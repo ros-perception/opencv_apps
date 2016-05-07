@@ -34,7 +34,7 @@ install:
   - cd ~/catkin_ws/src
   - ln -s $CI_SOURCE_PATH . # Link the repo we are testing to the new workspace
 
-  - if [ $OPENCV_VERSION == 3 ]; then  sed -i 's@libopencv-dev@opencv3@' $REPOSITORY_NAME/*/package.xml ; fi
+  - if [ $OPENCV_VERSION == 3 ]; then  sed -i 's@libopencv-dev@opencv3@' $REPOSITORY_NAME/package.xml ; fi
 
 # Install all dependencies, using wstool and rosdep.
 # wstool looks for a ROSINSTALL_FILE defined in before_install.
