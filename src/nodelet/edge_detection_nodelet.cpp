@@ -1,3 +1,4 @@
+// -*- coding:utf-8-unix; mode: c++; indent-tabs-mode: nil; c-basic-offset: 2; -*-
 /*********************************************************************
 * Software License Agreement (BSD License)
 *
@@ -77,7 +78,14 @@ class EdgeDetectionNodelet : public opencv_apps::Nodelet
   bool debug_view_;
   ros::Time prev_stamp_;
 
-  int low_threshold_;
+  int canny_threshold1_;
+  int canny_threshold2_;
+  int apertureSize_;
+  bool L2gradient_;
+  bool apply_blur_pre_;
+  bool apply_blur_post_;
+  int  postBlurSize_;
+  double  postBlurSigma_;
 
   std::string window_name_;
   static bool need_config_update_;
@@ -85,7 +93,15 @@ class EdgeDetectionNodelet : public opencv_apps::Nodelet
   void reconfigureCallback(edge_detection::EdgeDetectionConfig &new_config, uint32_t level)
   {
     config_ = new_config;
-    low_threshold_ = config_.canny_low_threshold;
+    canny_threshold1_ = config_.canny_threshold1;
+    canny_threshold2_ = config_.canny_threshold2;
+    apertureSize_ = 2*((config_.apertureSize/2)) + 1;
+    L2gradient_ = config_.L2gradient;
+
+    apply_blur_pre_  = config_.apply_blur_pre;
+    apply_blur_post_ = config_.apply_blur_post;
+    postBlurSize_    = 2*((config_.postBlurSize)/2) + 1;
+    postBlurSigma_   = config_.postBlurSigma;
   }
 
   const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
@@ -181,28 +197,36 @@ class EdgeDetectionNodelet : public opencv_apps::Nodelet
         case edge_detection::EdgeDetection_Canny:
           {
             int edgeThresh = 1;
-            int const max_lowThreshold = 100;
-            int ratio = 3;
             int kernel_size = 3;
+            int const max_canny_threshold1 = 500;
+            int const max_canny_threshold2 = 500;
             cv::Mat detected_edges;
 
             /// Reduce noise with a kernel 3x3
-            cv::blur( src_gray, grad, cv::Size(3,3) );
+            if(apply_blur_pre_) {
+              cv::blur( src_gray, src_gray, cv::Size(apertureSize_, apertureSize_) );
+            }
 
             /// Canny detector
-            cv::Canny( grad, grad, low_threshold_, low_threshold_*ratio, kernel_size );
+            cv::Canny( src_gray, grad, canny_threshold1_, canny_threshold2_, kernel_size, L2gradient_ );
+            if(apply_blur_post_) {
+              cv::GaussianBlur(grad, grad, cv::Size(postBlurSize_, postBlurSize_),
+                               postBlurSigma_, postBlurSigma_); // 0.3*(ksize/2 - 1) + 0.8
+            }
 
             new_window_name = "Canny Edge Detection Demo";
 
             /// Create a Trackbar for user to enter threshold
             if( debug_view_) {
               if (need_config_update_) {
-                config_.canny_low_threshold = low_threshold_;
+                config_.canny_threshold1 = canny_threshold1_;
+                config_.canny_threshold2 = canny_threshold2_;
                 srv.updateConfig(config_);
                 need_config_update_ = false;
               }
               if( window_name_ == new_window_name) {
-                cv::createTrackbar( "Min Threshold:", window_name_, &low_threshold_, max_lowThreshold, trackbarCallback);
+                cv::createTrackbar( "Min CannyThreshold1:", window_name_, &canny_threshold1_, max_canny_threshold1, trackbarCallback);
+                cv::createTrackbar( "Min CannyThreshold2:", window_name_, &canny_threshold2_, max_canny_threshold2, trackbarCallback);
               }
             }
             break;
@@ -254,18 +278,20 @@ public:
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
 
     pnh_->param("debug_view", debug_view_, false);
+
     if (debug_view_) {
       always_subscribe_ = true;
     }
     prev_stamp_ = ros::Time(0, 0);
 
     window_name_ = "Edge Detection Demo";
-    low_threshold_ = 10; // only for canny
+    canny_threshold1_ = 100; // only for canny
+    canny_threshold2_ = 200; // only for canny
 
     dynamic_reconfigure::Server<edge_detection::EdgeDetectionConfig>::CallbackType f =
       boost::bind(&EdgeDetectionNodelet::reconfigureCallback, this, _1, _2);
     srv.setCallback(f);
-    
+
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     //msg_pub_ = local_nh_.advertise<opencv_apps::LineArrayStamped>("lines", 1, msg_connect_cb, msg_disconnect_cb);
 
