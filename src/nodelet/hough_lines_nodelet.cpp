@@ -1,3 +1,4 @@
+// -*- coding:utf-8-unix; mode: c++; indent-tabs-mode: nil; c-basic-offset: 2; -*-
 /*********************************************************************
 * Software License Agreement (BSD License)
 *
@@ -75,11 +76,19 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
   int min_threshold_;
   int max_threshold_;
   int threshold_;
+  double rho_;
+  double theta_;
+  double minLineLength_;
+  double maxLineGap_;
 
   void reconfigureCallback(hough_lines::HoughLinesConfig &new_config, uint32_t level)
   {
-    config_ = new_config;
-    threshold_ = config_.threshold;
+    config_         = new_config;
+    rho_            = config_.rho;
+    theta_          = config_.theta;
+    threshold_      = config_.threshold;
+    minLineLength_  = config_.minLineLength;
+    maxLineGap_     = config_.maxLineGap;
   }
 
   const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
@@ -110,7 +119,37 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
     try
     {
       // Convert the image into something opencv can handle.
-      cv::Mat frame = cv_bridge::toCvShare(msg, msg->encoding)->image;
+      cv::Mat in_image = cv_bridge::toCvShare(msg, msg->encoding)->image;
+      cv::Mat src_gray;
+
+      if (in_image.channels() > 1) {
+        cv::cvtColor( in_image, src_gray, cv::COLOR_BGR2GRAY );
+        /// Apply Canny edge detector
+        Canny( src_gray, in_image, 50, 200, 3 );
+      }
+      else {
+        /// Check whether input gray image is filtered such that canny, sobel ...etc
+        bool is_filtered = true;
+        for(int y=0; y < in_image.rows; ++y) {
+          for(int x=0; x < in_image.cols; ++x) {
+            if(!(in_image.at<unsigned char>(y, x) == 0
+                 || in_image.at<unsigned char>(y, x) == 255)) {
+              is_filtered = false;
+              break;
+            }
+            if(!is_filtered) {
+              break;
+            }
+          }
+        }
+
+        if(!is_filtered) {
+          Canny( in_image, in_image, 50, 200, 3 );
+        }
+      }
+
+      cv::Mat out_image;
+      cv::cvtColor(in_image, out_image, CV_GRAY2BGR);
 
       // Messages
       opencv_apps::LineArrayStamped lines_msg;
@@ -118,15 +157,6 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
 
       // Do the work
       std::vector<cv::Rect> faces;
-      cv::Mat src_gray, edges;
-
-      if ( frame.channels() > 1 ) {
-        cv::cvtColor( frame, src_gray, cv::COLOR_BGR2GRAY );
-      } else {
-        src_gray = frame;
-      }
-      /// Apply Canny edge detector
-      Canny( src_gray, edges, 50, 200, 3 );
 
       if( debug_view_) {
         /// Create Trackbars for Thresholds
@@ -142,16 +172,13 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
         }
       }
 
-      /// Initialize
-      cv::cvtColor( edges, frame, cv::COLOR_GRAY2BGR );
-
       switch (config_.hough_type) {
         case hough_lines::HoughLines_Standard_Hough_Transform:
           {
             std::vector<cv::Vec2f> s_lines;
 
             /// 1. Use Standard Hough Transform
-            cv::HoughLines( edges, s_lines, 1, CV_PI/180, min_threshold_ + threshold_, 0, 0 );
+            cv::HoughLines( in_image, s_lines, rho_, theta_ * CV_PI/180, threshold_, minLineLength_, maxLineGap_ );
 
             /// Show the result
             for( size_t i = 0; i < s_lines.size(); i++ )
@@ -164,9 +191,9 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
               cv::Point pt1( cvRound(x0 + alpha*(-sin_t)), cvRound(y0 + alpha*cos_t) );
               cv::Point pt2( cvRound(x0 - alpha*(-sin_t)), cvRound(y0 - alpha*cos_t) );
 #ifndef CV_VERSION_EPOCH
-              cv::line( frame, pt1, pt2, cv::Scalar(255,0,0), 3, cv::LINE_AA);
+              cv::line( out_image, pt1, pt2, cv::Scalar(255,0,0), 3, cv::LINE_AA);
 #else
-              cv::line( frame, pt1, pt2, cv::Scalar(255,0,0), 3, CV_AA);
+              cv::line( out_image, pt1, pt2, cv::Scalar(255,0,0), 3, CV_AA);
 #endif
               opencv_apps::Line line_msg;
               line_msg.pt1.x = pt1.x;
@@ -184,16 +211,16 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
             std::vector<cv::Vec4i> p_lines;
 
             /// 2. Use Probabilistic Hough Transform
-            cv::HoughLinesP( edges, p_lines, 1, CV_PI/180, min_threshold_ + threshold_, 30, 10 );
+            cv::HoughLinesP( in_image, p_lines, rho_, theta_ * CV_PI/180, threshold_, minLineLength_, maxLineGap_ );
 
             /// Show the result
             for( size_t i = 0; i < p_lines.size(); i++ )
             {
               cv::Vec4i l = p_lines[i];
 #ifndef CV_VERSION_EPOCH
-              cv::line( frame, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(255,0,0), 3, cv::LINE_AA);
+              cv::line( out_image, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(255,0,0), 3, cv::LINE_AA);
 #else
-              cv::line( frame, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(255,0,0), 3, CV_AA);
+              cv::line( out_image, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(255,0,0), 3, CV_AA);
 #endif
               opencv_apps::Line line_msg;
               line_msg.pt1.x = l[0];
@@ -209,12 +236,12 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
 
       //-- Show what you got
       if( debug_view_) {
-        cv::imshow( window_name_, frame );
+        cv::imshow( window_name_, out_image );
         int c = cv::waitKey(1);
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", frame).toImageMsg();
+      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", out_image).toImageMsg();
       img_pub_.publish(out_img);
       msg_pub_.publish(lines_msg);
     }
@@ -262,7 +289,7 @@ public:
     dynamic_reconfigure::Server<hough_lines::HoughLinesConfig>::CallbackType f =
       boost::bind(&HoughLinesNodelet::reconfigureCallback, this, _1, _2);
     srv.setCallback(f);
-    
+
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::LineArrayStamped>(*pnh_, "lines", 1);
 
