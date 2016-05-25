@@ -1,3 +1,4 @@
+// -*- coding:utf-8-unix; mode: c++; indent-tabs-mode: nil; c-basic-offset: 2; -*-
 /*********************************************************************
 * Software License Agreement (BSD License)
 *
@@ -79,13 +80,25 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
   int max_canny_threshold_;
   int canny_threshold_;
   int accumulator_threshold_;
-
+  int gaussian_blur_size_;
+  double gaussian_sigma_x_;
+  double gaussian_sigma_y_;
+  int voting_threshold_;
+  int dp_;
+  int min_circle_radius_;
+  int max_circle_radius_;
 
   void reconfigureCallback(hough_circles::HoughCirclesConfig &new_config, uint32_t level)
   {
     config_ = new_config;
     canny_threshold_ = config_.canny_threshold;
     accumulator_threshold_ = config_.accumulator_threshold;
+    gaussian_blur_size_ = config_.gaussian_blur_size;
+    gaussian_sigma_x_ = config_.gaussian_sigma_x;
+    gaussian_sigma_y_ = config_.gaussian_sigma_y;
+    dp_ = config_.dp;
+    min_circle_radius_ = config_.min_circle_radius;
+    max_circle_radius_ = config_.max_circle_radius;
   }
 
   const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
@@ -141,10 +154,22 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
 
         cv::createTrackbar("Canny Threshold", window_name_, &canny_threshold_, max_canny_threshold_, trackbarCallback);
         cv::createTrackbar("Accumulator Threshold", window_name_, &accumulator_threshold_, max_accumulator_threshold_, trackbarCallback);
+        cv::createTrackbar("Gaussian Blur Size", window_name_, &gaussian_blur_size_, 30, trackbarCallback);
+        cv::createTrackbar("Gaussian Sigam X", window_name_, &gaussian_blur_size_, 10, trackbarCallback);
+        cv::createTrackbar("Gaussian Sigma Y", window_name_, &gaussian_blur_size_, 10, trackbarCallback);
+        cv::createTrackbar("Dp", window_name_, &dp_, 10, trackbarCallback);
+        cv::createTrackbar("Min Circle Radius", window_name_, &min_circle_radius_, 500, trackbarCallback);
+        cv::createTrackbar("Max Circle Radius", window_name_, &max_circle_radius_, 2000, trackbarCallback);
 
         if (need_config_update_) {
           config_.canny_threshold = canny_threshold_;
           config_.accumulator_threshold = accumulator_threshold_;
+          config_.gaussian_blur_size = gaussian_blur_size_;
+          config_.gaussian_sigma_x = gaussian_sigma_x_;
+          config_.gaussian_sigma_y = gaussian_sigma_y_;
+          config_.dp = dp_;
+          config_.min_circle_radius = min_circle_radius_;
+          config_.max_circle_radius = max_circle_radius_;
           srv.updateConfig(config_);
           need_config_update_ = false;
         }
@@ -159,8 +184,14 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
       // will hold the results of the detection
       std::vector<cv::Vec3f> circles;
       // runs the actual detection
-      cv::HoughCircles( src_gray, circles, CV_HOUGH_GRADIENT, 1, src_gray.rows/8, canny_threshold_, accumulator_threshold_, 0, 0 );
-
+      cv::HoughCircles( src_gray, circles,
+                        CV_HOUGH_GRADIENT,
+                        dp_,
+                        src_gray.rows/8,
+                        canny_threshold_,
+                        accumulator_threshold_,
+                        min_circle_radius_,
+                        max_circle_radius_ );
 
       // clone the colour, input image for displaying purposes
       for( size_t i = 0; i < circles.size(); i++ )
