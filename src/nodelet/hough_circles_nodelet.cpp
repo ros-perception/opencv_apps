@@ -149,9 +149,6 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
         src_gray = frame;
       }
 
-      // Reduce the noise so we avoid false circle detection
-      cv::GaussianBlur( src_gray, src_gray, cv::Size(9, 9), 2, 2 );
-
       // create the main window, and attach the trackbars
       if( debug_view_) {
         cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
@@ -178,6 +175,13 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
           need_config_update_ = false;
         }
       }
+
+      // Reduce the noise so we avoid false circle detection
+      // gaussian_blur_size_ must be odd number
+      if (gaussian_blur_size_%2 != 1) {
+        gaussian_blur_size_ = gaussian_blur_size_ + 1;
+      }
+      cv::GaussianBlur( src_gray, src_gray, cv::Size(gaussian_blur_size_, gaussian_blur_size_), gaussian_sigma_x_, gaussian_sigma_y_ );
 
       // those paramaters cannot be =0
       // so we must check here
