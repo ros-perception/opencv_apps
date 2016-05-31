@@ -73,9 +73,20 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
 
   cv::HOGDescriptor hog_;
 
+  double hit_threshold_;
+  int win_stride_;
+  int padding_;
+  double scale0_;
+  int group_threshold_;
+
   void reconfigureCallback(people_detect::PeopleDetectConfig &new_config, uint32_t level)
   {
     config_ = new_config;
+    hit_threshold_ = config_.hit_threshold;
+    win_stride_ = config_.win_stride;
+    padding_ = config_.padding;
+    scale0_ = config_.scale0;
+    group_threshold_ = config_.group_threshold;
   }
 
   const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
@@ -122,7 +133,7 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
       // run the detector with default parameters. to get a higher hit-rate
       // (and more false alarms, respectively), decrease the hitThreshold and
       // groupThreshold (set groupThreshold to 0 to turn off the grouping completely).
-      hog_.detectMultiScale(frame, found, 0, cv::Size(8,8), cv::Size(32,32), 1.05, 2);
+      hog_.detectMultiScale(frame, found, hit_threshold_, cv::Size(win_stride_, win_stride_), cv::Size(padding_, padding_), scale0_, group_threshold_);
       t = (double)cv::getTickCount() - t;
       NODELET_INFO("tdetection time = %gms", t*1000./cv::getTickFrequency());
       size_t i, j;
