@@ -161,7 +161,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
         cv::createTrackbar("Gaussian Blur Size", window_name_, &gaussian_blur_size_, 30, trackbarCallback);
         cv::createTrackbar("Gaussian Sigam X", window_name_, &gaussian_blur_size_, 10, trackbarCallback);
         cv::createTrackbar("Gaussian Sigma Y", window_name_, &gaussian_blur_size_, 10, trackbarCallback);
-        cv::createTrackbar("Dp", window_name_, &dp_int, 10, trackbarCallback);
+        cv::createTrackbar("Dp", window_name_, &dp_int, 100, trackbarCallback);
         cv::createTrackbar("Min Circle Radius", window_name_, &min_circle_radius_, 500, trackbarCallback);
         cv::createTrackbar("Max Circle Radius", window_name_, &max_circle_radius_, 2000, trackbarCallback);
 
