@@ -78,13 +78,13 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
   int accumulator_threshold_initial_value_;
   int max_accumulator_threshold_;
   int max_canny_threshold_;
-  int canny_threshold_;
-  int accumulator_threshold_;
+  double canny_threshold_; int canny_threshold_int; // for trackbar
+  double accumulator_threshold_; int accumulator_threshold_int;
   int gaussian_blur_size_;
   double gaussian_sigma_x_;
   double gaussian_sigma_y_;
   int voting_threshold_;
-  int dp_;
+  double dp_; int dp_int;
   int min_circle_radius_;
   int max_circle_radius_;
 
@@ -99,6 +99,10 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
     dp_ = config_.dp;
     min_circle_radius_ = config_.min_circle_radius;
     max_circle_radius_ = config_.max_circle_radius;
+
+    canny_threshold_int = int(canny_threshold_);
+    accumulator_threshold_int = int(accumulator_threshold_);
+    dp_int = int(dp_);
   }
 
   const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
@@ -118,7 +122,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
     do_work(msg, msg->header.frame_id);
   }
 
-  static void trackbarCallback( int, void* )
+  static void trackbarCallback( int value, void* userdata)
   {
     need_config_update_ = true;
   }
@@ -145,29 +149,26 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
         src_gray = frame;
       }
 
-      // Reduce the noise so we avoid false circle detection
-      cv::GaussianBlur( src_gray, src_gray, cv::Size(9, 9), 2, 2 );
-
       // create the main window, and attach the trackbars
       if( debug_view_) {
         cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
 
-        cv::createTrackbar("Canny Threshold", window_name_, &canny_threshold_, max_canny_threshold_, trackbarCallback);
-        cv::createTrackbar("Accumulator Threshold", window_name_, &accumulator_threshold_, max_accumulator_threshold_, trackbarCallback);
+        cv::createTrackbar("Canny Threshold", window_name_, &canny_threshold_int, max_canny_threshold_, trackbarCallback);
+        cv::createTrackbar("Accumulator Threshold", window_name_, &accumulator_threshold_int, max_accumulator_threshold_, trackbarCallback);
         cv::createTrackbar("Gaussian Blur Size", window_name_, &gaussian_blur_size_, 30, trackbarCallback);
         cv::createTrackbar("Gaussian Sigam X", window_name_, &gaussian_blur_size_, 10, trackbarCallback);
         cv::createTrackbar("Gaussian Sigma Y", window_name_, &gaussian_blur_size_, 10, trackbarCallback);
-        cv::createTrackbar("Dp", window_name_, &dp_, 10, trackbarCallback);
+        cv::createTrackbar("Dp", window_name_, &dp_int, 100, trackbarCallback);
         cv::createTrackbar("Min Circle Radius", window_name_, &min_circle_radius_, 500, trackbarCallback);
         cv::createTrackbar("Max Circle Radius", window_name_, &max_circle_radius_, 2000, trackbarCallback);
 
         if (need_config_update_) {
-          config_.canny_threshold = canny_threshold_;
-          config_.accumulator_threshold = accumulator_threshold_;
+          config_.canny_threshold = canny_threshold_int;
+          config_.accumulator_threshold = accumulator_threshold_int;
           config_.gaussian_blur_size = gaussian_blur_size_;
           config_.gaussian_sigma_x = gaussian_sigma_x_;
           config_.gaussian_sigma_y = gaussian_sigma_y_;
-          config_.dp = dp_;
+          config_.dp = dp_int;
           config_.min_circle_radius = min_circle_radius_;
           config_.max_circle_radius = max_circle_radius_;
           srv.updateConfig(config_);
@@ -175,10 +176,17 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
         }
       }
 
+      // Reduce the noise so we avoid false circle detection
+      // gaussian_blur_size_ must be odd number
+      if (gaussian_blur_size_%2 != 1) {
+        gaussian_blur_size_ = gaussian_blur_size_ + 1;
+      }
+      cv::GaussianBlur( src_gray, src_gray, cv::Size(gaussian_blur_size_, gaussian_blur_size_), gaussian_sigma_x_, gaussian_sigma_y_ );
+
       // those paramaters cannot be =0
       // so we must check here
-      canny_threshold_ = std::max(canny_threshold_, 1);
-      accumulator_threshold_ = std::max(accumulator_threshold_, 1);
+      canny_threshold_ = std::max(canny_threshold_, 1.0);
+      accumulator_threshold_ = std::max(accumulator_threshold_, 1.0);
 
       //runs the detection, and update the display
       // will hold the results of the detection
