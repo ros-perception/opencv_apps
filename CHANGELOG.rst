@@ -2,8 +2,8 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.11.13 (2016-06-01)
+--------------------
 * Add parameter to people_detector `#9 <https://github.com/ros-perception/opencv_apps/issues/9>`_
 * hough_circles: enable to set double value to the HoughCircle params `#8 <https://github.com/ros-perception/opencv_apps/issues/8>`_
 
