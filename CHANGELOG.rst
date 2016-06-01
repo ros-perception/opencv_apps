@@ -2,6 +2,25 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Add parameter to people_detector `#9 <https://github.com/ros-perception/opencv_apps/issues/9>`_
+* hough_circles: enable to set double value to the HoughCircle params `#8 <https://github.com/ros-perception/opencv_apps/issues/8>`_
+
+  * hough_circle enable to set gaussian_blue_size and kernel sigma from cfg
+  * hough_circles: fix default/min/max value of cfg
+  * hough_circle: enable to set db to 100
+  * circle_hough: dp, accumrate_threshold, canny_threshold is double, not int
+
+* Add parameter to hough_circles_nodelet `#7 <https://github.com/ros-perception/opencv_apps/issues/7>`_
+* Add parameter to hough_lines_nodelet `#6 <https://github.com/ros-perception/opencv_apps/issues/6>`_
+* Add parameter to edge_detection_nodelet(canny) `#5 <https://github.com/ros-perception/opencv_apps/issues/5>`_
+* Simplify source tree by removing duplicated node codes `#4 <https://github.com/ros-perception/opencv_apps/issues/4>`_  Closes `#3 <https://github.com/ros-perception/opencv_apps/issues/3>`_
+* fix .travis file
+* copy Travis and .gitignore from vision_opencv
+* geometry_msgs doesn't get used by opencv_apps, but std_msgs does. (`#119 <https://github.com/ros-perception/vision_opencv/pull/119>`_)
+* Contributors: Kei Okada, Kentaro Wada, Lucas Walter, Vincent Rabaud, IorI Yanokura
+
 1.11.12 (2016-03-10)
 --------------------
 * relax test condition
