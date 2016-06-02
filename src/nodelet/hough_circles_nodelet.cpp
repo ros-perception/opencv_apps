@@ -223,15 +223,18 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
                         min_circle_radius_,
                         max_circle_radius_ );
 
+      cv::Mat out_image;
+      cv::cvtColor( frame, out_image, cv::COLOR_GRAY2BGR);
+
       // clone the colour, input image for displaying purposes
       for( size_t i = 0; i < circles.size(); i++ )
       {
         cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
         int radius = cvRound(circles[i][2]);
         // circle center
-        circle( frame, center, 3, cv::Scalar(0,255,0), -1, 8, 0 );
+        circle( out_image, center, 3, cv::Scalar(0,255,0), -1, 8, 0 );
         // circle outline
-        circle( frame, center, radius, cv::Scalar(0,0,255), 3, 8, 0 );
+        circle( out_image, center, radius, cv::Scalar(0,0,255), 3, 8, 0 );
 
         opencv_apps::Circle circle_msg;
         circle_msg.center.x = center.x;
@@ -270,7 +273,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, msg->encoding,frame).toImageMsg();
+      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", out_image).toImageMsg();
       img_pub_.publish(out_img);
       msg_pub_.publish(circles_msg);
     }
@@ -321,7 +324,7 @@ public:
     //declare and initialize both parameters that are subjects to change
     canny_threshold_ = canny_threshold_initial_value_;
     accumulator_threshold_ = accumulator_threshold_initial_value_;
-    
+
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&HoughCirclesNodelet::reconfigureCallback, this, _1, _2);
