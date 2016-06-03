@@ -88,6 +88,9 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
   int min_circle_radius_;
   int max_circle_radius_;
 
+  image_transport::Publisher debug_image_pub_;
+  int debug_image_type_;
+
   void reconfigureCallback(hough_circles::HoughCirclesConfig &new_config, uint32_t level)
   {
     config_ = new_config;
@@ -99,6 +102,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
     dp_ = config_.dp;
     min_circle_radius_ = config_.min_circle_radius;
     max_circle_radius_ = config_.max_circle_radius;
+    debug_image_type_ = config_.debug_image_type;
 
     canny_threshold_int = int(canny_threshold_);
     accumulator_threshold_int = int(accumulator_threshold_);
@@ -190,6 +194,10 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
       canny_threshold_ = std::max(canny_threshold_, 1.0);
       accumulator_threshold_ = std::max(accumulator_threshold_, 1.0);
 
+      if( debug_view_) {
+        // https://github.com/Itseez/opencv/blob/2.4.8/modules/imgproc/src/hough.cpp#L817
+        cv::Canny(frame, edges, MAX(canny_threshold_/2,1), canny_threshold_, 3 );
+      }
       //runs the detection, and update the display
       // will hold the results of the detection
       std::vector<cv::Vec3f> circles;
@@ -197,7 +205,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
       cv::HoughCircles( src_gray, circles,
                         CV_HOUGH_GRADIENT,
                         dp_,
-                        src_gray.rows/8,
+                        src_gray.rows/16,
                         canny_threshold_,
                         accumulator_threshold_,
                         min_circle_radius_,
@@ -221,9 +229,32 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
       }
 
       // shows the results
-      if( debug_view_) {
-        cv::imshow( window_name_, frame );
-        int c = cv::waitKey(1);
+      if( debug_view_ || debug_image_pub_.getNumSubscribers() > 0 ) {
+        cv::Mat debug_image;
+        switch (debug_image_type_) {
+          case 1:
+            debug_image = src_gray;
+            break;
+          case 2:
+            debug_image = edges;
+            break;
+          default:
+            debug_image = frame;
+            break;
+        }
+        if ( debug_view_ ) {
+          cv::imshow( window_name_, debug_image );
+          int c = cv::waitKey(1);
+          if ( c == 's' ) {
+            debug_image_type_ = (++debug_image_type_)%3;
+            config_.debug_image_type = debug_image_type_;
+            srv.updateConfig(config_);
+          }
+        }
+        if ( debug_image_pub_.getNumSubscribers() > 0 ) {
+          sensor_msgs::Image::Ptr out_debug_img = cv_bridge::CvImage(msg->header, msg->encoding, debug_image).toImageMsg();
+          debug_image_pub_.publish(out_debug_img);
+        }
       }
 
       // Publish the image.
@@ -261,6 +292,7 @@ public:
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
 
+    debug_image_type_ = 0;
     pnh_->param("debug_view", debug_view_, false);
     if (debug_view_) {
       always_subscribe_ = debug_view_;
@@ -283,6 +315,9 @@ public:
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::CircleArrayStamped>(*pnh_, "circles", 1);
+
+    debug_image_type_ = 0;
+    debug_image_pub_ = advertiseImage(*pnh_, "debug_image", 1);
 
     onInitPostProcess();
   }
