@@ -81,8 +81,8 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
   double canny_threshold_; int canny_threshold_int; // for trackbar
   double accumulator_threshold_; int accumulator_threshold_int;
   int gaussian_blur_size_;
-  double gaussian_sigma_x_;
-  double gaussian_sigma_y_;
+  double gaussian_sigma_x_; int gaussian_sigma_x_int;
+  double gaussian_sigma_y_; int gaussian_sigma_y_int;
   int voting_threshold_;
   double dp_; int dp_int;
   int min_circle_radius_;
@@ -102,6 +102,8 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
 
     canny_threshold_int = int(canny_threshold_);
     accumulator_threshold_int = int(accumulator_threshold_);
+    gaussian_sigma_x_int = int(gaussian_sigma_x_);
+    gaussian_sigma_y_int = int(gaussian_sigma_y_);
     dp_int = int(dp_);
   }
 
@@ -156,18 +158,18 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
         cv::createTrackbar("Canny Threshold", window_name_, &canny_threshold_int, max_canny_threshold_, trackbarCallback);
         cv::createTrackbar("Accumulator Threshold", window_name_, &accumulator_threshold_int, max_accumulator_threshold_, trackbarCallback);
         cv::createTrackbar("Gaussian Blur Size", window_name_, &gaussian_blur_size_, 30, trackbarCallback);
-        cv::createTrackbar("Gaussian Sigam X", window_name_, &gaussian_blur_size_, 10, trackbarCallback);
-        cv::createTrackbar("Gaussian Sigma Y", window_name_, &gaussian_blur_size_, 10, trackbarCallback);
+        cv::createTrackbar("Gaussian Sigam X", window_name_, &gaussian_sigma_x_int, 10, trackbarCallback);
+        cv::createTrackbar("Gaussian Sigma Y", window_name_, &gaussian_sigma_y_int, 10, trackbarCallback);
         cv::createTrackbar("Dp", window_name_, &dp_int, 100, trackbarCallback);
         cv::createTrackbar("Min Circle Radius", window_name_, &min_circle_radius_, 500, trackbarCallback);
         cv::createTrackbar("Max Circle Radius", window_name_, &max_circle_radius_, 2000, trackbarCallback);
 
         if (need_config_update_) {
-          config_.canny_threshold = canny_threshold_int;
-          config_.accumulator_threshold = accumulator_threshold_int;
+          config_.canny_threshold = canny_threshold_ = (double)canny_threshold_int;
+          config_.accumulator_threshold = accumulator_threshold_ = (double)accumulator_threshold_int;
           config_.gaussian_blur_size = gaussian_blur_size_;
-          config_.gaussian_sigma_x = gaussian_sigma_x_;
-          config_.gaussian_sigma_y = gaussian_sigma_y_;
+          config_.gaussian_sigma_x = gaussian_sigma_x_ = (double)gaussian_sigma_x_int;
+          config_.gaussian_sigma_y = gaussian_sigma_y_ = (double)gaussian_sigma_y_int;
           config_.dp = dp_int;
           config_.min_circle_radius = min_circle_radius_;
           config_.max_circle_radius = max_circle_radius_;
