@@ -179,7 +179,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
           config_.gaussian_sigma_x = gaussian_sigma_x_ = (double)gaussian_sigma_x_int;
           config_.gaussian_sigma_y = gaussian_sigma_y_ = (double)gaussian_sigma_y_int;
           config_.min_distance_between_circles = min_distance_between_circles_ = (double)min_distance_between_circles_int;
-          config_.dp = dp_int;
+          config_.dp = dp_ = (double)dp_int;
           config_.min_circle_radius = min_circle_radius_;
           config_.max_circle_radius = max_circle_radius_;
           srv.updateConfig(config_);
