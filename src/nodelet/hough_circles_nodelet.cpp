@@ -81,12 +81,16 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
   double canny_threshold_; int canny_threshold_int; // for trackbar
   double accumulator_threshold_; int accumulator_threshold_int;
   int gaussian_blur_size_;
-  double gaussian_sigma_x_;
-  double gaussian_sigma_y_;
+  double gaussian_sigma_x_; int gaussian_sigma_x_int;
+  double gaussian_sigma_y_; int gaussian_sigma_y_int;
   int voting_threshold_;
+  double min_distance_between_circles_; int min_distance_between_circles_int;
   double dp_; int dp_int;
   int min_circle_radius_;
   int max_circle_radius_;
+
+  image_transport::Publisher debug_image_pub_;
+  int debug_image_type_;
 
   void reconfigureCallback(hough_circles::HoughCirclesConfig &new_config, uint32_t level)
   {
@@ -96,12 +100,17 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
     gaussian_blur_size_ = config_.gaussian_blur_size;
     gaussian_sigma_x_ = config_.gaussian_sigma_x;
     gaussian_sigma_y_ = config_.gaussian_sigma_y;
+
     dp_ = config_.dp;
     min_circle_radius_ = config_.min_circle_radius;
     max_circle_radius_ = config_.max_circle_radius;
-
+    debug_image_type_ = config_.debug_image_type;
+    min_distance_between_circles_ = config_.min_distance_between_circles;
     canny_threshold_int = int(canny_threshold_);
     accumulator_threshold_int = int(accumulator_threshold_);
+    gaussian_sigma_x_int = int(gaussian_sigma_x_);
+    gaussian_sigma_y_int = int(gaussian_sigma_y_);
+    min_distance_between_circles_int = int(min_distance_between_circles_);
     dp_int = int(dp_);
   }
 
@@ -156,19 +165,21 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
         cv::createTrackbar("Canny Threshold", window_name_, &canny_threshold_int, max_canny_threshold_, trackbarCallback);
         cv::createTrackbar("Accumulator Threshold", window_name_, &accumulator_threshold_int, max_accumulator_threshold_, trackbarCallback);
         cv::createTrackbar("Gaussian Blur Size", window_name_, &gaussian_blur_size_, 30, trackbarCallback);
-        cv::createTrackbar("Gaussian Sigam X", window_name_, &gaussian_blur_size_, 10, trackbarCallback);
-        cv::createTrackbar("Gaussian Sigma Y", window_name_, &gaussian_blur_size_, 10, trackbarCallback);
+        cv::createTrackbar("Gaussian Sigam X", window_name_, &gaussian_sigma_x_int, 10, trackbarCallback);
+        cv::createTrackbar("Gaussian Sigma Y", window_name_, &gaussian_sigma_y_int, 10, trackbarCallback);
+        cv::createTrackbar("Min Distance between Circles", window_name_, &min_distance_between_circles_int, 100, trackbarCallback);
         cv::createTrackbar("Dp", window_name_, &dp_int, 100, trackbarCallback);
         cv::createTrackbar("Min Circle Radius", window_name_, &min_circle_radius_, 500, trackbarCallback);
         cv::createTrackbar("Max Circle Radius", window_name_, &max_circle_radius_, 2000, trackbarCallback);
 
         if (need_config_update_) {
-          config_.canny_threshold = canny_threshold_int;
-          config_.accumulator_threshold = accumulator_threshold_int;
+          config_.canny_threshold = canny_threshold_ = (double)canny_threshold_int;
+          config_.accumulator_threshold = accumulator_threshold_ = (double)accumulator_threshold_int;
           config_.gaussian_blur_size = gaussian_blur_size_;
-          config_.gaussian_sigma_x = gaussian_sigma_x_;
-          config_.gaussian_sigma_y = gaussian_sigma_y_;
-          config_.dp = dp_int;
+          config_.gaussian_sigma_x = gaussian_sigma_x_ = (double)gaussian_sigma_x_int;
+          config_.gaussian_sigma_y = gaussian_sigma_y_ = (double)gaussian_sigma_y_int;
+          config_.min_distance_between_circles = min_distance_between_circles_ = (double)min_distance_between_circles_int;
+          config_.dp = dp_ = (double)dp_int;
           config_.min_circle_radius = min_circle_radius_;
           config_.max_circle_radius = max_circle_radius_;
           srv.updateConfig(config_);
@@ -188,6 +199,15 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
       canny_threshold_ = std::max(canny_threshold_, 1.0);
       accumulator_threshold_ = std::max(accumulator_threshold_, 1.0);
 
+      if( debug_view_) {
+        // https://github.com/Itseez/opencv/blob/2.4.8/modules/imgproc/src/hough.cpp#L817
+        cv::Canny(frame, edges, MAX(canny_threshold_/2,1), canny_threshold_, 3 );
+      }
+      if ( min_distance_between_circles_ == 0 ) { // set inital value
+        min_distance_between_circles_ = src_gray.rows/8;
+        config_.min_distance_between_circles = min_distance_between_circles_;
+        srv.updateConfig(config_);
+      }
       //runs the detection, and update the display
       // will hold the results of the detection
       std::vector<cv::Vec3f> circles;
@@ -195,7 +215,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
       cv::HoughCircles( src_gray, circles,
                         CV_HOUGH_GRADIENT,
                         dp_,
-                        src_gray.rows/8,
+                        min_distance_between_circles_,
                         canny_threshold_,
                         accumulator_threshold_,
                         min_circle_radius_,
@@ -219,9 +239,32 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
       }
 
       // shows the results
-      if( debug_view_) {
-        cv::imshow( window_name_, frame );
-        int c = cv::waitKey(1);
+      if( debug_view_ || debug_image_pub_.getNumSubscribers() > 0 ) {
+        cv::Mat debug_image;
+        switch (debug_image_type_) {
+          case 1:
+            debug_image = src_gray;
+            break;
+          case 2:
+            debug_image = edges;
+            break;
+          default:
+            debug_image = frame;
+            break;
+        }
+        if ( debug_view_ ) {
+          cv::imshow( window_name_, debug_image );
+          int c = cv::waitKey(1);
+          if ( c == 's' ) {
+            debug_image_type_ = (++debug_image_type_)%3;
+            config_.debug_image_type = debug_image_type_;
+            srv.updateConfig(config_);
+          }
+        }
+        if ( debug_image_pub_.getNumSubscribers() > 0 ) {
+          sensor_msgs::Image::Ptr out_debug_img = cv_bridge::CvImage(msg->header, msg->encoding, debug_image).toImageMsg();
+          debug_image_pub_.publish(out_debug_img);
+        }
       }
 
       // Publish the image.
@@ -259,6 +302,7 @@ public:
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
 
+    debug_image_type_ = 0;
     pnh_->param("debug_view", debug_view_, false);
     if (debug_view_) {
       always_subscribe_ = debug_view_;
@@ -270,6 +314,7 @@ public:
     accumulator_threshold_initial_value_ = 50;
     max_accumulator_threshold_ = 200;
     max_canny_threshold_ = 255;
+    min_distance_between_circles_ = 0;
 
     //declare and initialize both parameters that are subjects to change
     canny_threshold_ = canny_threshold_initial_value_;
@@ -281,6 +326,9 @@ public:
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::CircleArrayStamped>(*pnh_, "circles", 1);
+
+    debug_image_type_ = 0;
+    debug_image_pub_ = advertiseImage(*pnh_, "debug_image", 1);
 
     onInitPostProcess();
   }
