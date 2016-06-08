@@ -115,7 +115,10 @@ opencv_apps_add_nodelet(goodfeature_track goodfeature_track/goodfeature_track sr
 # Samples
 opencv_apps_add_nodelet(camshift camshift/camshift src/nodelet/camshift_nodelet.cpp)
 opencv_apps_add_nodelet(simple_example simple_example/simple_example src/nodelet/simple_example_nodelet.cpp)
-opencv_apps_add_nodelet(simple_compressed_example simple_compressed_example/simple_compressed_example src/nodelet/simple_compressed_example_nodelet.cpp)
+if("$ENV{ROS_DISTRO}" STRGREATER "hydro")
+  # because sensor_msgs does not have 'CompressedImageConstPtr' on hydro.
+  opencv_apps_add_nodelet(simple_compressed_example simple_compressed_example/simple_compressed_example src/nodelet/simple_compressed_example_nodelet.cpp)
+endif()
 # Optical Flow
 opencv_apps_add_nodelet(fback_flow fback_flow/fback_flow src/nodelet/fback_flow_nodelet.cpp)
   # fback.cpp
@@ -125,7 +128,10 @@ opencv_apps_add_nodelet(fback_flow fback_flow/fback_flow src/nodelet/fback_flow_
   # laplace.cpp
   # linemod.cpp
   # lkdemo.cpp
-opencv_apps_add_nodelet(lk_flow lk_flow/lk_flow src/nodelet/lk_flow_nodelet.cpp)
+if("$ENV{ROS_DISTRO}" STRGREATER "hydro")
+  # because of unreleased sensor_msgs::image::encodings on hydro.
+  opencv_apps_add_nodelet(lk_flow lk_flow/lk_flow src/nodelet/lk_flow_nodelet.cpp)
+endif()
 # Others
 opencv_apps_add_nodelet(phase_corr phase_corr/phase_corr src/nodelet/phase_corr_nodelet.cpp)
   # phase_corr.cpp
