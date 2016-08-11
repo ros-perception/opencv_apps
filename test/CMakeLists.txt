@@ -26,6 +26,7 @@ add_rostest(test-face_detection.test ARGS gui:=false)
 add_rostest(test-goodfeature_track.test ARGS gui:=false)
 add_rostest(test-camshift.test ARGS gui:=false)
 add_rostest(test-fback_flow.test ARGS gui:=false)
+add_rostest(test-fback_flow-nodelet.test ARGS gui:=false)
 add_rostest(test-lk_flow.test ARGS gui:=false)
 add_rostest(test-people_detect.test ARGS gui:=false)
 add_rostest(test-phase_corr.test ARGS gui:=false)
@@ -35,5 +36,3 @@ if(OPENCV_HAVE_OPTFLOW)
   add_rostest(test-simple_flow.test ARGS gui:=false)
 endif()
 add_rostest(test-watershed_segmentation.test ARGS gui:=false)
-
-
