@@ -72,8 +72,10 @@ class EdgeDetectionNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  edge_detection::EdgeDetectionConfig config_;
-  dynamic_reconfigure::Server<edge_detection::EdgeDetectionConfig> srv;
+  typedef edge_detection::EdgeDetectionConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -90,7 +92,7 @@ class EdgeDetectionNodelet : public opencv_apps::Nodelet
   std::string window_name_;
   static bool need_config_update_;
 
-  void reconfigureCallback(edge_detection::EdgeDetectionConfig &new_config, uint32_t level)
+  void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
     canny_threshold1_ = config_.canny_threshold1;
@@ -221,7 +223,7 @@ class EdgeDetectionNodelet : public opencv_apps::Nodelet
               if (need_config_update_) {
                 config_.canny_threshold1 = canny_threshold1_;
                 config_.canny_threshold2 = canny_threshold2_;
-                srv.updateConfig(config_);
+                reconfigure_server_->updateConfig(config_);
                 need_config_update_ = false;
               }
               if( window_name_ == new_window_name) {
@@ -288,9 +290,10 @@ public:
     canny_threshold1_ = 100; // only for canny
     canny_threshold2_ = 200; // only for canny
 
-    dynamic_reconfigure::Server<edge_detection::EdgeDetectionConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&EdgeDetectionNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     //msg_pub_ = local_nh_.advertise<opencv_apps::LineArrayStamped>("lines", 1, msg_connect_cb, msg_disconnect_cb);

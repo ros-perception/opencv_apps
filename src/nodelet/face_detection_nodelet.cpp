@@ -64,8 +64,10 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  face_detection::FaceDetectionConfig config_;
-  dynamic_reconfigure::Server<face_detection::FaceDetectionConfig> srv;
+  typedef face_detection::FaceDetectionConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -73,7 +75,7 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
   cv::CascadeClassifier face_cascade_;
   cv::CascadeClassifier eyes_cascade_;
 
-  void reconfigureCallback(face_detection::FaceDetectionConfig &new_config, uint32_t level)
+  void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
   }
@@ -207,9 +209,10 @@ public:
     }
     prev_stamp_ = ros::Time(0, 0);
 
-    dynamic_reconfigure::Server<face_detection::FaceDetectionConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&FaceDetectionNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
     
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::FaceArrayStamped>(*pnh_, "faces", 1);

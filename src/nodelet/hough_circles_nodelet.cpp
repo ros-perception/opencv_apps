@@ -64,8 +64,10 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  hough_circles::HoughCirclesConfig config_;
-  dynamic_reconfigure::Server<hough_circles::HoughCirclesConfig> srv;
+  typedef hough_circles::HoughCirclesConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -92,7 +94,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
   image_transport::Publisher debug_image_pub_;
   int debug_image_type_;
 
-  void reconfigureCallback(hough_circles::HoughCirclesConfig &new_config, uint32_t level)
+  void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
     canny_threshold_ = config_.canny_threshold;
@@ -182,7 +184,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
           config_.dp = dp_ = (double)dp_int;
           config_.min_circle_radius = min_circle_radius_;
           config_.max_circle_radius = max_circle_radius_;
-          srv.updateConfig(config_);
+          reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
       }
@@ -206,7 +208,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
       if ( min_distance_between_circles_ == 0 ) { // set inital value
         min_distance_between_circles_ = src_gray.rows/8;
         config_.min_distance_between_circles = min_distance_between_circles_;
-        srv.updateConfig(config_);
+        reconfigure_server_->updateConfig(config_);
       }
       //runs the detection, and update the display
       // will hold the results of the detection
@@ -258,7 +260,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
           if ( c == 's' ) {
             debug_image_type_ = (++debug_image_type_)%3;
             config_.debug_image_type = debug_image_type_;
-            srv.updateConfig(config_);
+            reconfigure_server_->updateConfig(config_);
           }
         }
         if ( debug_image_pub_.getNumSubscribers() > 0 ) {
@@ -320,9 +322,10 @@ public:
     canny_threshold_ = canny_threshold_initial_value_;
     accumulator_threshold_ = accumulator_threshold_initial_value_;
     
-    dynamic_reconfigure::Server<hough_circles::HoughCirclesConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&HoughCirclesNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::CircleArrayStamped>(*pnh_, "circles", 1);

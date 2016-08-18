@@ -56,8 +56,10 @@ class PhaseCorrNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  phase_corr::PhaseCorrConfig config_;
-  dynamic_reconfigure::Server<phase_corr::PhaseCorrConfig> srv;
+  typedef phase_corr::PhaseCorrConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -67,7 +69,7 @@ class PhaseCorrNodelet : public opencv_apps::Nodelet
   std::string window_name_;
   static bool need_config_update_;
 
-  void reconfigureCallback(phase_corr::PhaseCorrConfig &new_config, uint32_t level)
+  void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
   }
@@ -116,7 +118,7 @@ class PhaseCorrNodelet : public opencv_apps::Nodelet
       if( debug_view_) {
         cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
         if (need_config_update_) {
-          srv.updateConfig(config_);
+          reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
       }
@@ -202,9 +204,10 @@ public:
 
     window_name_ = "phase shift";
     
-    dynamic_reconfigure::Server<phase_corr::PhaseCorrConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&PhaseCorrNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::Point2DStamped>(*pnh_, "shift", 1);
