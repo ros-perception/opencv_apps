@@ -2,64 +2,18 @@ sudo: required
 dist: trusty
 language: generic
 env:
-  - OPENCV_VERSION=2 ROS_DISTRO=indigo
-  - OPENCV_VERSION=3 ROS_DISTRO=indigo
-  - OPENCV_VERSION=2 ROS_DISTRO=jade
-  - OPENCV_VERSION=3 ROS_DISTRO=jade
+  - OPENCV_VERSION=2 ROS_DISTRO=indigo DOCKER_IMAGE=ubuntu:trusty
+  - OPENCV_VERSION=3 ROS_DISTRO=indigo DOCKER_IMAGE=ubuntu:trusty
+  - OPENCV_VERSION=2 ROS_DISTRO=jade   DOCKER_IMAGE=ubuntu:trusty
+  - OPENCV_VERSION=3 ROS_DISTRO=jade   DOCKER_IMAGE=ubuntu:trusty
+  - ROS_DISTRO=kinetic                 DOCKER_IMAGE=ubuntu:xenial
 # Install system dependencies, namely ROS.
-before_install:
-  # Define some config vars.
-  - export ROS_CI_DESKTOP=`lsb_release -cs`  # e.g. [precise|trusty]
+script:
   - export CI_SOURCE_PATH=$(pwd)
   - export REPOSITORY_NAME=${PWD##*/}
-  - export ROSINSTALL_FILE=$CI_SOURCE_PATH/dependencies.rosinstall
-  - export CATKIN_OPTIONS=$CI_SOURCE_PATH/catkin.options
-  - export ROS_PARALLEL_JOBS='-j8 -l6'
-  # Install ROS
-  - sudo sh -c "echo \"deb http://packages.ros.org/ros-shadow-fixed/ubuntu $ROS_CI_DESKTOP main\" > /etc/apt/sources.list.d/ros-latest.list"
-  - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
-  - sudo apt-get update -qq
-  # Install ROS
-  - sudo apt-get install -y python-catkin-pkg python-catkin-tools python-rosdep python-wstool ros-$ROS_DISTRO-catkin
-  - source /opt/ros/$ROS_DISTRO/setup.bash
-  # Setup for rosdep
-  - sudo rosdep init
-  - rosdep update
+  - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
+  - docker run --rm -i -v $CI_SOURCE_PATH:$CI_SOURCE_PATH -e "CI_SOURCE_PATH=$CI_SOURCE_PATH" -e "HOME=$HOME" -e "ROS_DISTRO=$ROS_DISTRO" -e "OPENCV_VERSION=$OPENCV_VERSION" -t $DOCKER_IMAGE sh -c "cd $CI_SOURCE_PATH; ./.travis.sh"
 
-# Create a catkin workspace with the package under test.
-install:
-  - mkdir -p ~/catkin_ws/src
-
-  # Add the package under test to the workspace.
-  - cd ~/catkin_ws/src
-  - ln -s $CI_SOURCE_PATH . # Link the repo we are testing to the new workspace
-
-  - if [ $OPENCV_VERSION == 3 ]; then  sed -i 's@libopencv-dev@opencv3@' $REPOSITORY_NAME/package.xml ; fi
-
-# Install all dependencies, using wstool and rosdep.
-# wstool looks for a ROSINSTALL_FILE defined in before_install.
-before_script:
-  # source dependencies: install using wstool.
-  - cd ~/catkin_ws/src
-  - wstool init
-  - if [[ -f $ROSINSTALL_FILE ]] ; then wstool merge $ROSINSTALL_FILE ; fi
-  - if [ $OPENCV_VERSION == 3 ]; then wstool set -y image_pipeline --git https://github.com/ros-perception/image_pipeline; fi # need to recompile image_proc
-  - wstool up
-
-  # package depdencies: install using rosdep.
-  - cd ~/catkin_ws
-  - rosdep install -q -y -r --from-paths src --ignore-src --rosdistro $ROS_DISTRO
-
-# Compile and test.
-script:
-  - source /opt/ros/$ROS_DISTRO/setup.bash
-  - cd ~/catkin_ws
-  - catkin build -p1 -j1 --no-status
-  - catkin run_tests -p1 -j1 --no-status
-  - catkin_test_results --all build
-  - catkin clean -b --yes
-  - catkin config --install
-  - catkin build -p1 -j1 --no-status
 after_failure:
   - find ${HOME}/.ros/test_results -type f -exec echo "== {} ==" \; -exec cat {} \;
   - for file in ${HOME}/.ros/log/rostest-*; do echo "=== $file ==="; cat $file; done
