@@ -64,8 +64,10 @@ class FindContoursNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  find_contours::FindContoursConfig config_;
-  dynamic_reconfigure::Server<find_contours::FindContoursConfig> srv;
+  typedef find_contours::FindContoursConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -75,7 +77,7 @@ class FindContoursNodelet : public opencv_apps::Nodelet
   std::string window_name_;
   static bool need_config_update_;
 
-  void reconfigureCallback(find_contours::FindContoursConfig &new_config, uint32_t level)
+  void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
     low_threshold_ = config_.canny_low_threshold;
@@ -167,7 +169,7 @@ class FindContoursNodelet : public opencv_apps::Nodelet
       if( debug_view_) {
         if (need_config_update_) {
           config_.canny_low_threshold = low_threshold_;
-          srv.updateConfig(config_);
+          reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
         cv::createTrackbar( "Canny thresh:", window_name_, &low_threshold_, max_thresh, trackbarCallback);
@@ -220,9 +222,10 @@ public:
     window_name_ = "Demo code to find contours in an image";
     low_threshold_ = 100; // only for canny
     
-    dynamic_reconfigure::Server<find_contours::FindContoursConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&FindContoursNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::ContourArrayStamped>(*pnh_, "contours", 1);

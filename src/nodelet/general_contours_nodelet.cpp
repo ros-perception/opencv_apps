@@ -64,8 +64,10 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  general_contours::GeneralContoursConfig config_;
-  dynamic_reconfigure::Server<general_contours::GeneralContoursConfig> srv;
+  typedef general_contours::GeneralContoursConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -75,7 +77,7 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
   std::string window_name_;
   static bool need_config_update_;
 
-  void reconfigureCallback(general_contours::GeneralContoursConfig &new_config, uint32_t level)
+  void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
     threshold_ = config_.threshold;
@@ -197,7 +199,7 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
       if( debug_view_) {
         if (need_config_update_) {
           config_.threshold = threshold_;
-          srv.updateConfig(config_);
+          reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
         cv::createTrackbar( "Threshold:", window_name_, &threshold_, max_thresh, trackbarCallback);
@@ -251,9 +253,10 @@ public:
     window_name_ = "Contours";
     threshold_ = 100;
 
-    dynamic_reconfigure::Server<general_contours::GeneralContoursConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&GeneralContoursNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
     
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     rects_pub_ = advertise<opencv_apps::RotatedRectArrayStamped>(*pnh_, "rectangles", 1);

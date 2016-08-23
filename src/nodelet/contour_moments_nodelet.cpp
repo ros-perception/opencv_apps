@@ -64,8 +64,10 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  contour_moments::ContourMomentsConfig config_;
-  dynamic_reconfigure::Server<contour_moments::ContourMomentsConfig> srv;
+  typedef contour_moments::ContourMomentsConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -75,7 +77,7 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
   std::string window_name_;
   static bool need_config_update_;
 
-  void reconfigureCallback(contour_moments::ContourMomentsConfig &new_config, uint32_t level)
+  void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
     low_threshold_ = config_.canny_low_threshold;
@@ -251,9 +253,10 @@ public:
     window_name_ = "Contours";
     low_threshold_ = 100; // only for canny
     
-    dynamic_reconfigure::Server<contour_moments::ContourMomentsConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&ContourMomentsNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::MomentArrayStamped>(*pnh_, "moments", 1);

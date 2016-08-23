@@ -65,8 +65,10 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  camshift::CamShiftConfig config_;
-  dynamic_reconfigure::Server<camshift::CamShiftConfig> srv;
+  typedef camshift::CamShiftConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -102,7 +104,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
     on_mouse_y_ = y;
   }
 
-  void reconfigureCallback(camshift::CamShiftConfig &new_config, uint32_t level)
+  void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
     vmin_ = config_.vmin;
@@ -161,7 +163,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
           config_.vmin = vmin_;
           config_.vmax = vmax_;
           config_.smin = smin_;
-          srv.updateConfig(config_);
+          reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
       }
@@ -374,9 +376,10 @@ public:
     phranges = hranges;
     histimg = cv::Mat::zeros(200, 320, CV_8UC3);
 
-    dynamic_reconfigure::Server<camshift::CamShiftConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&CamShiftNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
 
     
     img_pub_ = advertiseImage(*pnh_, "image", 1);

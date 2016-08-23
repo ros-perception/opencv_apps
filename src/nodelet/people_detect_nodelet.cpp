@@ -62,8 +62,10 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  people_detect::PeopleDetectConfig config_;
-  dynamic_reconfigure::Server<people_detect::PeopleDetectConfig> srv;
+  typedef people_detect::PeopleDetectConfig Config;
+  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
+  Config config_;
+  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -79,7 +81,7 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
   double scale0_;
   int group_threshold_;
 
-  void reconfigureCallback(people_detect::PeopleDetectConfig &new_config, uint32_t level)
+  void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
     hit_threshold_ = config_.hit_threshold;
@@ -214,9 +216,10 @@ public:
 
     window_name_ = "people detector";
 
-    dynamic_reconfigure::Server<people_detect::PeopleDetectConfig>::CallbackType f =
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    dynamic_reconfigure::Server<Config>::CallbackType f =
       boost::bind(&PeopleDetectNodelet::reconfigureCallback, this, _1, _2);
-    srv.setCallback(f);
+    reconfigure_server_->setCallback(f);
 
     hog_.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
     
