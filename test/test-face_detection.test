@@ -8,17 +8,12 @@
     <node name="image_view" pkg="image_view" type="image_view" args="image:=image_rect_color" if="$(arg gui)" />
 
     <!-- face_detection.cpp -->
-    <node name="face_detection" pkg="opencv_apps" type="face_detection" args="image:=image_rect" >
-      <param name="debug_view" value="$(arg gui)" />
-      <param if="$(arg use_opencv3)"
-             name="face_cascade_name" value="$(find opencv3)/../OpenCV-3.1.0-dev/haarcascades/haarcascade_frontalface_alt.xml" />
-      <param if="$(arg use_opencv3)"
-             name="eyes_cascade_name" value="$(find opencv3)/../OpenCV-3.1.0-dev/haarcascades/haarcascade_eye_tree_eyeglasses.xml" />
-      <param unless="$(arg use_opencv3)"
-             name="face_cascade_name" value="/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml" />
-      <param unless="$(arg use_opencv3)"
-             name="eyes_cascade_name" value="/usr/share/opencv/haarcascades/haarcascade_eye_tree_eyeglasses.xml" />
-    </node>
+    <include file="$(find opencv_apps)/launch/face_detection.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect" />
+    </include>
+
+    <!-- Test Codes -->
     <node name="face_detection_saver" pkg="image_view" type="image_saver" args="image:=face_detection/image" >
       <param name="filename_format" value="$(find opencv_apps)/test/face_detection.png"/>
     </node>

@@ -7,10 +7,12 @@
     <node name="image_view" pkg="image_view" type="image_view" args="image:=image_rect_color" if="$(arg gui)" />
 
     <!-- contour_moments.cpp -->
-    <node name="contour_moments" pkg="opencv_apps" type="contour_moments" args="image:=image_rect" >
-      <param name="debug_view" value="$(arg gui)" />
-      <param name="threshold" value="30" />
-    </node>
+    <include file="$(find opencv_apps)/launch/contour_moments.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect" />
+    </include>
+
+    <!-- Test Codes -->
     <node name="contour_moments_saver" pkg="image_view" type="image_saver" args="image:=contour_moments/image" >
       <param name="filename_format" value="$(find opencv_apps)/test/contour_moments.png"/>
     </node>

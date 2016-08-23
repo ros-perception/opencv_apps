@@ -7,15 +7,16 @@
     <node name="image_view" pkg="image_view" type="image_view" args="image:=image_rect_color" if="$(arg gui)" />
 
     <!-- camshift.cpp -->
-    <node name="camshift" pkg="opencv_apps" type="camshift" args="image:=image_rect_color" >
-      <param name="debug_view" value="$(arg gui)" />
-      <rosparam param="histogram">
-        [0.0, 255.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-      </rosparam>
-      <param name="vmin" value="120" />
-      <param name="vmax" value="230" />
-      <param name="smin" value="60" />
-    </node>
+    <include file="$(find opencv_apps)/launch/camshift.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect_color" />
+      <arg name="histogram" value="[0.0, 255.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]" />
+      <arg name="vmin" value="120" />
+      <arg name="vmax" value="230" />
+      <arg name="smin" value="60" />
+    </include>
+
+    <!-- Test Codes -->
     <node name="camshift_saver_result" pkg="image_view" type="image_saver" args="image:=camshift/image" >
       <param name="filename_format" value="$(find opencv_apps)/test/camshift_result.png"/>
     </node>

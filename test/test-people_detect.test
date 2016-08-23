@@ -7,9 +7,12 @@
     <node name="image_view" pkg="image_view" type="image_view" args="image:=image_rect_color" if="$(arg gui)" />
 
     <!-- people_detect.cpp -->
-    <node name="people_detect" pkg="opencv_apps" type="people_detect" args="image:=image_rect" >
-      <param name="debug_view" value="$(arg gui)" />
-    </node>
+    <include file="$(find opencv_apps)/launch/people_detect.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect" />
+    </include>
+
+    <!-- Test Codes -->
     <node name="people_detect_saver" pkg="image_view" type="image_saver" args="image:=people_detect/image" >
       <param name="filename_format" value="$(find opencv_apps)/test/people_detect.png"/>
     </node>

@@ -7,10 +7,13 @@
     <node name="image_view" pkg="image_view" type="image_view" args="image:=image_rect_color" if="$(arg gui)" />
 
     <!-- segment_objects.cpp -->
-    <node name="segment_objects" pkg="opencv_apps" type="segment_objects" args="image:=image_rect" >
-      <param name="use_camera_info" value="false" />
-      <param name="debug_view" value="$(arg gui)" />
-    </node>
+    <include file="$(find opencv_apps)/launch/segment_objects.launch" >
+      <arg name="use_camera_info" value="false" />
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect" />
+    </include>
+
+    <!-- Test Codes -->
     <node name="segment_objects_saver" pkg="image_view" type="image_saver" args="image:=segment_objects/image" >
       <param name="filename_format" value="$(find opencv_apps)/test/segment_objects.png"/>
     </node>

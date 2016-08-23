@@ -7,10 +7,13 @@
     <node name="image_view" pkg="image_view" type="image_view" args="image:=image_rect_color" if="$(arg gui)" />
 
     <!-- general_contours.cpp -->
-    <node name="general_contours" pkg="opencv_apps" type="general_contours" args="image:=image_rect" >
-      <param name="debug_view" value="$(arg gui)" />
-      <param name="threshold" value="30" />
-    </node>
+    <include file="$(find opencv_apps)/launch/general_contours.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect" />
+      <arg name="threshold" value="30" />
+    </include>
+
+    <!-- Test Codes -->
     <node name="general_contours_saver" pkg="image_view" type="image_saver" args="image:=general_contours/image" >
       <param name="filename_format" value="$(find opencv_apps)/test/general_contours.png"/>
     </node>
