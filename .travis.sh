@@ -76,8 +76,8 @@ source /opt/ros/$ROS_DISTRO/setup.bash
 cd ~/catkin_ws
 catkin build -p1 -j1 --no-status
 catkin run_tests -p1 -j1 --no-status
-catkin_test_results --verbose build
-catkin clean -b --yes
+catkin_test_results --verbose build || catkin_test_results --all build
+catkin clean -b --yes || catkin clean -b -a
 catkin config --install
 catkin build -p1 -j1 --no-status
 travis_time_end
