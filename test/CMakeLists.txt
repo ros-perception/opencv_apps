@@ -40,4 +40,5 @@ if(OPENCV_HAVE_OPTFLOW)
 endif()
 add_rostest(test-watershed_segmentation.test ARGS gui:=false)
 
-
+add_rostest(test-simple_example.test ARGS gui:=false)
+add_rostest(test-simple_compressed_example.test ARGS gui:=false)
