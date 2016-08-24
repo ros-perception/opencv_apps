@@ -38,6 +38,7 @@
  */
 
 #include <ros/ros.h>
+#include <sensor_msgs/CompressedImage.h>
 #include <sensor_msgs/image_encodings.h>
 #include <nodelet/nodelet.h>
 #include <image_transport/image_transport.h>
