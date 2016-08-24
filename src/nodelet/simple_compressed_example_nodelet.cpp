@@ -60,6 +60,7 @@ class ImageConverter
   ros::NodeHandle nh_;
   ros::Subscriber image_sub_;
   ros::Publisher image_pub_;
+  bool debug_view_;
 
 public:
   ImageConverter()
@@ -69,12 +70,17 @@ public:
             &ImageConverter::imageCb,this);
     image_pub_ = nh_.advertise<sensor_msgs::CompressedImage>("/image_converter/output_video/compressed", 1);
 
-    cv::namedWindow(OPENCV_WINDOW);
+    nh_.param("debug_view", debug_view_, false);
+    if( debug_view_) {
+      cv::namedWindow(OPENCV_WINDOW);
+    }
   }
 
   ~ImageConverter()
   {
-    cv::destroyWindow(OPENCV_WINDOW);
+    if( debug_view_) {
+      cv::destroyWindow(OPENCV_WINDOW);
+    }
   }
 
   void imageCb(const sensor_msgs::CompressedImageConstPtr& msg)
@@ -137,9 +143,11 @@ public:
     if (cv_ptr->image.rows > 110 && cv_ptr->image.cols > 110)
       cv::circle(cv_ptr->image, cv::Point(cv_ptr->image.cols/2, cv_ptr->image.rows/2), 100, CV_RGB(255,0,0));
 
-    // Update GUI Window
-    cv::imshow(OPENCV_WINDOW, cv_ptr->image);
-    cv::waitKey(3);
+    if( debug_view_) {
+      // Update GUI Window
+      cv::imshow(OPENCV_WINDOW, cv_ptr->image);
+      cv::waitKey(3);
+    }
 
     // Output modified video stream
 #ifndef CV_BRIDGE_COMPRESSED_IMAGE_IS_NOT_SUPPORTED
