@@ -11,6 +11,7 @@
     <include file="$(find opencv_apps)/launch/face_detection.launch" >
       <arg name="debug_view" value="$(arg gui)" />
       <arg name="image" value="image_rect" />
+      <arg name="use_opencv3" value="$(arg use_opencv3)" />
     </include>
 
     <!-- Test Codes -->
