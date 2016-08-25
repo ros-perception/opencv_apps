@@ -17,7 +17,7 @@
       <param name="filename_format" value="$(find opencv_apps)/test/simple_example.png"/>
     </node>
     <param name="simple_example_test/topic" value="/image_converter/output_video/raw" />
-    <test test-name="simple_example_test" pkg="rostest" type="hztest" name="simple_example_test" >
+    <test test-name="simple_example_test" pkg="rostest" type="hztest" name="simple_example_test" retry="3" >
       <param name="hz" value="20" />
       <param name="hzerror" value="15" />
       <param name="test_duration" value="5.0" /> 
