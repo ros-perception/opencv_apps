@@ -38,6 +38,7 @@
  */
 
 #include <ros/ros.h>
+#include <sensor_msgs/CompressedImage.h>
 #include <sensor_msgs/image_encodings.h>
 #include <nodelet/nodelet.h>
 #include <image_transport/image_transport.h>
@@ -88,7 +89,50 @@ public:
     cv_bridge::CvImagePtr cv_ptr;
     try
     {
+      /*
+	Supporting CompressedImage in cv_bridge has been started from 1.11.9 (2015-11-29)
+	note : hydro 1.10.18, indigo : 1.11.13 ...
+	https://github.com/ros-perception/vision_opencv/pull/70
+       */
+#ifndef CV_BRIDGE_COMPRESSED_IMAGE_IS_NOT_SUPPORTED
       cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+#else
+      //cv_ptr = cv_bridge::toCvCopyImpl(matFromImage(msg), msg.header, sensor_msgs::image_encodings::BGR8, sensor_msgs::image_encodings::BGR8);
+	  //cv::Mat matFromImage(const sensor_msgs::CompressedImage& source)
+	  cv::Mat jpegData(1,msg->data.size(),CV_8UC1);
+	  jpegData.data     = const_cast<uchar*>(&msg->data[0]);
+	  cv::InputArray data(jpegData);
+	  cv::Mat image     = cv::imdecode(data,cv::IMREAD_COLOR);
+
+	//cv_ptr = cv_bridge::toCvCopyImpl(bgrMat, msg->header, sensor_msgs::image_encodings::BGR8, sensor_msgs::image_encodings::BGR8);
+	sensor_msgs::Image ros_image;
+	ros_image.header = msg->header;
+	ros_image.height = image.rows;
+	ros_image.width = image.cols;
+	ros_image.encoding = sensor_msgs::image_encodings::BGR8;
+	ros_image.is_bigendian = false;
+	ros_image.step = image.cols * image.elemSize();
+	size_t size = ros_image.step * image.rows;
+	ros_image.data.resize(size);
+
+	if (image.isContinuous())
+	  {
+	    memcpy((char*)(&ros_image.data[0]), image.data, size);
+	  }
+	else
+	  {
+	    // Copy by row by row
+	    uchar* ros_data_ptr = (uchar*)(&ros_image.data[0]);
+	    uchar* cv_data_ptr = image.data;
+	    for (int i = 0; i < image.rows; ++i)
+	      {
+		memcpy(ros_data_ptr, cv_data_ptr, ros_image.step);
+		ros_data_ptr += ros_image.step;
+		cv_data_ptr += image.step;
+	      }
+	  }
+	cv_ptr = cv_bridge::toCvCopy(ros_image, sensor_msgs::image_encodings::BGR8);
+#endif
     }
     catch (cv_bridge::Exception& e)
     {
@@ -107,8 +151,66 @@ public:
     }
 
     // Output modified video stream
+#ifndef CV_BRIDGE_COMPRESSED_IMAGE_IS_NOT_SUPPORTED
     image_pub_.publish(cv_ptr->toCompressedImageMsg());
+#else
+    image_pub_.publish(toCompressedImageMsg(cv_ptr));
+#endif
   }
+#ifdef CV_BRIDGE_COMPRESSED_IMAGE_IS_NOT_SUPPORTED
+  sensor_msgs::CompressedImage toCompressedImageMsg(cv_bridge::CvImagePtr cv_ptr) const
+  {
+    sensor_msgs::CompressedImage ros_image;
+    const std::string dst_format = std::string();
+    ros_image.header = cv_ptr->header;
+    cv::Mat image;
+    if(cv_ptr->encoding != sensor_msgs::image_encodings::BGR8)
+      {
+	cv_bridge::CvImagePtr tempThis = boost::make_shared<cv_bridge::CvImage>(*cv_ptr);
+	cv_bridge::CvImagePtr temp = cv_bridge::cvtColor(tempThis,sensor_msgs::image_encodings::BGR8);
+	cv_ptr->image = temp->image;
+      }
+    else
+      {
+	image = cv_ptr->image;
+      }
+    std::vector<uchar> buf;
+    if (dst_format.empty() || dst_format == "jpg")
+      {
+	ros_image.format = "jpg";
+	cv::imencode(".jpg", image, buf);
+      }
+
+    if (dst_format == "png")
+      {
+	ros_image.format = "png";
+	cv::imencode(".png", image, buf);
+      }
+
+    //TODO: check this formats (on rviz) and add more formats
+    //from http://docs.opencv.org/modules/highgui/doc/reading_and_writing_images_and_video.html#Mat imread(const string& filename, int flags)
+    if (dst_format == "jp2")
+      {
+	ros_image.format = "jp2";
+	cv::imencode(".jp2", image, buf);
+      }
+
+    if (dst_format == "bmp")
+      {
+	ros_image.format = "bmp";
+	cv::imencode(".bmp", image, buf);
+      }
+
+    if (dst_format == "tif")
+      {
+	ros_image.format = "tif";
+	cv::imencode(".tif", image, buf);
+      }
+
+    ros_image.data = buf;
+    return ros_image;
+  }
+#endif
 };
 
 

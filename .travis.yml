@@ -2,6 +2,7 @@ sudo: required
 dist: trusty
 language: generic
 env:
+  - ROS_DISTRO=hydro                   DOCKER_IMAGE=ubuntu:precise
   - OPENCV_VERSION=2 ROS_DISTRO=indigo DOCKER_IMAGE=ubuntu:trusty
   - OPENCV_VERSION=3 ROS_DISTRO=indigo DOCKER_IMAGE=ubuntu:trusty
   - OPENCV_VERSION=2 ROS_DISTRO=jade   DOCKER_IMAGE=ubuntu:trusty
