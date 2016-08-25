@@ -44,9 +44,13 @@ add_rostest(test-watershed_segmentation.test ARGS gui:=false)
 add_rostest(test-simple_example.test ARGS gui:=false)
 add_rostest(test-simple_compressed_example.test ARGS gui:=false)
 
-file(GLOB LAUNCH_FILES *.test)
-foreach(LAUNCH_FILE ${LAUNCH_FILES})
-  roslaunch_add_file_check(${LAUNCH_FILE})
-endforeach()
+if(roslaunch_VERSION VERSION_LESS "1.11.1")
+  message(WARNING "roslaunch_add_file check fails with unsupported doc attributes ${roslaunch_VERSION}")
+else()
+  file(GLOB LAUNCH_FILES *.test)
+  foreach(LAUNCH_FILE ${LAUNCH_FILES})
+    roslaunch_add_file_check(${LAUNCH_FILE})
+  endforeach()
+endif()
 
 
