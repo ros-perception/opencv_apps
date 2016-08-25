@@ -250,6 +250,9 @@ install(TARGETS ${_opencv_apps_nodelet_targets}
 install(FILES nodelet_plugins.xml
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+install(DIRECTORY launch test
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+        USE_SOURCE_PERMISSIONS)
 
 ## test
 if(CATKIN_ENABLE_TESTING)
