@@ -4,6 +4,22 @@
     <description>Nodelet to combine two images</description>
   </class>
 
+  <class name="normalized_block_filter/normalized_block_filter" type="smoothing_filter::NormalizedBlockFilterNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to smoothing by normalized_block filter</description>
+  </class>
+
+  <class name="bilateral_filter/bilateral_filter" type="smoothing_filter::BilateralFilterNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to smoothing by bilateral filter</description>
+  </class>
+
+  <class name="median_filter/median_filter" type="smoothing_filter::MedianFilterNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to smoothing by median filter</description>
+  </class>
+
+  <class name="gaussian_filter/gaussian_filter" type="smoothing_filter::GaussianFilterNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to smoothing by gaussian filter</description>
+  </class>
+
   <class name="edge_detection/edge_detection" type="edge_detection::EdgeDetectionNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to find edges</description>
   </class>

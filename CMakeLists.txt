@@ -18,6 +18,7 @@ endif()
 # generate the dynamic_reconfigure config file
 generate_dynamic_reconfigure_options(
   cfg/AddingImages.cfg
+  cfg/NormalizedBlockFilter.cfg cfg/BilateralFilter.cfg cfg/GaussianFilter.cfg cfg/MedianFilter.cfg
   cfg/EdgeDetection.cfg cfg/HoughLines.cfg cfg/HoughCircles.cfg
   cfg/FindContours.cfg cfg/ConvexHull.cfg cfg/GeneralContours.cfg cfg/ContourMoments.cfg
   cfg/FaceDetection.cfg
@@ -148,7 +149,10 @@ opencv_apps_add_nodelet(adding_images adding_images/adding_images src/nodelet/ad
   # ./tutorial_code/ImgProc/Morphology_2.cpp
   # ./tutorial_code/ImgProc/Morphology_3.cpp
   # ./tutorial_code/ImgProc/Pyramids.cpp
-  # ./tutorial_code/ImgProc/Smoothing.cpp
+opencv_apps_add_nodelet(normalized_block_filter normalized_block_filter/normalized_block_filter src/nodelet/smoothing_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Smoothing.cpp
+opencv_apps_add_nodelet(bilateral_filter bilateral_filter/bilateral_filter src/nodelet/smoothing_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Smoothing.cpp
+opencv_apps_add_nodelet(gaussian_filter gaussian_filter/gaussian_filter src/nodelet/smoothing_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Smoothing.cpp
+opencv_apps_add_nodelet(median_filter median_filter/median_filter src/nodelet/smoothing_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Smoothing.cpp
 opencv_apps_add_nodelet(threshold threshold/threshold src/nodelet/threshold_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold.cpp
   # ./tutorial_code/ImgProc/Threshold_inRange.cpp
 
