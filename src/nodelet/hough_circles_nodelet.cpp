@@ -224,7 +224,11 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
                         max_circle_radius_ );
 
       cv::Mat out_image;
-      cv::cvtColor( frame, out_image, cv::COLOR_GRAY2BGR);
+      if ( frame.channels() == 1 ) {
+        cv::cvtColor( frame, out_image, cv::COLOR_GRAY2BGR);
+      } else {
+        out_image = frame;
+      }
 
       // clone the colour, input image for displaying purposes
       for( size_t i = 0; i < circles.size(); i++ )
