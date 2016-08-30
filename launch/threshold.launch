@@ -1,0 +1,78 @@
+<launch>
+  <arg name="gui" default="true" />
+  <arg name="image" default="image" doc="The image topic. Should be remapped to the name of the real image topic." />
+
+  <!-- threshold.cpp -->
+  <node name="binary_threshold_image"
+        pkg="opencv_apps" type="threshold">
+    <remap from="image" to="$(arg image)" />
+    <rosparam>
+      threshold_type: 0
+      apply_otsu: true
+    </rosparam>
+  </node>
+
+  <node name="binary_inverted_threshold_image"
+        pkg="opencv_apps" type="threshold">
+    <remap from="image" to="$(arg image)" />
+    <rosparam>
+      threshold_type: 1
+      apply_otsu: true
+    </rosparam>
+  </node>
+
+  <node name="threshold_truncated_image"
+        pkg="opencv_apps" type="threshold">
+    <remap from="image" to="$(arg image)" />
+    <rosparam>
+      threshold_type: 2
+      apply_otsu: true
+    </rosparam>
+  </node>
+
+  <node name="threshold_to_zero_image"
+        pkg="opencv_apps" type="threshold">
+    <remap from="image" to="$(arg image)" />
+    <rosparam>
+      threshold_type: 3
+      apply_otsu: true
+    </rosparam>
+  </node>
+
+  <node name="threshold_to_zero_inverted_image"
+        pkg="opencv_apps" type="threshold">
+    <remap from="image" to="$(arg image)" />
+    <rosparam>
+      threshold_type: 4
+      apply_otsu: true
+    </rosparam>
+  </node>
+
+  <group if="$(arg gui)">
+    <node name="image_view_0"
+          pkg="image_view" type="image_view">
+      <remap from="image" to="$(arg image)" />
+    </node>
+    <node name="image_view_1"
+          pkg="image_view" type="image_view">
+      <remap from="image" to="binary_threshold_image/image" />
+    </node>
+    <node name="image_view_2"
+          pkg="image_view" type="image_view">
+      <remap from="image" to="binary_inverted_threshold_image/image" />
+    </node>
+    <node name="image_view_3"
+          pkg="image_view" type="image_view">
+      <remap from="image" to="threshold_truncated_image/image" />
+    </node>
+    <node name="image_view_4"
+          pkg="image_view" type="image_view">
+      <remap from="image" to="threshold_to_zero_image/image" />
+    </node>
+    <node name="image_view_5"
+          pkg="image_view" type="image_view">
+      <remap from="image" to="threshold_to_zero_inverted_image/image" />
+    </node>
+  </group>
+
+</launch>
