@@ -76,6 +76,10 @@
     <description>Nodelet of Simple Example from wiki</description>
   </class>
 
+   <class name="threshold/threshold" type="threshold::ThresholdNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of threshold</description>
+  </class>
+
   <class name="watershed_segmentation/watershed_segmentation" type="watershed_segmentation::WatershedSegmentationNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to demonstrate the famous watershed segmentation algorithm in OpenCV: watershed()</description>
   </class>
