@@ -6,11 +6,14 @@
     <node name="image_view" pkg="image_view" type="image_view" args="image:=image_rect" if="$(arg gui)" />
 
     <!-- simple_flow.cpp -->
-    <node name="simple_flow" pkg="opencv_apps" type="simple_flow" args="image:=image_rect" >
-      <param name="use_camera_info" value="false" />
-      <param name="debug_view" value="$(arg gui)" />
-      <param name="scale" value="8" />
-    </node>
+    <include file="$(find opencv_apps)/launch/simple_flow.launch" >
+      <arg name="use_camera_info" value="false" />
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect" />
+      <arg name="scale" value="8" />
+    </include>
+
+    <!-- Test Codes -->
     <node name="simple_flow_saver" pkg="image_view" type="image_saver" args="image:=simple_flow/image" >
       <param name="filename_format" value="$(find opencv_apps)/test/simple_flow.png"/>
     </node>

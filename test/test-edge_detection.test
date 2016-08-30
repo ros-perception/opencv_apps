@@ -8,10 +8,14 @@
 
     <!-- edge_detection.cpp  -->
     <!-- 0: Sobel -->
-    <node name="edge_sobel_detection" pkg="opencv_apps" type="edge_detection" args="image:=image_rect" >
-      <param name="debug_view" value="$(arg gui)" />
-      <param name="edge_type" value="0" />
-    </node>
+    <include file="$(find opencv_apps)/launch/edge_detection.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect" />
+      <arg name="edge_type" value="0" />
+      <arg name="node_name" value="edge_sobel_detection" />
+    </include>
+
+    <!-- Test Codes -->
     <node name="edge_sobel_detection_saver" pkg="image_view" type="image_saver" args="image:=edge_sobel_detection/image" >
       <param name="filename_format" value="$(find opencv_apps)/test/edge_sobel_detection.png"/>
     </node>
@@ -22,10 +26,14 @@
       <param name="test_duration" value="5.0" /> 
     </test>
     <!-- 1: Laplace -->
-    <node name="edge_laplace_detection" pkg="opencv_apps" type="edge_detection" args="image:=image_rect" >
-      <param name="debug_view" value="$(arg gui)" />
-      <param name="edge_type" value="1" />
-    </node>
+    <include file="$(find opencv_apps)/launch/edge_detection.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect" />
+      <arg name="edge_type" value="1" />
+      <arg name="node_name" value="edge_laplace_detection" />
+    </include>
+
+    <!-- Test Codes -->
     <node name="edge_laplace_detection_saver" pkg="image_view" type="image_saver" args="image:=edge_laplace_detection/image" >
       <param name="filename_format" value="$(find opencv_apps)/test/edge_laplace_detection.png"/>
     </node>
@@ -36,11 +44,14 @@
       <param name="test_duration" value="5.0" /> 
     </test>
     <!-- 2: Canny -->
-    <node name="edge_canny_detection" pkg="opencv_apps" type="edge_detection" args="image:=image_rect" >
-      <param name="debug_view" value="$(arg gui)" />
-      <param name="edge_type" value="2" />
-      <param name="canny_low_threshold" value="40" />
-    </node>
+    <include file="$(find opencv_apps)/launch/edge_detection.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect" />
+      <arg name="edge_type" value="2" />
+      <arg name="node_name" value="edge_canny_detection" />
+    </include>
+
+    <!-- Test Codes -->
     <node name="edge_canny_detection_saver" pkg="image_view" type="image_saver" args="image:=edge_canny_detection/image" >
       <param name="filename_format" value="$(find opencv_apps)/test/edge_canny_detection.png"/>
     </node>

@@ -6,10 +6,13 @@
     <node name="image_view" pkg="image_view" type="image_view" args="image:=image_rect" if="$(arg gui)" />
 
     <!-- phase_corr.cpp -->
-    <node name="phase_corr" pkg="opencv_apps" type="phase_corr" args="image:=image_rect" >
-      <param name="use_camera_info" value="false" />
-      <param name="debug_view" value="$(arg gui)" />
-    </node>
+    <include file="$(find opencv_apps)/launch/phase_corr.launch" >
+      <arg name="use_camera_info" value="false" />
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect" />
+    </include>
+
+    <!-- Test Codes -->
     <node name="phase_corr_saver" pkg="image_view" type="image_saver" args="image:=phase_corr/image" >
       <param name="filename_format" value="$(find opencv_apps)/test/phase_corr.png"/>
     </node>

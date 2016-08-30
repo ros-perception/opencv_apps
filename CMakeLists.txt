@@ -324,9 +324,20 @@ install(TARGETS ${_opencv_apps_nodelet_targets}
 install(FILES nodelet_plugins.xml
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+install(DIRECTORY launch test
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+        USE_SOURCE_PERMISSIONS)
 
 ## test
 if(CATKIN_ENABLE_TESTING)
-  find_package(catkin REQUIRED COMPONENTS rostest)
+  find_package(catkin REQUIRED COMPONENTS rostest roslaunch)
+  if(roslaunch_VERSION VERSION_LESS "1.11.1")
+    message(WARNING "roslaunch_add_file check fails with unsupported doc attributes ${roslaunch_VERSION}")
+  else()
+    file(GLOB LAUNCH_FILES launch/*.launch)
+    foreach(LAUNCH_FILE ${LAUNCH_FILES})
+      roslaunch_add_file_check(${LAUNCH_FILE})
+    endforeach()
+  endif()
   add_subdirectory(test)
 endif()

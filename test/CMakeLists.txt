@@ -16,6 +16,7 @@ add_dependencies(tests vslam_tutorial_bag)
 
 #add_rostest(test-apps.test)
 add_rostest(test-edge_detection.test ARGS gui:=false)
+
 add_rostest(test-hough_lines.test ARGS gui:=false)
 add_rostest(test-hough_circles.test ARGS gui:=false)
 add_rostest(test-find_contours.test ARGS gui:=false)
@@ -42,3 +43,14 @@ add_rostest(test-watershed_segmentation.test ARGS gui:=false)
 
 add_rostest(test-simple_example.test ARGS gui:=false)
 add_rostest(test-simple_compressed_example.test ARGS gui:=false)
+
+if(roslaunch_VERSION VERSION_LESS "1.11.1")
+  message(WARNING "roslaunch_add_file check fails with unsupported doc attributes ${roslaunch_VERSION}")
+else()
+  file(GLOB LAUNCH_FILES *.test)
+  foreach(LAUNCH_FILE ${LAUNCH_FILES})
+    roslaunch_add_file_check(${LAUNCH_FILE})
+  endforeach()
+endif()
+
+
