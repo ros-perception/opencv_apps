@@ -8,52 +8,20 @@
 
     <!-- threshold.cpp -->
     <include file="$(find opencv_apps)/launch/threshold.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
       <arg name="image" value="image_rect_color" />
-      <arg name="gui" value="$(arg gui)" />
+      <arg name="apply_otsu" value="true" />
+      <arg name="threshold_type" value="0" />
+      <arg name="threshold" value="127" />
+      <arg name="max_binary" value="255" />
     </include>
 
     <!-- Test Codes -->
-    <node name="binary_threshold_saver_result" pkg="image_view" type="image_saver" args="image:=binary_threshold_image/image" >
-      <param name="filename_format" value="$(find opencv_apps)/test/binary_threshold_result.png"/>
+    <node name="threshold_saver_result" pkg="image_view" type="image_saver" args="image:=threshold/image" >
+      <param name="filename_format" value="$(find opencv_apps)/test/threshold_result.png"/>
     </node>
-    <node name="binary_inverted_threshold_saver_result" pkg="image_view" type="image_saver" args="image:=binary_inverted_threshold_image/image" >
-      <param name="filename_format" value="$(find opencv_apps)/test/binary_inverted_threshold_result.png"/>
-    </node>
-    <node name="threshold_truncated_saver_result" pkg="image_view" type="image_saver" args="image:=threshold_truncated_image/image" >
-      <param name="filename_format" value="$(find opencv_apps)/test/threshold_truncated_result.png"/>
-    </node>
-    <node name="threshold_to_zero_saver_result" pkg="image_view" type="image_saver" args="image:=threshold_to_zero_image/image" >
-      <param name="filename_format" value="$(find opencv_apps)/test/threshold_to_zero_result.png"/>
-    </node>
-    <node name="threshold_to_zero_inverted_saver_result" pkg="image_view" type="image_saver" args="image:=threshold_to_zero_inverted_image/image" >
-      <param name="filename_format" value="$(find opencv_apps)/test/threshold_to_zero_inverted_result.png"/>
-    </node>
-    <param name="binary_threshold_test/topic" value="binary_threshold_image/image" />
-    <test test-name="binary_threshold_test" pkg="rostest" type="hztest" name="binary_threshold_test" >
-      <param name="hz" value="20" />
-      <param name="hzerror" value="15" />
-      <param name="test_duration" value="5.0" />
-    </test>
-    <param name="binary_inverted_threshold_test/topic" value="binary_inverted_threshold_image/image" />
-    <test test-name="binary_inverted_threshold_test" pkg="rostest" type="hztest" name="binary_inverted_threshold_test" >
-      <param name="hz" value="20" />
-      <param name="hzerror" value="15" />
-      <param name="test_duration" value="5.0" />
-    </test>
-    <param name="threshold_truncated_test/topic" value="threshold_truncated_image/image" />
-    <test test-name="threshold_truncated_test" pkg="rostest" type="hztest" name="threshold_truncated_test" >
-      <param name="hz" value="20" />
-      <param name="hzerror" value="15" />
-      <param name="test_duration" value="5.0" />
-    </test>
-    <param name="threshold_to_zero_test/topic" value="threshold_to_zero_image/image" />
-    <test test-name="threshold_to_zero_test" pkg="rostest" type="hztest" name="threshold_to_zero_test" >
-      <param name="hz" value="20" />
-      <param name="hzerror" value="15" />
-      <param name="test_duration" value="5.0" />
-    </test>
-    <param name="threshold_to_zero_inverted_test/topic" value="threshold_to_zero_inverted_image/image" />
-    <test test-name="threshold_to_zero_inverted_test" pkg="rostest" type="hztest" name="threshold_to_zero_inverted_test" >
+    <param name="threshold_test/topic" value="threshold/image" />
+    <test test-name="threshold_test" pkg="rostest" type="hztest" name="threshold_test" >
       <param name="hz" value="20" />
       <param name="hzerror" value="15" />
       <param name="test_duration" value="5.0" />
