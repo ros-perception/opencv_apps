@@ -107,20 +107,26 @@ namespace threshold {
 
     void do_work(const sensor_msgs::Image::ConstPtr& image_msg,
                   const std::string input_frame_from_msg) {
-      cv::Mat src_image =
-        cv_bridge::toCvShare(image_msg, image_msg->encoding)->image;
-      cv::Mat gray_image;
-      cv::cvtColor(src_image, gray_image, cv::COLOR_BGR2GRAY);
-      cv::Mat result_image;
+      try {
+        cv::Mat src_image =
+          cv_bridge::toCvShare(image_msg, image_msg->encoding)->image;
+        cv::Mat gray_image;
+        cv::cvtColor(src_image, gray_image, cv::COLOR_BGR2GRAY);
+        cv::Mat result_image;
 
-      if (apply_otsu_) {
-        threshold_type_ |= CV_THRESH_OTSU;
+        if (apply_otsu_) {
+          threshold_type_ |= CV_THRESH_OTSU;
+        }
+        cv::threshold(gray_image, result_image, threshold_value_,
+                     max_binary_value_, threshold_type_);
+        img_pub_.publish(cv_bridge::CvImage(image_msg->header,
+                                            sensor_msgs::image_encodings::MONO8,
+                                            result_image).toImageMsg());
       }
-      cv::threshold(gray_image, result_image, threshold_value_,
-                    max_binary_value_, threshold_type_);
-      img_pub_.publish(cv_bridge::CvImage(image_msg->header,
-                                          sensor_msgs::image_encodings::MONO8,
-                                          result_image).toImageMsg());
+      catch (cv::Exception& e) {
+        NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(),
+                      e.func.c_str(), e.file.c_str(), e.line);
+      }
     }
 
   public:
