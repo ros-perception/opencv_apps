@@ -41,6 +41,7 @@
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
 #include <cv_bridge/cv_bridge.h>
+#include <opencv2/highgui/highgui.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
 
 #include "opencv_apps/nodelet.h"
@@ -57,6 +58,10 @@ namespace threshold {
     typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
     Config config_;
     boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+
+    bool debug_view_;
+
+    std::string window_name_;
 
     image_transport::Publisher img_pub_;
     image_transport::Subscriber img_sub_;
@@ -119,6 +124,12 @@ namespace threshold {
         }
         cv::threshold(gray_image, result_image, threshold_value_,
                      max_binary_value_, threshold_type_);
+        //-- Show what you got
+        if (debug_view_) {
+          cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
+          cv::imshow(window_name_, result_image);
+          int c = cv::waitKey(1);
+        }
         img_pub_.publish(cv_bridge::CvImage(image_msg->header,
                                             sensor_msgs::image_encodings::MONO8,
                                             result_image).toImageMsg());
@@ -135,6 +146,10 @@ namespace threshold {
       it_ = boost::shared_ptr<image_transport::ImageTransport>(
         new image_transport::ImageTransport(*nh_));
 
+      pnh_->param("debug_view", debug_view_, false);
+      if (debug_view_) {
+        always_subscribe_ = true;
+      }
       ////////////////////////////////////////////////////////
       // Dynamic Reconfigure
       ////////////////////////////////////////////////////////
