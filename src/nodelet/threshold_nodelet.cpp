@@ -73,11 +73,11 @@ namespace threshold {
     void imageCallbackWithInfo(
       const sensor_msgs::ImageConstPtr& msg,
       const sensor_msgs::CameraInfoConstPtr& cam_info) {
-      binarize(msg, cam_info->header.frame_id);
+      do_work(msg, cam_info->header.frame_id);
     }
 
     void imageCallback(const sensor_msgs::ImageConstPtr& msg) {
-      binarize(msg, msg->header.frame_id);
+      do_work(msg, msg->header.frame_id);
     }
 
     void subscribe() {
@@ -105,7 +105,7 @@ namespace threshold {
       apply_otsu_ = config.apply_otsu;
     }
 
-    void binarize(const sensor_msgs::Image::ConstPtr& image_msg,
+    void do_work(const sensor_msgs::Image::ConstPtr& image_msg,
                   const std::string input_frame_from_msg) {
       cv::Mat src_image =
         cv_bridge::toCvShare(image_msg, image_msg->encoding)->image;
