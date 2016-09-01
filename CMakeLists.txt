@@ -17,6 +17,7 @@ endif()
 
 # generate the dynamic_reconfigure config file
 generate_dynamic_reconfigure_options(
+  cfg/AddingImages.cfg
   cfg/EdgeDetection.cfg cfg/HoughLines.cfg cfg/HoughCircles.cfg
   cfg/FindContours.cfg cfg/ConvexHull.cfg cfg/GeneralContours.cfg cfg/ContourMoments.cfg
   cfg/FaceDetection.cfg
@@ -109,7 +110,7 @@ endmacro()
   # ./tutorial_code/calib3d/stereoBM/SBM_Sample.cpp
 
 # core
-  # ./tutorial_code/core/AddingImages/AddingImages.cpp
+opencv_apps_add_nodelet(adding_images adding_images/adding_images src/nodelet/adding_images_nodelet.cpp) # ./tutorial_code/core/AddingImages/AddingImages.cpp
   # ./tutorial_code/core/discrete_fourier_transform/discrete_fourier_transform.cpp
   # ./tutorial_code/core/file_input_output/file_input_output.cpp
   # ./tutorial_code/core/how_to_scan_images/how_to_scan_images.cpp

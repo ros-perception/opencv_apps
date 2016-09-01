@@ -15,6 +15,7 @@ add_custom_target(vslam_tutorial_bag DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/vslam_t
 add_dependencies(tests vslam_tutorial_bag)
 
 #add_rostest(test-apps.test)
+add_rostest(test-adding_images.test ARGS gui:=false)
 add_rostest(test-edge_detection.test ARGS gui:=false)
 
 add_rostest(test-hough_lines.test ARGS gui:=false)

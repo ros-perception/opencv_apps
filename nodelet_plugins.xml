@@ -1,5 +1,9 @@
 <library path="lib/libopencv_apps">
 
+  <class name="adding_images/adding_images" type="adding_images::AddingImagesNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to combine two images</description>
+  </class>
+
   <class name="edge_detection/edge_detection" type="edge_detection::EdgeDetectionNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to find edges</description>
   </class>
@@ -63,11 +67,11 @@
   <class name="simple_flow/simple_flow" type="simple_flow::SimpleFlowNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet of SimpleFlow optical flow algorithm</description>
   </class>
-  
+
  <class name="simple_example/simple_example" type="simple_example::SimpleExampleNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet of Simple Example from wiki</description>
   </class>
-  
+
    <class name="simple_compressed_example/simple_compressed_example" type="simple_compressed_example::SimpleCompressedExampleNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet of Simple Example from wiki</description>
   </class>
