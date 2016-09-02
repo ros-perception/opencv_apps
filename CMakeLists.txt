@@ -30,6 +30,7 @@ generate_dynamic_reconfigure_options(
   cfg/PhaseCorr.cfg
   cfg/SegmentObjects.cfg
   cfg/SimpleFlow.cfg
+  cfg/Threshold.cfg
   cfg/WatershedSegmentation.cfg
   )
 
@@ -148,7 +149,7 @@ opencv_apps_add_nodelet(adding_images adding_images/adding_images src/nodelet/ad
   # ./tutorial_code/ImgProc/Morphology_3.cpp
   # ./tutorial_code/ImgProc/Pyramids.cpp
   # ./tutorial_code/ImgProc/Smoothing.cpp
-  # ./tutorial_code/ImgProc/Threshold.cpp
+opencv_apps_add_nodelet(threshold threshold/threshold src/nodelet/threshold_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold.cpp
   # ./tutorial_code/ImgProc/Threshold_inRange.cpp
 
 # ImgTrans
