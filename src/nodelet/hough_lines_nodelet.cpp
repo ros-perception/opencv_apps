@@ -121,7 +121,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
     try
     {
       // Convert the image into something opencv can handle.
-      cv::Mat in_image = cv_bridge::toCvShare(msg, msg->encoding)->image;
+      cv::Mat in_image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
       cv::Mat src_gray;
 
       if (in_image.channels() > 1) {

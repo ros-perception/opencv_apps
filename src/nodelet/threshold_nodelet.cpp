@@ -114,7 +114,7 @@ namespace threshold {
                   const std::string input_frame_from_msg) {
       try {
         cv::Mat src_image =
-          cv_bridge::toCvShare(image_msg, image_msg->encoding)->image;
+          cv_bridge::toCvShare(image_msg, sensor_msgs::image_encodings::BGR8)->image;
         cv::Mat gray_image;
         cv::cvtColor(src_image, gray_image, cv::COLOR_BGR2GRAY);
         cv::Mat result_image;
