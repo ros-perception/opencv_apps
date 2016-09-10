@@ -16,6 +16,10 @@ add_dependencies(tests vslam_tutorial_bag)
 
 #add_rostest(test-apps.test)
 add_rostest(test-adding_images.test ARGS gui:=false)
+add_rostest(test-normalized_block_filter.test ARGS gui:=false)
+add_rostest(test-bilateral_filter.test ARGS gui:=false)
+add_rostest(test-gaussian_filter.test ARGS gui:=false)
+add_rostest(test-median_filter.test ARGS gui:=false)
 add_rostest(test-threshold.test ARGS gui:=false)
 add_rostest(test-edge_detection.test ARGS gui:=false)
 
