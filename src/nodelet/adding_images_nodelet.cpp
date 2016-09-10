@@ -166,19 +166,9 @@ namespace adding_images {
       // Work on the image.
       try {
         cv::Mat image1 =
-          cv_bridge::toCvShare(image_msg1, image_msg1->encoding)->image;
+          cv_bridge::toCvShare(image_msg1, sensor_msgs::image_encodings::BGR8)->image;
         cv::Mat image2 =
-          cv_bridge::toCvShare(image_msg2, image_msg2->encoding)->image;
-
-        // convert image to bgr8
-        if (image_msg1->encoding == sensor_msgs::image_encodings::RGB8 ||
-            image_msg1->encoding == sensor_msgs::image_encodings::RGB16) {
-          cv::cvtColor(image1, image1, CV_RGB2BGR);
-        }
-        if (image_msg2->encoding == sensor_msgs::image_encodings::RGB8 ||
-            image_msg2->encoding == sensor_msgs::image_encodings::RGB16) {
-          cv::cvtColor(image2, image2, CV_RGB2BGR);
-        }
+          cv_bridge::toCvShare(image_msg2, sensor_msgs::image_encodings::BGR8)->image;
 
         cv::Mat result_image;
         cv::addWeighted(image1, alpha_, image2, beta_, gamma_, result_image);

@@ -42,6 +42,7 @@
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
 #include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -126,11 +127,7 @@ class LKFlowNodelet : public opencv_apps::Nodelet
     try
     {
       // Convert the image into something opencv can handle.
-      cv::Mat image = cv_bridge::toCvShare(msg, msg->encoding)->image;
-      if (msg->encoding == sensor_msgs::image_encodings::RGB8 ||
-          msg->encoding == sensor_msgs::image_encodings::RGB16) {
-        cv::cvtColor(image, image, cv::COLOR_RGB2BGR);
-      }
+      cv::Mat image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
 
       // Messages
       opencv_apps::FlowArrayStamped flows_msg;
