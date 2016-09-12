@@ -2,8 +2,8 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.11.14 (2016-09-12)
+--------------------
 
 * Force convert to bgr for display (`#30 <https://github.com/ros-perception/opencv_apps/issues/30>`_)
 
