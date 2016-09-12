@@ -2,6 +2,69 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
+* Force convert to bgr for display (`#30 <https://github.com/ros-perception/opencv_apps/issues/30>`_)
+
+  * add include sensor_msgs/image_encodings for old image_encodings
+  * force conver to bgr8 using sensor_msgs::image_encodings::BGR8
+
+* Add more nodes from opencv sample codes
+
+  * [smoothing] Add smoothing filter sample code, test, launch files (`#32 <https://github.com/ros-perception/opencv_apps/issues/32>`_)
+  * [threshold] add threshold sample code (`#27 <https://github.com/ros-perception/opencv_apps/issues/27>`_)
+  * [adding_image] add adding_image sample code (`#29 <https://github.com/ros-perception/opencv_apps/issues/29>`_)
+
+* Add launch files for opencv_apps nodes
+
+  * separate launch and test files (`#20 <https://github.com/ros-perception/opencv_apps/issues/20>`_)
+
+* Add hydro travis testing (`#22 <https://github.com/ros-perception/opencv_apps/issues/22>`_)
+
+  * test/CMakeLists.txt : catkin_download_test_data not working with DESTINATION . for hydro
+  * cv_bridge before 1.11.9 does not suport CompressedImage in cv_bridge
+  * lk_flow : need to explicitly include sensor_msgs/image_endcodings.h
+  * simple_compressed_example_nodelet.cpp : need to include sensor_msgs/CompressedImage explicitly on hydro
+  * .travis.yml : add hydro testing
+
+* Minor Fixes
+
+  * update gitignore to avoid test png data (`#28 <https://github.com/ros-perception/opencv_apps/issues/28>`_)
+  * fix  hough_circles for input frame color (`#13 <https://github.com/ros-perception/opencv_apps/issues/13>`_ )
+  * CMakeLists.txt update list of opencv tutorial codes (`#25 <https://github.com/ros-perception/opencv_apps/issues/25>`_)
+  * fix face_detection.launch to accept args for cascade xml for opencv3 (`#20 <https://github.com/ros-perception/opencv_apps/issues/20>`_)
+  * CMakeLists.txt : add install rule for launch (`#20 <https://github.com/ros-perception/opencv_apps/issues/20>`_)
+  * add launch/*.launch files (from test/*.test) to reuse launch files (`#20 <https://github.com/ros-perception/opencv_apps/issues/20>`_)
+  * CMakeLists.txt: on roslaunch 1.11.1, roslaunch_add_file check fails with unsupported doc attributes (`#20 <https://github.com/ros-perception/opencv_apps/issues/20>`_)
+  * 
+
+* Add test for simple_example / simple_compressed_example (`#24 <https://github.com/ros-perception/opencv_apps/issues/24>`_)
+
+  * add retry for simple_example/simple_compressed_example test, not sure why it fails.. on travis
+  * package.xml : add image_transport_plugins to test_depend for republish node in test-simple_compressed_example.test
+  * add test for simple_example/simple_compressed_example
+  * simple_example_nodlet.cpp / simple_compressed_example_nodelet.cpp : support debug_view param
+  * .travis.sh : add catkin_test_results --verbose
+
+* Support kinetic on travis (`#15 <https://github.com/ros-perception/opencv_apps/issues/15>`_)
+
+  * test/test-face-detection.test : add haarcascade data from opencv3 package directory
+  * use docekr to run trusty/xenial .travis.sh
+
+* Modified enabling use_camera_info by rosparam (`#18 <https://github.com/ros-perception/opencv_apps/issues/18>`_)
+  
+  * Enabling dynamic_reconfigure in private nodelet handler
+
+* Enable to set min_distance_between_circles param, publish debug message (`#14 <https://github.com/ros-perception/opencv_apps/issues/14>`_)
+
+  * hough_circles : fix to set dp_int to dp
+  * hough_circles : enable to set min_distance_between_circles
+  * hough_circles : add debug_image_publisher
+  * hough_circles : fix bugs on createTrackver uses gaussian_blur_size for sigma x/y
+
+* Contributors: Kei Okada, Iori Yanokura
+
 1.11.13 (2016-06-01)
 --------------------
 * Add parameter to people_detector `#9 <https://github.com/ros-perception/opencv_apps/issues/9>`_
