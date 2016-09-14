@@ -183,7 +183,7 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
       cv::findContours(markerMask, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
 
       if( contours.empty() ) {
-        NODELET_WARN("contnorus is empty");
+        NODELET_WARN("contours are empty");
         return; //continue;
       }
       cv::Mat markers(markerMask.size(), CV_32S);
