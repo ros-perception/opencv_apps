@@ -1,0 +1,35 @@
+<launch>
+  <arg name="gui" default="true" />
+  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag" />
+
+  <group ns="wide_stereo/left" >
+    <node name="image_proc" pkg="image_proc" type="image_proc" />
+    <node name="image_view" pkg="image_view" type="image_view" args="image:=image_rect_color" if="$(arg gui)" />
+
+    <!-- line_segment_detector.cpp  -->
+    <include file="$(find opencv_apps)/launch/line_segment_detector.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect" />
+      <arg name="lsd_refine_type" value="2" />
+      <arg name="lsd_scale" value="0.4" />
+      <arg name="lsd_sigma_scale" value="0.6" />
+      <arg name="lsd_quant" value="2.0" />
+      <arg name="lsd_angle_threshold" value="22.5" />
+      <arg name="lsd_log_eps" value="0" />
+      <arg name="lsd_density_threshold" value="0.3" />
+      <arg name="lsd_n_bins" value="1024" />
+      <arg name="lsd_line_length_threshold" value="0.0" />
+    </include>
+
+    <!-- Test Codes -->
+    <node name="line_segment_detector_saver" pkg="image_view" type="image_saver" args="image:=line_segment_detector/image" >
+      <param name="filename_format" value="$(find opencv_apps)/test/line_segment_detector.png"/>
+    </node>
+    <param name="line_segment_detector_test/topic" value="line_segment_detector/lines" /> <!-- opencv_apps/LineArrayStamped -->
+    <test test-name="line_segment_detector_test" pkg="rostest" type="hztest" name="line_segment_detector_test" >
+      <param name="hz" value="20" />
+      <param name="hzerror" value="15" />
+      <param name="test_duration" value="5.0" />
+    </test>
+  </group>
+</launch>
