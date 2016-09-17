@@ -17,6 +17,7 @@ endif()
 
 # generate the dynamic_reconfigure config file
 generate_dynamic_reconfigure_options(
+  cfg/DiscreteFourierTransform.cfg
   cfg/AddingImages.cfg
   cfg/Smoothing.cfg
   cfg/EdgeDetection.cfg cfg/HoughLines.cfg cfg/HoughCircles.cfg
@@ -113,7 +114,7 @@ endmacro()
 
 # core
 opencv_apps_add_nodelet(adding_images adding_images/adding_images src/nodelet/adding_images_nodelet.cpp) # ./tutorial_code/core/AddingImages/AddingImages.cpp
-  # ./tutorial_code/core/discrete_fourier_transform/discrete_fourier_transform.cpp
+opencv_apps_add_nodelet(discrete_fourier_transform discrete_fourier_transform/discrete_fourier_transform src/nodelet/discrete_fourier_transform_nodelet.cpp)  # ./tutorial_code/core/discrete_fourier_transform/discrete_fourier_transform.cpp
   # ./tutorial_code/core/file_input_output/file_input_output.cpp
   # ./tutorial_code/core/how_to_scan_images/how_to_scan_images.cpp
   # ./tutorial_code/core/interoperability_with_OpenCV_1/interoperability_with_OpenCV_1.cpp
