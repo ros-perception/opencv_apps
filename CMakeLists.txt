@@ -29,6 +29,7 @@ generate_dynamic_reconfigure_options(
   cfg/DiscreteFourierTransform.cfg
   cfg/AddingImages.cfg
   cfg/Smoothing.cfg
+  cfg/Pyramids.cfg
   cfg/EdgeDetection.cfg cfg/HoughLines.cfg cfg/HoughCircles.cfg
   cfg/FindContours.cfg cfg/ConvexHull.cfg cfg/GeneralContours.cfg cfg/ContourMoments.cfg
   cfg/FaceDetection.cfg
@@ -168,7 +169,7 @@ opencv_apps_add_nodelet(discrete_fourier_transform discrete_fourier_transform/di
   # ./tutorial_code/ImgProc/Morphology_1.cpp
   # ./tutorial_code/ImgProc/Morphology_2.cpp
   # ./tutorial_code/ImgProc/Morphology_3.cpp
-  # ./tutorial_code/ImgProc/Pyramids.cpp
+opencv_apps_add_nodelet(pyramids pyramids/pyramids src/nodelet/pyramids_nodelet.cpp)  # ./tutorial_code/ImgProc/Pyramids.cpp
 opencv_apps_add_nodelet(smoothing smoothing/smoothing src/nodelet/smoothing_nodelet.cpp)  # ./tutorial_code/ImgProc/Smoothing.cpp
 opencv_apps_add_nodelet(threshold threshold/threshold src/nodelet/threshold_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold.cpp
 opencv_apps_add_nodelet(rgb_color_filter rgb_color_filter/rgb_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp

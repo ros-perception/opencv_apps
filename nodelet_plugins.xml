@@ -11,6 +11,10 @@
     <description>Nodelet to smoothing by homogeneous filter, bilateral filter, gaussian filter, median filter</description>
   </class>
 
+  <class name="pyramids/pyramids" type="pyramids::PyramidsNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to process image pyramids</description>
+  </class>
+
   <class name="edge_detection/edge_detection" type="edge_detection::EdgeDetectionNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to find edges</description>
   </class>
