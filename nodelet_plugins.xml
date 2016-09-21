@@ -1,7 +1,10 @@
 <library path="lib/libopencv_apps">
-
   <class name="adding_images/adding_images" type="adding_images::AddingImagesNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to combine two images</description>
+  </class>
+
+  <class name="discrete_fourier_transform/discrete_fourier_transform" type="discrete_fourier_transform::DiscreteFourierTransformNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to fourier transform</description>
   </class>
 
   <class name="smoothing/smoothing" type="smoothing::SmoothingNodelet" base_class_type="nodelet::Nodelet">
