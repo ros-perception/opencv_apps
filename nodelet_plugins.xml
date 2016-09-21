@@ -47,6 +47,10 @@
     <description>Nodelet for detecting corners using Shi-Tomasi method</description>
   </class>
 
+  <class name="corner_harris/corner_harris" type="corner_harris::CornerHarrisNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet for detecting corners using Harris method</description>
+  </class>
+
   <class name="camshift/camshift" type="camshift::CamShiftNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to show mean-shift based tracking</description>
   </class>
