@@ -43,6 +43,10 @@
     <description>Nodelet to find faces</description>
   </class>
 
+  <class name="face_recognition/face_recognition" type="face_recognition::FaceRecognitionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to identify faces</description>
+  </class>
+
   <class name="goodfeature_track/goodfeature_track" type="goodfeature_track::GoodfeatureTrackNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet for detecting corners using Shi-Tomasi method</description>
   </class>
