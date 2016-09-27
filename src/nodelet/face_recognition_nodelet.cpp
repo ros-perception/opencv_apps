@@ -71,6 +71,13 @@ namespace fs = boost::filesystem3; // for hydro
 namespace fs = boost::filesystem;
 #endif
 
+#if CV_MAJOR_VERSION >= 3
+#include <opencv2/face.hpp>
+namespace face = cv::face;
+#else
+namespace face = cv;
+#endif
+
 // utility for resolving path
 namespace boost {
 #if BOOST_VERSION < 105000
@@ -102,7 +109,7 @@ namespace filesystem {
       if (pw == NULL) return p;
       homedir = pw->pw_dir;
     }
-    ret = path(homedir);
+    ret = path(std::string(homedir));
     return ret.append(++it, p.end());
   }
 }} // end of utility for resolving paths
@@ -258,7 +265,7 @@ namespace face_recognition {
     boost::shared_ptr<LabelMapper> label_mapper_;
     boost::shared_ptr<Storage> storage_;
     cv::Size face_image_size_;
-    cv::Ptr<cv::FaceRecognizer> model_;
+    cv::Ptr<face::FaceRecognizer> model_;
 
     void drawFace(cv::Mat &img, const opencv_apps::Face &face) {
       cv::Rect r(int(face.face.x), int(face.face.y), int(face.face.width), int(face.face.height));
@@ -440,13 +447,13 @@ namespace face_recognition {
       if (need_recreate_model) {
         try {
           if (config.model_method == "eigen") {
-            model_ = cv::createEigenFaceRecognizer(config.model_num_components,
+            model_ = face::createEigenFaceRecognizer(config.model_num_components,
                                                    config.model_threshold);
           } else if (config.model_method == "fisher") {
-            model_ = cv::createFisherFaceRecognizer(config.model_num_components,
+            model_ = face::createFisherFaceRecognizer(config.model_num_components,
                                                     config.model_threshold);
           } else if (config.model_method == "LBPH") {
-            model_ = cv::createLBPHFaceRecognizer(config.lbph_radius,
+            model_ = face::createLBPHFaceRecognizer(config.lbph_radius,
                                                   config.lbph_neighbors,
                                                   config.lbph_grid_x,
                                                   config.lbph_grid_y);
