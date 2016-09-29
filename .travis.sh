@@ -56,8 +56,9 @@ travis_time_start setup.before_script
 cd ~/catkin_ws/src
 wstool init
 #if [[ -f $ROSINSTALL_FILE ]] ; then wstool merge $ROSINSTALL_FILE ; fi
-if [ $OPENCV_VERSION == 3 ]; then rosinstall_generator image_pipeline >> .rosinstall.opencv3; fi # need to recompile image_proc
-if [ $OPENCV_VERSION == 3 ]; then rosinstall_generator vision_opencv  >> .rosinstall.opencv3; fi # need to recompile visoin_opencv
+if [ $OPENCV_VERSION == 3 ]; then rosinstall_generator image_pipeline --upstream >> .rosinstall.opencv3; fi # need to recompile image_proc
+if [ $OPENCV_VERSION == 3 ]; then rosinstall_generator compressed_image_transport --upstream >> .rosinstall.opencv3; fi # need to recompile compressed_image_transport
+if [ $OPENCV_VERSION == 3 ]; then rosinstall_generator vision_opencv --upstream >> .rosinstall.opencv3; fi # need to recompile visoin_opencv
 if [ $OPENCV_VERSION == 3 ]; then wstool merge .rosinstall.opencv3; fi # need to recompile visoin_opencv
 wstool up
 wstool info
@@ -75,7 +76,7 @@ travis_time_start setup.script
 source /opt/ros/$ROS_DISTRO/setup.bash
 cd ~/catkin_ws
 catkin build -p1 -j1 --no-status
-catkin run_tests -p1 -j1 --no-status
+catkin run_tests -p1 -j1 --no-status opencv_apps --no-deps
 catkin_test_results --verbose build || catkin_test_results --all build
 catkin clean -b --yes || catkin clean -b -a
 catkin config --install
