@@ -110,7 +110,7 @@ namespace filesystem {
       homedir = pw->pw_dir;
     }
     ret = path(std::string(homedir));
-    return ret.append(++it, p.end());
+    return ret.append(++it, p.end(), path::codecvt());
   }
 }} // end of utility for resolving paths
 
