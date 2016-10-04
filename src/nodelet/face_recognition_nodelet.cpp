@@ -474,7 +474,15 @@ namespace face_recognition {
 
       if (config_.model_threshold != config.model_threshold) {
         try {
+#if CV_MAJOR_VERSION >= 3
+          if(face::BasicFaceRecognizer* model = dynamic_cast<face::BasicFaceRecognizer*>(model_.get())) {
+            model->setThreshold(config.model_threshold);
+          } else if (face::LBPHFaceRecognizer* model = dynamic_cast<face::LBPHFaceRecognizer*>(model_.get())) {
+            model->setThreshold(config.model_threshold);
+          }
+#else
           model_->set("threshold", config.model_threshold);
+#endif
         } catch (cv::Exception &e) {
           NODELET_ERROR_STREAM("Error: set threshold: " << e.what());
         }
