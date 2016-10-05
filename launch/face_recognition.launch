@@ -13,6 +13,7 @@
     <arg name="image" value="$(arg image)" />
     <arg name="debug_view" value="$(arg debug_view)" />
     <arg name="node_name" value="face_detection" />
+    <arg name="use_opencv3" value="$(arg use_opencv3)" />
   </include>
 
   <node name="face_recognition" pkg="opencv_apps" type="face_recognition"
