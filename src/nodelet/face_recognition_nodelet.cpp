@@ -223,6 +223,7 @@ namespace face_recognition {
       }
 
       std::stringstream ss;
+      // data_dir/person_label/person_label_123456.jpg
       ss << label << "_" << std::setw(6) << std::setfill('0') << file_count << ".jpg";
       fs::path file_path = img_dir / ss.str();
       ROS_INFO_STREAM("saving image to :" << file_path);
