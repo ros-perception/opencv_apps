@@ -6,6 +6,7 @@
   <arg name="debug_view" default="true" />
 
   <arg name="image" default="image" />
+  <arg name="data_dir" default="~/.ros/opencv_apps/face_data" />
 
   <include file="$(find opencv_apps)/launch/face_detection.launch"
            if="$(arg launch_face_detection)">
@@ -16,6 +17,7 @@
 
   <node name="face_recognition" pkg="opencv_apps" type="face_recognition"
         output="screen">
+    <param name="data_dir" value="$(arg data_dir)" />
     <remap from="image" to="$(arg image)" />
     <remap from="faces" to="face_detection/faces" />
   </node>
