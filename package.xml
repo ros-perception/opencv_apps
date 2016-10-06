@@ -36,7 +36,7 @@
   <test_depend>image_proc</test_depend>
   <test_depend>image_view</test_depend>
   <test_depend>topic_tools</test_depend>
-  <test_depend>image_transport_plugins</test_depend>
+  <test_depend>compressed_image_transport</test_depend>
 
   <export>
     <nodelet plugin="${prefix}/nodelet_plugins.xml"/>
