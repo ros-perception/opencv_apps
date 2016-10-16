@@ -59,6 +59,7 @@ namespace face_detection {
 class FaceDetectionNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
+  image_transport::Publisher face_img_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
   ros::Publisher msg_pub_;
@@ -127,6 +128,17 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
       face_cascade_.detectMultiScale( frame_gray, faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, cv::Size(30, 30) );
 #endif
 
+      cv::Mat face_image;
+      if (faces.size() > 0) {
+        cv::Rect max_area = faces[0];
+        for ( size_t i = 0; i < faces.size(); i++ ) {
+          if (max_area.width * max_area.height > faces[i].width * faces[i].height) {
+            max_area = faces[i];
+          }
+        }
+        face_image = frame(max_area).clone();
+      }
+
       for( size_t i = 0; i < faces.size(); i++ )
       {
         cv::Point center( faces[i].x + faces[i].width/2, faces[i].y + faces[i].height/2 );
@@ -170,9 +182,13 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, msg->encoding,frame).toImageMsg();
+      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, frame).toImageMsg();
       img_pub_.publish(out_img);
       msg_pub_.publish(faces_msg);
+      if (faces.size() > 0) {
+        sensor_msgs::Image::Ptr out_face_img = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, face_image).toImageMsg();
+        face_img_pub_.publish(out_face_img);
+      }
     }
     catch (cv::Exception &e)
     {
@@ -216,6 +232,7 @@ public:
     reconfigure_server_->setCallback(f);
     
     img_pub_ = advertiseImage(*pnh_, "image", 1);
+    face_img_pub_ = advertiseImage(*pnh_, "face_image", 1);
     msg_pub_ = advertise<opencv_apps::FaceArrayStamped>(*pnh_, "faces", 1);
 
     std::string face_cascade_name, eyes_cascade_name;
