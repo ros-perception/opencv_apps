@@ -76,8 +76,12 @@ travis_time_start setup.script
 source /opt/ros/$ROS_DISTRO/setup.bash
 cd ~/catkin_ws
 catkin build -p1 -j1 --no-status
-catkin run_tests -p1 -j1 --no-status opencv_apps --no-deps
-catkin_test_results --verbose build || catkin_test_results --all build
+if [ "${ROS_DISTRO}" = "hydro" ]; then
+  echo -e "\033[31;1mSkip testing on hydro\033[0m"
+else
+  catkin run_tests -p1 -j1 --no-status opencv_apps --no-deps
+  catkin_test_results --verbose build || catkin_test_results --all build
+fi
 catkin clean -b --yes || catkin clean -b -a
 catkin config --install
 catkin build -p1 -j1 --no-status
