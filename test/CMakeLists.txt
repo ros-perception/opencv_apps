@@ -19,6 +19,8 @@ add_rostest(test-adding_images.test ARGS gui:=false)
 add_rostest(test-discrete_fourier_transform.test ARGS gui:=false)
 add_rostest(test-smoothing.test ARGS gui:=false)
 add_rostest(test-threshold.test ARGS gui:=false)
+add_rostest(test-rgb_color_filter.test ARGS gui:=false)
+add_rostest(test-hsi_color_filter.test ARGS gui:=false)
 add_rostest(test-edge_detection.test ARGS gui:=false)
 
 add_rostest(test-hough_lines.test ARGS gui:=false)
