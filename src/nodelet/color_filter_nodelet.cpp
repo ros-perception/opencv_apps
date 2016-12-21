@@ -43,11 +43,13 @@
 
 #include <dynamic_reconfigure/server.h>
 #include "opencv_apps/RGBColorFilterConfig.h"
-#include "opencv_apps/HSIColorFilterConfig.h"
+#include "opencv_apps/HSLColorFilterConfig.h"
+#include "opencv_apps/HSVColorFilterConfig.h"
 
 namespace color_filter {
 class RGBColorFilter;
-class HSIColorFilter;
+class HSLColorFilter;
+class HSVColorFilter;
 
 template <typename Config>
 class ColorFilterNodelet : public opencv_apps::Nodelet
@@ -223,17 +225,17 @@ private:
   }
 };
 
-class HSIColorFilterNodelet
-  : public ColorFilterNodelet<color_filter::HSIColorFilterConfig> {
+class HSLColorFilterNodelet
+  : public ColorFilterNodelet<color_filter::HSLColorFilterConfig> {
 protected:
   int h_min_;
   int h_max_;
   int s_min_;
   int s_max_;
-  int i_min_;
-  int i_max_;
+  int l_min_;
+  int l_max_;
 
-  virtual void reconfigureCallback(color_filter::HSIColorFilterConfig& config,
+  virtual void reconfigureCallback(color_filter::HSLColorFilterConfig& config,
                                    uint32_t level) {
     boost::mutex::scoped_lock lock(mutex_);
     config_ = config;
@@ -241,34 +243,105 @@ protected:
     h_min_ = config.h_limit_min;
     s_max_ = config.s_limit_max;
     s_min_ = config.s_limit_min;
-    i_max_ = config.i_limit_max;
-    i_min_ = config.i_limit_min;
+    l_max_ = config.l_limit_max;
+    l_min_ = config.l_limit_min;
     updateCondition();
   }
 
   virtual void updateCondition() {
-    if (h_max_ < h_min_) std::swap(h_max_, h_min_);
     if (s_max_ < s_min_) std::swap(s_max_, s_min_);
-    if (i_max_ < i_min_) std::swap(i_max_, i_min_);
-    lower_color_range_ = cv::Scalar(h_min_, s_min_, i_min_, 0);
-    upper_color_range_ = cv::Scalar(h_max_, s_max_, i_max_, 0);
+    if (l_max_ < l_min_) std::swap(l_max_, l_min_);
+    lower_color_range_ = cv::Scalar(h_min_/2, l_min_, s_min_, 0);
+    upper_color_range_ = cv::Scalar(h_max_/2, l_max_, s_max_, 0);
+  }
+
+  virtual void filter(const cv::Mat& input_image, cv::Mat& output_image) {
+    cv::Mat hls_image;
+    cv::cvtColor(input_image, hls_image, cv::COLOR_BGR2HLS);
+    if ( lower_color_range_[0] < upper_color_range_[0] ) {
+      cv::inRange(hls_image, lower_color_range_, upper_color_range_,
+                  output_image);
+    }else {
+      cv::Scalar lower_color_range_0 = cv::Scalar(       0, l_min_, s_min_, 0);
+      cv::Scalar upper_color_range_0 = cv::Scalar(h_max_/2, l_max_, s_max_, 0);
+      cv::Scalar lower_color_range_360 = cv::Scalar(h_min_/2, l_min_, s_min_, 0);
+      cv::Scalar upper_color_range_360 = cv::Scalar(   360/2, l_max_, s_max_, 0);
+      cv::Mat output_image_0, output_image_360;
+      cv::inRange(hls_image, lower_color_range_0, upper_color_range_0, output_image_0);
+      cv::inRange(hls_image, lower_color_range_360, upper_color_range_360, output_image_360);
+      output_image = output_image_0 | output_image_360;
+    }
+  }
+
+public:
+  virtual void onInit() {
+    h_max_ = 360;
+    h_min_ = 0;
+    s_max_ = 256;
+    s_min_ = 0;
+    l_max_ = 256;
+    l_min_ = 0;
+
+    ColorFilterNodelet::onInit();
+  }
+};
+
+class HSVColorFilterNodelet
+  : public ColorFilterNodelet<color_filter::HSVColorFilterConfig> {
+protected:
+  int h_min_;
+  int h_max_;
+  int s_min_;
+  int s_max_;
+  int v_min_;
+  int v_max_;
+
+  virtual void reconfigureCallback(color_filter::HSVColorFilterConfig& config,
+                                   uint32_t level) {
+    boost::mutex::scoped_lock lock(mutex_);
+    config_ = config;
+    h_max_ = config.h_limit_max;
+    h_min_ = config.h_limit_min;
+    s_max_ = config.s_limit_max;
+    s_min_ = config.s_limit_min;
+    v_max_ = config.v_limit_max;
+    v_min_ = config.v_limit_min;
+    updateCondition();
+  }
+
+  virtual void updateCondition() {
+    if (s_max_ < s_min_) std::swap(s_max_, s_min_);
+    if (v_max_ < v_min_) std::swap(v_max_, v_min_);
+    lower_color_range_ = cv::Scalar(h_min_/2, s_min_, v_min_, 0);
+    upper_color_range_ = cv::Scalar(h_max_/2, s_max_, v_max_, 0);
   }
 
   virtual void filter(const cv::Mat& input_image, cv::Mat& output_image) {
     cv::Mat hsv_image;
     cv::cvtColor(input_image, hsv_image, cv::COLOR_BGR2HSV);
-    cv::inRange(hsv_image, lower_color_range_, upper_color_range_,
-                output_image);
+    if ( lower_color_range_[0] < upper_color_range_[0] ) {
+      cv::inRange(hsv_image, lower_color_range_, upper_color_range_,
+                  output_image);
+    }else {
+      cv::Scalar lower_color_range_0 = cv::Scalar(       0, s_min_, v_min_, 0);
+      cv::Scalar upper_color_range_0 = cv::Scalar(h_max_/2, s_max_, v_max_, 0);
+      cv::Scalar lower_color_range_360 = cv::Scalar(h_min_/2, s_min_, v_min_, 0);
+      cv::Scalar upper_color_range_360 = cv::Scalar(   360/2, s_max_, v_max_, 0);
+      cv::Mat output_image_0, output_image_360;
+      cv::inRange(hsv_image, lower_color_range_0, upper_color_range_0, output_image_0);
+      cv::inRange(hsv_image, lower_color_range_360, upper_color_range_360, output_image_360);
+      output_image = output_image_0 | output_image_360;
+    }
   }
 
 public:
   virtual void onInit() {
-    h_max_ = 255;
+    h_max_ = 360;
     h_min_ = 0;
-    s_max_ = 255;
+    s_max_ = 256;
     s_min_ = 0;
-    i_max_ = 255;
-    i_min_ = 0;
+    v_max_ = 256;
+    v_min_ = 0;
 
     ColorFilterNodelet::onInit();
   }
@@ -278,6 +351,8 @@ public:
 
 #include <pluginlib/class_list_macros.h>
 typedef color_filter::RGBColorFilterNodelet RGBColorFilterNodelet;
-typedef color_filter::HSIColorFilterNodelet HSIColorFilterNodelet;
+typedef color_filter::HSLColorFilterNodelet HSLColorFilterNodelet;
+typedef color_filter::HSVColorFilterNodelet HSVColorFilterNodelet;
 PLUGINLIB_EXPORT_CLASS(color_filter::RGBColorFilterNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(color_filter::HSIColorFilterNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(color_filter::HSLColorFilterNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(color_filter::HSVColorFilterNodelet, nodelet::Nodelet);
