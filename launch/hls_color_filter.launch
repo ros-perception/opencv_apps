@@ -1,5 +1,5 @@
 <launch>
-  <arg name="node_name" default="hsl_color_filter" />
+  <arg name="node_name" default="hls_color_filter" />
 
   <arg name="image" default="image" doc="The image topic. Should be remapped to the name of the real image topic." />
 
@@ -14,7 +14,7 @@
   <arg name="l_limit_min" default="50" doc="The minimum allowed field value Luminance" />
 
   <!-- color_filter.cpp  -->
-  <node name="$(arg node_name)" pkg="opencv_apps" type="hsl_color_filter" output="screen">
+  <node name="$(arg node_name)" pkg="opencv_apps" type="hls_color_filter" output="screen">
     <remap from="image" to="$(arg image)" />
     <param name="use_camera_info" value="$(arg use_camera_info)" />
     <param name="debug_view" value="$(arg debug_view)" />

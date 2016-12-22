@@ -91,7 +91,7 @@
     <description>Nodelet of rgb color filter</description>
    </class>
 
-   <class name="hls_color_filter/hsi_color_filter" type="color_filter::HLSColorFilterNodelet" base_class_type="nodelet::Nodelet">
+   <class name="hls_color_filter/hls_color_filter" type="color_filter::HLSColorFilterNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet of hls color filter</description>
    </class>
 
