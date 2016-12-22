@@ -91,8 +91,12 @@
     <description>Nodelet of rgb color filter</description>
    </class>
 
-   <class name="hsi_color_filter/hsi_color_filter" type="color_filter::HSIColorFilterNodelet" base_class_type="nodelet::Nodelet">
-    <description>Nodelet of hsi color filter</description>
+   <class name="hls_color_filter/hsi_color_filter" type="color_filter::HLSColorFilterNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of hls color filter</description>
+   </class>
+
+   <class name="hsv_color_filter/hsi_color_filter" type="color_filter::HSVColorFilterNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of hsv color filter</description>
    </class>
 
   <class name="watershed_segmentation/watershed_segmentation" type="watershed_segmentation::WatershedSegmentationNodelet" base_class_type="nodelet::Nodelet">
