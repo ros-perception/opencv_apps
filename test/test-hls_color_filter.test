@@ -11,11 +11,11 @@
       <arg name="debug_view" value="$(arg gui)" />
       <arg name="image" value="image_rect_color" />
       <arg name="h_limit_max" value="50" />
-      <arg name="h_limit_min" value="0" />
-      <arg name="s_limit_max" value="200" />
-      <arg name="s_limit_min" value="90" />
-      <arg name="l_limit_max" value="255" />
-      <arg name="l_limit_min" value="60" />
+      <arg name="h_limit_min" value="30" />
+      <arg name="s_limit_max" value="120" />
+      <arg name="s_limit_min" value="30" />
+      <arg name="l_limit_max" value="190" />
+      <arg name="l_limit_min" value="120" />
     </include>
 
     <!-- Test Codes -->
