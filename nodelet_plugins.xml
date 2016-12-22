@@ -95,7 +95,7 @@
     <description>Nodelet of hls color filter</description>
    </class>
 
-   <class name="hsv_color_filter/hsi_color_filter" type="color_filter::HSVColorFilterNodelet" base_class_type="nodelet::Nodelet">
+   <class name="hsv_color_filter/hsv_color_filter" type="color_filter::HSVColorFilterNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet of hsv color filter</description>
    </class>
 
