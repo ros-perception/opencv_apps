@@ -1,7 +1,16 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(opencv_apps)
 
-find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp)
+find_package(catkin REQUIRED COMPONENTS
+  cv_bridge
+  dynamic_reconfigure
+  image_transport
+  message_generation
+  nodelet
+  roscpp
+  sensor_msgs
+  std_msgs
+)
 
 find_package(OpenCV REQUIRED)
 message(STATUS "OpenCV Components: ${OpenCV_LIB_COMPONENTS}")
@@ -23,6 +32,7 @@ generate_dynamic_reconfigure_options(
   cfg/EdgeDetection.cfg cfg/HoughLines.cfg cfg/HoughCircles.cfg
   cfg/FindContours.cfg cfg/ConvexHull.cfg cfg/GeneralContours.cfg cfg/ContourMoments.cfg
   cfg/FaceDetection.cfg
+  cfg/FaceRecognition.cfg
   cfg/GoodfeatureTrack.cfg
   cfg/CornerHarris.cfg
   #
@@ -59,6 +69,7 @@ add_message_files(
    Face.msg
    FaceArray.msg
    FaceArrayStamped.msg
+   Label.msg
    Line.msg
    LineArray.msg
    LineArrayStamped.msg
@@ -77,10 +88,16 @@ add_message_files(
    ContourArrayStamped.msg
 )
 
+add_service_files(
+  FILES
+  FaceRecognitionTrain.srv
+)
+
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
   std_msgs
+  sensor_msgs
 )
 
 catkin_package(CATKIN_DEPENDS std_msgs
@@ -244,6 +261,7 @@ opencv_apps_add_nodelet(camshift camshift/camshift src/nodelet/camshift_nodelet.
 # ./em.cpp
 # ./example_cmake/example.cpp
 opencv_apps_add_nodelet(face_detection face_detection/face_detection src/nodelet/face_detection_nodelet.cpp) # ./facedetect.cpp
+opencv_apps_add_nodelet(face_recognition face_recognition/face_recognition src/nodelet/face_recognition_nodelet.cpp)
 # ./facial_features.cpp
 opencv_apps_add_nodelet(fback_flow fback_flow/fback_flow src/nodelet/fback_flow_nodelet.cpp) # ./fback.cpp
 # ./ffilldemo.cpp
@@ -334,7 +352,7 @@ install(TARGETS ${_opencv_apps_nodelet_targets}
 install(FILES nodelet_plugins.xml
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-install(DIRECTORY launch test
+install(DIRECTORY launch test scripts
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         USE_SOURCE_PERMISSIONS)
 
