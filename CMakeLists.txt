@@ -24,6 +24,7 @@ generate_dynamic_reconfigure_options(
   cfg/FindContours.cfg cfg/ConvexHull.cfg cfg/GeneralContours.cfg cfg/ContourMoments.cfg
   cfg/FaceDetection.cfg
   cfg/GoodfeatureTrack.cfg
+  cfg/CornerHarris.cfg
   #
   cfg/CamShift.cfg
   cfg/FBackFlow.cfg
@@ -202,7 +203,7 @@ opencv_apps_add_nodelet(contour_moments contour_moments/contour_moments src/node
 # TrackingMotion
 opencv_apps_add_nodelet(goodfeature_track goodfeature_track/goodfeature_track src/nodelet/goodfeature_track_nodelet.cpp) # ./tutorial_code/TrackingMotion/goodFeaturesToTrack_Demo.cpp
   # ./tutorial_code/TrackingMotion/cornerDetector_Demo.cpp
-  # ./tutorial_code/TrackingMotion/cornerHarris_Demo.cpp
+opencv_apps_add_nodelet(corner_harris corner_harris/corner_harris src/nodelet/corner_harris_nodelet.cpp)  # ./tutorial_code/TrackingMotion/cornerHarris_Demo.cpp
   # ./tutorial_code/TrackingMotion/cornerSubPix_Demo.cpp
 
 # videoio
