@@ -87,6 +87,18 @@
     <description>Nodelet of threshold</description>
   </class>
 
+   <class name="rgb_color_filter/rgb_color_filter" type="color_filter::RGBColorFilterNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of rgb color filter</description>
+   </class>
+
+   <class name="hls_color_filter/hls_color_filter" type="color_filter::HLSColorFilterNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of hls color filter</description>
+   </class>
+
+   <class name="hsv_color_filter/hsv_color_filter" type="color_filter::HSVColorFilterNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of hsv color filter</description>
+   </class>
+
   <class name="watershed_segmentation/watershed_segmentation" type="watershed_segmentation::WatershedSegmentationNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to demonstrate the famous watershed segmentation algorithm in OpenCV: watershed()</description>
   </class>

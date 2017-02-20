@@ -33,6 +33,9 @@ generate_dynamic_reconfigure_options(
   cfg/SegmentObjects.cfg
   cfg/SimpleFlow.cfg
   cfg/Threshold.cfg
+  cfg/RGBColorFilter.cfg
+  cfg/HLSColorFilter.cfg
+  cfg/HSVColorFilter.cfg
   cfg/WatershedSegmentation.cfg
   )
 
@@ -152,7 +155,9 @@ opencv_apps_add_nodelet(discrete_fourier_transform discrete_fourier_transform/di
   # ./tutorial_code/ImgProc/Pyramids.cpp
 opencv_apps_add_nodelet(smoothing smoothing/smoothing src/nodelet/smoothing_nodelet.cpp)  # ./tutorial_code/ImgProc/Smoothing.cpp
 opencv_apps_add_nodelet(threshold threshold/threshold src/nodelet/threshold_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold.cpp
-  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
+opencv_apps_add_nodelet(rgb_color_filter rgb_color_filter/rgb_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
+opencv_apps_add_nodelet(hls_color_filter hls_color_filter/hls_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
+opencv_apps_add_nodelet(hsv_color_filter hsv_color_filter/hsv_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
 
 # ImgTrans
 opencv_apps_add_nodelet(edge_detection edge_detection/edge_detection src/nodelet/edge_detection_nodelet.cpp) # ./tutorial_code/ImgTrans/CannyDetector_Demo.cpp
