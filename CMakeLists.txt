@@ -4,6 +4,7 @@ project(opencv_apps)
 find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp)
 
 find_package(OpenCV REQUIRED)
+message(STATUS "OpenCV VERSION: ${OpenCV_VERSION}")
 message(STATUS "OpenCV Components: ${OpenCV_LIB_COMPONENTS}")
 if(OpenCV_VERSION VERSION_LESS "3.0" OR TARGET opencv_optflow)
   set(OPENCV_HAVE_OPTFLOW TRUE)
