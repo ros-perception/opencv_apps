@@ -171,9 +171,9 @@ namespace adding_images {
       // Work on the image.
       try {
         cv::Mat image1 =
-          cv_bridge::toCvShare(image_msg1, sensor_msgs::image_encodings::BGR8)->image;
+          cv_bridge::toCvShare(image_msg1, image_msg1->encoding)->image;
         cv::Mat image2 =
-          cv_bridge::toCvShare(image_msg2, sensor_msgs::image_encodings::BGR8)->image;
+          cv_bridge::toCvShare(image_msg2, image_msg2->encoding)->image;
 
         cv::Mat result_image;
         cv::addWeighted(image1, alpha_, image2, beta_, gamma_, result_image);
@@ -183,9 +183,8 @@ namespace adding_images {
           cv::imshow(window_name_, result_image);
           int c = cv::waitKey(1);
         }
-        // publish bgr8 image
         img_pub_.publish(cv_bridge::CvImage(image_msg1->header,
-                                            sensor_msgs::image_encodings::BGR8,
+                                            image_msg1->encoding,
                                             result_image).toImageMsg());
 
       } catch (cv::Exception& e) {
