@@ -155,7 +155,12 @@ namespace adding_images {
       boost::mutex::scoped_lock lock(mutex_);
       config_ = config;
       alpha_ = config.alpha;
-      beta_ = 1.0 - alpha_;
+      if ( config.use_beta ) {
+        beta_ = config.beta;
+      } else {
+        beta_ = 1.0 - alpha_;
+        config.beta = beta_;
+      }
       gamma_ = config.gamma;
     }
 
