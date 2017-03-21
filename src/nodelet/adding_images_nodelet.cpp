@@ -155,11 +155,11 @@ namespace adding_images {
       boost::mutex::scoped_lock lock(mutex_);
       config_ = config;
       alpha_ = config.alpha;
-      if ( config.use_beta ) {
-        beta_ = config.beta;
-      } else {
+      if ( config.auto_beta ) {
         beta_ = 1.0 - alpha_;
         config.beta = beta_;
+      } else {
+        beta_ = config.beta;
       }
       gamma_ = config.gamma;
     }
@@ -174,6 +174,11 @@ namespace adding_images {
           cv_bridge::toCvShare(image_msg1, image_msg1->encoding)->image;
         cv::Mat image2 =
           cv_bridge::toCvShare(image_msg2, image_msg2->encoding)->image;
+        if (image_msg1->encoding != image_msg2->encoding) {
+          NODELET_ERROR("Encoding of input images must be same: %s, %s",
+                        image_msg1->encoding.c_str(), image_msg2->encoding.c_str());
+          return;
+        }
 
         cv::Mat result_image;
         cv::addWeighted(image1, alpha_, image2, beta_, gamma_, result_image);
