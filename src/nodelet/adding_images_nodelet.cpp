@@ -173,9 +173,9 @@ namespace adding_images {
         cv::Mat image1 =
           cv_bridge::toCvShare(image_msg1, image_msg1->encoding)->image;
         cv::Mat image2 =
-          cv_bridge::toCvShare(image_msg2, image_msg2->encoding)->image;
-        if (image_msg1->encoding != image_msg2->encoding) {
-          NODELET_ERROR("Encoding of input images must be same: %s, %s",
+          cv_bridge::toCvShare(image_msg2, image_msg1->encoding)->image;
+        if (cv_bridge::getCvType(image_msg1->encoding) != cv_bridge::getCvType(image_msg2->encoding)) {
+          NODELET_ERROR("Encoding of input images must be same type: %s, %s",
                         image_msg1->encoding.c_str(), image_msg2->encoding.c_str());
           return;
         }
@@ -188,7 +188,13 @@ namespace adding_images {
                                                               result_image).toImageMsg();
         if (debug_view_) {
           cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
-          cv::imshow(window_name_, cv_bridge::cvtColorForDisplay(cv_bridge::toCvShare(image_msg3, image_msg3->encoding))->image);
+          cv_bridge::CvtColorForDisplayOptions options;
+          if (sensor_msgs::image_encodings::bitDepth(image_msg1->encoding) == 32 ||
+              sensor_msgs::image_encodings::bitDepth(image_msg1->encoding) == 64) {
+            // float or double image
+            options.do_dynamic_scaling = true;
+          }
+          cv::imshow(window_name_, cv_bridge::cvtColorForDisplay(cv_bridge::toCvShare(image_msg3), "", options)->image);
           int c = cv::waitKey(1);
         }
         img_pub_.publish(image_msg3);
