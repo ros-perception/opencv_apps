@@ -173,9 +173,9 @@ namespace adding_images {
         cv::Mat image1 =
           cv_bridge::toCvShare(image_msg1, image_msg1->encoding)->image;
         cv::Mat image2 =
-          cv_bridge::toCvShare(image_msg2, image_msg2->encoding)->image;
-        if (image_msg1->encoding != image_msg2->encoding) {
-          NODELET_ERROR("Encoding of input images must be same: %s, %s",
+          cv_bridge::toCvShare(image_msg2, image_msg1->encoding)->image;
+        if (cv_bridge::getCvType(image_msg1->encoding) != cv_bridge::getCvType(image_msg2->encoding)) {
+          NODELET_ERROR("Encoding of input images must be same type: %s, %s",
                         image_msg1->encoding.c_str(), image_msg2->encoding.c_str());
           return;
         }
