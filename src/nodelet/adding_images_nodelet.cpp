@@ -183,14 +183,15 @@ namespace adding_images {
         cv::Mat result_image;
         cv::addWeighted(image1, alpha_, image2, beta_, gamma_, result_image);
         //-- Show what you got
+        sensor_msgs::ImagePtr image_msg3 = cv_bridge::CvImage(image_msg1->header,
+                                                              image_msg1->encoding,
+                                                              result_image).toImageMsg();
         if (debug_view_) {
           cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
-          cv::imshow(window_name_, result_image);
+          cv::imshow(window_name_, cv_bridge::cvtColorForDisplay(cv_bridge::toCvShare(image_msg3, image_msg3->encoding))->image);
           int c = cv::waitKey(1);
         }
-        img_pub_.publish(cv_bridge::CvImage(image_msg1->header,
-                                            image_msg1->encoding,
-                                            result_image).toImageMsg());
+        img_pub_.publish(image_msg3);
 
       } catch (cv::Exception& e) {
         NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(),
