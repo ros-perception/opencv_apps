@@ -112,7 +112,7 @@ namespace adding_images {
       NODELET_DEBUG("Subscribing to image topic.");
       sub_image1_.subscribe(*it_, "image1", 3);
       sub_image2_.subscribe(*it_, "image2", 3);
-      sub_camera_info_.subscribe(*pnh_, "info", 3);
+      sub_camera_info_.subscribe(*nh_, "camera_info", 3);
       if (config_.use_camera_info) {
         if (approximate_sync_) {
           async_with_info_ = boost::make_shared<
