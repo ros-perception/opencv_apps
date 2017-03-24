@@ -155,7 +155,12 @@ namespace adding_images {
       boost::mutex::scoped_lock lock(mutex_);
       config_ = config;
       alpha_ = config.alpha;
-      beta_ = 1.0 - alpha_;
+      if ( config.auto_beta ) {
+        beta_ = 1.0 - alpha_;
+        config.beta = beta_;
+      } else {
+        beta_ = config.beta;
+      }
       gamma_ = config.gamma;
     }
 
@@ -166,22 +171,35 @@ namespace adding_images {
       // Work on the image.
       try {
         cv::Mat image1 =
-          cv_bridge::toCvShare(image_msg1, sensor_msgs::image_encodings::BGR8)->image;
+          cv_bridge::toCvShare(image_msg1, image_msg1->encoding)->image;
         cv::Mat image2 =
-          cv_bridge::toCvShare(image_msg2, sensor_msgs::image_encodings::BGR8)->image;
+          cv_bridge::toCvShare(image_msg2, image_msg1->encoding)->image;
+        if (cv_bridge::getCvType(image_msg1->encoding) != cv_bridge::getCvType(image_msg2->encoding)) {
+          NODELET_ERROR("Encoding of input images must be same type: %s, %s",
+                        image_msg1->encoding.c_str(), image_msg2->encoding.c_str());
+          return;
+        }
 
         cv::Mat result_image;
         cv::addWeighted(image1, alpha_, image2, beta_, gamma_, result_image);
         //-- Show what you got
+        sensor_msgs::ImagePtr image_msg3 = cv_bridge::CvImage(image_msg1->header,
+                                                              image_msg1->encoding,
+                                                              result_image).toImageMsg();
         if (debug_view_) {
           cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
-          cv::imshow(window_name_, result_image);
+          cv_bridge::CvtColorForDisplayOptions options;
+          if (sensor_msgs::image_encodings::bitDepth(image_msg1->encoding) ==
+              sensor_msgs::image_encodings::bitDepth("32FC1") ||
+              sensor_msgs::image_encodings::bitDepth(image_msg1->encoding) ==
+              sensor_msgs::image_encodings::bitDepth("64FC1")) {
+            // is float image
+            options.do_dynamic_scaling = true;
+          }
+          cv::imshow(window_name_, cv_bridge::cvtColorForDisplay(cv_bridge::toCvShare(image_msg3), "", options)->image);
           int c = cv::waitKey(1);
         }
-        // publish bgr8 image
-        img_pub_.publish(cv_bridge::CvImage(image_msg1->header,
-                                            sensor_msgs::image_encodings::BGR8,
-                                            result_image).toImageMsg());
+        img_pub_.publish(image_msg3);
 
       } catch (cv::Exception& e) {
         NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(),
