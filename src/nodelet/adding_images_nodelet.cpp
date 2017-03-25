@@ -188,6 +188,9 @@ namespace adding_images {
                                                               result_image).toImageMsg();
         if (debug_view_) {
           cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
+#ifdef CV_BRIDGE_CVT_COLOR_FOR_DISPLAY_IS_NOT_SUPPORTED
+          cv::imshow(window_name_, result_image);
+#else
 #ifdef CV_BRIDGE_CVT_COLOR_FOR_DISPLAY_OPTION_IS_NOT_SUPPORTED
           cv::imshow(window_name_, cv_bridge::cvtColorForDisplay(cv_bridge::toCvShare(image_msg3, image_msg3->encoding))->image);
 #else
@@ -198,6 +201,7 @@ namespace adding_images {
             options.do_dynamic_scaling = true;
           }
           cv::imshow(window_name_, cv_bridge::cvtColorForDisplay(cv_bridge::toCvShare(image_msg3), "", options)->image);
+#endif
 #endif
           int c = cv::waitKey(1);
         }
