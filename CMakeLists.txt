@@ -15,6 +15,10 @@ endif()
 if(cv_bridge_VERSION VERSION_LESS "1.11.9")
   add_definitions("-DCV_BRIDGE_COMPRESSED_IMAGE_IS_NOT_SUPPORTED")
 endif()
+# Supporting CvtColorForDisplayOptions in cv_bridge has been started from 1.11.13 (2016-07-11)
+if(cv_bridge_VERSION VERSION_LESS "1.11.13")
+  add_definitions("-DCV_BRIDGE_CVT_COLOR_FOR_DISPLAY_OPTION_IS_NOT_SUPPORTED")
+endif()
 
 # generate the dynamic_reconfigure config file
 generate_dynamic_reconfigure_options(

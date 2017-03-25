@@ -188,6 +188,9 @@ namespace adding_images {
                                                               result_image).toImageMsg();
         if (debug_view_) {
           cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
+#ifdef CV_BRIDGE_CVT_COLOR_FOR_DISPLAY_OPTION_IS_NOT_SUPPORTED
+          cv::imshow(window_name_, cv_bridge::cvtColorForDisplay(cv_bridge::toCvShare(image_msg3, image_msg3->encoding))->image);
+#else
           cv_bridge::CvtColorForDisplayOptions options;
           if (sensor_msgs::image_encodings::bitDepth(image_msg1->encoding) == 32 ||
               sensor_msgs::image_encodings::bitDepth(image_msg1->encoding) == 64) {
@@ -195,6 +198,7 @@ namespace adding_images {
             options.do_dynamic_scaling = true;
           }
           cv::imshow(window_name_, cv_bridge::cvtColorForDisplay(cv_bridge::toCvShare(image_msg3), "", options)->image);
+#endif
           int c = cv::waitKey(1);
         }
         img_pub_.publish(image_msg3);
