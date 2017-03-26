@@ -4,6 +4,7 @@ project(opencv_apps)
 find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp)
 
 find_package(OpenCV REQUIRED)
+message(STATUS "OpenCV VERSION: ${OpenCV_VERSION}")
 message(STATUS "OpenCV Components: ${OpenCV_LIB_COMPONENTS}")
 if(OpenCV_VERSION VERSION_LESS "3.0" OR TARGET opencv_optflow)
   set(OPENCV_HAVE_OPTFLOW TRUE)
@@ -13,6 +14,14 @@ endif()
 # https://github.com/ros-perception/vision_opencv/pull/70
 if(cv_bridge_VERSION VERSION_LESS "1.11.9")
   add_definitions("-DCV_BRIDGE_COMPRESSED_IMAGE_IS_NOT_SUPPORTED")
+endif()
+# Supporting CvtColorForDisplay in cv_bridge has been started from 1.11.9 (2015-11-29)
+if(cv_bridge_VERSION VERSION_LESS "1.11.9")
+  add_definitions("-DCV_BRIDGE_CVT_COLOR_FOR_DISPLAY_IS_NOT_SUPPORTED")
+endif()
+# Supporting CvtColorForDisplayOptions in cv_bridge has been started from 1.11.13 (2016-07-11)
+if(cv_bridge_VERSION VERSION_LESS "1.11.13")
+  add_definitions("-DCV_BRIDGE_CVT_COLOR_FOR_DISPLAY_OPTION_IS_NOT_SUPPORTED")
 endif()
 
 # generate the dynamic_reconfigure config file
