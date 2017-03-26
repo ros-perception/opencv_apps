@@ -2,6 +2,51 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
+* New Nodes
+
+  * [color_filter_nodelet.cpp] Add color_filter nodelet (`#48 <https://github.com/ros-perception/opencv_apps/issues/48>`_)
+    * use BGR2HSB, support H from 0-360 and 350 - 360+a
+    * Unified hsl -> hls
+    * Add hsv_color_filter test
+    * Modified hls_color_filter's test paramter.  Extracting skin color.
+  * [corner_harris_nodelet.cpp] Add corner-harris (`#38 <https://github.com/ros-perception/opencv_apps/issues/38>`_ )
+  * [discrete_fourier_transform_nodelet.cpp] Add discrete_fourier_transform_nodelet (`#36 <https://github.com/ros-perception/opencv_apps/issues/36>`_ )
+
+* New Feature
+
+ * [face_detection_nodelet.cpp] publish face roi image (`#40 <https://github.com/ros-perception/opencv_apps/issues/40>`_ )
+    * [face_detection_nodelet.cpp] fix: use encoding BGR8 on conversion from cv::Mat to sensor_msgs/Image
+
+* Fix / Improvement
+
+ * [adding_images_nodelet.cpp] Fix AddingImages (`#52 <https://github.com/ros-perception/opencv_apps/issues/52>`_)
+    * CvtColorForDisplay is not supported until 1.11.9 (hydro)
+    * CvtColorForDisplayOptions is supported in 1.11.13
+    * Rename topic ~info to camera_info for consistency
+    * Do dynamic scaling for float/double images
+    * Support adding images whose encodings are same kind, For example adding rgb8 + bgr8
+    * display using cvtColorForDisplay
+    * Clarify with auto_beta for auto beta settings
+    * Check input encoding consistency
+    * Add arbitrary dtype images
+    * AddingImages: enable to set beta param if use_data is true
+  * [face_detection] add test for face_detection/face_image topic  (`#49 <https://github.com/ros-perception/opencv_apps/issues/49>`_)
+    * test/CMakeLists.txt : skip face_detection.test
+    * [test/test-face_detection.test] add test for face_image
+  * [.travis.sh] bugfix: test for opencv3 `#45 <https://github.com/ros-perception/opencv_apps/issues/45>`_
+    * [.travis.sh] bugfix: use --upstream for rosinstall_generator to fetch not only metapackage
+    - [.travis.sh] run test only opencv_apps package (not dep packages)
+    - [.travis.sh] build compressed_image_transport from source if opencv3 is enabled
+    - [package.xml] use compressed_image_transport for test_depend instead of meta package image_transport_plugins
+  * [doc] Better package description. (`#43 <https://github.com/ros-perception/opencv_apps/issues/43>`_)
+  * watershed_segmentation_nodelet.cpp : Fix typo in warnnige message  (`#34 <https://github.com/ros-perception/opencv_apps/issues/34>`_)
+  * Create README.md
+
+* Contributors: Isaac I.Y. Saito, Kei Okada, Kentaro Wada, Yuki Furuta, Iori Yanokura
+
 1.11.14 (2016-09-12)
 --------------------
 
