@@ -181,6 +181,19 @@ namespace adding_images {
         }
 
         cv::Mat result_image;
+        if ( image1.rows != image2.rows || image1.cols != image2.cols ) {
+          int new_rows = std::max(image1.rows, image2.rows);
+          int new_cols = std::max(image1.cols, image2.cols);
+          // if ( new_rows != image1.rows || new_cols != image1.cols ) {
+          cv::Mat image1_ = cv::Mat(new_rows, new_cols, image1.type());
+          image1.copyTo(image1_(cv::Rect(0, 0, image1.cols, image1.rows)));
+          image1 = image1_.clone(); // need clone becuase toCvShare??
+
+          //if ( new_rows != image2.rows || new_cols != image2.cols ) {
+          cv::Mat image2_ = cv::Mat(new_rows, new_cols, image2.type());
+          image2.copyTo(image2_(cv::Rect(0, 0, image2.cols, image2.rows)));
+          image2 = image2_.clone();
+        }
         cv::addWeighted(image1, alpha_, image2, beta_, gamma_, result_image);
         //-- Show what you got
         sensor_msgs::ImagePtr image_msg3 = cv_bridge::CvImage(image_msg1->header,
