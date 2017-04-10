@@ -55,7 +55,7 @@
 #include "opencv_apps/FaceArray.h"
 #include "opencv_apps/FaceArrayStamped.h"
 
-namespace face_detection {
+namespace opencv_apps {
 class FaceDetectionNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -66,7 +66,7 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef face_detection::FaceDetectionConfig Config;
+  typedef opencv_apps::FaceDetectionConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -248,4 +248,4 @@ public:
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(face_detection::FaceDetectionNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(opencv_apps::FaceDetectionNodelet, nodelet::Nodelet);

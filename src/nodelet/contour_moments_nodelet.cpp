@@ -54,7 +54,7 @@
 #include "opencv_apps/MomentArray.h"
 #include "opencv_apps/MomentArrayStamped.h"
 
-namespace contour_moments {
+namespace opencv_apps {
 class ContourMomentsNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -64,7 +64,7 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef contour_moments::ContourMomentsConfig Config;
+  typedef opencv_apps::ContourMomentsConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -267,4 +267,4 @@ bool ContourMomentsNodelet::need_config_update_ = false;
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(contour_moments::ContourMomentsNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(opencv_apps::ContourMomentsNodelet, nodelet::Nodelet);

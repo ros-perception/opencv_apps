@@ -52,7 +52,7 @@
 #include "opencv_apps/FBackFlowConfig.h"
 #include "opencv_apps/FlowArrayStamped.h"
 
-namespace fback_flow {
+namespace opencv_apps {
 class FBackFlowNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -62,7 +62,7 @@ class FBackFlowNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef fback_flow::FBackFlowConfig Config;
+  typedef opencv_apps::FBackFlowConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -223,4 +223,4 @@ bool FBackFlowNodelet::need_config_update_ = false;
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(fback_flow::FBackFlowNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(opencv_apps::FBackFlowNodelet, nodelet::Nodelet);

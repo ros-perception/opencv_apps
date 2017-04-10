@@ -55,7 +55,7 @@
 #include "opencv_apps/AddingImagesConfig.h"
 #include "opencv_apps/nodelet.h"
 
-namespace adding_images {
+namespace opencv_apps {
   class AddingImagesNodelet : public opencv_apps::Nodelet {
   private:
     boost::shared_ptr<image_transport::ImageTransport> it_;
@@ -72,7 +72,7 @@ namespace adding_images {
     ////////////////////////////////////////////////////////
     // Dynamic Reconfigure
     ////////////////////////////////////////////////////////
-    typedef adding_images::AddingImagesConfig Config;
+    typedef opencv_apps::AddingImagesConfig Config;
     typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
     Config config_;
     boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -242,7 +242,7 @@ namespace adding_images {
       onInitPostProcess();
     }
   };
-}
+}  // namespace opencv_apps
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(adding_images::AddingImagesNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(opencv_apps::AddingImagesNodelet, nodelet::Nodelet);

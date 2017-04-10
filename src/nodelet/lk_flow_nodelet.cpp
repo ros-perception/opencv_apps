@@ -53,7 +53,7 @@
 #include "opencv_apps/LKFlowConfig.h"
 #include "opencv_apps/FlowArrayStamped.h"
 
-namespace lk_flow {
+namespace opencv_apps {
 class LKFlowNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -66,7 +66,7 @@ class LKFlowNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef lk_flow::LKFlowConfig Config;
+  typedef opencv_apps::LKFlowConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -327,4 +327,4 @@ bool LKFlowNodelet::need_config_update_ = false;
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(lk_flow::LKFlowNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(opencv_apps::LKFlowNodelet, nodelet::Nodelet);

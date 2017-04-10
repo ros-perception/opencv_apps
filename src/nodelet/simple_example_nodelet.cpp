@@ -49,7 +49,7 @@
 #include <dynamic_reconfigure/server.h>
 
 
-namespace simple_example {
+namespace opencv_apps {
 
 static const std::string OPENCV_WINDOW = "Image window";
 
@@ -120,7 +120,7 @@ class SimpleExampleNodelet : public nodelet::Nodelet
 public:
   virtual void onInit()
   {
-      simple_example::ImageConverter ic;
+      opencv_apps::ImageConverter ic;
       ros::spin();
   }
 };
@@ -128,4 +128,4 @@ public:
 }
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(simple_example::SimpleExampleNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(opencv_apps::SimpleExampleNodelet, nodelet::Nodelet);

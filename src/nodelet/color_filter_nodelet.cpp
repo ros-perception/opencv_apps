@@ -46,7 +46,7 @@
 #include "opencv_apps/HLSColorFilterConfig.h"
 #include "opencv_apps/HSVColorFilterConfig.h"
 
-namespace color_filter {
+namespace opencv_apps {
 class RGBColorFilter;
 class HLSColorFilter;
 class HSVColorFilter;
@@ -177,7 +177,7 @@ public:
 };
 
 class RGBColorFilterNodelet
-  : public ColorFilterNodelet<color_filter::RGBColorFilterConfig> {
+  : public ColorFilterNodelet<opencv_apps::RGBColorFilterConfig> {
 protected:
   int r_min_;
   int r_max_;
@@ -186,7 +186,7 @@ protected:
   int g_min_;
   int g_max_;
 
-  virtual void reconfigureCallback(color_filter::RGBColorFilterConfig& config,
+  virtual void reconfigureCallback(opencv_apps::RGBColorFilterConfig& config,
                                    uint32_t level) {
     boost::mutex::scoped_lock lock(mutex_);
     config_ = config;
@@ -226,7 +226,7 @@ private:
 };
 
 class HLSColorFilterNodelet
-  : public ColorFilterNodelet<color_filter::HLSColorFilterConfig> {
+  : public ColorFilterNodelet<opencv_apps::HLSColorFilterConfig> {
 protected:
   int h_min_;
   int h_max_;
@@ -235,7 +235,7 @@ protected:
   int l_min_;
   int l_max_;
 
-  virtual void reconfigureCallback(color_filter::HLSColorFilterConfig& config,
+  virtual void reconfigureCallback(opencv_apps::HLSColorFilterConfig& config,
                                    uint32_t level) {
     boost::mutex::scoped_lock lock(mutex_);
     config_ = config;
@@ -287,7 +287,7 @@ public:
 };
 
 class HSVColorFilterNodelet
-  : public ColorFilterNodelet<color_filter::HSVColorFilterConfig> {
+  : public ColorFilterNodelet<opencv_apps::HSVColorFilterConfig> {
 protected:
   int h_min_;
   int h_max_;
@@ -296,7 +296,7 @@ protected:
   int v_min_;
   int v_max_;
 
-  virtual void reconfigureCallback(color_filter::HSVColorFilterConfig& config,
+  virtual void reconfigureCallback(opencv_apps::HSVColorFilterConfig& config,
                                    uint32_t level) {
     boost::mutex::scoped_lock lock(mutex_);
     config_ = config;
@@ -350,9 +350,9 @@ public:
 }
 
 #include <pluginlib/class_list_macros.h>
-typedef color_filter::RGBColorFilterNodelet RGBColorFilterNodelet;
-typedef color_filter::HLSColorFilterNodelet HLSColorFilterNodelet;
-typedef color_filter::HSVColorFilterNodelet HSVColorFilterNodelet;
-PLUGINLIB_EXPORT_CLASS(color_filter::RGBColorFilterNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(color_filter::HLSColorFilterNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(color_filter::HSVColorFilterNodelet, nodelet::Nodelet);
+typedef opencv_apps::RGBColorFilterNodelet RGBColorFilterNodelet;
+typedef opencv_apps::HLSColorFilterNodelet HLSColorFilterNodelet;
+typedef opencv_apps::HSVColorFilterNodelet HSVColorFilterNodelet;
+PLUGINLIB_EXPORT_CLASS(opencv_apps::RGBColorFilterNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(opencv_apps::HLSColorFilterNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(opencv_apps::HSVColorFilterNodelet, nodelet::Nodelet);
