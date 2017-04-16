@@ -212,7 +212,7 @@ protected:
                 output_image);
   }
 
-private:
+public:
   virtual void onInit() {
     r_max_ = 255;
     r_min_ = 0;
@@ -347,12 +347,39 @@ public:
   }
 };
 
-}
+}  // namespace opencv_apps
+
+namespace color_filter {
+  class RGBColorFilterNodelet : public opencv_apps::RGBColorFilterNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet rgb_color_filter/rgb_color_filter is deprecated, "
+               "and renamed to opencv_apps/rgb_color_filter.");
+      opencv_apps::RGBColorFilterNodelet::onInit();
+    }
+  };
+  class HLSColorFilterNodelet : public opencv_apps::HLSColorFilterNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet hls_color_filter/hls_color_filter is deprecated, "
+               "and renamed to opencv_apps/hls_color_filter.");
+      opencv_apps::HLSColorFilterNodelet::onInit();
+    }
+  };
+  class HSVColorFilterNodelet : public opencv_apps::HSVColorFilterNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet hsv_color_filter/hsv_color_filter is deprecated, "
+               "and renamed to opencv_apps/hsv_color_filter.");
+      opencv_apps::HSVColorFilterNodelet::onInit();
+    }
+  };
+} // namespace color_filter
 
 #include <pluginlib/class_list_macros.h>
-typedef opencv_apps::RGBColorFilterNodelet RGBColorFilterNodelet;
-typedef opencv_apps::HLSColorFilterNodelet HLSColorFilterNodelet;
-typedef opencv_apps::HSVColorFilterNodelet HSVColorFilterNodelet;
+PLUGINLIB_EXPORT_CLASS(color_filter::RGBColorFilterNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(color_filter::HLSColorFilterNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(color_filter::HSVColorFilterNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::RGBColorFilterNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::HLSColorFilterNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::HSVColorFilterNodelet, nodelet::Nodelet);

@@ -339,5 +339,17 @@ int WatershedSegmentationNodelet::on_mouse_y_ = 0;
 int WatershedSegmentationNodelet::on_mouse_flags_ = 0;
 }  // namespace opencv_apps
 
+namespace watershed_segmentation {
+  class WatershedSegmentationNodelet : public opencv_apps::WatershedSegmentationNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet watershed_segmentation/watershed_segmentation is deprecated, "
+               "and renamed to opencv_apps/watershed_segmentation.");
+      opencv_apps::WatershedSegmentationNodelet::onInit();
+    }
+  };
+} // namespace watershed_segmentation
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(watershed_segmentation::WatershedSegmentationNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::WatershedSegmentationNodelet, nodelet::Nodelet);

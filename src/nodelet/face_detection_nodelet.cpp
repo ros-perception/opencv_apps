@@ -245,7 +245,19 @@ public:
     onInitPostProcess();
   }
 };
-}
+}  // namespace opencv_apps
+
+namespace face_detection {
+  class FaceDetectionNodelet : public opencv_apps::FaceDetectionNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet face_detection/face_detection is deprecated, "
+               "and renamed to opencv_apps/face_detection.");
+      opencv_apps::FaceDetectionNodelet::onInit();
+    }
+  };
+} // namespace face_detection
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(face_detection::FaceDetectionNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::FaceDetectionNodelet, nodelet::Nodelet);

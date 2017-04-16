@@ -269,5 +269,17 @@ public:
 bool GeneralContoursNodelet::need_config_update_ = false;
 }
 
+namespace general_contours {
+  class GeneralContoursNodelet : public opencv_apps::GeneralContoursNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet general_contours/general_contours is deprecated, "
+               "and renamed to opencv_apps/general_contours.");
+      opencv_apps::GeneralContoursNodelet::onInit();
+    }
+  };
+} // namespace general_contours
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(general_contours::GeneralContoursNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::GeneralContoursNodelet, nodelet::Nodelet);

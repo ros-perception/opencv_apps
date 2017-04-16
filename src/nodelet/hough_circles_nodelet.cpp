@@ -347,5 +347,17 @@ public:
 bool HoughCirclesNodelet::need_config_update_ = false;
 }
 
+namespace hough_circles {
+  class HoughCirclesNodelet : public opencv_apps::HoughCirclesNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet hough_circles/hough_circles is deprecated, "
+               "and renamed to opencv_apps/hough_circles.");
+      opencv_apps::HoughCirclesNodelet::onInit();
+    }
+  };
+} // namespace hough_circles
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(hough_circles::HoughCirclesNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::HoughCirclesNodelet, nodelet::Nodelet);

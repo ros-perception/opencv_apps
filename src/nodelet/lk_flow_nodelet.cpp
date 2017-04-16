@@ -326,5 +326,17 @@ public:
 bool LKFlowNodelet::need_config_update_ = false;
 }
 
+namespace lk_flow {
+  class LKFlowNodelet : public opencv_apps::LKFlowNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet lk_flow/lk_flow is deprecated, "
+               "and renamed to opencv_apps/lk_flow.");
+      opencv_apps::LKFlowNodelet::onInit();
+    }
+  };
+} // namespace lk_flow
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(lk_flow::LKFlowNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::LKFlowNodelet, nodelet::Nodelet);

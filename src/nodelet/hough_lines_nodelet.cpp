@@ -303,5 +303,17 @@ public:
 bool HoughLinesNodelet::need_config_update_ = false;
 }
 
+namespace hough_lines {
+  class HoughLinesNodelet : public opencv_apps::HoughLinesNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet hough_lines/hough_lines is deprecated, "
+               "and renamed to opencv_apps/hough_lines.");
+      opencv_apps::HoughLinesNodelet::onInit();
+    }
+  };
+} // namespace hough_lines
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(hough_lines::HoughLinesNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::HoughLinesNodelet, nodelet::Nodelet);

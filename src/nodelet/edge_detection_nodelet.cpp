@@ -304,5 +304,17 @@ public:
 bool EdgeDetectionNodelet::need_config_update_ = false;
 }
 
+namespace edge_detection {
+  class EdgeDetectionNodelet : public opencv_apps::EdgeDetectionNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet edge_detection/edge_detection is deprecated, "
+               "and renamed to opencv_apps/edge_detection.");
+      opencv_apps::EdgeDetectionNodelet::onInit();
+    }
+  };
+} // namespace edge_detection
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(edge_detection::EdgeDetectionNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::EdgeDetectionNodelet, nodelet::Nodelet);

@@ -222,5 +222,17 @@ public:
 bool FBackFlowNodelet::need_config_update_ = false;
 }
 
+namespace fback_flow {
+  class FBackFlowNodelet : public opencv_apps::FBackFlowNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet fback_flow/fback_flow is deprecated, "
+               "and renamed to opencv_apps/fback_flow.");
+      opencv_apps::FBackFlowNodelet::onInit();
+    }
+  };
+} // namespace fback_flow
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(fback_flow::FBackFlowNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::FBackFlowNodelet, nodelet::Nodelet);

@@ -266,5 +266,17 @@ public:
 bool ContourMomentsNodelet::need_config_update_ = false;
 }
 
+namespace contour_moments {
+  class ContourMomentsNodelet : public opencv_apps::ContourMomentsNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet contour_moments/contour_moments is deprecated, "
+               "and renamed to opencv_apps/contour_moments.");
+      opencv_apps::ContourMomentsNodelet::onInit();
+    }
+  };
+} // namespace contour_moments
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(contour_moments::ContourMomentsNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::ContourMomentsNodelet, nodelet::Nodelet);

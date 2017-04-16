@@ -429,5 +429,17 @@ int CamShiftNodelet::on_mouse_x_ = 0;
 int CamShiftNodelet::on_mouse_y_ = 0;
 }  // namespace opencv_apps
 
+namespace camshift {
+  class CamShiftNodelet : public opencv_apps::CamShiftNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet camshift/camshift is deprecated, "
+               "and renamed to opencv_apps/camshift.");
+      opencv_apps::CamShiftNodelet::onInit();
+    }
+  };
+} // namespace camshift
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(camshift::CamShiftNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::CamShiftNodelet, nodelet::Nodelet);

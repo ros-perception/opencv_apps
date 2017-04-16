@@ -228,5 +228,17 @@ public:
 bool SmoothingNodelet::need_config_update_ = false;
 }
 
+namespace smoothing {
+  class SmoothingNodelet : public opencv_apps::SmoothingNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet smoothing/smoothing is deprecated, "
+               "and renamed to opencv_apps/smoothing.");
+      opencv_apps::SmoothingNodelet::onInit();
+    }
+  };
+} // namespace smoothing
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(smoothing::SmoothingNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::SmoothingNodelet, nodelet::Nodelet);

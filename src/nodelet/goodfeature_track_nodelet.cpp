@@ -240,5 +240,17 @@ public:
 bool GoodfeatureTrackNodelet::need_config_update_ = false;
 }
 
+namespace goodfeature_track {
+  class GoodfeatureTrackNodelet : public opencv_apps::GoodfeatureTrackNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet goodfeature_track/goodfeature_track is deprecated, "
+               "and renamed to opencv_apps/goodfeature_track.");
+      opencv_apps::GoodfeatureTrackNodelet::onInit();
+    }
+  };
+} // namespace goodfeature_track
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(goodfeature_track::GoodfeatureTrackNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::GoodfeatureTrackNodelet, nodelet::Nodelet);

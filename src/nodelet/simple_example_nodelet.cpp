@@ -127,5 +127,17 @@ public:
 
 }
 
+namespace simple_example {
+  class SimpleExampleNodelet : public opencv_apps::SimpleExampleNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet simple_example/simple_example is deprecated, "
+               "and renamed to opencv_apps/simple_example.");
+      opencv_apps::SimpleExampleNodelet::onInit();
+    }
+  };
+} // namespace simple_example
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(simple_example::SimpleExampleNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::SimpleExampleNodelet, nodelet::Nodelet);

@@ -114,17 +114,17 @@
     <description>Nodelet of threshold</description>
   </class>
 
-   <class name="rgb_color_filter/rgb_color_filter" type="rgb_color_filter::RGBColorFilterNodelet" base_class_type="nodelet::Nodelet" />
+   <class name="rgb_color_filter/rgb_color_filter" type="color_filter::RGBColorFilterNodelet" base_class_type="nodelet::Nodelet" />
    <class name="opencv_apps/rgb_color_filter" type="opencv_apps::RGBColorFilterNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet of rgb color filter</description>
    </class>
 
-   <class name="hls_color_filter/hls_color_filter" type="hls_color_filter::HLSColorFilterNodelet" base_class_type="nodelet::Nodelet" />
+   <class name="hls_color_filter/hls_color_filter" type="color_filter::HLSColorFilterNodelet" base_class_type="nodelet::Nodelet" />
    <class name="opencv_apps/hls_color_filter" type="opencv_apps::HLSColorFilterNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet of hls color filter</description>
    </class>
 
-   <class name="hsv_color_filter/hsv_color_filter" type="hsv_color_filter::HSVColorFilterNodelet" base_class_type="nodelet::Nodelet" />
+   <class name="hsv_color_filter/hsv_color_filter" type="color_filter::HSVColorFilterNodelet" base_class_type="nodelet::Nodelet" />
    <class name="opencv_apps/hsv_color_filter" type="opencv_apps::HSVColorFilterNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet of hsv color filter</description>
    </class>

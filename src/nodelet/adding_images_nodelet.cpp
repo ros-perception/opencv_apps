@@ -244,5 +244,17 @@ namespace opencv_apps {
   };
 }  // namespace opencv_apps
 
+namespace adding_images {
+  class AddingImagesNodelet : public opencv_apps::AddingImagesNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet adding_images/adding_images is deprecated, "
+               "and renamed to opencv_apps/adding_images.");
+      opencv_apps::AddingImagesNodelet::onInit();
+    }
+  };
+} // namespace adding_images
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(adding_images::AddingImagesNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::AddingImagesNodelet, nodelet::Nodelet);

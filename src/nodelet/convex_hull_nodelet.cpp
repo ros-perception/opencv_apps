@@ -240,5 +240,17 @@ public:
 bool ConvexHullNodelet::need_config_update_ = false;
 }
 
+namespace convex_hull {
+  class ConvexHullNodelet : public opencv_apps::ConvexHullNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet convex_hull/convex_hull is deprecated, "
+               "and renamed to opencv_apps/convex_hull.");
+      opencv_apps::ConvexHullNodelet::onInit();
+    }
+  };
+} // namespace convex_hull
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(convex_hull::ConvexHullNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::ConvexHullNodelet, nodelet::Nodelet);

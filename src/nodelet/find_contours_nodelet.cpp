@@ -235,7 +235,19 @@ public:
   }
 };
 bool FindContoursNodelet::need_config_update_ = false;
-}
+}  // namespace opencv_apps
+
+namespace find_contours {
+  class FindContoursNodelet : public opencv_apps::FindContoursNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet find_contours/find_contours is deprecated, "
+               "and renamed to opencv_apps/find_contours.");
+      opencv_apps::FindContoursNodelet::onInit();
+    }
+  };
+} // namespace find_contours
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(find_contours::FindContoursNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::FindContoursNodelet, nodelet::Nodelet);

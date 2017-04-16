@@ -219,5 +219,17 @@ public:
 bool PhaseCorrNodelet::need_config_update_ = false;
 }
 
+namespace phase_corr {
+  class PhaseCorrNodelet : public opencv_apps::PhaseCorrNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet phase_corr/phase_corr is deprecated, "
+               "and renamed to opencv_apps/phase_corr.");
+      opencv_apps::PhaseCorrNodelet::onInit();
+    }
+  };
+} // namespace phase_corr
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(phase_corr::PhaseCorrNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::PhaseCorrNodelet, nodelet::Nodelet);

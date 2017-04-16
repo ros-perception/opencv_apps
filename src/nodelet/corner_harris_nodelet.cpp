@@ -213,5 +213,17 @@ public:
 bool CornerHarrisNodelet::need_config_update_ = false;
 }
 
+namespace corner_harris {
+  class CornerHarrisNodelet : public opencv_apps::CornerHarrisNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet corner_harris/corner_harris is deprecated, "
+               "and renamed to opencv_apps/corner_harris.");
+      opencv_apps::CornerHarrisNodelet::onInit();
+    }
+  };
+} // namespace corner_harris
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(corner_harris::CornerHarrisNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::CornerHarrisNodelet, nodelet::Nodelet);

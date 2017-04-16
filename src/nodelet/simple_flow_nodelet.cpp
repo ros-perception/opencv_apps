@@ -256,5 +256,17 @@ public:
 bool SimpleFlowNodelet::need_config_update_ = false;
 }
 
+namespace simple_flow {
+  class SimpleFlowNodelet : public opencv_apps::SimpleFlowNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet simple_flow/simple_flow is deprecated, "
+               "and renamed to opencv_apps/simple_flow.");
+      opencv_apps::SimpleFlowNodelet::onInit();
+    }
+  };
+} // namespace simple_flow
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(simple_flow::SimpleFlowNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::SimpleFlowNodelet, nodelet::Nodelet);

@@ -231,7 +231,19 @@ public:
   }
 };
 bool PeopleDetectNodelet::need_config_update_ = false;
-}
+}  // namespace opencv_apps
+
+namespace people_detect {
+  class PeopleDetectNodelet : public opencv_apps::PeopleDetectNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet people_detect/people_detect is deprecated, "
+               "and renamed to opencv_apps/people_detect.");
+      opencv_apps::PeopleDetectNodelet::onInit();
+    }
+  };
+} // namespace people_detect
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(people_detect::PeopleDetectNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::PeopleDetectNodelet, nodelet::Nodelet);

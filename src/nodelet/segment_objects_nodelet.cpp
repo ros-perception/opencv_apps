@@ -276,5 +276,17 @@ public:
 bool SegmentObjectsNodelet::need_config_update_ = false;
 }
 
+namespace segment_objects {
+  class SegmentObjectsNodelet : public opencv_apps::SegmentObjectsNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet segment_objects/segment_objects is deprecated, "
+               "and renamed to opencv_apps/segment_objects.");
+      opencv_apps::SegmentObjectsNodelet::onInit();
+    }
+  };
+} // namespace segment_objects
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(segment_objects::SegmentObjectsNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::SegmentObjectsNodelet, nodelet::Nodelet);

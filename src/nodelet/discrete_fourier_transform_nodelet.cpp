@@ -198,5 +198,17 @@ public:
 };
 }
 
+namespace discrete_fourier_transform {
+  class DiscreteFourierTransformNodelet : public opencv_apps::DiscreteFourierTransformNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet discrete_fourier_transform/discrete_fourier_transform is deprecated, "
+               "and renamed to opencv_apps/discrete_fourier_transform.");
+      opencv_apps::DiscreteFourierTransformNodelet::onInit();
+    }
+  };
+} // namespace discrete_fourier_transform
+
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(discrete_fourier_transform::DiscreteFourierTransformNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::DiscreteFourierTransformNodelet, nodelet::Nodelet);
