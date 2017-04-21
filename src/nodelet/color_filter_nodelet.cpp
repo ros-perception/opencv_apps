@@ -36,7 +36,7 @@
 #include "opencv_apps/nodelet.h"
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
-#include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <cv_bridge/cv_bridge.h>
 
 #include <opencv2/highgui/highgui.hpp>
@@ -88,7 +88,7 @@ protected:
   boost::mutex mutex_;
 
   // publisch color space
-  sensor_msgs::PointCloud color_space_msg_;
+  sensor_msgs::PointCloud2 color_space_msg_;
   ros::Publisher color_space_pub_;
 
   virtual void reconfigureCallback(Config& new_config, uint32_t level) = 0;
@@ -193,7 +193,25 @@ public:
     img_pub_ = advertiseImage(*pnh_, "image", 1);
 
     // to advertise you can do it like this (as above):
-    color_space_pub_ = pnh_->advertise<sensor_msgs::PointCloud>("color_space", 1);
+    color_space_pub_ = pnh_->advertise<sensor_msgs::PointCloud2>("color_space", 1);
+    color_space_msg_.header.frame_id = "/map";
+    color_space_msg_.fields.resize(4);
+    color_space_msg_.fields[0].name = "x";
+    color_space_msg_.fields[0].offset = 0;
+    color_space_msg_.fields[0].datatype = sensor_msgs::PointField::FLOAT32;
+    color_space_msg_.fields[0].count = 1;
+    color_space_msg_.fields[1].name = "y";
+    color_space_msg_.fields[1].offset = 4;
+    color_space_msg_.fields[1].datatype = sensor_msgs::PointField::FLOAT32;
+    color_space_msg_.fields[1].count = 1;
+    color_space_msg_.fields[2].name = "z";
+    color_space_msg_.fields[2].offset = 8;
+    color_space_msg_.fields[2].datatype = sensor_msgs::PointField::FLOAT32;
+    color_space_msg_.fields[2].count = 1;
+    color_space_msg_.fields[3].name = "rgb";
+    color_space_msg_.fields[3].offset = 12;
+    color_space_msg_.fields[3].datatype = sensor_msgs::PointField::UINT32;
+    color_space_msg_.fields[3].count = 1;
 
     onInitPostProcess();
   }
@@ -239,27 +257,25 @@ protected:
     cv::inRange(input_image, lower_color_range_, upper_color_range_, output_image);
 
     /// publish color spaces
-    color_space_msg_.header.frame_id = "/map";
-    if ( color_space_msg_.points.size() != input_image.rows*input_image.cols) {
-      color_space_msg_.points.resize(input_image.rows*input_image.cols);
-      color_space_msg_.channels.resize(3);
-      color_space_msg_.channels[0].name = "b";
-      color_space_msg_.channels[1].name = "g";
-      color_space_msg_.channels[2].name = "r";
-      color_space_msg_.channels[0].values.resize(input_image.rows*input_image.cols);
-      color_space_msg_.channels[1].values.resize(input_image.rows*input_image.cols);
-      color_space_msg_.channels[2].values.resize(input_image.rows*input_image.cols);
+    if ( color_space_msg_.data.size() != 16*input_image.rows*input_image.cols) {
+      color_space_msg_.data.resize(16*input_image.rows*input_image.cols);
+      color_space_msg_.width = input_image.cols;
+      color_space_msg_.height = input_image.rows;
+      color_space_msg_.point_step = 16;
+      color_space_msg_.row_step = color_space_msg_.width;
     }
     for ( size_t i = 0; i < input_image.rows *  input_image.cols; i++ ) {
-      float r = input_image.at<cv::Vec3b>(i)[0]/255.0;
-      float g = input_image.at<cv::Vec3b>(i)[1]/255.0;
-      float b = input_image.at<cv::Vec3b>(i)[2]/255.0;
-      color_space_msg_.points[i].x = r;
-      color_space_msg_.points[i].y = g;
-      color_space_msg_.points[i].z = b;
-      color_space_msg_.channels[0].values[i] = r;
-      color_space_msg_.channels[1].values[i] = g;
-      color_space_msg_.channels[2].values[i] = b;
+      unsigned char r = input_image.at<cv::Vec3b>(i)[0];
+      unsigned char g = input_image.at<cv::Vec3b>(i)[1];
+      unsigned char b = input_image.at<cv::Vec3b>(i)[2];
+      float x = r/255.0;
+      float y = g/255.0;
+      float z = b/255.0;
+      memcpy((void *)(&(color_space_msg_.data[i*16+0])), (const void *)&x, sizeof(float));
+      memcpy((void *)(&(color_space_msg_.data[i*16+4])), (const void *)&y, sizeof(float));
+      memcpy((void *)(&(color_space_msg_.data[i*16+8])), (const void *)&z, sizeof(float));
+      unsigned char rgb[4] = {r, g, b, 0};
+      memcpy((void *)(&(color_space_msg_.data[i*16+12])), (const void *)rgb, 4*sizeof(unsigned char));
     }
     color_space_pub_.publish(color_space_msg_);
   }
@@ -335,30 +351,28 @@ protected:
     }
 
     /// publish color spaces
-    color_space_msg_.header.frame_id = "/map";
-    if ( color_space_msg_.points.size() != input_image.rows*input_image.cols) {
-      color_space_msg_.points.resize(input_image.rows*input_image.cols);
-      color_space_msg_.channels.resize(3);
-      color_space_msg_.channels[0].name = "b";
-      color_space_msg_.channels[1].name = "g";
-      color_space_msg_.channels[2].name = "r";
-      color_space_msg_.channels[0].values.resize(input_image.rows*input_image.cols);
-      color_space_msg_.channels[1].values.resize(input_image.rows*input_image.cols);
-      color_space_msg_.channels[2].values.resize(input_image.rows*input_image.cols);
+    if ( color_space_msg_.data.size() != 16*input_image.rows*input_image.cols) {
+      color_space_msg_.data.resize(16*input_image.rows*input_image.cols);
+      color_space_msg_.width = input_image.cols;
+      color_space_msg_.height = input_image.rows;
+      color_space_msg_.point_step = 16;
+      color_space_msg_.row_step = color_space_msg_.width;
     }
     for ( size_t i = 0; i < input_image.rows *  input_image.cols; i++ ) {
+      unsigned char r = input_image.at<cv::Vec3b>(i)[0];
+      unsigned char g = input_image.at<cv::Vec3b>(i)[1];
+      unsigned char b = input_image.at<cv::Vec3b>(i)[2];
       float h = hls_image.at<cv::Vec3b>(i)[0]*2;
       float l = hls_image.at<cv::Vec3b>(i)[1]/255.0;
       float s = hls_image.at<cv::Vec3b>(i)[2]/255.0;
-      float r = input_image.at<cv::Vec3b>(i)[0]/255.0;
-      float g = input_image.at<cv::Vec3b>(i)[1]/255.0;
-      float b = input_image.at<cv::Vec3b>(i)[2]/255.0;
-      color_space_msg_.points[i].x = s*cos(h*M_PI/180.0);
-      color_space_msg_.points[i].y = s*sin(h*M_PI/180.0);
-      color_space_msg_.points[i].z = l;
-      color_space_msg_.channels[0].values[i] = r;
-      color_space_msg_.channels[1].values[i] = g;
-      color_space_msg_.channels[2].values[i] = b;
+      float x = s*cos(h*M_PI/180.0);
+      float y = s*sin(h*M_PI/180.0);
+      float z = l;
+      memcpy((void *)(&(color_space_msg_.data[i*16+0])), (const void *)&x, sizeof(float));
+      memcpy((void *)(&(color_space_msg_.data[i*16+4])), (const void *)&y, sizeof(float));
+      memcpy((void *)(&(color_space_msg_.data[i*16+8])), (const void *)&z, sizeof(float));
+      unsigned char rgb[4] = {r, g, b, 0};
+      memcpy((void *)(&(color_space_msg_.data[i*16+12])), (const void *)rgb, 4*sizeof(unsigned char));
     }
     color_space_pub_.publish(color_space_msg_);
   }
@@ -429,32 +443,29 @@ protected:
       cv::inRange(hsv_image, lower_color_range_360, upper_color_range_360, output_image_360);
       output_image = output_image_0 | output_image_360;
     }
-
     /// publish color spaces
-    color_space_msg_.header.frame_id = "/map";
-    if ( color_space_msg_.points.size() != input_image.rows*input_image.cols) {
-      color_space_msg_.points.resize(input_image.rows*input_image.cols);
-      color_space_msg_.channels.resize(3);
-      color_space_msg_.channels[0].name = "b";
-      color_space_msg_.channels[1].name = "g";
-      color_space_msg_.channels[2].name = "r";
-      color_space_msg_.channels[0].values.resize(input_image.rows*input_image.cols);
-      color_space_msg_.channels[1].values.resize(input_image.rows*input_image.cols);
-      color_space_msg_.channels[2].values.resize(input_image.rows*input_image.cols);
+    if ( color_space_msg_.data.size() != 16*input_image.rows*input_image.cols) {
+      color_space_msg_.data.resize(16*input_image.rows*input_image.cols);
+      color_space_msg_.width = input_image.cols;
+      color_space_msg_.height = input_image.rows;
+      color_space_msg_.point_step = 16;
+      color_space_msg_.row_step = color_space_msg_.width;
     }
     for ( size_t i = 0; i < input_image.rows *  input_image.cols; i++ ) {
+      unsigned char r = input_image.at<cv::Vec3b>(i)[0];
+      unsigned char g = input_image.at<cv::Vec3b>(i)[1];
+      unsigned char b = input_image.at<cv::Vec3b>(i)[2];
       float h = hsv_image.at<cv::Vec3b>(i)[0]*2;
       float s = hsv_image.at<cv::Vec3b>(i)[1]/255.0;
       float v = hsv_image.at<cv::Vec3b>(i)[2]/255.0;
-      float r = input_image.at<cv::Vec3b>(i)[0]/255.0;
-      float g = input_image.at<cv::Vec3b>(i)[1]/255.0;
-      float b = input_image.at<cv::Vec3b>(i)[2]/255.0;
-      color_space_msg_.points[i].x = s*cos(h*M_PI/180.0);
-      color_space_msg_.points[i].y = s*sin(h*M_PI/180.0);
-      color_space_msg_.points[i].z = v;
-      color_space_msg_.channels[0].values[i] = r;
-      color_space_msg_.channels[1].values[i] = g;
-      color_space_msg_.channels[2].values[i] = b;
+      float x = s*cos(h*M_PI/180.0);
+      float y = s*sin(h*M_PI/180.0);
+      float z = v;
+      memcpy((void *)(&(color_space_msg_.data[i*16+0])), (const void *)&x, sizeof(float));
+      memcpy((void *)(&(color_space_msg_.data[i*16+4])), (const void *)&y, sizeof(float));
+      memcpy((void *)(&(color_space_msg_.data[i*16+8])), (const void *)&z, sizeof(float));
+      unsigned char rgb[4] = {r, g, b, 0};
+      memcpy((void *)(&(color_space_msg_.data[i*16+12])), (const void *)rgb, 4*sizeof(unsigned char));
     }
     color_space_pub_.publish(color_space_msg_);
   }
