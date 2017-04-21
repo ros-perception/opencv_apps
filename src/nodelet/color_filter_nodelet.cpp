@@ -36,6 +36,7 @@
 #include "opencv_apps/nodelet.h"
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
+#include <sensor_msgs/PointCloud.h>
 #include <cv_bridge/cv_bridge.h>
 
 #include <opencv2/highgui/highgui.hpp>
@@ -85,6 +86,10 @@ protected:
   cv::Scalar upper_color_range_;
 
   boost::mutex mutex_;
+
+  // publisch color space
+  sensor_msgs::PointCloud color_space_msg_;
+  ros::Publisher color_space_pub_;
 
   virtual void reconfigureCallback(Config& new_config, uint32_t level) = 0;
 
@@ -187,6 +192,9 @@ public:
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
 
+    // to advertise you can do it like this (as above):
+    color_space_pub_ = pnh_->advertise<sensor_msgs::PointCloud>("color_space", 1);
+
     onInitPostProcess();
   }
 };
@@ -229,6 +237,31 @@ protected:
   void filter(const cv::Mat& input_image, cv::Mat& output_image)  // NOLINT(modernize-use-override)
   {
     cv::inRange(input_image, lower_color_range_, upper_color_range_, output_image);
+
+    /// publish color spaces
+    color_space_msg_.header.frame_id = "/map";
+    if ( color_space_msg_.points.size() != input_image.rows*input_image.cols) {
+      color_space_msg_.points.resize(input_image.rows*input_image.cols);
+      color_space_msg_.channels.resize(3);
+      color_space_msg_.channels[0].name = "b";
+      color_space_msg_.channels[1].name = "g";
+      color_space_msg_.channels[2].name = "r";
+      color_space_msg_.channels[0].values.resize(input_image.rows*input_image.cols);
+      color_space_msg_.channels[1].values.resize(input_image.rows*input_image.cols);
+      color_space_msg_.channels[2].values.resize(input_image.rows*input_image.cols);
+    }
+    for ( size_t i = 0; i < input_image.rows *  input_image.cols; i++ ) {
+      float r = input_image.at<cv::Vec3b>(i)[0]/255.0;
+      float g = input_image.at<cv::Vec3b>(i)[1]/255.0;
+      float b = input_image.at<cv::Vec3b>(i)[2]/255.0;
+      color_space_msg_.points[i].x = r;
+      color_space_msg_.points[i].y = g;
+      color_space_msg_.points[i].z = b;
+      color_space_msg_.channels[0].values[i] = r;
+      color_space_msg_.channels[1].values[i] = g;
+      color_space_msg_.channels[2].values[i] = b;
+    }
+    color_space_pub_.publish(color_space_msg_);
   }
 
 protected:
@@ -300,6 +333,34 @@ protected:
       cv::inRange(hls_image, lower_color_range_360, upper_color_range_360, output_image_360);
       output_image = output_image_0 | output_image_360;
     }
+
+    /// publish color spaces
+    color_space_msg_.header.frame_id = "/map";
+    if ( color_space_msg_.points.size() != input_image.rows*input_image.cols) {
+      color_space_msg_.points.resize(input_image.rows*input_image.cols);
+      color_space_msg_.channels.resize(3);
+      color_space_msg_.channels[0].name = "b";
+      color_space_msg_.channels[1].name = "g";
+      color_space_msg_.channels[2].name = "r";
+      color_space_msg_.channels[0].values.resize(input_image.rows*input_image.cols);
+      color_space_msg_.channels[1].values.resize(input_image.rows*input_image.cols);
+      color_space_msg_.channels[2].values.resize(input_image.rows*input_image.cols);
+    }
+    for ( size_t i = 0; i < input_image.rows *  input_image.cols; i++ ) {
+      float h = hls_image.at<cv::Vec3b>(i)[0]*2;
+      float l = hls_image.at<cv::Vec3b>(i)[1]/255.0;
+      float s = hls_image.at<cv::Vec3b>(i)[2]/255.0;
+      float r = input_image.at<cv::Vec3b>(i)[0]/255.0;
+      float g = input_image.at<cv::Vec3b>(i)[1]/255.0;
+      float b = input_image.at<cv::Vec3b>(i)[2]/255.0;
+      color_space_msg_.points[i].x = s*cos(h*M_PI/180.0);
+      color_space_msg_.points[i].y = s*sin(h*M_PI/180.0);
+      color_space_msg_.points[i].z = l;
+      color_space_msg_.channels[0].values[i] = r;
+      color_space_msg_.channels[1].values[i] = g;
+      color_space_msg_.channels[2].values[i] = b;
+    }
+    color_space_pub_.publish(color_space_msg_);
   }
 
 public:
@@ -368,6 +429,34 @@ protected:
       cv::inRange(hsv_image, lower_color_range_360, upper_color_range_360, output_image_360);
       output_image = output_image_0 | output_image_360;
     }
+
+    /// publish color spaces
+    color_space_msg_.header.frame_id = "/map";
+    if ( color_space_msg_.points.size() != input_image.rows*input_image.cols) {
+      color_space_msg_.points.resize(input_image.rows*input_image.cols);
+      color_space_msg_.channels.resize(3);
+      color_space_msg_.channels[0].name = "b";
+      color_space_msg_.channels[1].name = "g";
+      color_space_msg_.channels[2].name = "r";
+      color_space_msg_.channels[0].values.resize(input_image.rows*input_image.cols);
+      color_space_msg_.channels[1].values.resize(input_image.rows*input_image.cols);
+      color_space_msg_.channels[2].values.resize(input_image.rows*input_image.cols);
+    }
+    for ( size_t i = 0; i < input_image.rows *  input_image.cols; i++ ) {
+      float h = hsv_image.at<cv::Vec3b>(i)[0]*2;
+      float s = hsv_image.at<cv::Vec3b>(i)[1]/255.0;
+      float v = hsv_image.at<cv::Vec3b>(i)[2]/255.0;
+      float r = input_image.at<cv::Vec3b>(i)[0]/255.0;
+      float g = input_image.at<cv::Vec3b>(i)[1]/255.0;
+      float b = input_image.at<cv::Vec3b>(i)[2]/255.0;
+      color_space_msg_.points[i].x = s*cos(h*M_PI/180.0);
+      color_space_msg_.points[i].y = s*sin(h*M_PI/180.0);
+      color_space_msg_.points[i].z = v;
+      color_space_msg_.channels[0].values[i] = r;
+      color_space_msg_.channels[1].values[i] = g;
+      color_space_msg_.channels[2].values[i] = b;
+    }
+    color_space_pub_.publish(color_space_msg_);
   }
 
 public:
