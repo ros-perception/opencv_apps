@@ -60,6 +60,19 @@ class RGBColorFilter;
 class HLSColorFilter;
 class HSVColorFilter;
 
+// http://stackoverflow.com/questions/12703305/how-to-compare-scalars-in-opencv
+// Custom operator to compare cv::Scalar class...
+bool operator <(const cv::Scalar &a, const cv::Scalar &b)
+{
+  bool Result = true;
+  // Do whatever you think a Scalar comparison must be.
+  std::cerr << a.depth <<  " " << a.channels << std::endl;
+  for ( size_t i = 0 ; i < 4; i++ ) {
+    if ( a[i] >= b[i] ) Result = false;
+  }
+  return Result;
+}
+
 template <typename Config>
 class ColorFilterNodelet : public opencv_apps::Nodelet
 {
@@ -274,6 +287,10 @@ protected:
       memcpy((void *)(&(color_space_msg_.data[i*16+0])), (const void *)&x, sizeof(float));
       memcpy((void *)(&(color_space_msg_.data[i*16+4])), (const void *)&y, sizeof(float));
       memcpy((void *)(&(color_space_msg_.data[i*16+8])), (const void *)&z, sizeof(float));
+      if ( output_image.at<unsigned char>(i) == 0 ) {
+        unsigned char gray = 16 + (r/3 + g/3 + b/3)*(255-16)/255;
+        r = g = b = gray;
+      }
       unsigned char rgb[4] = {r, g, b, 0};
       memcpy((void *)(&(color_space_msg_.data[i*16+12])), (const void *)rgb, 4*sizeof(unsigned char));
     }
@@ -371,6 +388,10 @@ protected:
       memcpy((void *)(&(color_space_msg_.data[i*16+0])), (const void *)&x, sizeof(float));
       memcpy((void *)(&(color_space_msg_.data[i*16+4])), (const void *)&y, sizeof(float));
       memcpy((void *)(&(color_space_msg_.data[i*16+8])), (const void *)&z, sizeof(float));
+      if ( output_image.at<unsigned char>(i) == 0 ) {
+        unsigned char gray = 16 + (r/3 + g/3 + b/3)*(255-16)/255;
+        r = g = b = gray;
+      }
       unsigned char rgb[4] = {r, g, b, 0};
       memcpy((void *)(&(color_space_msg_.data[i*16+12])), (const void *)rgb, 4*sizeof(unsigned char));
     }
@@ -464,6 +485,10 @@ protected:
       memcpy((void *)(&(color_space_msg_.data[i*16+0])), (const void *)&x, sizeof(float));
       memcpy((void *)(&(color_space_msg_.data[i*16+4])), (const void *)&y, sizeof(float));
       memcpy((void *)(&(color_space_msg_.data[i*16+8])), (const void *)&z, sizeof(float));
+      if ( output_image.at<unsigned char>(i) == 0 ) {
+        unsigned char gray = 16 + (r/3 + g/3 + b/3)*(255-16)/255;
+        r = g = b = gray;
+      }
       unsigned char rgb[4] = {r, g, b, 0};
       memcpy((void *)(&(color_space_msg_.data[i*16+12])), (const void *)rgb, 4*sizeof(unsigned char));
     }
