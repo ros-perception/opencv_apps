@@ -51,6 +51,10 @@
     <description>Nodelet for detecting corners using Harris method</description>
   </class>
 
+  <class name="background_subtraction/background_subtraction" type="background_subtraction::BackGroundSubtractionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to calculate background subtraction</description>
+  </class>
+
   <class name="camshift/camshift" type="camshift::CamShiftNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to show mean-shift based tracking</description>
   </class>

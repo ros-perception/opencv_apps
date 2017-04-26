@@ -35,6 +35,8 @@ generate_dynamic_reconfigure_options(
   cfg/GoodfeatureTrack.cfg
   cfg/CornerHarris.cfg
   #
+  cfg/BackGroundSubtraction.cfg
+  #
   cfg/CamShift.cfg
   cfg/FBackFlow.cfg
   cfg/LKFlow.cfg
@@ -216,7 +218,7 @@ opencv_apps_add_nodelet(corner_harris corner_harris/corner_harris src/nodelet/co
   # ./tutorial_code/TrackingMotion/cornerSubPix_Demo.cpp
 
 # videoio
- # ./tutorial_code/video/bg_sub.cpp
+opencv_apps_add_nodelet(background_subtraction background_subtraction/background_subtraction src/nodelet/background_subtraction_nodelet.cpp) # ./tutorial_code/video/bg_sub.cpp
  # ./tutorial_code/videoio/video-input-psnr-ssim/video-input-psnr-ssim.cpp
  # ./tutorial_code/videoio/video-write/video-write.cpp
 
