@@ -144,10 +144,12 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
         cv::Point center( faces[i].x + faces[i].width/2, faces[i].y + faces[i].height/2 );
         cv::ellipse( frame,  center, cv::Size( faces[i].width/2, faces[i].height/2), 0, 0, 360, cv::Scalar( 255, 0, 255 ), 2, 8, 0 );
         opencv_apps::Face face_msg;
-        face_msg.face.x = center.x;
-        face_msg.face.y = center.y;
+        face_msg.face.x = faces[i].x;
+        face_msg.face.y = faces[i].y;
         face_msg.face.width = faces[i].width;
         face_msg.face.height = faces[i].height;
+        face_msg.face_center.x = center.x;
+        face_msg.face_center.y = center.y;
 
         cv::Mat faceROI = frame_gray( faces[i] );
         std::vector<cv::Rect> eyes;
@@ -166,11 +168,15 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
           cv::circle( frame, eye_center, radius, cv::Scalar( 255, 0, 0 ), 3, 8, 0 );
 
           opencv_apps::Rect eye_msg;
-          eye_msg.x = eye_center.x;
-          eye_msg.y = eye_center.y;
+          eye_msg.x = faces[i].x + eyes[j].x;
+          eye_msg.y = faces[i].y + eyes[j].y;
           eye_msg.width = eyes[j].width;
           eye_msg.height = eyes[j].height;
           face_msg.eyes.push_back(eye_msg);
+          opencv_apps::Point2D eye_center_msg;
+          eye_center_msg.x = eye_center.x;
+          eye_center_msg.y = eye_center.y;
+          face_msg.eyes_center.push_back(eye_center_msg);
         }
 
         faces_msg.faces.push_back(face_msg);
