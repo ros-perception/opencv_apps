@@ -14,6 +14,15 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag
 add_custom_target(vslam_tutorial_bag DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag)
 add_dependencies(tests vslam_tutorial_bag)
 
+# test data for face recognition
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/face_data
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/face_data.tar.gz
+  COMMAND ${CMAKE_COMMAND} -E tar zxf face_data.tar.gz
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMENT "Extracting face_data.tar.gz")
+add_custom_target(face_data DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/face_data)
+add_dependencies(tests face_data)
+
 #add_rostest(test-apps.test)
 add_rostest(test-adding_images.test ARGS gui:=false)
 add_rostest(test-discrete_fourier_transform.test ARGS gui:=false)
@@ -33,11 +42,14 @@ add_rostest(test-contour_moments.test ARGS gui:=false)
 if(cv_bridge_VERSION VERSION_LESS "1.11.9") # hydro skip face_detection.test
 elseif(OpenCV_VERSION VERSION_LESS "3.0")
   add_rostest(test-face_detection.test ARGS gui:=false)
+  add_rostest(test-face_recognition.test ARGS gui:=false)
 else()
   if(OpenCV_VERSION VERSION_LESS "3.2")
     add_rostest(test-face_detection.test ARGS gui:=false use_opencv3:=true use_opencv3_1:=true)
+    add_rostest(test-face_recognition.test ARGS gui:=false use_opencv3:=true use_opencv3_1:=true)
   else()
     add_rostest(test-face_detection.test ARGS gui:=false use_opencv3:=true use_opencv3_2:=true)
+    add_rostest(test-face_recognition.test ARGS gui:=false use_opencv3:=true use_opencv3_2:=true)
   endif()
 endif()
 add_rostest(test-goodfeature_track.test ARGS gui:=false)
