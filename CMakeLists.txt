@@ -63,7 +63,6 @@ add_message_files(
    FlowStamped.msg
    FlowArray.msg
    FlowArrayStamped.msg
-   RectArrayStamped.msg
    Size.msg
    Face.msg
    FaceArray.msg
