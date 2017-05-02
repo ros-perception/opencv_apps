@@ -51,6 +51,8 @@
 
 namespace opencv_apps {
 
+namespace simple_example {
+
 static const std::string OPENCV_WINDOW = "Image window";
 
 class ImageConverter
@@ -112,6 +114,7 @@ public:
   }
 };
 
+} // namespace simple_example
 
 class SimpleExampleNodelet : public nodelet::Nodelet
 {
@@ -120,12 +123,12 @@ class SimpleExampleNodelet : public nodelet::Nodelet
 public:
   virtual void onInit()
   {
-      opencv_apps::ImageConverter ic;
+      simple_example::ImageConverter ic;
       ros::spin();
   }
 };
 
-}
+} // namespace opencv_apps
 
 namespace simple_example {
   class SimpleExampleNodelet : public opencv_apps::SimpleExampleNodelet {
