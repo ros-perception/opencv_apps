@@ -39,11 +39,6 @@
 #include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/video/tracking.hpp>
-#if CV_MAJOR_VERSION == 3
-#include <opencv2/optflow.hpp>
-#endif
 
 #include <dynamic_reconfigure/server.h>
 #include "opencv_apps/CentroidConfig.h"
@@ -88,12 +83,11 @@ class CentroidNodelet : public opencv_apps::Nodelet
     try
     {
       // Convert the image into something opencv can handle.
-      cv::Mat cvimg = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
+      cv::Mat cvimg = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8)->image;
 
-      // Messages
+      // result message
       opencv_apps::Point2DStamped point_msg;
       point_msg.header = msg->header;
-
 
       if( debug_view_) {
         cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
@@ -102,10 +96,24 @@ class CentroidNodelet : public opencv_apps::Nodelet
       //float start = (float)cv::getTickCount();
 
       // add your OpenCV process
+      long center_x = 0;
+      long center_y = 0;
+      long total_grey = 0;
+      int height = cvimg.rows;
+      int width =  cvimg.cols;
+
+      for(int i = 0; i < height; i++) {
+        for(int j = 0; j < width; j++) {
+          int grey = cvimg.at<unsigned char>(i, j);
+          center_x += j * grey;
+          center_y += i * grey;
+          total_grey += grey;
+        }
+      }
 
       // set values to message
-      point_msg.point.x = 1.1;
-      point_msg.point.y = 2.2;
+      point_msg.point.x = center_x / (double)total_grey;
+      point_msg.point.y = center_y / (double)total_grey;
 
       //-- Show what you got
       if ( debug_view_) {
