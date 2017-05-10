@@ -107,4 +107,7 @@
     <description>Nodelet to demonstrate the famous watershed segmentation algorithm in OpenCV: watershed()</description>
   </class>
 
+  <class name="centroid/centroid" type="centroid::CentroidNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of calculating centroid</description>
+  </class>
 </library>
