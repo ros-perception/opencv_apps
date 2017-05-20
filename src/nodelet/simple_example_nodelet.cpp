@@ -49,6 +49,8 @@
 #include <dynamic_reconfigure/server.h>
 
 
+namespace opencv_apps {
+
 namespace simple_example {
 
 static const std::string OPENCV_WINDOW = "Image window";
@@ -112,6 +114,7 @@ public:
   }
 };
 
+} // namespace simple_example
 
 class SimpleExampleNodelet : public nodelet::Nodelet
 {
@@ -125,7 +128,19 @@ public:
   }
 };
 
-}
+} // namespace opencv_apps
+
+namespace simple_example {
+  class SimpleExampleNodelet : public opencv_apps::SimpleExampleNodelet {
+  public:
+    virtual void onInit() {
+      ROS_WARN("DeprecationWarning: Nodelet simple_example/simple_example is deprecated, "
+               "and renamed to opencv_apps/simple_example.");
+      opencv_apps::SimpleExampleNodelet::onInit();
+    }
+  };
+} // namespace simple_example
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(simple_example::SimpleExampleNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(opencv_apps::SimpleExampleNodelet, nodelet::Nodelet);
