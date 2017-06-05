@@ -120,7 +120,7 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
     try
     {
       // Convert the image into something opencv can handle.
-      cv::Mat frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
+      cv::Mat frame = cv_bridge::toCvShare(msg, msg->encoding)->image;
 
       // Messages
       opencv_apps::MomentArrayStamped moments_msg;
@@ -151,23 +151,10 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
       /// Find contours
       cv::findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
 
-      /// Get the moments
-      std::vector<cv::Moments> mu(contours.size() );
-      for( size_t i = 0; i < contours.size(); i++ )
-      { mu[i] = moments( contours[i], false ); }
-
-      ///  Get the mass centers:
-      std::vector<cv::Point2f> mc( contours.size() );
-      for( size_t i = 0; i < contours.size(); i++ )
-      { mc[i] = cv::Point2f( static_cast<float>(mu[i].m10/mu[i].m00) , static_cast<float>(mu[i].m01/mu[i].m00) ); }
-
       /// Draw contours
-      cv::Mat drawing = cv::Mat::zeros( canny_output.size(), CV_8UC3 );
-      for( size_t i = 0; i< contours.size(); i++ )
-      {
-        cv::Scalar color = cv::Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
-        cv::drawContours( drawing, contours, (int)i, color, 2, 8, hierarchy, 0, cv::Point() );
-        cv::circle( drawing, mc[i], 4, color, -1, 8, 0 );
+      cv::Mat drawing;
+      if( debug_view_) {
+        drawing = cv::Mat::zeros( canny_output.size(), CV_8UC3 );
       }
 
       /// Calculate the area with the moments 00 and compare with the result of the OpenCV function
@@ -175,12 +162,25 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
 
       // https://stackoverflow.com/questions/13495207/opencv-c-sorting-contours-by-their-contourarea
       std::sort(contours.begin(), contours.end(), compareContourAreas);
+
+      std::vector<cv::Moments> mu(contours.size() );
+      std::vector<cv::Point2f> mc( contours.size() );
       for( size_t i = 0; i< contours.size(); i++ )
       {
+        /// Get the moments
+        for( size_t i = 0; i < contours.size(); i++ )
+        { mu[i] = moments( contours[i], false ); }
+
+        ///  Get the mass centers:
+        for( size_t i = 0; i < contours.size(); i++ )
+        { mc[i] = cv::Point2f( static_cast<float>(mu[i].m10/mu[i].m00) , static_cast<float>(mu[i].m01/mu[i].m00) ); }
+
+        if( debug_view_) {
+          cv::Scalar color = cv::Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+          cv::drawContours( drawing, contours, (int)i, color, 2, 8, hierarchy, 0, cv::Point() );
+          cv::circle( drawing, mc[i], 4, color, -1, 8, 0 );
+        }
         NODELET_INFO(" * Contour[%d] - Area (M_00) = %.2f - Area OpenCV: %.2f - Length: %.2f - Center (%.2f, %.2f)", (int)i, mu[i].m00, cv::contourArea(contours[i]), cv::arcLength( contours[i], true ), mc[i].x, mc[i].y );
-        cv::Scalar color = cv::Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
-        cv::drawContours( drawing, contours, (int)i, color, 2, 8, hierarchy, 0, cv::Point() );
-        cv::circle( drawing, mc[i], 4, color, -1, 8, 0 );
 
         opencv_apps::Moment moment_msg;
         moment_msg.m00 = mu[i].m00;
