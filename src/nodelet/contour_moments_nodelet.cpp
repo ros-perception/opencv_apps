@@ -55,6 +55,15 @@
 #include "opencv_apps/MomentArrayStamped.h"
 
 namespace contour_moments {
+
+// https://stackoverflow.com/questions/13495207/opencv-c-sorting-contours-by-their-contourarea
+// comparison function object
+bool compareContourAreas ( std::vector<cv::Point> contour1, std::vector<cv::Point> contour2 ) {
+  double i = fabs( contourArea(cv::Mat(contour1)) );
+  double j = fabs( contourArea(cv::Mat(contour2)) );
+  return ( i > j );
+}
+
 class ContourMomentsNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -163,6 +172,9 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
 
       /// Calculate the area with the moments 00 and compare with the result of the OpenCV function
       NODELET_INFO("\t Info: Area and Contour Length");
+
+      // https://stackoverflow.com/questions/13495207/opencv-c-sorting-contours-by-their-contourarea
+      std::sort(contours.begin(), contours.end(), compareContourAreas);
       for( size_t i = 0; i< contours.size(); i++ )
       {
         NODELET_INFO(" * Contour[%d] - Area (M_00) = %.2f - Area OpenCV: %.2f - Length: %.2f - Center (%.2f, %.2f)", (int)i, mu[i].m00, cv::contourArea(contours[i]), cv::arcLength( contours[i], true ), mc[i].x, mc[i].y );
