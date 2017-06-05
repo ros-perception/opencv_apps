@@ -162,10 +162,10 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
       }
 
       /// Calculate the area with the moments 00 and compare with the result of the OpenCV function
-      printf("\t Info: Area and Contour Length \n");
+      NODELET_INFO("\t Info: Area and Contour Length");
       for( size_t i = 0; i< contours.size(); i++ )
       {
-        NODELET_INFO(" * Contour[%d] - Area (M_00) = %.2f - Area OpenCV: %.2f - Length: %.2f \n", (int)i, mu[i].m00, cv::contourArea(contours[i]), cv::arcLength( contours[i], true ) );
+        NODELET_INFO(" * Contour[%d] - Area (M_00) = %.2f - Area OpenCV: %.2f - Length: %.2f - Center (%.2f, %.2f)", (int)i, mu[i].m00, cv::contourArea(contours[i]), cv::arcLength( contours[i], true ), mc[i].x, mc[i].y );
         cv::Scalar color = cv::Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
         cv::drawContours( drawing, contours, (int)i, color, 2, 8, hierarchy, 0, cv::Point() );
         cv::circle( drawing, mc[i], 4, color, -1, 8, 0 );
