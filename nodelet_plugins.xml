@@ -67,6 +67,10 @@
     <description>Nodelet to calculate Lukas-Kanade optical flow</description>
   </class>
 
+  <class name="match_template/match_template" type="match_template::MatchTemplateNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to find the template on the image</description>
+  </class>
+
   <class name="people_detect/people_detect" type="people_detect::PeopleDetectNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to demonstrate the use of the HoG descriptor</description>
   </class>

@@ -39,6 +39,7 @@ generate_dynamic_reconfigure_options(
   cfg/CamShift.cfg
   cfg/FBackFlow.cfg
   cfg/LKFlow.cfg
+  cfg/MatchTemplate.cfg
   cfg/PeopleDetect.cfg
   cfg/PhaseCorr.cfg
   cfg/SegmentObjects.cfg
@@ -329,6 +330,8 @@ endif()
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/video_dmtx.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/video_homography.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/videocapture_pvapi.cpp
+
+opencv_apps_add_nodelet(match_template match_template/match_template src/nodelet/match_template_nodelet.cpp)
 
 add_library(${PROJECT_NAME} SHARED
   src/nodelet/nodelet.cpp
