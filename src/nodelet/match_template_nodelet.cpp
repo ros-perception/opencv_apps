@@ -227,11 +227,6 @@ namespace match_template
       //templ_ = imread(templ_file, cv::IMREAD_COLOR);
       templ_ = imread (templ_file, cv::IMREAD_COLOR);
 
-      if (debug_view_)
-      {
-        cv::imshow ("Match Template", templ_);
-        int c = cv::waitKey (1);
-      }
       prev_stamp_ = ros::Time (0, 0);
 
       reconfigure_server_ = boost::make_shared < dynamic_reconfigure::Server < Config > >(*pnh_);
