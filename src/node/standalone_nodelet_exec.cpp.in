@@ -45,7 +45,7 @@ int main(int argc, char **argv)
 
     // need to use 1 worker thread to prevent freezing in imshow, calling imshow from mutiple threads
     //nodelet::Loader manager(false);
-    ros::NodeHandle("~").setParam("num_worker_threads", 1); // need to call   Loader(bool provide_ros_api = true);
+    ros::param::set("~num_worker_threads", 1); // need to call   Loader(bool provide_ros_api = true);
     nodelet::Loader manager(true);
     nodelet::M_string remappings;
     nodelet::V_string my_argv(argv + 1, argv + argc);
