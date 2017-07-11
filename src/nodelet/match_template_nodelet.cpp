@@ -52,6 +52,7 @@
 #include <dynamic_reconfigure/server.h>
 #include "opencv_apps/MatchTemplateConfig.h"
 #include "opencv_apps/RectArrayStamped.h"
+#include <std_msgs/Float64.h>
 
 namespace match_template
 {
@@ -61,6 +62,7 @@ namespace match_template
     image_transport::Publisher matched_img_pub_;
     image_transport::Subscriber img_sub_;
     image_transport::CameraSubscriber cam_sub_;
+    ros::Publisher matched_val_pub_;
     ros::Publisher msg_pub_;
 
     boost::shared_ptr < image_transport::ImageTransport > it_;
@@ -135,14 +137,12 @@ namespace match_template
         {
           matchTemplate (frame, templ_, result, match_method_);
         }
-        //! [normalize]
-        //normalize (result, result, 0, 255, cv::NORM_MINMAX, CV_8UC1, cv::Mat ());
-        normalize (result, result, 0, 255, cv::NORM_MINMAX, CV_8UC1, cv::Mat ());
 
         //! [best_match]
         /// Localizing the best match with minMaxLoc
         double minVal;
         double maxVal;
+        double matchVal;
         cv::Point minLoc;
         cv::Point maxLoc;
         cv::Point matchLoc;
@@ -153,13 +153,23 @@ namespace match_template
         if (match_method_ == CV_TM_SQDIFF || match_method_ == CV_TM_SQDIFF_NORMED || match_method_ == CV_TM_CCORR)
         {
           matchLoc = minLoc;
+          matchVal = minVal;
         }
         else
         {
           matchLoc = maxLoc;
+          matchVal = maxVal;
         }
+        NODELET_DEBUG_STREAM(std::fixed << std::setw(12) << minVal << " " << maxVal << " min " << matchVal);
+
+        //! [normalize] for visualization
+        normalize (result, result, 0, 255, cv::NORM_MINMAX, CV_8UC1, cv::Mat ());
+
         rectangle (frame, matchLoc, cv::Point (matchLoc.x + templ_.cols, matchLoc.y + templ_.rows), cv::Scalar::all (0),
                    2, 8, 0);
+        std::stringstream ss;
+        ss << std::fixed << std::setw(12) << std::setprecision(0) << matchVal;
+        cv::putText(frame, ss.str(), cv::Point(0,20), cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(255.0, 255.0, 255.0), 1, CV_AA);
         rectangle (result, cv::Point (matchLoc.x - templ_.cols/2, matchLoc.y - templ_.rows/2), cv::Point (matchLoc.x + templ_.cols/2, matchLoc.y + templ_.rows/2),
                    cv::Scalar::all (0), 2, 8, 0);
 
@@ -179,6 +189,9 @@ namespace match_template
           cv_bridge::CvImage (msg->header, sensor_msgs::image_encodings::MONO8, result).toImageMsg ();
         img_pub_.publish (out_img);
         matched_img_pub_.publish (match_img);
+        std_msgs::Float64 matched_val_msg;
+        matched_val_msg.data = matchVal;
+        matched_val_pub_.publish (matched_val_msg);
       }
       catch (cv::Exception & e)
       {
@@ -250,6 +263,7 @@ namespace match_template
 
       img_pub_ = advertiseImage (*pnh_, "image", 1);
       matched_img_pub_ = advertiseImage (*pnh_, "matched_image", 1);
+      matched_val_pub_ = advertise< std_msgs::Float64 > (*pnh_, "matched_value", 1);
       msg_pub_ = advertise < opencv_apps::RectArrayStamped > (*pnh_, "matched_rectangle", 1);
 
       onInitPostProcess ();
