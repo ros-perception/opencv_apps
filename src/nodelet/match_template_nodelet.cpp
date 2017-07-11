@@ -88,6 +88,10 @@ namespace match_template
     void reconfigureCallback (Config & new_config, uint32_t level)
     {
       config_ = new_config;
+      if ( match_method_ != config_.match_method ) {
+        match_method_ = config_.match_method;
+        NODELET_WARN_STREAM("Change Mathing Method to " << match_method_);
+      }
     }
 
     const std::string & frameWithDefault (const std::string & frame, const std::string & image_frame)
