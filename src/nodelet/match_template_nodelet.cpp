@@ -122,13 +122,6 @@ namespace match_template
         int result_rows = frame.rows - templ_.rows + 1;
         cv::Mat result (result_rows, result_cols, CV_32FC1);
 
-        //-- Show template
-        if (debug_view_)
-        {
-          cv::imshow ("Template", templ_);
-          int c = cv::waitKey (1);
-        }
-
         //! [match_template]
         /// Do the Matching and Normalize
         bool method_accepts_mask = (match_method_ == CV_TM_SQDIFF || match_method_ == CV_TM_CCORR_NORMED);
@@ -169,6 +162,15 @@ namespace match_template
                    2, 8, 0);
         rectangle (result, matchLoc, cv::Point (matchLoc.x + templ_.cols, matchLoc.y + templ_.rows),
                    cv::Scalar::all (0), 2, 8, 0);
+
+        //-- Show template and result
+        if (debug_view_)
+        {
+          cv::imshow ("Template", templ_);
+          cv::imshow ("Soure Image", frame);
+          cv::imshow ("Result window", result);
+          int c = cv::waitKey (1);
+        }
 
         // Publish the image.
         sensor_msgs::Image::Ptr out_img =
@@ -239,11 +241,6 @@ namespace match_template
         exit (-1);
       }
 
-      if (debug_view_)
-      {
-        cv::imshow ("Match Template", templ_);
-        int c = cv::waitKey (1);
-      }
       prev_stamp_ = ros::Time (0, 0);
 
       reconfigure_server_ = boost::make_shared < dynamic_reconfigure::Server < Config > >(*pnh_);
