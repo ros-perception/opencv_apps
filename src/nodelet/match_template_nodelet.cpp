@@ -232,13 +232,12 @@ namespace match_template
         mask_ = imread (mask_file, cv::IMREAD_COLOR);
       }
 #endif
-      if (templ_file.empty ())
-      {
-        NODELET_ERROR ("Cannot open template file %s", templ_file.c_str ());
-        exit (0);
-      }
-      //templ_ = imread(templ_file, cv::IMREAD_COLOR);
       templ_ = imread (templ_file, cv::IMREAD_COLOR);
+      if (!templ_.data)
+      {
+        NODELET_ERROR ("Cannot open template file (%s)", templ_file.c_str ());
+        exit (-1);
+      }
 
       if (debug_view_)
       {
