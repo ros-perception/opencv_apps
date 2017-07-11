@@ -160,7 +160,7 @@ namespace match_template
         }
         rectangle (frame, matchLoc, cv::Point (matchLoc.x + templ_.cols, matchLoc.y + templ_.rows), cv::Scalar::all (0),
                    2, 8, 0);
-        rectangle (result, matchLoc, cv::Point (matchLoc.x + templ_.cols, matchLoc.y + templ_.rows),
+        rectangle (result, cv::Point (matchLoc.x - templ_.cols/2, matchLoc.y - templ_.rows/2), cv::Point (matchLoc.x + templ_.cols/2, matchLoc.y + templ_.rows/2),
                    cv::Scalar::all (0), 2, 8, 0);
 
         //-- Show template and result
