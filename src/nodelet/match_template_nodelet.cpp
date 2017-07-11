@@ -63,7 +63,7 @@ namespace match_template
     image_transport::Subscriber img_sub_;
     image_transport::CameraSubscriber cam_sub_;
     ros::Publisher matched_val_pub_;
-    ros::Publisher msg_pub_;
+    ros::Publisher matched_rect_pub_;
 
     boost::shared_ptr < image_transport::ImageTransport > it_;
 
@@ -189,6 +189,18 @@ namespace match_template
           cv_bridge::CvImage (msg->header, sensor_msgs::image_encodings::MONO8, result).toImageMsg ();
         img_pub_.publish (out_img);
         matched_img_pub_.publish (match_img);
+
+        // Publish the result.
+        opencv_apps::RectArrayStamped matched_rect_msg;
+        matched_rect_msg.header = msg->header;
+        opencv_apps::Rect rect_msg;
+        rect_msg.x = matchLoc.x;
+        rect_msg.y = matchLoc.y;
+        rect_msg.width = templ_.cols;
+        rect_msg.height = templ_.rows;
+        matched_rect_msg.rects.push_back(rect_msg);
+        matched_rect_pub_.publish (matched_rect_msg);
+
         std_msgs::Float64 matched_val_msg;
         matched_val_msg.data = matchVal;
         matched_val_pub_.publish (matched_val_msg);
@@ -264,7 +276,7 @@ namespace match_template
       img_pub_ = advertiseImage (*pnh_, "image", 1);
       matched_img_pub_ = advertiseImage (*pnh_, "matched_image", 1);
       matched_val_pub_ = advertise< std_msgs::Float64 > (*pnh_, "matched_value", 1);
-      msg_pub_ = advertise < opencv_apps::RectArrayStamped > (*pnh_, "matched_rectangle", 1);
+      matched_rect_pub_ = advertise < opencv_apps::RectArrayStamped > (*pnh_, "matched_rectangle", 1);
 
       onInitPostProcess ();
     }
