@@ -72,12 +72,16 @@ namespace match_template
 
     bool debug_view_;
     int match_method_;
+#if (CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 2) // mask is only supported since opencv 3.2 (https://github.com/opencv/opencv/pull/3554)
     bool use_mask_;
+#endif
 
       ros::Time prev_stamp_;
 
       cv::Mat templ_;
+#if (CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 2)
       cv::Mat mask_;
+#endif
 
     void reconfigureCallback (Config & new_config, uint32_t level)
     {
@@ -128,11 +132,13 @@ namespace match_template
         //! [match_template]
         /// Do the Matching and Normalize
         bool method_accepts_mask = (match_method_ == CV_TM_SQDIFF || match_method_ == CV_TM_CCORR_NORMED);
+#if (CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 2)
         if (use_mask_ && method_accepts_mask)
         {
           matchTemplate (frame, templ_, result, match_method_, mask_);
         }
         else
+#endif
         {
           matchTemplate (frame, templ_, result, match_method_);
         }
@@ -204,10 +210,15 @@ namespace match_template
 
       pnh_->param ("debug_view", debug_view_, false);
       pnh_->param ("match_method", match_method_, (int) CV_TM_SQDIFF);
+#if (CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 2)
       pnh_->param ("use_mask", use_mask_, false);
-      std::string templ_file, mask_file;
+#endif
+      std::string templ_file;
       pnh_->param ("template_file", templ_file, std::string ("template.png"));
+#if (CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 2)
+      std::string mask_file;
       pnh_->param ("mask_file", mask_file, std::string ("mask.png"));
+#endif
 
       NODELET_INFO ("template_file: %s", templ_file.c_str ());
 
@@ -215,10 +226,12 @@ namespace match_template
       {
         always_subscribe_ = true;
       }
+#if (CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 2)
       if (use_mask_)
       {
         mask_ = imread (mask_file, cv::IMREAD_COLOR);
       }
+#endif
       if (templ_file.empty ())
       {
         NODELET_ERROR ("Cannot open template file %s", templ_file.c_str ());
