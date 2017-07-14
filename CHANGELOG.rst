@@ -2,8 +2,8 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.12.0 (2017-07-14)
+-------------------
 * [src/node/standalone_nodelet_exec.cpp.in] workaround for freezing imshow on kinetic (`#67 <https://github.com/ros-perception/opencv_apps/issues/67>`_)
   * use ros::param::set instead of ros::NodeHandle("~"), that did not output NODELET_INFO
   * workaround for freezing imshow on kinetic
