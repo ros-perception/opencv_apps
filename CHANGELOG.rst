@@ -2,6 +2,27 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [src/node/standalone_nodelet_exec.cpp.in] workaround for freezing imshow on kinetic (`#67 <https://github.com/ros-perception/opencv_apps/issues/67>`_)
+  * use ros::param::set instead of ros::NodeHandle("~"), that did not output NODELET_INFO
+  * workaround for freezing imshow on kinetic
+
+* [launch/hough_circles.launch] Corrected a typo and applied the node_name argument (`#69 <https://github.com/ros-perception/opencv_apps/issues/69>`_ )
+* [face_recognition] add nodelet / script / message files for face recognition (new) `#63 <https://github.com/ros-perception/opencv_apps/issues/63>`_ from furushchev/face-recognition-new
+
+  * add face_recognition nodelet / test
+    cfg/FaceRecognition.cfg
+    launch/face_recognition.launch
+    scripts/face_recognition_trainer.py
+    src/nodelet/face_recognition_nodelet.cpp
+
+  * [Face.msg] add label / confidence for face recognition
+  * [CMakeLists.txt] remove duplicate msg: RectArrayStamped.msg
+
+* cfg/*.cfg : Set useless use_camera_info flag to false in default (`#58 <https://github.com/ros-perception/opencv_apps/issues/58>`_ )
+* Contributors: Kei Okada, Kentaro Wada, Yuki Furuta, wangl5
+
 1.11.15 (2017-03-26)
 --------------------
 
