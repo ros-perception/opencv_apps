@@ -52,6 +52,7 @@
 #include <dynamic_reconfigure/server.h>
 #include "opencv_apps/MatchTemplateConfig.h"
 #include "opencv_apps/RectArrayStamped.h"
+#include "geometry_msgs/PointStamped.h"
 
 namespace match_template
 {
@@ -61,23 +62,24 @@ namespace match_template
     image_transport::Publisher matched_img_pub_;
     image_transport::Subscriber img_sub_;
     image_transport::CameraSubscriber cam_sub_;
+    image_transport::Subscriber template_sub_;
     ros::Publisher msg_pub_;
 
     boost::shared_ptr < image_transport::ImageTransport > it_;
-
+    
     typedef match_template::MatchTemplateConfig Config;
     typedef dynamic_reconfigure::Server < Config > ReconfigureServer;
     Config config_;
-      boost::shared_ptr < ReconfigureServer > reconfigure_server_;
+    boost::shared_ptr < ReconfigureServer > reconfigure_server_;
 
     bool debug_view_;
-    int match_method_;
+    // int match_method_;
     bool use_mask_;
 
-      ros::Time prev_stamp_;
+    ros::Time prev_stamp_;
 
-      cv::Mat templ_;
-      cv::Mat mask_;
+    cv::Mat templ_;
+    cv::Mat mask_;
 
     void reconfigureCallback (Config & new_config, uint32_t level)
     {
@@ -102,6 +104,11 @@ namespace match_template
       do_work (msg, msg->header.frame_id);
     }
 
+    void templateCallback (const sensor_msgs::ImageConstPtr & msg)
+    {
+      templ_ = cv_bridge::toCvCopy (msg, sensor_msgs::image_encodings::BGR8)->image;
+    }
+    
     void do_work (const sensor_msgs::ImageConstPtr & msg, const std::string input_frame_from_msg)
     {
       // Work on the image.
@@ -121,23 +128,24 @@ namespace match_template
         //-- Show template
         if (debug_view_)
         {
+          cv::imshow ("Image", frame);
           cv::imshow ("Template", templ_);
           int c = cv::waitKey (1);
         }
 
         //! [match_template]
         /// Do the Matching and Normalize
-        bool method_accepts_mask = (match_method_ == CV_TM_SQDIFF || match_method_ == CV_TM_CCORR_NORMED);
+        //bool method_accepts_mask = (match_method_ == CV_TM_SQDIFF || match_method_ == CV_TM_CCORR_NORMED);
+        bool method_accepts_mask = (config_.match_method == CV_TM_SQDIFF || config_.match_method == CV_TM_CCORR_NORMED);
         if (use_mask_ && method_accepts_mask)
         {
-          matchTemplate (frame, templ_, result, match_method_, mask_);
+          matchTemplate (frame, templ_, result, config_.match_method, mask_);
         }
         else
         {
-          matchTemplate (frame, templ_, result, match_method_);
+          matchTemplate (frame, templ_, result, config_.match_method);
         }
         //! [normalize]
-        //normalize (result, result, 0, 255, cv::NORM_MINMAX, CV_8UC1, cv::Mat ());
         normalize (result, result, 0, 255, cv::NORM_MINMAX, CV_8UC1, cv::Mat ());
 
         //! [best_match]
@@ -147,22 +155,52 @@ namespace match_template
         cv::Point minLoc;
         cv::Point maxLoc;
         cv::Point matchLoc;
+        bool is_top = true;
+        int remove_margin_x = templ_.cols / 2;
+        int remove_margin_y = templ_.rows / 2;
 
-        cv::minMaxLoc (result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat ());
-        //! [match_loc]
-        /// For SQDIFF and SQDIFF_NORMED, the best matches are lower values. For all the other methods, the higher the better
-        if (match_method_ == CV_TM_SQDIFF || match_method_ == CV_TM_SQDIFF_NORMED || match_method_ == CV_TM_CCORR)
-        {
-          matchLoc = minLoc;
+        // find top 10 position from image
+        for (int i=0; i<3; i++) {
+          cv::minMaxLoc (result, &minVal, &maxVal, &minLoc, &maxLoc, cv::Mat ());
+          NODELET_INFO ("min_val, max_val = %f %f", double(minVal), double(maxVal));
+          //! [match_loc]
+          /// For SQDIFF and SQDIFF_NORMED, the best matches are lower values. For all the other methods, the higher the better
+          if (config_.match_method == CV_TM_SQDIFF || config_.match_method == CV_TM_SQDIFF_NORMED || config_.match_method == CV_TM_CCORR)
+          {
+            matchLoc = minLoc;
+            // remove matched region with some margin
+            rectangle (result,
+                       cv::Point(matchLoc.x - remove_margin_x,
+                                 matchLoc.y - remove_margin_y),
+                       cv::Point(matchLoc.x + remove_margin_x,
+                                 matchLoc.y + remove_margin_y),
+                       255, -1, 8, 0);
+          }
+          else
+          {
+            matchLoc = maxLoc;
+            // remove matched region
+            rectangle (result,
+                       cv::Point(matchLoc.x - remove_margin_x,
+                                 matchLoc.y - remove_margin_y),
+                       cv::Point(matchLoc.x + remove_margin_x,
+                                 matchLoc.y + remove_margin_y),
+                       0, -1, 8, 0);
+          }
+          if (is_top)
+          {
+            rectangle (frame, matchLoc, cv::Point (matchLoc.x + templ_.cols,
+                                                   matchLoc.y + templ_.rows),
+                       cv::Scalar(0, 0, 255), 4, 8, 0);
+            is_top = false;
+          }
+          else
+          {
+            rectangle (frame, matchLoc, cv::Point (matchLoc.x + templ_.cols,
+                                                   matchLoc.y + templ_.rows),
+                       cv::Scalar(0, 255, 0), 2, 8, 0);
+          }
         }
-        else
-        {
-          matchLoc = maxLoc;
-        }
-        rectangle (frame, matchLoc, cv::Point (matchLoc.x + templ_.cols, matchLoc.y + templ_.rows), cv::Scalar::all (0),
-                   2, 8, 0);
-        rectangle (result, matchLoc, cv::Point (matchLoc.x + templ_.cols, matchLoc.y + templ_.rows),
-                   cv::Scalar::all (0), 2, 8, 0);
 
         // Publish the image.
         sensor_msgs::Image::Ptr out_img =
@@ -171,6 +209,16 @@ namespace match_template
           cv_bridge::CvImage (msg->header, sensor_msgs::image_encodings::MONO8, result).toImageMsg ();
         img_pub_.publish (out_img);
         matched_img_pub_.publish (match_img);
+
+        // Publish the point on the image
+        geometry_msgs::PointStamped point;
+        point.header.stamp = ros::Time::now ();
+        point.header.frame_id = input_frame_from_msg;
+        point.point.x = matchLoc.x + templ_.cols / 2;
+        point.point.y = matchLoc.y + templ_.rows / 2;
+        point.point.z = 0;
+        msg_pub_.publish (point);
+
       }
       catch (cv::Exception & e)
       {
@@ -187,6 +235,9 @@ namespace match_template
         cam_sub_ = it_->subscribeCamera ("image", 3, &MatchTemplateNodelet::imageCallbackWithInfo, this);
       else
         img_sub_ = it_->subscribe ("image", 3, &MatchTemplateNodelet::imageCallback, this);
+
+      template_sub_ = it_->subscribe ("template", 3, &MatchTemplateNodelet::templateCallback, this);
+      
     }
 
     void unsubscribe ()
@@ -194,6 +245,7 @@ namespace match_template
       NODELET_DEBUG ("Unsubscribing from image topic.");
       img_sub_.shutdown ();
       cam_sub_.shutdown ();
+      template_sub_.shutdown ();
     }
 
   public:
@@ -203,7 +255,7 @@ namespace match_template
       it_ = boost::shared_ptr < image_transport::ImageTransport > (new image_transport::ImageTransport (*nh_));
 
       pnh_->param ("debug_view", debug_view_, false);
-      pnh_->param ("match_method", match_method_, (int) CV_TM_SQDIFF);
+      // pnh_->param ("match_method", match_method_, (int) CV_TM_SQDIFF);
       pnh_->param ("use_mask", use_mask_, false);
       std::string templ_file, mask_file;
       pnh_->param ("template_file", templ_file, std::string ("template.png"));
@@ -224,7 +276,6 @@ namespace match_template
         NODELET_ERROR ("Cannot open template file %s", templ_file.c_str ());
         exit (0);
       }
-      //templ_ = imread(templ_file, cv::IMREAD_COLOR);
       templ_ = imread (templ_file, cv::IMREAD_COLOR);
 
       prev_stamp_ = ros::Time (0, 0);
@@ -236,7 +287,7 @@ namespace match_template
 
       img_pub_ = advertiseImage (*pnh_, "image", 1);
       matched_img_pub_ = advertiseImage (*pnh_, "matched_image", 1);
-      msg_pub_ = advertise < opencv_apps::RectArrayStamped > (*pnh_, "matched_rectangle", 1);
+      msg_pub_ = advertise < geometry_msgs::PointStamped > (*pnh_, "pixel_position", 1);
 
       onInitPostProcess ();
     }
