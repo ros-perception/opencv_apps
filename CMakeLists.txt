@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(opencv_apps)
 
-find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport image_geometry nodelet roscpp sensor_msgs)
 
 find_package(OpenCV REQUIRED)
 message(STATUS "OpenCV VERSION: ${OpenCV_VERSION}")
