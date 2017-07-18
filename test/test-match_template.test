@@ -1,44 +1,33 @@
 <launch>
   <arg name="gui" default="true" />
-  <arg name="use_opencv3" default="false" />
-  <arg name="use_opencv3_1" default="false" />
-  <arg name="use_opencv3_2" default="false" />
   <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag" />
 
   <group ns="wide_stereo/left" >
     <node name="image_proc" pkg="image_proc" type="image_proc" />
-    <node name="image_view" pkg="image_view" type="image_view" args="image:=image_rect" if="$(arg gui)" />
-    <!-- match_template.cpp -->
+    <node name="image_view" pkg="image_view" type="image_view" args="image:=image_rect_color" if="$(arg gui)" />
+
+    <!-- convex_hull.cpp -->
     <include file="$(find opencv_apps)/launch/match_template.launch" >
       <arg name="debug_view" value="$(arg gui)" />
-      <arg name="image" value="image_raw" />
-      <arg name="template_file" value="$(find opencv_apps)/test/template.png"/>
-      <!--
-      <arg name="use_opencv3" value="$(arg use_opencv3)" />
-      <arg name="use_opencv3_1" value="$(arg use_opencv3_1)" />
-      <arg name="use_opencv3_2" value="$(arg use_opencv3_2)" />
-      -->
+      <arg name="image" value="image_rect" />
+      <arg name="template_file" value="$(find opencv_apps)/test/template.png" />
+      <arg name="mask_file" value="" />
     </include>
 
     <!-- Test Codes -->
-    <node name="scene_saver" pkg="image_view" type="image_saver">
-      <remap from="image" to="match_template/image" />
-      <param name="filename_format" value="$(find opencv_apps)/test/matched_scene.png"/>
-    </node>
-    <node name="template_saver" pkg="image_view" type="image_saver">
-      <remap from="image" to="match_template/template" />
-      <param name="filename_format" value="$(find opencv_apps)/test/matched_template.png" />
+    <node name="match_template_saver" pkg="image_view" type="image_saver" args="image:=match_template/image" >
+      <param name="filename_format" value="$(find opencv_apps)/test/match_template.png"/>
     </node>
     <param name="image_test/topic" value="match_template/image" />
     <test test-name="image_test" pkg="rostest" type="hztest" name="image_test" >
-      <param name="hz" value="16" />
-      <param name="hzerror" value="14" />
+      <param name="hz" value="20" />
+      <param name="hzerror" value="15" />
       <param name="test_duration" value="5.0" /> 
     </test>
     <param name="score_image_test/topic" value="match_template/score_image" />
     <test test-name="score_image_test" pkg="rostest" type="hztest" name="score_image_test" >
-      <param name="hz" value="16" />
-      <param name="hzerror" value="14" />
+      <param name="hz" value="20" />
+      <param name="hzerror" value="15" />
       <param name="test_duration" value="5.0" /> 
     </test>
   </group>

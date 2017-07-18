@@ -1,38 +1,50 @@
 /*********************************************************************
- * Software License Agreement (BSD License)
- *
- *  Copyright (c) 2017, Ryosuke Tajima.
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above
- *     copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *   * Neither the name of the Ryosuke Tajima nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- *  POSSIBILITY OF SUCH DAMAGE.
- *********************************************************************/
+* Software License Agreement (BSD License)
+*
+*  Copyright (c) 2017, Ryosuke Tajima.
+*  All rights reserved.
+*
+*  Redistribution and use in source and binary forms, with or without
+*  modification, are permitted provided that the following conditions
+*  are met:
+*
+*   * Redistributions of source code must retain the above copyright
+*     notice, this list of conditions and the following disclaimer.
+*   * Redistributions in binary form must reproduce the above
+*     copyright notice, this list of conditions and the following
+*     disclaimer in the documentation and/or other materials provided
+*     with the distribution.
+*   * Neither the name of the Ryosuke Tajima nor the names of its
+*     contributors may be used to endorse or promote products derived
+*     from this software without specific prior written permission.
+*
+*  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+*  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+*  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+*  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+*  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+*  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+*  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+*  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+*  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+*  POSSIBILITY OF SUCH DAMAGE.
+*********************************************************************/
 
 // https://github.com/opencv/opencv/raw/master/samples/cpp/tutorial_code/Histograms_Matching/MatchTemplate_Demo.cpp
+/**
+ * @file MatchTemplate_Demo.cpp
+ * @brief Sample code to use the function MatchTemplate
+ * @author OpenCV team
+ */
+
+#include <ros/ros.h>
+#include "opencv_apps/nodelet.h"
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/imgproc/types_c.h>
@@ -70,6 +82,11 @@ class MatchTemplateNodelet:public opencv_apps::Nodelet
   bool debug_view_;
   ros::Time prev_stamp_;
   cv::Mat templ_;
+  // mask is only supported since opencv 3.2 (https://github.com/opencv/opencv/pull/3554)
+#if (CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 2)
+  bool use_mask_;
+  cv::Mat mask_;
+#endif
 
   std::string scene_window_name_, templ_window_name_;
   static bool mouse_update_;
@@ -164,7 +181,17 @@ class MatchTemplateNodelet:public opencv_apps::Nodelet
         mouse_update_ = false;
       }
       // Match template
-      matchTemplate (frame, templ_, score, config_.match_method);
+      bool method_accepts_mask = (config_.match_method == CV_TM_SQDIFF || config_.match_method == CV_TM_CCORR_NORMED);      
+#if (CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 2)
+      if (use_mask_ && method_accepts_mask)
+      {
+        matchTemplate (frame, templ_, score, config_.match_method, mask_);
+      }
+      else
+#endif
+      {
+        matchTemplate (frame, templ_, score, config_.match_method);
+      }
       /// Localizing the best match with minMaxLoc
       int remove_margin_x = templ_.cols / 2;
       int remove_margin_y = templ_.rows / 2;
@@ -290,10 +317,16 @@ public:
     pnh_->param ("template_file", templ_file, std::string (""));
     if (!templ_file.empty())
     {
-      NODELET_INFO ("template_file: %s\n", templ_file.c_str());
       templ_ = imread (templ_file, cv::IMREAD_COLOR);
     }
-
+#if (CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 2)
+    std::string mask_file;
+    pnh_->param ("mask_file", mask_file, std::string ("mask.png"));
+    if (use_mask_)
+    {
+      mask_ = imread (mask_file, cv::IMREAD_COLOR);
+    }
+#endif
     if (debug_view_)
     {
       always_subscribe_ = true;
@@ -310,6 +343,7 @@ public:
     reconfigure_server_->setCallback (f);
 
     scene_img_pub_ = advertiseImage (*pnh_, "image", 1);
+    // template is global topic, so mouse selection publish it globaly.
     templ_img_pub_ = advertiseImage (*nh_, "template", 1);
     score_img_pub_ = advertiseImage (*pnh_, "score_image", 1);
     msg_pub_ = advertise < geometry_msgs::PointStamped > (*pnh_, "pixel_position", 1);
@@ -318,7 +352,6 @@ public:
     onInitPostProcess ();
   }
 };
-// bool MatchTemplateNodelet::need_config_update_ = false;
 bool MatchTemplateNodelet::mouse_update_ = false;
 int MatchTemplateNodelet::mouse_event_ = 0;
 int MatchTemplateNodelet::mouse_x_ = 0;

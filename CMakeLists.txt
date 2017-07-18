@@ -159,7 +159,7 @@ opencv_apps_add_nodelet(discrete_fourier_transform discrete_fourier_transform/di
   # ./tutorial_code/Histograms_Matching/calcHist_Demo.cpp
   #  ./tutorial_code/Histograms_Matching/compareHist_Demo.cpp
   # ./tutorial_code/Histograms_Matching/EqualizeHist_Demo.cpp
-  # ./tutorial_code/Histograms_Matching/MatchTemplate_Demo.cpp
+opencv_apps_add_nodelet(match_template match_template/match_template src/nodelet/match_template_nodelet.cpp) # ./tutorial_code/Histograms_Matching/MatchTemplate_Demo.cpp
 
 # imagecodecs
   # ./tutorial_code/imgcodecs/GDAL_IO/gdal-image.cpp
@@ -330,8 +330,6 @@ endif()
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/video_dmtx.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/video_homography.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/videocapture_pvapi.cpp
-
-opencv_apps_add_nodelet(match_template match_template/match_template src/nodelet/match_template_nodelet.cpp)
 
 add_library(${PROJECT_NAME} SHARED
   src/nodelet/nodelet.cpp
