@@ -4,8 +4,8 @@
   <arg name="use_camera_info" default="false" doc="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
   <arg name="debug_view" default="false" doc="Specify whether the node displays a window to show edge image" />
   <arg name="match_method" default="5" doc="Matching method. 0:CV_TM_SQDIFF 1:CV_TM_SQDIFF_NORMED 2:CV_TM_CCORR 3:CV_TM_CCORR_NORMED 4:CV_TM_CCOEFF 5:CV_TM_CCOEFF_NORMED" />
-  <arg name="template_file" default="$(find opencv_apps)/template.png" doc="filename for template image"/>
-  <arg name="mask_file" default="$(find opencv_apps)/mask.png" doc="filename for mask image"/>
+  <arg name="template_file" default="" doc="filename for template image"/>
+  <arg name="mask_file" default="" doc="filename for mask image"/>
 
   <!-- match_template_nodelet.cpp -->
   <node name="$(arg node_name)" pkg="opencv_apps" type="match_template" output="screen">
