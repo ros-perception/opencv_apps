@@ -159,7 +159,7 @@ class LKFlowNodelet : public opencv_apps::Nodelet
       if( needToInit )
       {
         // automatic initialization
-        cv::goodFeaturesToTrack(gray, points[1], MAX_COUNT, 0.01, 10, cv::Mat(), 3, 0, 0.04);
+        cv::goodFeaturesToTrack(gray, points[1], MAX_COUNT, 0.01, 10, cv::Mat(), 3, false, 0.04);
         cv::cornerSubPix(gray, points[1], subPixWinSize, cv::Size(-1,-1), termcrit);
         addRemovePt = false;
       }
