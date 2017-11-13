@@ -5,6 +5,7 @@
   <arg name="use_opencv3" default="false" />
   <arg name="use_opencv3_1" default="false" />
   <arg name="use_opencv3_2" default="false" />
+  <arg name="use_opencv3_3" default="false" />
   <arg name="debug_view" default="true" />
 
   <arg name="image" default="image" />
@@ -18,6 +19,7 @@
     <arg name="use_opencv3" value="$(arg use_opencv3)" />
     <arg name="use_opencv3_1" value="$(arg use_opencv3_1)" />
     <arg name="use_opencv3_2" value="$(arg use_opencv3_2)" />
+    <arg name="use_opencv3_3" value="$(arg use_opencv3_3)" />
   </include>
 
   <node name="face_recognition" pkg="opencv_apps" type="face_recognition"
