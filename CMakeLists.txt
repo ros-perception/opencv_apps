@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(opencv_apps)
 
-find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport image_geometry nodelet roscpp sensor_msgs)
 
 find_package(OpenCV REQUIRED)
 message(STATUS "OpenCV VERSION: ${OpenCV_VERSION}")
@@ -39,6 +39,7 @@ generate_dynamic_reconfigure_options(
   cfg/CamShift.cfg
   cfg/FBackFlow.cfg
   cfg/LKFlow.cfg
+  cfg/MatchTemplate.cfg
   cfg/PeopleDetect.cfg
   cfg/PhaseCorr.cfg
   cfg/SegmentObjects.cfg
@@ -158,7 +159,7 @@ opencv_apps_add_nodelet(discrete_fourier_transform discrete_fourier_transform/di
   # ./tutorial_code/Histograms_Matching/calcHist_Demo.cpp
   #  ./tutorial_code/Histograms_Matching/compareHist_Demo.cpp
   # ./tutorial_code/Histograms_Matching/EqualizeHist_Demo.cpp
-  # ./tutorial_code/Histograms_Matching/MatchTemplate_Demo.cpp
+opencv_apps_add_nodelet(match_template match_template/match_template src/nodelet/match_template_nodelet.cpp) # ./tutorial_code/Histograms_Matching/MatchTemplate_Demo.cpp
 
 # imagecodecs
   # ./tutorial_code/imgcodecs/GDAL_IO/gdal-image.cpp

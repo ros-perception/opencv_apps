@@ -70,6 +70,8 @@ add_rostest(test-watershed_segmentation.test ARGS gui:=false)
 add_rostest(test-simple_example.test ARGS gui:=false)
 add_rostest(test-simple_compressed_example.test ARGS gui:=false)
 
+add_rostest(test-match_template.test ARGS gui:=false)
+
 if(roslaunch_VERSION VERSION_LESS "1.11.1")
   message(WARNING "roslaunch_add_file check fails with unsupported doc attributes ${roslaunch_VERSION}")
 else()
