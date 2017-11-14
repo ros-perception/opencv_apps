@@ -2,7 +2,8 @@
   <arg name="node_name" default="face_detection" />
   <arg name="use_opencv3" default="false" />
   <arg name="use_opencv3_1" default="false" />
-  <arg name="use_opencv3_2" default="$(arg use_opencv3)" />
+  <arg name="use_opencv3_2" default="false" />
+  <arg name="use_opencv3_3" default="$(arg use_opencv3)" />
 
   <arg name="image" default="image" doc="The image topic. Should be remapped to the name of the real image topic." />
 
@@ -17,6 +18,10 @@
        name="face_cascade_name" default="$(find opencv3)/../OpenCV-3.2.0-dev/haarcascades/haarcascade_frontalface_alt.xml" doc="Face dtection cascade Filename" />
   <arg if="$(arg use_opencv3_2)"
        name="eyes_cascade_name" default="$(find opencv3)/../OpenCV-3.2.0-dev/haarcascades/haarcascade_eye_tree_eyeglasses.xml" doc="Eye dtection cascade Filename" />
+  <arg if="$(arg use_opencv3_3)"
+       name="face_cascade_name" default="$(find opencv3)/../OpenCV-3.3.1/haarcascades/haarcascade_frontalface_alt.xml" doc="Face dtection cascade Filename" />
+  <arg if="$(arg use_opencv3_3)"
+       name="eyes_cascade_name" default="$(find opencv3)/../OpenCV-3.3.1/haarcascades/haarcascade_eye_tree_eyeglasses.xml" doc="Eye dtection cascade Filename" />
   <arg unless="$(arg use_opencv3)"
        name="face_cascade_name" default="/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml" doc="Face dtection cascade Filename" />
   <arg unless="$(arg use_opencv3)"
