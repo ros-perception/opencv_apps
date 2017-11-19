@@ -53,7 +53,7 @@
 #include "opencv_apps/Rect.h"
 #include "opencv_apps/RectArrayStamped.h"
 
-namespace people_detect {
+namespace opencv_apps {
 class PeopleDetectNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -63,7 +63,7 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef people_detect::PeopleDetectConfig Config;
+  typedef opencv_apps::PeopleDetectConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -231,7 +231,20 @@ public:
   }
 };
 bool PeopleDetectNodelet::need_config_update_ = false;
-}
+} // namespace opencv_apps
+
+namespace people_detect {
+class PeopleDetectNodelet : public opencv_apps::PeopleDetectNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet people_detect/people_detect is deprecated, "
+             "and renamed to opencv_apps/people_detect.");
+    opencv_apps::PeopleDetectNodelet::onInit();
+  }
+};
+} // namespace people_detect
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::PeopleDetectNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(people_detect::PeopleDetectNodelet, nodelet::Nodelet);

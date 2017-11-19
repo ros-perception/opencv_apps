@@ -53,7 +53,7 @@
 #include "opencv_apps/ContourArrayStamped.h"
 #include "opencv_apps/Point2DArray.h"
 
-namespace watershed_segmentation {
+namespace opencv_apps {
 class WatershedSegmentationNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -64,7 +64,7 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef watershed_segmentation::WatershedSegmentationConfig Config;
+  typedef opencv_apps::WatershedSegmentationConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -92,7 +92,7 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
     on_mouse_flags_ = flags;
   }
 
-  void reconfigureCallback(watershed_segmentation::WatershedSegmentationConfig &new_config, uint32_t level)
+  void reconfigureCallback(opencv_apps::WatershedSegmentationConfig &new_config, uint32_t level)
   {
     config_ = new_config;
   }
@@ -337,7 +337,19 @@ int WatershedSegmentationNodelet::on_mouse_event_ = 0;
 int WatershedSegmentationNodelet::on_mouse_x_ = 0;
 int WatershedSegmentationNodelet::on_mouse_y_ = 0;
 int WatershedSegmentationNodelet::on_mouse_flags_ = 0;
-}
+} // namespace opencv_apps
+
+namespace watershed_segmentation {
+class WatershedSegmentationNodelet : public opencv_apps::WatershedSegmentationNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet watershed_segmentation/watershed_segmentation is deprecated, "
+             "and renamed to opencv_apps/watershed_segmentation.");
+    opencv_apps::WatershedSegmentationNodelet::onInit();
+  }
+};
+} // namespace watershed_segmentation
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::WatershedSegmentationNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(watershed_segmentation::WatershedSegmentationNodelet, nodelet::Nodelet);

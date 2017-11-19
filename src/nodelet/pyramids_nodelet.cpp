@@ -53,7 +53,7 @@
 #include "opencv_apps/PyramidsConfig.h"
 #include <dynamic_reconfigure/server.h>
 
-namespace pyramids {
+namespace opencv_apps {
 class PyramidsNodelet : public opencv_apps::Nodelet {
   image_transport::Publisher img_pub_;
   image_transport::Subscriber img_sub_;
@@ -62,7 +62,7 @@ class PyramidsNodelet : public opencv_apps::Nodelet {
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef pyramids::PyramidsConfig Config;
+  typedef opencv_apps::PyramidsConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -107,14 +107,14 @@ class PyramidsNodelet : public opencv_apps::Nodelet {
       // Do the work
       int num = num_of_pyramids_;
       switch (config_.pyramids_type) {
-        case pyramids::Pyramids_Up: {
+        case opencv_apps::Pyramids_Up: {
           while(num) {
             num--;
             cv::pyrUp(src_image, src_image, cv::Size(src_image.cols * 2, src_image.rows * 2));
           }
           break;
         }
-        case pyramids::Pyramids_Down: {
+        case opencv_apps::Pyramids_Down: {
           while(num) {
             num--;
             cv::pyrDown(src_image, src_image, cv::Size(src_image.cols / 2, src_image.rows / 2));
@@ -179,7 +179,20 @@ public:
     onInitPostProcess();
   }
 };
-}
+} // namespace opencv_apps
+
+namespace pyramids {
+class PyramidsNodelet : public opencv_apps::PyramidsNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet pyramids/pyramids is deprecated, "
+             "and renamed to opencv_apps/pyramids.");
+    opencv_apps::PyramidsNodelet::onInit();
+  }
+};
+} // namespace pyramids
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::PyramidsNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(pyramids::PyramidsNodelet, nodelet::Nodelet);

@@ -62,7 +62,7 @@
 #include <dynamic_reconfigure/server.h>
 #include "opencv_apps/EdgeDetectionConfig.h"
 
-namespace edge_detection {
+namespace opencv_apps {
 class EdgeDetectionNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -72,7 +72,7 @@ class EdgeDetectionNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef edge_detection::EdgeDetectionConfig Config;
+  typedef opencv_apps::EdgeDetectionConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -155,7 +155,7 @@ class EdgeDetectionNodelet : public opencv_apps::Nodelet
       std::string new_window_name;
       cv::Mat grad;
       switch (config_.edge_type) {
-        case edge_detection::EdgeDetection_Sobel:
+        case opencv_apps::EdgeDetection_Sobel:
           {
             /// Generate grad_x and grad_y
             cv::Mat grad_x, grad_y;
@@ -181,7 +181,7 @@ class EdgeDetectionNodelet : public opencv_apps::Nodelet
             new_window_name = "Sobel Edge Detection Demo";
             break;
           }
-        case edge_detection::EdgeDetection_Laplace:
+        case opencv_apps::EdgeDetection_Laplace:
           {
             cv::Mat dst;
             int kernel_size = 3;
@@ -196,7 +196,7 @@ class EdgeDetectionNodelet : public opencv_apps::Nodelet
             new_window_name = "Laplace Edge Detection Demo";
             break;
           }
-        case edge_detection::EdgeDetection_Canny:
+        case opencv_apps::EdgeDetection_Canny:
           {
             int edgeThresh = 1;
             int kernel_size = 3;
@@ -302,7 +302,20 @@ public:
   }
 };
 bool EdgeDetectionNodelet::need_config_update_ = false;
-}
+} // namespace opencv_apps
+
+namespace edge_detection {
+class EdgeDetectionNodelet : public opencv_apps::EdgeDetectionNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet edge_detection/edge_detection is deprecated, "
+             "and renamed to opencv_apps/edge_detection.");
+    opencv_apps::EdgeDetectionNodelet::onInit();
+  }
+};
+} // namespace edge_detection
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::EdgeDetectionNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(edge_detection::EdgeDetectionNodelet, nodelet::Nodelet);

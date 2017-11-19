@@ -47,7 +47,7 @@
 #include "opencv_apps/PhaseCorrConfig.h"
 #include "opencv_apps/Point2DStamped.h"
 
-namespace phase_corr {
+namespace opencv_apps {
 class PhaseCorrNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -57,7 +57,7 @@ class PhaseCorrNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef phase_corr::PhaseCorrConfig Config;
+  typedef opencv_apps::PhaseCorrConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -217,7 +217,20 @@ public:
   }
 };
 bool PhaseCorrNodelet::need_config_update_ = false;
-}
+} // namespace opencv_apps
+
+namespace phase_corr {
+class PhaseCorrNodelet : public opencv_apps::PhaseCorrNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet phase_corr/phase_corr is deprecated, "
+             "and renamed to opencv_apps/phase_corr.");
+    opencv_apps::PhaseCorrNodelet::onInit();
+  }
+};
+} // namespace phase_corr
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::PhaseCorrNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(phase_corr::PhaseCorrNodelet, nodelet::Nodelet);

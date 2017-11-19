@@ -55,7 +55,7 @@
 #include "opencv_apps/CircleArray.h"
 #include "opencv_apps/CircleArrayStamped.h"
 
-namespace hough_circles {
+namespace opencv_apps {
 class HoughCirclesNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -65,7 +65,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef hough_circles::HoughCirclesConfig Config;
+  typedef opencv_apps::HoughCirclesConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -345,7 +345,20 @@ public:
   }
 };
 bool HoughCirclesNodelet::need_config_update_ = false;
-}
+} // namespace opencv_apps
+
+namespace hough_circles {
+class HoughCirclesNodelet : public opencv_apps::HoughCirclesNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet hough_circles/hough_circles is deprecated, "
+             "and renamed to opencv_apps/hough_circles.");
+    opencv_apps::HoughCirclesNodelet::onInit();
+  }
+};
+} // namespace hough_circles
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::HoughCirclesNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(hough_circles::HoughCirclesNodelet, nodelet::Nodelet);

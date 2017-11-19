@@ -55,7 +55,7 @@
 #include "opencv_apps/ContourArray.h"
 #include "opencv_apps/ContourArrayStamped.h"
 
-namespace segment_objects {
+namespace opencv_apps {
 class SegmentObjectsNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -66,7 +66,7 @@ class SegmentObjectsNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef segment_objects::SegmentObjectsConfig Config;
+  typedef opencv_apps::SegmentObjectsConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -274,7 +274,20 @@ public:
   }
 };
 bool SegmentObjectsNodelet::need_config_update_ = false;
-}
+} // namespace opencv_apps
+
+namespace segment_objects {
+class SegmentObjectsNodelet : public opencv_apps::SegmentObjectsNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet segment_objects/segment_objects is deprecated, "
+             "and renamed to opencv_apps/segment_objects.");
+    opencv_apps::SegmentObjectsNodelet::onInit();
+  }
+};
+} // namespace segment_objects
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::SegmentObjectsNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(segment_objects::SegmentObjectsNodelet, nodelet::Nodelet);

@@ -54,7 +54,7 @@
 #include "opencv_apps/MomentArray.h"
 #include "opencv_apps/MomentArrayStamped.h"
 
-namespace contour_moments {
+namespace opencv_apps {
 
 // https://stackoverflow.com/questions/13495207/opencv-c-sorting-contours-by-their-contourarea
 // comparison function object
@@ -73,7 +73,7 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef contour_moments::ContourMomentsConfig Config;
+  typedef opencv_apps::ContourMomentsConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -276,7 +276,20 @@ public:
   }
 };
 bool ContourMomentsNodelet::need_config_update_ = false;
-}
+} // namespace opencv_apps
+
+namespace contour_moments {
+class ContourMomentsNodelet : public opencv_apps::ContourMomentsNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet contour_moments/contour_moments is deprecated, "
+             "and renamed to opencv_apps/contour_moments.");
+    opencv_apps::ContourMomentsNodelet::onInit();
+  }
+};
+} // namespace contour_moments
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::ContourMomentsNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(contour_moments::ContourMomentsNodelet, nodelet::Nodelet);

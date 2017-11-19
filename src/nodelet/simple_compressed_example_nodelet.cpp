@@ -51,6 +51,7 @@
 
 #include <dynamic_reconfigure/server.h>
 
+namespace opencv_apps {
 
 namespace simple_compressed_example {
 
@@ -214,6 +215,7 @@ public:
 #endif
 };
 
+} // namespace simple_compressed_example
 
 class SimpleCompressedExampleNodelet : public nodelet::Nodelet
 {
@@ -227,7 +229,19 @@ public:
   }
 };
 
-}
+} // namespace opencv_apps
+
+namespace simple_compressed_example {
+class SimpleCompressedExampleNodelet : public opencv_apps::SimpleCompressedExampleNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet simple_compressed_example/simple_compressed_example is deprecated, "
+             "and renamed to opencv_apps/simple_compressed_example.");
+    opencv_apps::SimpleCompressedExampleNodelet::onInit();
+  }
+};
+} // namespace simple_compressed_example
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::SimpleCompressedExampleNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(simple_compressed_example::SimpleCompressedExampleNodelet, nodelet::Nodelet);
