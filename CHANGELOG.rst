@@ -2,8 +2,8 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.0 (2017-11-20)
+------------------
 * Fix namespace and pkg name of nodelets (Closes (`#21 <https://github.com/ros-perception/opencv_apps/issues/21>`_)) (`#74 <https://github.com/ros-perception/opencv_apps/issues/74>`_)
   Fix namespace and pkg name of nodelets
 * Add pyramids_nodelet (`#37 <https://github.com/ros-perception/opencv_apps/issues/37>`_)

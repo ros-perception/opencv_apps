@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>opencv_apps</name>
-  <version>1.12.0</version>
+  <version>2.0.0</version>
   <description>
     <p>opencv_apps provides various nodes that run internally OpenCV's functionalities and publish the result as ROS topics. With opencv_apps, you can skip writing OpenCV application codes for a lot of its functionalities by simply running a launch file that corresponds to OpenCV's functionality you want.</p>
     <ul>
