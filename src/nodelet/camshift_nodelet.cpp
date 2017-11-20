@@ -56,7 +56,7 @@
 #include "opencv_apps/CamShiftConfig.h"
 #include "opencv_apps/RotatedRectStamped.h"
 
-namespace camshift {
+namespace opencv_apps {
 class CamShiftNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_, bproj_pub_;
@@ -66,7 +66,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef camshift::CamShiftConfig Config;
+  typedef opencv_apps::CamShiftConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -427,7 +427,20 @@ bool CamShiftNodelet::on_mouse_update_ = false;
 int CamShiftNodelet::on_mouse_event_ = 0;
 int CamShiftNodelet::on_mouse_x_ = 0;
 int CamShiftNodelet::on_mouse_y_ = 0;
-}
+} // namespace opencv_apps
+
+namespace camshift {
+class CamShiftNodelet : public opencv_apps::CamShiftNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet camshift/camshift is deprecated, "
+             "and renamed to opencv_apps/camshift.");
+    opencv_apps::CamShiftNodelet::onInit();
+  }
+};
+} // namespace camshift
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::CamShiftNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(camshift::CamShiftNodelet, nodelet::Nodelet);

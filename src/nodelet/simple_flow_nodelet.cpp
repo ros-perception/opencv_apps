@@ -54,7 +54,7 @@
 #include "opencv_apps/SimpleFlowConfig.h"
 #include "opencv_apps/FlowArrayStamped.h"
 
-namespace simple_flow {
+namespace opencv_apps {
 class SimpleFlowNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -64,7 +64,7 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef simple_flow::SimpleFlowConfig Config;
+  typedef opencv_apps::SimpleFlowConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -254,7 +254,19 @@ public:
   }
 };
 bool SimpleFlowNodelet::need_config_update_ = false;
-}
+} // namespace opencv_apps
+
+namespace simple_flow {
+class SimpleFlowNodelet : public opencv_apps::SimpleFlowNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet simple_flow/simple_flow is deprecated, "
+             "and renamed to opencv_apps/simple_flow.");
+    opencv_apps::SimpleFlowNodelet::onInit();
+  }
+};
+} // namespace simple_flow
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::SimpleFlowNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(simple_flow::SimpleFlowNodelet, nodelet::Nodelet);

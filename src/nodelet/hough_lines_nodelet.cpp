@@ -55,7 +55,7 @@
 #include "opencv_apps/LineArray.h"
 #include "opencv_apps/LineArrayStamped.h"
 
-namespace hough_lines {
+namespace opencv_apps {
 class HoughLinesNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -65,7 +65,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef hough_lines::HoughLinesConfig Config;
+  typedef opencv_apps::HoughLinesConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -176,7 +176,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
       }
 
       switch (config_.hough_type) {
-        case hough_lines::HoughLines_Standard_Hough_Transform:
+        case opencv_apps::HoughLines_Standard_Hough_Transform:
           {
             std::vector<cv::Vec2f> s_lines;
 
@@ -208,7 +208,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
 
             break;
           }
-        case hough_lines::HoughLines_Probabilistic_Hough_Transform:
+        case opencv_apps::HoughLines_Probabilistic_Hough_Transform:
         default:
           {
             std::vector<cv::Vec4i> p_lines;
@@ -301,7 +301,20 @@ public:
   }
 };
 bool HoughLinesNodelet::need_config_update_ = false;
-}
+} // namespace opencv_apps
+
+namespace hough_lines {
+class HoughLinesNodelet : public opencv_apps::HoughLinesNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet hough_lines/hough_lines is deprecated, "
+             "and renamed to opencv_apps/hough_lines.");
+    opencv_apps::HoughLinesNodelet::onInit();
+  }
+};
+} // namespace hough_lines
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::HoughLinesNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(hough_lines::HoughLinesNodelet, nodelet::Nodelet);

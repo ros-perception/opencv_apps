@@ -55,7 +55,7 @@
 #include "opencv_apps/RotatedRectArray.h"
 #include "opencv_apps/RotatedRectArrayStamped.h"
 
-namespace general_contours {
+namespace opencv_apps {
 class GeneralContoursNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -65,7 +65,7 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef general_contours::GeneralContoursConfig Config;
+  typedef opencv_apps::GeneralContoursConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -267,7 +267,20 @@ public:
   }
 };
 bool GeneralContoursNodelet::need_config_update_ = false;
-}
+} // namespace opencv_apps
+
+namespace general_contours {
+class GeneralContoursNodelet : public opencv_apps::GeneralContoursNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet general_contours/general_contours is deprecated, "
+             "and renamed to opencv_apps/general_contours.");
+    opencv_apps::GeneralContoursNodelet::onInit();
+  }
+};
+} // namespace general_contours
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::GeneralContoursNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(general_contours::GeneralContoursNodelet, nodelet::Nodelet);

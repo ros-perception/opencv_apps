@@ -51,12 +51,12 @@
 
 #include <dynamic_reconfigure/server.h>
 
-namespace threshold {
+namespace opencv_apps {
   class ThresholdNodelet : public opencv_apps::Nodelet {
     ////////////////////////////////////////////////////////
     // Dynamic Reconfigure
     ////////////////////////////////////////////////////////
-    typedef threshold::ThresholdConfig Config;
+    typedef opencv_apps::ThresholdConfig Config;
     typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
     Config config_;
     boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -165,7 +165,20 @@ namespace threshold {
       onInitPostProcess();
     }
   };
-}
+} // namespace opencv_apps
+
+namespace threshold {
+class ThresholdNodelet : public opencv_apps::ThresholdNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet threshold/threshold is deprecated, "
+             "and renamed to opencv_apps/threshold.");
+    opencv_apps::ThresholdNodelet::onInit();
+  }
+};
+} // namespace threshold
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::ThresholdNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(threshold::ThresholdNodelet, nodelet::Nodelet);

@@ -59,7 +59,7 @@
 /// Global Variables
 int MAX_KERNEL_LENGTH = 31;
 
-namespace smoothing {
+namespace opencv_apps {
 class SmoothingNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -69,7 +69,7 @@ class SmoothingNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef smoothing::SmoothingConfig Config;
+  typedef opencv_apps::SmoothingConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -136,28 +136,28 @@ class SmoothingNodelet : public opencv_apps::Nodelet
       cv::Mat out_image = in_image.clone();
       int i = kernel_size_;
       switch (config_.filter_type) {
-        case smoothing::Smoothing_Homogeneous_Blur:
+        case opencv_apps::Smoothing_Homogeneous_Blur:
           {
             /// Applying Homogeneous blur
             ROS_DEBUG_STREAM("Applying Homogeneous blur with kernel size " << i );
             cv::blur( in_image, out_image, cv::Size( i, i ), cv::Point(-1,-1) );
             break;
           }
-        case smoothing::Smoothing_Gaussian_Blur:
+        case opencv_apps::Smoothing_Gaussian_Blur:
           {
             /// Applying Gaussian blur
             ROS_DEBUG_STREAM("Applying Gaussian blur with kernel size " << i );
             cv::GaussianBlur( in_image, out_image, cv::Size( i, i ), 0, 0 );
             break;
           }
-        case smoothing::Smoothing_Median_Blur:
+        case opencv_apps::Smoothing_Median_Blur:
           {
             /// Applying Median blur
             ROS_DEBUG_STREAM("Applying Median blur with kernel size " << i );
             cv::medianBlur ( in_image, out_image, i );
             break;
           }
-        case smoothing::Smoothing_Bilateral_Filter:
+        case opencv_apps::Smoothing_Bilateral_Filter:
           {
             /// Applying Bilateral Filter
             ROS_DEBUG_STREAM("Applying Bilateral blur with kernel size " << i );
@@ -226,7 +226,19 @@ public:
   }
 };
 bool SmoothingNodelet::need_config_update_ = false;
-}
+} // namespace opencv_apps
+
+namespace smoothing {
+class SmoothingNodelet : public opencv_apps::SmoothingNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet smoothing/smoothing is deprecated, "
+             "and renamed to opencv_apps/smoothing.");
+    opencv_apps::SmoothingNodelet::onInit();
+  }
+};
+} // namespace smoothing
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::SmoothingNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(smoothing::SmoothingNodelet, nodelet::Nodelet);

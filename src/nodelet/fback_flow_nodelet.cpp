@@ -52,7 +52,7 @@
 #include "opencv_apps/FBackFlowConfig.h"
 #include "opencv_apps/FlowArrayStamped.h"
 
-namespace fback_flow {
+namespace opencv_apps {
 class FBackFlowNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -62,7 +62,7 @@ class FBackFlowNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef fback_flow::FBackFlowConfig Config;
+  typedef opencv_apps::FBackFlowConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -220,7 +220,20 @@ public:
   }
 };
 bool FBackFlowNodelet::need_config_update_ = false;
-}
+} // namespace opencv_apps
+
+namespace fback_flow {
+class FBackFlowNodelet : public opencv_apps::FBackFlowNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet fback_flow/fback_flow is deprecated, "
+             "and renamed to opencv_apps/fback_flow.");
+    opencv_apps::FBackFlowNodelet::onInit();
+  }
+};
+} // namespace fback_flow
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::FBackFlowNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(fback_flow::FBackFlowNodelet, nodelet::Nodelet);
