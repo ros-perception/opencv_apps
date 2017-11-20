@@ -2,6 +2,25 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Fix namespace and pkg name of nodelets (Closes (`#21 <https://github.com/ros-perception/opencv_apps/issues/21>`_)) (`#74 <https://github.com/ros-perception/opencv_apps/issues/74>`_)
+  Fix namespace and pkg name of nodelets
+* Add pyramids_nodelet (`#37 <https://github.com/ros-perception/opencv_apps/issues/37>`_)
+  * use toCvCopy instead of CvShare in adding_images
+* adding_images_nodelt :support different size of images (`#57 <https://github.com/ros-perception/opencv_apps/issues/57>`_)
+* fix contour moment program (`#66 <https://github.com/ros-perception/opencv_apps/issues/66>`_)
+  * contour_moments_nodelet.cpp: remove redundant codes, use input encoding
+  * contour_moments_nodelet.cpp: sort contours by the area
+  * contour_moments_nodelet.cpp: remove tailing NR from NODELET_INFO
+
+* fix for opencv 3.3.1 (`#71 <https://github.com/ros-perception/opencv_apps/issues/71>`_)
+  * fix launch/test fiels for opencv3.3
+  * goodFeaturesTrack takes useHarriesDetector == false
+  * opencv 3.3.1 has newer FaceRecognizer
+
+* Contributors: Kei Okada, Iori Yanokura
+
 1.12.0 (2017-07-14)
 -------------------
 * [src/node/standalone_nodelet_exec.cpp.in] workaround for freezing imshow on kinetic (`#67 <https://github.com/ros-perception/opencv_apps/issues/67>`_)
