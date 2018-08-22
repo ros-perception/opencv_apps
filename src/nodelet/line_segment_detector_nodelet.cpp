@@ -54,7 +54,7 @@
 #include "opencv_apps/LineSegmentDetectorConfig.h"
 
 
-namespace line_segment_detector {
+namespace opencv_apps {
 class LineSegmentDetectorNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -255,4 +255,5 @@ bool LineSegmentDetectorNodelet::need_config_update_ = false;
 }
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::LineSegmentDetectorNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(line_segment_detector::LineSegmentDetectorNodelet, nodelet::Nodelet);
