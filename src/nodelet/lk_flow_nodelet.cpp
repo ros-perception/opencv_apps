@@ -94,7 +94,6 @@ class LKFlowNodelet : public opencv_apps::Nodelet
   int block_size_;
   float harris_k_;
 
-
   void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
@@ -332,8 +331,6 @@ public:
     min_distance_ = min_distance_initial_value_;
     block_size_ = block_size_initial_value_;
     harris_k_ = harris_k_initial_value_;
-
-
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
