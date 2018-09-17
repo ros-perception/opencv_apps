@@ -85,10 +85,6 @@ class LKFlowNodelet : public opencv_apps::Nodelet
   cv::Mat gray, prevGray;
   std::vector<cv::Point2f> points[2];
 
-  float quality_level_initial_value_;
-  int min_distance_initial_value_;
-  int block_size_initial_value_;
-  float harris_k_initial_value_;
   float quality_level_;
   int min_distance_;
   int block_size_;
@@ -321,16 +317,6 @@ public:
     needToInit = true;
     nightMode = false;
     addRemovePt = false;
-
-    quality_level_initial_value_ = 0.01;
-    min_distance_initial_value_ = 10;
-    block_size_initial_value_ = 3;
-    harris_k_initial_value_ = 0.04;
-
-    quality_level_ = quality_level_initial_value_;
-    min_distance_ = min_distance_initial_value_;
-    block_size_ = block_size_initial_value_;
-    harris_k_ = harris_k_initial_value_;
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
