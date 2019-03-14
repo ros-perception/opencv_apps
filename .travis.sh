@@ -23,6 +23,8 @@ function travis_time_end {
 }
 
 apt-get update -qq && apt-get install -y -q wget sudo lsb-release gnupg # for docker
+# set DEBIAN_FRONTEND=noninteractive
+echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
 
 travis_time_start setup.before_install
 #before_install:
