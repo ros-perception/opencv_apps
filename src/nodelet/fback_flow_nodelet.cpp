@@ -67,6 +67,7 @@ class FBackFlowNodelet : public opencv_apps::Nodelet
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
+  int queue_size_;
   bool debug_view_;
   ros::Time prev_stamp_;
 
@@ -120,6 +121,12 @@ class FBackFlowNodelet : public opencv_apps::Nodelet
           reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
+      }
+
+      // Check if clock is jumped back
+      if (ros::Time::isSimTime() && prev_stamp_ > msg->header.stamp) {
+        NODELET_WARN_STREAM("Detected jump back in time of " << msg->header.stamp << ". Clearing optical flow cache.");
+        prevgray = cv::Mat();
       }
 
       // Do the work
@@ -182,9 +189,9 @@ class FBackFlowNodelet : public opencv_apps::Nodelet
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", 3, &FBackFlowNodelet::imageCallbackWithInfo, this);
+      cam_sub_ = it_->subscribeCamera("image", queue_size_, &FBackFlowNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", 3, &FBackFlowNodelet::imageCallback, this);
+      img_sub_ = it_->subscribe("image", queue_size_, &FBackFlowNodelet::imageCallback, this);
   }
 
   void unsubscribe()
@@ -200,6 +207,7 @@ public:
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
 
+    pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
     if (debug_view_) {
       always_subscribe_ = true;
