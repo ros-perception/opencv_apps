@@ -25,6 +25,10 @@ message(STATUS "OpenCV Components: ${OpenCV_LIB_COMPONENTS}")
 if(OpenCV_VERSION VERSION_LESS "3.0" OR TARGET opencv_optflow)
   set(OPENCV_HAVE_OPTFLOW TRUE)
 endif()
+# DIS flow appeared in opencv-contrib 3.2
+if(OpenCV_VERSION VERSION_EQUAL "3.2" OR OpenCV_VERSION VERSION_GREATER "3.2")
+  set(OPENCV_HAVE_DISFLOW TRUE)
+endif()
 # Supporting CompressedImage in cv_bridge has been started from 1.11.9 (2015-11-29)
 # note : hydro 1.10.18, indigo : 1.11.13 ...
 # https://github.com/ros-perception/vision_opencv/pull/70
@@ -43,6 +47,7 @@ endif()
 # generate the dynamic_reconfigure config file
 generate_dynamic_reconfigure_options(
   cfg/DiscreteFourierTransform.cfg
+
   cfg/AddingImages.cfg
   cfg/Smoothing.cfg
   cfg/Pyramids.cfg
@@ -54,6 +59,7 @@ generate_dynamic_reconfigure_options(
   cfg/CornerHarris.cfg
   #
   cfg/CamShift.cfg
+  cfg/DISFlow.cfg
   cfg/FBackFlow.cfg
   cfg/LKFlow.cfg
   cfg/PeopleDetect.cfg
@@ -341,6 +347,12 @@ endif()
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/video_dmtx.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/video_homography.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/videocapture_pvapi.cpp
+
+# DIS flow appeared in opencv-contrib 3.2
+# sample of dis flow in 4.0: https://github.com/opencv/opencv/blob/4.0.0/samples/cpp/dis_opticalflow.cpp
+if(OPENCV_HAVE_DISFLOW)
+  opencv_apps_add_nodelet(dis_flow src/nodelet/dis_flow_nodelet.cpp)
+endif()
 
 add_library(${PROJECT_NAME} SHARED
   src/nodelet/nodelet.cpp

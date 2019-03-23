@@ -63,6 +63,10 @@
     <description>Nodelet to show mean-shift based tracking</description>
   </class>
 
+  <class name="opencv_apps/dis_flow" type="opencv_apps::DISFlowNodelet"  base_class_type="nodelet::Nodelet">
+    <description>Nodelet of DIS optical flow algorithm</description>
+  </class>
+
   <class name="opencv_apps/fback_flow" type="opencv_apps::FBackFlowNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to demonstrates dense optical flow algorithm by Gunnar Farneback</description>
   </class>
