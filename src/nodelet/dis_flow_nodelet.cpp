@@ -182,7 +182,7 @@ class DISFlowNodelet : public opencv_apps::Nodelet
 
         // Convert HSV to BGR
         cv::Mat output_cv;
-        cv::cvtColor(hsv_8u, output_cv, cv::ColorConversionCodes::COLOR_HSV2BGR);
+        cv::cvtColor(hsv_8u, output_cv, cv::COLOR_HSV2BGR);
 
         // Show OpenCV window
         if (debug_view_) {
