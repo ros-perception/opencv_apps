@@ -107,11 +107,6 @@ catkin_package(CATKIN_DEPENDS std_msgs
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
-## Declare a cpp library
-if(OPENCV_HAVE_OPTFLOW)
-  list(APPEND ${PROJECT_NAME}_EXTRA_FILES src/nodelet/simple_flow_nodelet.cpp)
-endif()
-
 ## Macro to add nodelets
 macro(opencv_apps_add_nodelet node_name nodelet_cppfile)
   set(NODE_NAME ${node_name})
@@ -334,7 +329,6 @@ endif()
 add_library(${PROJECT_NAME} SHARED
   src/nodelet/nodelet.cpp
   ${_opencv_apps_nodelet_cppfiles}
-  ${${PROJECT_NAME}_EXTRA_FILES}
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
