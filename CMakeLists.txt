@@ -3,11 +3,15 @@ project(opencv_apps)
 
 find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp sensor_msgs)
 
+# Call find_package(OpenCV) to get target in opencv library, such as opencv_optflow or opencv_line_descriptor
 find_package(OpenCV REQUIRED)
 message(STATUS "OpenCV VERSION: ${OpenCV_VERSION}")
 message(STATUS "OpenCV Components: ${OpenCV_LIB_COMPONENTS}")
 if(OpenCV_VERSION VERSION_LESS "3.0" OR TARGET opencv_optflow)
   set(OPENCV_HAVE_OPTFLOW TRUE)
+endif()
+if(TARGET opencv_line_descriptor)
+  set(OPENCV_HAVE_LINE_DESCRIPTOR TRUE)
 endif()
 # Supporting CompressedImage in cv_bridge has been started from 1.11.9 (2015-11-29)
 # note : hydro 1.10.18, indigo : 1.11.13 ...
@@ -39,6 +43,7 @@ generate_dynamic_reconfigure_options(
   #
   cfg/CamShift.cfg
   cfg/FBackFlow.cfg
+  cfg/LineSegmentDetector.cfg
   cfg/LKFlow.cfg
   cfg/PeopleDetect.cfg
   cfg/PhaseCorr.cfg
@@ -108,6 +113,9 @@ catkin_package(CATKIN_DEPENDS std_msgs
 include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
 ## Declare a cpp library
+if(OPENCV_HAVE_LINE_DESCRIPTOR)
+  list(APPEND ${PROJECT_NAME}_EXTRA_FILES src/nodelet/line_segment_detector_nodelet.cpp)
+endif()
 if(OPENCV_HAVE_OPTFLOW)
   list(APPEND ${PROJECT_NAME}_EXTRA_FILES src/nodelet/simple_flow_nodelet.cpp)
 endif()
@@ -282,7 +290,9 @@ opencv_apps_add_nodelet(fback_flow src/nodelet/fback_flow_nodelet.cpp) # ./fback
 # ./letter_recog.cpp
 opencv_apps_add_nodelet(lk_flow src/nodelet/lk_flow_nodelet.cpp) # ./lkdemo.cpp
 # ./logistic_regression.cpp
-# ./lsd_lines.cpp
+if(OPENCV_HAVE_LINE_DESCRIPTOR)
+  opencv_apps_add_nodelet(line_segment_detector line_segment_detector/line_segment_detector src/nodelet/line_segment_detector_nodelet.cpp) # ./lsd_lines.cpp
+endif()
 # ./mask_tmpl.cpp
 # ./matchmethod_orb_akaze_brisk.cpp
 # ./minarea.cpp
@@ -363,7 +373,10 @@ if(CATKIN_ENABLE_TESTING)
   else()
     file(GLOB LAUNCH_FILES launch/*.launch)
     foreach(LAUNCH_FILE ${LAUNCH_FILES})
-      roslaunch_add_file_check(${LAUNCH_FILE})
+      if(NOT OPENCV_HAVE_LINE_DESCRIPTOR AND "${LAUNCH_FILE}" MATCHES launch/line_segment_detector.launch)
+      else()
+        roslaunch_add_file_check(${LAUNCH_FILE})
+      endif()
     endforeach()
   endif()
   add_subdirectory(test)

@@ -71,6 +71,10 @@
     <description>Nodelet to calculate Lukas-Kanade optical flow</description>
   </class>
 
+  <class name="opencv_apps/line_segment_detector" type="opencv_apps::LineSegmentDetectorNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detector line segments</description>
+  </class>
+
   <class name="opencv_apps/people_detect" type="opencv_apps::PeopleDetectNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to demonstrate the use of the HoG descriptor</description>
   </class>
