@@ -373,9 +373,21 @@ install(TARGETS ${_opencv_apps_nodelet_targets}
 install(FILES nodelet_plugins.xml
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-install(DIRECTORY launch test scripts
-        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-        USE_SOURCE_PERMISSIONS)
+
+# If dis flow isn't available, exclude it's launch and test files from installation
+if(OPENCV_HAVE_DISFLOW)
+  install(DIRECTORY launch test scripts
+          USE_SOURCE_PERMISSIONS
+          DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  )
+else()
+  install(DIRECTORY launch test scripts
+          USE_SOURCE_PERMISSIONS
+          DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+          PATTERN "launch/dis_flow.launch" EXCLUDE
+          PATTERN "test/test-dis_flow.test" EXCLUDE
+  )
+endif()
 
 ## test
 if(CATKIN_ENABLE_TESTING)
@@ -385,6 +397,12 @@ if(CATKIN_ENABLE_TESTING)
     message(WARNING "roslaunch_add_file check fails with unsupported doc attributes ${roslaunch_VERSION}")
   else()
     file(GLOB LAUNCH_FILES launch/*.launch)
+
+    # If dis flow isn't available, exclude it's launch from check
+    if(NOT OPENCV_HAVE_DISFLOW)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_SOURCE_DIR}/launch/dis_flow.launch)
+    endif()
+
     foreach(LAUNCH_FILE ${LAUNCH_FILES})
       roslaunch_add_file_check(${LAUNCH_FILE})
     endforeach()
