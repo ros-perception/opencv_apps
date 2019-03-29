@@ -82,6 +82,12 @@ if(roslaunch_VERSION VERSION_LESS "1.11.1")
   message(WARNING "roslaunch_add_file check fails with unsupported doc attributes ${roslaunch_VERSION}")
 else()
   file(GLOB LAUNCH_FILES *.test)
+
+  # If dis flow isn't available, exclude it's launch from check
+  if(NOT OPENCV_HAVE_DISFLOW)
+    list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_SOURCE_DIR}/test/test-dis_flow.test)
+  endif()
+
   foreach(LAUNCH_FILE ${LAUNCH_FILES})
     roslaunch_add_file_check(${LAUNCH_FILE})
   endforeach()
