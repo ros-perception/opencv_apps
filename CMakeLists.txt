@@ -100,7 +100,7 @@ generate_messages(
 )
 
 catkin_package(CATKIN_DEPENDS std_msgs
-#                DEPENDS OpenCV
+               DEPENDS OpenCV
                INCLUDE_DIRS include
                LIBRARIES ${PROJECT_NAME}
 )
