@@ -347,7 +347,11 @@ namespace opencv_apps {
       boost::mutex::scoped_lock lock(mutex_);
 
       // check if the face data is being trained
-      if(label_mapper_->getMap().empty()) return;
+      if(label_mapper_->getMap().empty())
+        {
+          NODELET_WARN_THROTTLE(1.0, "Face data is not trained. Please train first.");
+          return;
+        }
 
       // check if need to draw and publish debug image
       bool publish_debug_image = debug_img_pub_.getNumSubscribers() > 0;
