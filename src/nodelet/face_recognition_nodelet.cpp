@@ -141,6 +141,7 @@ namespace opencv_apps {
       }
       return "nan";
     }
+    const std::map<std::string, int>& getMap() const { return m_; }
 
     void debugPrint() {
       ROS_WARN_STREAM("label mapper: debug print:");
@@ -344,6 +345,9 @@ namespace opencv_apps {
                            const opencv_apps::FaceArrayStamped::ConstPtr &faces) {
       NODELET_DEBUG("faceImageCallback");
       boost::mutex::scoped_lock lock(mutex_);
+
+      // check if the face data is being trained
+      if(label_mapper_->getMap().empty()) return;
 
       // check if need to draw and publish debug image
       bool publish_debug_image = debug_img_pub_.getNumSubscribers() > 0;
