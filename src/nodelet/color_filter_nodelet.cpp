@@ -47,6 +47,12 @@
 #include "opencv_apps/HSVColorFilterConfig.h"
 
 namespace color_filter {
+class RGBColorFilterNodelet;
+class HLSColorFilterNodelet;
+class HSVColorFilterNodelet;
+}
+
+namespace opencv_apps {
 class RGBColorFilter;
 class HLSColorFilter;
 class HSVColorFilter;
@@ -177,7 +183,7 @@ public:
 };
 
 class RGBColorFilterNodelet
-  : public ColorFilterNodelet<color_filter::RGBColorFilterConfig> {
+  : public ColorFilterNodelet<opencv_apps::RGBColorFilterConfig> {
 protected:
   int r_min_;
   int r_max_;
@@ -186,7 +192,7 @@ protected:
   int g_min_;
   int g_max_;
 
-  virtual void reconfigureCallback(color_filter::RGBColorFilterConfig& config,
+  virtual void reconfigureCallback(opencv_apps::RGBColorFilterConfig& config,
                                    uint32_t level) {
     boost::mutex::scoped_lock lock(mutex_);
     config_ = config;
@@ -212,7 +218,7 @@ protected:
                 output_image);
   }
 
-private:
+protected:
   virtual void onInit() {
     r_max_ = 255;
     r_min_ = 0;
@@ -223,10 +229,13 @@ private:
 
     ColorFilterNodelet::onInit();
   }
+  friend class color_filter::RGBColorFilterNodelet;
+  friend class color_filter::HLSColorFilterNodelet;
+  friend class color_filter::HSVColorFilterNodelet;  
 };
 
 class HLSColorFilterNodelet
-  : public ColorFilterNodelet<color_filter::HLSColorFilterConfig> {
+  : public ColorFilterNodelet<opencv_apps::HLSColorFilterConfig> {
 protected:
   int h_min_;
   int h_max_;
@@ -235,7 +244,7 @@ protected:
   int l_min_;
   int l_max_;
 
-  virtual void reconfigureCallback(color_filter::HLSColorFilterConfig& config,
+  virtual void reconfigureCallback(opencv_apps::HLSColorFilterConfig& config,
                                    uint32_t level) {
     boost::mutex::scoped_lock lock(mutex_);
     config_ = config;
@@ -287,7 +296,7 @@ public:
 };
 
 class HSVColorFilterNodelet
-  : public ColorFilterNodelet<color_filter::HSVColorFilterConfig> {
+  : public ColorFilterNodelet<opencv_apps::HSVColorFilterConfig> {
 protected:
   int h_min_;
   int h_max_;
@@ -296,7 +305,7 @@ protected:
   int v_min_;
   int v_max_;
 
-  virtual void reconfigureCallback(color_filter::HSVColorFilterConfig& config,
+  virtual void reconfigureCallback(opencv_apps::HSVColorFilterConfig& config,
                                    uint32_t level) {
     boost::mutex::scoped_lock lock(mutex_);
     config_ = config;
@@ -347,12 +356,40 @@ public:
   }
 };
 
-}
+} // namespace opencv_apps
+
+namespace color_filter {
+class RGBColorFilterNodelet : public opencv_apps::RGBColorFilterNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet rgb_color_filter/rgb_color_filter is deprecated, "
+             "and renamed to opencv_apps/rgb_color_filter.");
+    opencv_apps::RGBColorFilterNodelet::onInit();
+  }
+};
+class HLSColorFilterNodelet : public opencv_apps::HLSColorFilterNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet hls_color_filter/hls_color_filter is deprecated, "
+             "and renamed to opencv_apps/hls_color_filter.");
+    opencv_apps::HLSColorFilterNodelet::onInit();
+  }
+};
+class HSVColorFilterNodelet : public opencv_apps::HSVColorFilterNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet hsv_color_filter/hsv_color_filter is deprecated, "
+             "and renamed to opencv_apps/hsv_color_filter.");
+    opencv_apps::HSVColorFilterNodelet::onInit();
+  }
+};
+} // namespace color_filter
+
 
 #include <pluginlib/class_list_macros.h>
-typedef color_filter::RGBColorFilterNodelet RGBColorFilterNodelet;
-typedef color_filter::HLSColorFilterNodelet HLSColorFilterNodelet;
-typedef color_filter::HSVColorFilterNodelet HSVColorFilterNodelet;
 PLUGINLIB_EXPORT_CLASS(color_filter::RGBColorFilterNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(color_filter::HLSColorFilterNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(color_filter::HSVColorFilterNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(opencv_apps::RGBColorFilterNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(opencv_apps::HLSColorFilterNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(opencv_apps::HSVColorFilterNodelet, nodelet::Nodelet);

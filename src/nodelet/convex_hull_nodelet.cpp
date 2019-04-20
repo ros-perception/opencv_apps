@@ -55,7 +55,7 @@
 #include "opencv_apps/ContourArray.h"
 #include "opencv_apps/ContourArrayStamped.h"
 
-namespace convex_hull {
+namespace opencv_apps {
 class ConvexHullNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -65,7 +65,7 @@ class ConvexHullNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef convex_hull::ConvexHullConfig Config;
+  typedef opencv_apps::ConvexHullConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -238,7 +238,20 @@ public:
   }
 };
 bool ConvexHullNodelet::need_config_update_ = false;
-}
+} // namespace opencv_apps
+
+namespace convex_hull {
+class ConvexHullNodelet : public opencv_apps::ConvexHullNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet convex_hull/convex_hull is deprecated, "
+             "and renamed to opencv_apps/convex_hull.");
+    opencv_apps::ConvexHullNodelet::onInit();
+  }
+};
+} // namespace convex_hull
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::ConvexHullNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(convex_hull::ConvexHullNodelet, nodelet::Nodelet);

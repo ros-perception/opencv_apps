@@ -1,5 +1,5 @@
 <launch>
-  <arg name="node_name" default="houh_circles" />
+  <arg name="node_name" default="hough_circles" />
 
   <arg name="image" default="image" doc="The image topic. Should be remapped to the name of the real image topic." />
 
@@ -16,7 +16,7 @@
   <arg name="max_circle_radius" default="0" doc="The maximum size of the circle, If unknown, put zero as default." />
 
   <!-- hough_circles.cpp -->
-  <node name="hough_circles" pkg="opencv_apps" type="hough_circles" args="image:=image_rect" >
+  <node name="$(arg node_name)" pkg="opencv_apps" type="hough_circles">
     <remap from="image" to="$(arg image)" />
     <param name="use_camera_info" value="$(arg use_camera_info)" />
     <param name="debug_view" value="$(arg debug_view)" />

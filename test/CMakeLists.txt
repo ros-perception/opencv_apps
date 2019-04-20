@@ -14,10 +14,20 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag
 add_custom_target(vslam_tutorial_bag DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag)
 add_dependencies(tests vslam_tutorial_bag)
 
+# test data for face recognition
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/face_data
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/face_data.tar.gz
+  COMMAND ${CMAKE_COMMAND} -E tar zxf face_data.tar.gz
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMENT "Extracting face_data.tar.gz")
+add_custom_target(face_data DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/face_data)
+add_dependencies(tests face_data)
+
 #add_rostest(test-apps.test)
 add_rostest(test-adding_images.test ARGS gui:=false)
 add_rostest(test-discrete_fourier_transform.test ARGS gui:=false)
 add_rostest(test-smoothing.test ARGS gui:=false)
+add_rostest(test-pyramids.test ARGS gui:=false)
 add_rostest(test-threshold.test ARGS gui:=false)
 add_rostest(test-rgb_color_filter.test ARGS gui:=false)
 add_rostest(test-hls_color_filter.test ARGS gui:=false)
@@ -31,14 +41,21 @@ add_rostest(test-convex_hull.test ARGS gui:=false)
 add_rostest(test-general_contours.test ARGS gui:=false)
 add_rostest(test-contour_moments.test ARGS gui:=false)
 if(cv_bridge_VERSION VERSION_LESS "1.11.9") # hydro skip face_detection.test
+elseif("$ENV{ROS_DISTRO}" STREQUAL "melodic") # melodic uses opencv3
+  add_rostest(test-face_detection.test ARGS gui:=false)
+  add_rostest(test-face_recognition.test ARGS gui:=false)
 elseif(OpenCV_VERSION VERSION_LESS "3.0")
   add_rostest(test-face_detection.test ARGS gui:=false)
+  add_rostest(test-face_recognition.test ARGS gui:=false)
+elseif(OpenCV_VERSION VERSION_LESS "3.2")
+  add_rostest(test-face_detection.test ARGS gui:=false use_opencv3:=true use_opencv3_1:=true)
+  add_rostest(test-face_recognition.test ARGS gui:=false use_opencv3:=true use_opencv3_1:=true)
+elseif(OpenCV_VERSION VERSION_LESS "3.3")
+  add_rostest(test-face_detection.test ARGS gui:=false use_opencv3:=true use_opencv3_2:=true)
+  add_rostest(test-face_recognition.test ARGS gui:=false use_opencv3:=true use_opencv3_2:=true)
 else()
-  if(OpenCV_VERSION VERSION_LESS "3.2")
-    add_rostest(test-face_detection.test ARGS gui:=false use_opencv3:=true use_opencv3_1:=true)
-  else()
-    add_rostest(test-face_detection.test ARGS gui:=false use_opencv3:=true use_opencv3_2:=true)
-  endif()
+  add_rostest(test-face_detection.test ARGS gui:=false use_opencv3:=true use_opencv3_3:=true)
+  add_rostest(test-face_recognition.test ARGS gui:=false use_opencv3:=true use_opencv3_3:=true)
 endif()
 add_rostest(test-goodfeature_track.test ARGS gui:=false)
 add_rostest(test-corner_harris.test ARGS gui:=false)

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(opencv_apps)
 
-find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp)
+find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp sensor_msgs)
 
 message(STATUS "OpenCV VERSION: ${OpenCV_VERSION}")
 message(STATUS "OpenCV Components: ${OpenCV_LIB_COMPONENTS}")
@@ -29,9 +29,11 @@ generate_dynamic_reconfigure_options(
   cfg/DiscreteFourierTransform.cfg
   cfg/AddingImages.cfg
   cfg/Smoothing.cfg
+  cfg/Pyramids.cfg
   cfg/EdgeDetection.cfg cfg/HoughLines.cfg cfg/HoughCircles.cfg
   cfg/FindContours.cfg cfg/ConvexHull.cfg cfg/GeneralContours.cfg cfg/ContourMoments.cfg
   cfg/FaceDetection.cfg
+  cfg/FaceRecognition.cfg
   cfg/GoodfeatureTrack.cfg
   cfg/CornerHarris.cfg
   #
@@ -63,7 +65,6 @@ add_message_files(
    FlowStamped.msg
    FlowArray.msg
    FlowArrayStamped.msg
-   RectArrayStamped.msg
    Size.msg
    Face.msg
    FaceArray.msg
@@ -86,9 +87,15 @@ add_message_files(
    ContourArrayStamped.msg
 )
 
+add_service_files(
+  FILES
+  FaceRecognitionTrain.srv
+)
+
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
+  sensor_msgs
   std_msgs
 )
 
@@ -100,15 +107,10 @@ catkin_package(CATKIN_DEPENDS std_msgs
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
-## Declare a cpp library
-if(OPENCV_HAVE_OPTFLOW)
-  list(APPEND ${PROJECT_NAME}_EXTRA_FILES src/nodelet/simple_flow_nodelet.cpp)
-endif()
-
 ## Macro to add nodelets
-macro(opencv_apps_add_nodelet node_name nodelet_name nodelet_cppfile)
+macro(opencv_apps_add_nodelet node_name nodelet_cppfile)
   set(NODE_NAME ${node_name})
-  set(NODELET_NAME ${nodelet_name})
+  set(NODELET_NAME opencv_apps/${node_name})
   configure_file(src/node/standalone_nodelet_exec.cpp.in ${node_name}.cpp @ONLY)
   add_executable(${node_name}_exe ${node_name}.cpp)
   SET_TARGET_PROPERTIES(${node_name}_exe PROPERTIES OUTPUT_NAME ${node_name})
@@ -126,8 +128,8 @@ endmacro()
   # ./tutorial_code/calib3d/stereoBM/SBM_Sample.cpp
 
 # core
-opencv_apps_add_nodelet(adding_images adding_images/adding_images src/nodelet/adding_images_nodelet.cpp) # ./tutorial_code/core/AddingImages/AddingImages.cpp
-opencv_apps_add_nodelet(discrete_fourier_transform discrete_fourier_transform/discrete_fourier_transform src/nodelet/discrete_fourier_transform_nodelet.cpp)  # ./tutorial_code/core/discrete_fourier_transform/discrete_fourier_transform.cpp
+opencv_apps_add_nodelet(adding_images src/nodelet/adding_images_nodelet.cpp) # ./tutorial_code/core/AddingImages/AddingImages.cpp
+opencv_apps_add_nodelet(discrete_fourier_transform src/nodelet/discrete_fourier_transform_nodelet.cpp)  # ./tutorial_code/core/discrete_fourier_transform/discrete_fourier_transform.cpp
   # ./tutorial_code/core/file_input_output/file_input_output.cpp
   # ./tutorial_code/core/how_to_scan_images/how_to_scan_images.cpp
   # ./tutorial_code/core/interoperability_with_OpenCV_1/interoperability_with_OpenCV_1.cpp
@@ -162,19 +164,19 @@ opencv_apps_add_nodelet(discrete_fourier_transform discrete_fourier_transform/di
   # ./tutorial_code/ImgProc/Morphology_1.cpp
   # ./tutorial_code/ImgProc/Morphology_2.cpp
   # ./tutorial_code/ImgProc/Morphology_3.cpp
-  # ./tutorial_code/ImgProc/Pyramids.cpp
-opencv_apps_add_nodelet(smoothing smoothing/smoothing src/nodelet/smoothing_nodelet.cpp)  # ./tutorial_code/ImgProc/Smoothing.cpp
-opencv_apps_add_nodelet(threshold threshold/threshold src/nodelet/threshold_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold.cpp
-opencv_apps_add_nodelet(rgb_color_filter rgb_color_filter/rgb_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
-opencv_apps_add_nodelet(hls_color_filter hls_color_filter/hls_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
-opencv_apps_add_nodelet(hsv_color_filter hsv_color_filter/hsv_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
+opencv_apps_add_nodelet(pyramids src/nodelet/pyramids_nodelet.cpp)  # ./tutorial_code/ImgProc/Pyramids.cpp
+opencv_apps_add_nodelet(smoothing src/nodelet/smoothing_nodelet.cpp)  # ./tutorial_code/ImgProc/Smoothing.cpp
+opencv_apps_add_nodelet(threshold src/nodelet/threshold_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold.cpp
+opencv_apps_add_nodelet(rgb_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
+opencv_apps_add_nodelet(hls_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
+opencv_apps_add_nodelet(hsv_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
 
 # ImgTrans
-opencv_apps_add_nodelet(edge_detection edge_detection/edge_detection src/nodelet/edge_detection_nodelet.cpp) # ./tutorial_code/ImgTrans/CannyDetector_Demo.cpp
+opencv_apps_add_nodelet(edge_detection src/nodelet/edge_detection_nodelet.cpp) # ./tutorial_code/ImgTrans/CannyDetector_Demo.cpp
                                                                                                              # ./tutorial_code/ImgTrans/Laplace_Demo.cpp
                                                                                                              # ./tutorial_code/ImgTrans/Sobel_Demo.cpp
-opencv_apps_add_nodelet(hough_lines hough_lines/hough_lines src/nodelet/hough_lines_nodelet.cpp) # ./tutorial_code/ImgTrans/HoughLines_Demo.cpp
-opencv_apps_add_nodelet(hough_circles hough_circles/hough_circles src/nodelet/hough_circles_nodelet.cpp) # ./tutorial_code/ImgTrans/HoughCircle_Demo.cpp
+opencv_apps_add_nodelet(hough_lines src/nodelet/hough_lines_nodelet.cpp) # ./tutorial_code/ImgTrans/HoughLines_Demo.cpp
+opencv_apps_add_nodelet(hough_circles src/nodelet/hough_circles_nodelet.cpp) # ./tutorial_code/ImgTrans/HoughCircle_Demo.cpp
  # ./tutorial_code/ImgTrans/copyMakeBorder_demo.cpp
  # ./tutorial_code/ImgTrans/filter2D_demo.cpp
  # ./tutorial_code/ImgTrans/Geometric_Transforms_Demo.cpp
@@ -202,17 +204,17 @@ opencv_apps_add_nodelet(hough_circles hough_circles/hough_circles src/nodelet/ho
  # ./tutorial_code/photo/seamless_cloning/cloning_gui.cpp
 
 # ShapeDescriptors
-opencv_apps_add_nodelet(find_contours find_contours/find_contours src/nodelet/find_contours_nodelet.cpp) # ./tutorial_code/ShapeDescriptors/findContours_demo.cpp
-opencv_apps_add_nodelet(convex_hull convex_hull/convex_hull src/nodelet/convex_hull_nodelet.cpp) # ./tutorial_code/ShapeDescriptors/hull_demo.cpp
-opencv_apps_add_nodelet(general_contours general_contours/general_contours src/nodelet/general_contours_nodelet.cpp) # ./tutorial_code/ShapeDescriptors/generalContours_demo2.cpp
-opencv_apps_add_nodelet(contour_moments contour_moments/contour_moments src/nodelet/contour_moments_nodelet.cpp) # ./tutorial_code/ShapeDescriptors/moments_demo.cpp
+opencv_apps_add_nodelet(find_contours src/nodelet/find_contours_nodelet.cpp) # ./tutorial_code/ShapeDescriptors/findContours_demo.cpp
+opencv_apps_add_nodelet(convex_hull src/nodelet/convex_hull_nodelet.cpp) # ./tutorial_code/ShapeDescriptors/hull_demo.cpp
+opencv_apps_add_nodelet(general_contours src/nodelet/general_contours_nodelet.cpp) # ./tutorial_code/ShapeDescriptors/generalContours_demo2.cpp
+opencv_apps_add_nodelet(contour_moments src/nodelet/contour_moments_nodelet.cpp) # ./tutorial_code/ShapeDescriptors/moments_demo.cpp
   # ./tutorial_code/ShapeDescriptors/generalContours_demo1.cpp
   # ./tutorial_code/ShapeDescriptors/pointPolygonTest_demo.cpp
 
 # TrackingMotion
-opencv_apps_add_nodelet(goodfeature_track goodfeature_track/goodfeature_track src/nodelet/goodfeature_track_nodelet.cpp) # ./tutorial_code/TrackingMotion/goodFeaturesToTrack_Demo.cpp
+opencv_apps_add_nodelet(goodfeature_track src/nodelet/goodfeature_track_nodelet.cpp) # ./tutorial_code/TrackingMotion/goodFeaturesToTrack_Demo.cpp
   # ./tutorial_code/TrackingMotion/cornerDetector_Demo.cpp
-opencv_apps_add_nodelet(corner_harris corner_harris/corner_harris src/nodelet/corner_harris_nodelet.cpp)  # ./tutorial_code/TrackingMotion/cornerHarris_Demo.cpp
+opencv_apps_add_nodelet(corner_harris src/nodelet/corner_harris_nodelet.cpp)  # ./tutorial_code/TrackingMotion/cornerHarris_Demo.cpp
   # ./tutorial_code/TrackingMotion/cornerSubPix_Demo.cpp
 
 # videoio
@@ -233,7 +235,7 @@ opencv_apps_add_nodelet(corner_harris corner_harris/corner_harris src/nodelet/co
 # ./autofocus.cpp
 # ./bgfg_segm.cpp
 # ./calibration.cpp
-opencv_apps_add_nodelet(camshift camshift/camshift src/nodelet/camshift_nodelet.cpp) # ./camshiftdemo.cpp
+opencv_apps_add_nodelet(camshift src/nodelet/camshift_nodelet.cpp) # ./camshiftdemo.cpp
 # ./cloning_demo.cpp
 # ./cloning_gui.cpp
 # ./connected_components.cpp
@@ -252,9 +254,10 @@ opencv_apps_add_nodelet(camshift camshift/camshift src/nodelet/camshift_nodelet.
 # ./edge.cpp
 # ./em.cpp
 # ./example_cmake/example.cpp
-opencv_apps_add_nodelet(face_detection face_detection/face_detection src/nodelet/face_detection_nodelet.cpp) # ./facedetect.cpp
+opencv_apps_add_nodelet(face_detection src/nodelet/face_detection_nodelet.cpp) # ./facedetect.cpp
+opencv_apps_add_nodelet(face_recognition src/nodelet/face_recognition_nodelet.cpp)
 # ./facial_features.cpp
-opencv_apps_add_nodelet(fback_flow fback_flow/fback_flow src/nodelet/fback_flow_nodelet.cpp) # ./fback.cpp
+opencv_apps_add_nodelet(fback_flow src/nodelet/fback_flow_nodelet.cpp) # ./fback.cpp
 # ./ffilldemo.cpp
 # ./filestorage_base64.cpp
 # ./filestorage.cpp
@@ -272,7 +275,7 @@ opencv_apps_add_nodelet(fback_flow fback_flow/fback_flow src/nodelet/fback_flow_
 # ./kmeans.cpp
 # ./laplace.cpp
 # ./letter_recog.cpp
-opencv_apps_add_nodelet(lk_flow lk_flow/lk_flow src/nodelet/lk_flow_nodelet.cpp) # ./lkdemo.cpp
+opencv_apps_add_nodelet(lk_flow src/nodelet/lk_flow_nodelet.cpp) # ./lkdemo.cpp
 # ./logistic_regression.cpp
 # ./lsd_lines.cpp
 # ./mask_tmpl.cpp
@@ -284,11 +287,11 @@ opencv_apps_add_nodelet(lk_flow lk_flow/lk_flow src/nodelet/lk_flow_nodelet.cpp)
 # ./opencv_version.cpp
 # ./openni_capture.cpp
 # ./pca.cpp
-opencv_apps_add_nodelet(people_detect people_detect/people_detect src/nodelet/people_detect_nodelet.cpp) # ./peopledetect.cpp
-opencv_apps_add_nodelet(phase_corr phase_corr/phase_corr src/nodelet/phase_corr_nodelet.cpp) # ./phase_corr.cpp
+opencv_apps_add_nodelet(people_detect src/nodelet/people_detect_nodelet.cpp) # ./peopledetect.cpp
+opencv_apps_add_nodelet(phase_corr src/nodelet/phase_corr_nodelet.cpp) # ./phase_corr.cpp
 # ./points_classifier.cpp
 # ./polar_transforms.cpp
-opencv_apps_add_nodelet(segment_objects segment_objects/segment_objects src/nodelet/segment_objects_nodelet.cpp) # ./segment_objects.cpp
+opencv_apps_add_nodelet(segment_objects src/nodelet/segment_objects_nodelet.cpp) # ./segment_objects.cpp
 # ./select3dobj.cpp
 # ./shape_example.cpp
 # ./smiledetect.cpp
@@ -304,16 +307,16 @@ opencv_apps_add_nodelet(segment_objects segment_objects/segment_objects src/node
 # ./tree_engine.cpp
 # ./tvl1_optical_flow.cpp
 # ./videostab.cpp
-opencv_apps_add_nodelet(watershed_segmentation watershed_segmentation/watershed_segmentation src/nodelet/watershed_segmentation_nodelet.cpp) # ./watershed.cpp
+opencv_apps_add_nodelet(watershed_segmentation src/nodelet/watershed_segmentation_nodelet.cpp) # ./watershed.cpp
 
 # ros examples
-opencv_apps_add_nodelet(simple_example simple_example/simple_example src/nodelet/simple_example_nodelet.cpp)
-opencv_apps_add_nodelet(simple_compressed_example simple_compressed_example/simple_compressed_example src/nodelet/simple_compressed_example_nodelet.cpp)
+opencv_apps_add_nodelet(simple_example src/nodelet/simple_example_nodelet.cpp)
+opencv_apps_add_nodelet(simple_compressed_example src/nodelet/simple_compressed_example_nodelet.cpp)
 
 # https://github.com/Itseez/opencv/blob/2.4/samples/cpp/simpleflow_demo.cpp
 # simple flow requires opencv-contrib https://github.com/ros-perception/vision_opencv/issues/108
 if(OPENCV_HAVE_OPTFLOW)
-  opencv_apps_add_nodelet(simple_flow simple_flow/simple_flow src/nodelet/simple_flow_nodelet.cpp)
+  opencv_apps_add_nodelet(simple_flow src/nodelet/simple_flow_nodelet.cpp)
 endif()
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/bgfg_gmg.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/hybridtrackingsample.cpp
@@ -326,7 +329,6 @@ endif()
 add_library(${PROJECT_NAME} SHARED
   src/nodelet/nodelet.cpp
   ${_opencv_apps_nodelet_cppfiles}
-  ${${PROJECT_NAME}_EXTRA_FILES}
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
@@ -343,7 +345,7 @@ install(TARGETS ${_opencv_apps_nodelet_targets}
 install(FILES nodelet_plugins.xml
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-install(DIRECTORY launch test
+install(DIRECTORY launch test scripts
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         USE_SOURCE_PERMISSIONS)
 

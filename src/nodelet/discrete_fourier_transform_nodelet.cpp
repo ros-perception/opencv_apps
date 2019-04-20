@@ -50,7 +50,7 @@
 
 #include <dynamic_reconfigure/server.h>
 
-namespace discrete_fourier_transform {
+namespace opencv_apps {
 class DiscreteFourierTransformNodelet : public opencv_apps::Nodelet {
   image_transport::Publisher img_pub_;
   image_transport::Subscriber img_sub_;
@@ -58,7 +58,7 @@ class DiscreteFourierTransformNodelet : public opencv_apps::Nodelet {
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef discrete_fourier_transform::DiscreteFourierTransformConfig Config;
+  typedef opencv_apps::DiscreteFourierTransformConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -196,7 +196,20 @@ public:
     onInitPostProcess();
   }
 };
-}
+} // namespace opencv_apps
+
+namespace discrete_fourier_transform {
+class DiscreteFourierTransformNodelet : public opencv_apps::DiscreteFourierTransformNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet discrete_fourier_transform/discrete_fourier_transform is deprecated, "
+             "and renamed to opencv_apps/discrete_fourier_transform.");
+    opencv_apps::DiscreteFourierTransformNodelet::onInit();
+  }
+};
+} // namespace discrete_fourier_transform
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::DiscreteFourierTransformNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(discrete_fourier_transform::DiscreteFourierTransformNodelet, nodelet::Nodelet);

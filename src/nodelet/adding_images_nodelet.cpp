@@ -55,7 +55,7 @@
 #include "opencv_apps/AddingImagesConfig.h"
 #include "opencv_apps/nodelet.h"
 
-namespace adding_images {
+namespace opencv_apps {
   class AddingImagesNodelet : public opencv_apps::Nodelet {
   private:
     boost::shared_ptr<image_transport::ImageTransport> it_;
@@ -72,7 +72,7 @@ namespace adding_images {
     ////////////////////////////////////////////////////////
     // Dynamic Reconfigure
     ////////////////////////////////////////////////////////
-    typedef adding_images::AddingImagesConfig Config;
+    typedef opencv_apps::AddingImagesConfig Config;
     typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
     Config config_;
     boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -171,9 +171,9 @@ namespace adding_images {
       // Work on the image.
       try {
         cv::Mat image1 =
-          cv_bridge::toCvShare(image_msg1, image_msg1->encoding)->image;
+          cv_bridge::toCvCopy(image_msg1, image_msg1->encoding)->image;
         cv::Mat image2 =
-          cv_bridge::toCvShare(image_msg2, image_msg1->encoding)->image;
+          cv_bridge::toCvCopy(image_msg2, image_msg1->encoding)->image;
         if (cv_bridge::getCvType(image_msg1->encoding) != cv_bridge::getCvType(image_msg2->encoding)) {
           NODELET_ERROR("Encoding of input images must be same type: %s, %s",
                         image_msg1->encoding.c_str(), image_msg2->encoding.c_str());
@@ -181,6 +181,19 @@ namespace adding_images {
         }
 
         cv::Mat result_image;
+        if ( image1.rows != image2.rows || image1.cols != image2.cols ) {
+          int new_rows = std::max(image1.rows, image2.rows);
+          int new_cols = std::max(image1.cols, image2.cols);
+          // if ( new_rows != image1.rows || new_cols != image1.cols ) {
+          cv::Mat image1_ = cv::Mat(new_rows, new_cols, image1.type());
+          image1.copyTo(image1_(cv::Rect(0, 0, image1.cols, image1.rows)));
+          image1 = image1_.clone(); // need clone becuase toCvShare??
+
+          //if ( new_rows != image2.rows || new_cols != image2.cols ) {
+          cv::Mat image2_ = cv::Mat(new_rows, new_cols, image2.type());
+          image2.copyTo(image2_(cv::Rect(0, 0, image2.cols, image2.rows)));
+          image2 = image2_.clone();
+        }
         cv::addWeighted(image1, alpha_, image2, beta_, gamma_, result_image);
         //-- Show what you got
         sensor_msgs::ImagePtr image_msg3 = cv_bridge::CvImage(image_msg1->header,
@@ -242,7 +255,20 @@ namespace adding_images {
       onInitPostProcess();
     }
   };
-}
+} // namespace opencv_apps
+
+namespace adding_images {
+class AddingImagesNodelet : public opencv_apps::AddingImagesNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet adding_images/adding_images is deprecated, "
+             "and renamed to opencv_apps/adding_images.");
+    opencv_apps::AddingImagesNodelet::onInit();
+  }
+};
+} // namespace adding_images
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::AddingImagesNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(adding_images::AddingImagesNodelet, nodelet::Nodelet);

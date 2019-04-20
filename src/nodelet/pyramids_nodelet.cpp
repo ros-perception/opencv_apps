@@ -1,4 +1,4 @@
-// -*- mode: c++ -*-
+// -*- coding:utf-8-unix; mode: c++; indent-tabs-mode: nil; c-basic-offset: 2; -*-
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
@@ -33,35 +33,28 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-// https://github.com/opencv/opencv/blob/2.4/samples/cpp/tutorial_code/ImgProc/Smoothing.cpp
+// https://github.com/opencv/opencv/blob/master/samples/cpp/tutorial_code/ImgProc/Pyramids/Pyramids.cpp
+// https://github.com/opencv/opencv/blob/2.4.13.4/samples/cpp/tutorial_code/ImgProc/Pyramids.cpp
 /**
- * file Smoothing.cpp
- * brief Sample code for simple filters
- * author OpenCV team
+ * @file Pyramids.cpp
+ * @brief Sample code of image pyramids (pyrDown and pyrUp)
+ * @author OpenCV team
  */
 
-#include <ros/ros.h>
 #include "opencv_apps/nodelet.h"
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
 #include <cv_bridge/cv_bridge.h>
 
-#include <iostream>
-#include <vector>
-
+#include <opencv2/highgui/highgui.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/features2d/features2d.hpp"
 
+
+#include "opencv_apps/PyramidsConfig.h"
 #include <dynamic_reconfigure/server.h>
-#include "opencv_apps/SmoothingConfig.h"
-
-/// Global Variables
-int MAX_KERNEL_LENGTH = 31;
 
 namespace opencv_apps {
-class SmoothingNodelet : public opencv_apps::Nodelet
-{
+class PyramidsNodelet : public opencv_apps::Nodelet {
   image_transport::Publisher img_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
@@ -69,23 +62,21 @@ class SmoothingNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef opencv_apps::SmoothingConfig Config;
+  typedef opencv_apps::PyramidsConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   bool debug_view_;
-  ros::Time prev_stamp_;
+
+  int num_of_pyramids_;
 
   std::string window_name_;
-  static bool need_config_update_;
 
-  int kernel_size_;
+  void reconfigureCallback(Config& new_config, uint32_t level) {
+    config_ = new_config;
 
-  void reconfigureCallback(Config &new_config, uint32_t level)
-  {
-    config_         = new_config;
-    kernel_size_    = (config_.kernel_size/2)*2+1; // kernel_size must be odd number
+    num_of_pyramids_ = config_.num_of_pyramids;
   }
 
   const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
@@ -105,92 +96,57 @@ class SmoothingNodelet : public opencv_apps::Nodelet
     do_work(msg, msg->header.frame_id);
   }
 
-  static void trackbarCallback( int, void* )
-  {
-    need_config_update_ = true;
-  }
-
-  void do_work(const sensor_msgs::ImageConstPtr& msg, const std::string input_frame_from_msg)
+  void do_work(const sensor_msgs::ImageConstPtr& image_msg, const std::string input_frame_from_msg)
   {
     // Work on the image.
-    try
-    {
+    try {
       // Convert the image into something opencv can handle.
-      cv::Mat in_image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
+      cv::Mat src_image =
+        cv_bridge::toCvShare(image_msg, image_msg->encoding)->image;
 
-
-      if( debug_view_) {
-        /// Create Trackbars for Thresholds
-        char kernel_label[] = "Kernel Size : ";
-
-        cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
-        cv::createTrackbar( kernel_label, window_name_, &kernel_size_, MAX_KERNEL_LENGTH, trackbarCallback);
-        if (need_config_update_) {
-          kernel_size_    = (kernel_size_/2)*2+1; // kernel_size must be odd number
-          config_.kernel_size = kernel_size_;
-          reconfigure_server_->updateConfig(config_);
-          need_config_update_ = false;
+      // Do the work
+      int num = num_of_pyramids_;
+      switch (config_.pyramids_type) {
+        case opencv_apps::Pyramids_Up: {
+          while(num) {
+            num--;
+            cv::pyrUp(src_image, src_image, cv::Size(src_image.cols * 2, src_image.rows * 2));
+          }
+          break;
+        }
+        case opencv_apps::Pyramids_Down: {
+          while(num) {
+            num--;
+            cv::pyrDown(src_image, src_image, cv::Size(src_image.cols / 2, src_image.rows / 2));
+          }
+          break;
         }
       }
 
-      cv::Mat out_image = in_image.clone();
-      int i = kernel_size_;
-      switch (config_.filter_type) {
-        case opencv_apps::Smoothing_Homogeneous_Blur:
-          {
-            /// Applying Homogeneous blur
-            ROS_DEBUG_STREAM("Applying Homogeneous blur with kernel size " << i );
-            cv::blur( in_image, out_image, cv::Size( i, i ), cv::Point(-1,-1) );
-            break;
-          }
-        case opencv_apps::Smoothing_Gaussian_Blur:
-          {
-            /// Applying Gaussian blur
-            ROS_DEBUG_STREAM("Applying Gaussian blur with kernel size " << i );
-            cv::GaussianBlur( in_image, out_image, cv::Size( i, i ), 0, 0 );
-            break;
-          }
-        case opencv_apps::Smoothing_Median_Blur:
-          {
-            /// Applying Median blur
-            ROS_DEBUG_STREAM("Applying Median blur with kernel size " << i );
-            cv::medianBlur ( in_image, out_image, i );
-            break;
-          }
-        case opencv_apps::Smoothing_Bilateral_Filter:
-          {
-            /// Applying Bilateral Filter
-            ROS_DEBUG_STREAM("Applying Bilateral blur with kernel size " << i );
-            cv::bilateralFilter ( in_image, out_image, i, i*2, i/2 );
-            break;
-          }
-      }
-
       //-- Show what you got
-      if( debug_view_) {
-        cv::imshow( window_name_, out_image );
+      if(debug_view_) {
+        cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
+        cv::imshow(window_name_, src_image);
         int c = cv::waitKey(1);
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", out_image).toImageMsg();
-      img_pub_.publish(out_img);
+      img_pub_.publish(cv_bridge::CvImage(image_msg->header,
+                                          image_msg->encoding,
+                                          src_image).toImageMsg());
     }
-    catch (cv::Exception &e)
-    {
+    catch (cv::Exception &e) {
       NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
     }
-
-    prev_stamp_ = msg->header.stamp;
   }
 
   void subscribe()
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", 3, &SmoothingNodelet::imageCallbackWithInfo, this);
+      cam_sub_ = it_->subscribeCamera("image", 3, &PyramidsNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", 3, &SmoothingNodelet::imageCallback, this);
+      img_sub_ = it_->subscribe("image", 3, &PyramidsNodelet::imageCallback, this);
   }
 
   void unsubscribe()
@@ -201,23 +157,21 @@ class SmoothingNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
-  {
+  virtual void onInit() {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
 
     pnh_->param("debug_view", debug_view_, false);
+
     if (debug_view_) {
       always_subscribe_ = true;
     }
-    prev_stamp_ = ros::Time(0, 0);
 
-    window_name_ = "Smoothing Demo";
-    kernel_size_ = 7;
+    window_name_ = "Image Pyramids Demo";
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-      boost::bind(&SmoothingNodelet::reconfigureCallback, this, _1, _2);
+      boost::bind(&PyramidsNodelet::reconfigureCallback, this, _1, _2);
     reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
@@ -225,20 +179,20 @@ public:
     onInitPostProcess();
   }
 };
-bool SmoothingNodelet::need_config_update_ = false;
 } // namespace opencv_apps
 
-namespace smoothing {
-class SmoothingNodelet : public opencv_apps::SmoothingNodelet {
+namespace pyramids {
+class PyramidsNodelet : public opencv_apps::PyramidsNodelet {
 public:
   virtual void onInit() {
-    ROS_WARN("DeprecationWarning: Nodelet smoothing/smoothing is deprecated, "
-             "and renamed to opencv_apps/smoothing.");
-    opencv_apps::SmoothingNodelet::onInit();
+    ROS_WARN("DeprecationWarning: Nodelet pyramids/pyramids is deprecated, "
+             "and renamed to opencv_apps/pyramids.");
+    opencv_apps::PyramidsNodelet::onInit();
   }
 };
-} // namespace smoothing
+} // namespace pyramids
+
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(opencv_apps::SmoothingNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(smoothing::SmoothingNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(opencv_apps::PyramidsNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(pyramids::PyramidsNodelet, nodelet::Nodelet);

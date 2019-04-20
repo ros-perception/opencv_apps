@@ -43,7 +43,10 @@ int main(int argc, char **argv)
                  "\t$ rosrun image_rotate image_rotate image:=<image topic> [transport]");
     }
 
-    nodelet::Loader manager(false);
+    // need to use 1 worker thread to prevent freezing in imshow, calling imshow from mutiple threads
+    //nodelet::Loader manager(false);
+    ros::param::set("~num_worker_threads", 1); // need to call   Loader(bool provide_ros_api = true);
+    nodelet::Loader manager(true);
     nodelet::M_string remappings;
     nodelet::V_string my_argv(argv + 1, argv + argc);
     my_argv.push_back("--shutdown-on-close"); // Internal

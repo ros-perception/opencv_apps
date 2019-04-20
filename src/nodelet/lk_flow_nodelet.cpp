@@ -53,7 +53,7 @@
 #include "opencv_apps/LKFlowConfig.h"
 #include "opencv_apps/FlowArrayStamped.h"
 
-namespace lk_flow {
+namespace opencv_apps {
 class LKFlowNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -66,7 +66,7 @@ class LKFlowNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef lk_flow::LKFlowConfig Config;
+  typedef opencv_apps::LKFlowConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -85,9 +85,18 @@ class LKFlowNodelet : public opencv_apps::Nodelet
   cv::Mat gray, prevGray;
   std::vector<cv::Point2f> points[2];
 
+  float quality_level_;
+  int min_distance_;
+  int block_size_;
+  float harris_k_;
+
   void reconfigureCallback(Config &new_config, uint32_t level)
   {
     config_ = new_config;
+    quality_level_ = config_.quality_level;
+    min_distance_ = config_.min_distance;
+    block_size_ = config_.block_size;
+    harris_k_ = config_.harris_k;
   }
 
   const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
@@ -136,9 +145,17 @@ class LKFlowNodelet : public opencv_apps::Nodelet
       if( debug_view_) {
         /// Create Trackbars for Thresholds
         cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
+
+        cv::createTrackbar("Min Distance", window_name_, &min_distance_, 100, trackbarCallback);
+        cv::createTrackbar("Block Size", window_name_, &block_size_, 100, trackbarCallback);
+
         //cv::setMouseCallback( window_name_, onMouse, 0 );
         if (need_config_update_) {
           reconfigure_server_->updateConfig(config_);
+          config_.quality_level = quality_level_;
+          config_.min_distance = min_distance_;
+          config_.block_size = block_size_;
+          config_.harris_k = harris_k_;
           need_config_update_ = false;
         }
       }
@@ -159,7 +176,7 @@ class LKFlowNodelet : public opencv_apps::Nodelet
       if( needToInit )
       {
         // automatic initialization
-        cv::goodFeaturesToTrack(gray, points[1], MAX_COUNT, 0.01, 10, cv::Mat(), 3, 0, 0.04);
+        cv::goodFeaturesToTrack(gray, points[1], MAX_COUNT, quality_level_, min_distance_, cv::Mat(), block_size_, false, harris_k_);
         cv::cornerSubPix(gray, points[1], subPixWinSize, cv::Size(-1,-1), termcrit);
         addRemovePt = false;
       }
@@ -324,7 +341,20 @@ public:
   }
 };
 bool LKFlowNodelet::need_config_update_ = false;
-}
+} // namespace opencv_apps
+
+namespace lk_flow {
+class LKFlowNodelet : public opencv_apps::LKFlowNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet lk_flow/lk_flow is deprecated, "
+             "and renamed to opencv_apps/lk_flow.");
+    opencv_apps::LKFlowNodelet::onInit();
+  }
+};
+} // namespace lk_flow
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::LKFlowNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(lk_flow::LKFlowNodelet, nodelet::Nodelet);

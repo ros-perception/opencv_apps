@@ -51,7 +51,7 @@
  * @author OpenCV team
  */
 
-namespace corner_harris {
+namespace opencv_apps {
 class CornerHarrisNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -61,7 +61,7 @@ class CornerHarrisNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef corner_harris::CornerHarrisConfig Config;
+  typedef opencv_apps::CornerHarrisConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -211,7 +211,20 @@ public:
   }
 };
 bool CornerHarrisNodelet::need_config_update_ = false;
-}
+} // namespace opencv_apps
+
+namespace corner_harris {
+class CornerHarrisNodelet : public opencv_apps::CornerHarrisNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet corner_harris/corner_harris is deprecated, "
+             "and renamed to opencv_apps/corner_harris.");
+    opencv_apps::CornerHarrisNodelet::onInit();
+  }
+};
+} // namespace corner_harris
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::CornerHarrisNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(corner_harris::CornerHarrisNodelet, nodelet::Nodelet);

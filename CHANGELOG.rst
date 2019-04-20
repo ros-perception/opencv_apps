@@ -2,6 +2,46 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.0 (2017-11-20)
+------------------
+* Fix namespace and pkg name of nodelets (Closes (`#21 <https://github.com/ros-perception/opencv_apps/issues/21>`_)) (`#74 <https://github.com/ros-perception/opencv_apps/issues/74>`_)
+  Fix namespace and pkg name of nodelets
+* Add pyramids_nodelet (`#37 <https://github.com/ros-perception/opencv_apps/issues/37>`_)
+  * use toCvCopy instead of CvShare in adding_images
+* adding_images_nodelt :support different size of images (`#57 <https://github.com/ros-perception/opencv_apps/issues/57>`_)
+* fix contour moment program (`#66 <https://github.com/ros-perception/opencv_apps/issues/66>`_)
+  * contour_moments_nodelet.cpp: remove redundant codes, use input encoding
+  * contour_moments_nodelet.cpp: sort contours by the area
+  * contour_moments_nodelet.cpp: remove tailing NR from NODELET_INFO
+
+* fix for opencv 3.3.1 (`#71 <https://github.com/ros-perception/opencv_apps/issues/71>`_)
+  * fix launch/test fiels for opencv3.3
+  * goodFeaturesTrack takes useHarriesDetector == false
+  * opencv 3.3.1 has newer FaceRecognizer
+
+* Contributors: Kei Okada, Iori Yanokura
+
+1.12.0 (2017-07-14)
+-------------------
+* [src/node/standalone_nodelet_exec.cpp.in] workaround for freezing imshow on kinetic (`#67 <https://github.com/ros-perception/opencv_apps/issues/67>`_)
+  * use ros::param::set instead of ros::NodeHandle("~"), that did not output NODELET_INFO
+  * workaround for freezing imshow on kinetic
+
+* [launch/hough_circles.launch] Corrected a typo and applied the node_name argument (`#69 <https://github.com/ros-perception/opencv_apps/issues/69>`_ )
+* [face_recognition] add nodelet / script / message files for face recognition (new) `#63 <https://github.com/ros-perception/opencv_apps/issues/63>`_ from furushchev/face-recognition-new
+
+  * add face_recognition nodelet / test
+    cfg/FaceRecognition.cfg
+    launch/face_recognition.launch
+    scripts/face_recognition_trainer.py
+    src/nodelet/face_recognition_nodelet.cpp
+
+  * [Face.msg] add label / confidence for face recognition
+  * [CMakeLists.txt] remove duplicate msg: RectArrayStamped.msg
+
+* cfg/*.cfg : Set useless use_camera_info flag to false in default (`#58 <https://github.com/ros-perception/opencv_apps/issues/58>`_ )
+* Contributors: Kei Okada, Kentaro Wada, Yuki Furuta, wangl5
+
 1.11.15 (2017-03-26)
 --------------------
 

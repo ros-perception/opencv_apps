@@ -53,7 +53,7 @@
 #include "opencv_apps/Point2D.h"
 #include "opencv_apps/Point2DArrayStamped.h"
 
-namespace goodfeature_track {
+namespace opencv_apps {
 class GoodfeatureTrackNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -63,7 +63,7 @@ class GoodfeatureTrackNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef goodfeature_track::GoodfeatureTrackConfig Config;
+  typedef opencv_apps::GoodfeatureTrackConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
@@ -238,7 +238,20 @@ public:
   }
 };
 bool GoodfeatureTrackNodelet::need_config_update_ = false;
-}
+} // namespace opencv_apps
+
+namespace goodfeature_track {
+class GoodfeatureTrackNodelet : public opencv_apps::GoodfeatureTrackNodelet {
+public:
+  virtual void onInit() {
+    ROS_WARN("DeprecationWarning: Nodelet goodfeature_track/goodfeature_track is deprecated, "
+             "and renamed to opencv_apps/goodfeature_track.");
+    opencv_apps::GoodfeatureTrackNodelet::onInit();
+  }
+};
+} // namespace goodfeature_track
+
 
 #include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(opencv_apps::GoodfeatureTrackNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(goodfeature_track::GoodfeatureTrackNodelet, nodelet::Nodelet);
