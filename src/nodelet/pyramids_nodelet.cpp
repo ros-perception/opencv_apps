@@ -67,6 +67,7 @@ class PyramidsNodelet : public opencv_apps::Nodelet {
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
+  int queue_size_;
   bool debug_view_;
 
   int num_of_pyramids_;
@@ -144,9 +145,9 @@ class PyramidsNodelet : public opencv_apps::Nodelet {
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", 3, &PyramidsNodelet::imageCallbackWithInfo, this);
+      cam_sub_ = it_->subscribeCamera("image", queue_size_, &PyramidsNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", 3, &PyramidsNodelet::imageCallback, this);
+      img_sub_ = it_->subscribe("image", queue_size_, &PyramidsNodelet::imageCallback, this);
   }
 
   void unsubscribe()
@@ -161,6 +162,7 @@ public:
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
 
+    pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
 
     if (debug_view_) {

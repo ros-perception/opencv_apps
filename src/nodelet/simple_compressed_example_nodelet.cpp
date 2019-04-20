@@ -62,17 +62,19 @@ class ImageConverter
   ros::NodeHandle nh_;
   ros::Subscriber image_sub_;
   ros::Publisher image_pub_;
+  int queue_size_;
   bool debug_view_;
 
 public:
   ImageConverter()
   {
       // Subscrive to input video feed and publish output video feed
-    image_sub_ = nh_.subscribe("image/compressed", 1,
+    image_sub_ = nh_.subscribe("image/compressed", queue_size_,
             &ImageConverter::imageCb,this);
     image_pub_ = nh_.advertise<sensor_msgs::CompressedImage>("/image_converter/output_video/compressed", 1);
 
     ros::NodeHandle pnh_("~");
+    pnh_.param("queue_size", queue_size_, 3);
     pnh_.param("debug_view", debug_view_, false);
     if( debug_view_) {
       cv::namedWindow(OPENCV_WINDOW);
