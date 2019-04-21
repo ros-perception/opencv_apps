@@ -61,6 +61,7 @@ namespace opencv_apps {
     Config config_;
     boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
+    int queue_size_;
     bool debug_view_;
 
     std::string window_name_;
@@ -91,10 +92,10 @@ namespace opencv_apps {
       NODELET_DEBUG("Subscribing to image topic.");
       if (config_.use_camera_info)
         cam_sub_ = it_->subscribeCamera(
-          "image", 1, &ThresholdNodelet::imageCallbackWithInfo, this);
+          "image", queue_size_, &ThresholdNodelet::imageCallbackWithInfo, this);
       else
         img_sub_ =
-          it_->subscribe("image", 1, &ThresholdNodelet::imageCallback, this);
+          it_->subscribe("image", queue_size_, &ThresholdNodelet::imageCallback, this);
     }
 
     void unsubscribe() {
@@ -148,6 +149,7 @@ namespace opencv_apps {
       it_ = boost::shared_ptr<image_transport::ImageTransport>(
         new image_transport::ImageTransport(*nh_));
 
+      pnh_->param("queue_size", queue_size_, 3);
       pnh_->param("debug_view", debug_view_, false);
       if (debug_view_) {
         always_subscribe_ = true;

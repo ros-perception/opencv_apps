@@ -60,6 +60,7 @@ class ImageConverter
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
+  int queue_size_;
   bool debug_view_;
 
 public:
@@ -67,11 +68,12 @@ public:
     : it_(nh_)
   {
     // Subscrive to input video feed and publish output video feed
-    image_sub_ = it_.subscribe("image", 1,
+    image_sub_ = it_.subscribe("image", queue_size_,
       &ImageConverter::imageCb, this);
     image_pub_ = it_.advertise("/image_converter/output_video/raw", 1);
 
     ros::NodeHandle pnh_("~");
+    pnh_.param("queue_size", queue_size_, 1);
     pnh_.param("debug_view", debug_view_, false);
     if( debug_view_) {
       cv::namedWindow(OPENCV_WINDOW);

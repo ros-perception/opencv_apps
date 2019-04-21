@@ -77,6 +77,7 @@ namespace opencv_apps {
     Config config_;
     boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
+    int queue_size_;
     bool debug_view_;
     ros::Time prev_stamp_;
 
@@ -116,13 +117,13 @@ namespace opencv_apps {
       if (config_.use_camera_info) {
         if (approximate_sync_) {
           async_with_info_ = boost::make_shared<
-            message_filters::Synchronizer<ApproxSyncPolicyWithCameraInfo> >(100);
+            message_filters::Synchronizer<ApproxSyncPolicyWithCameraInfo> >(queue_size_);
           async_with_info_->connectInput(sub_image1_, sub_image2_, sub_camera_info_);
           async_with_info_->registerCallback(boost::bind(
             &AddingImagesNodelet::imageCallbackWithInfo, this, _1, _2, _3));
         } else {
           sync_with_info_ =
-            boost::make_shared<message_filters::Synchronizer<SyncPolicyWithCameraInfo> >(100);
+            boost::make_shared<message_filters::Synchronizer<SyncPolicyWithCameraInfo> >(queue_size_);
           sync_with_info_->connectInput(sub_image1_, sub_image2_, sub_camera_info_);
           sync_with_info_->registerCallback(boost::bind(
             &AddingImagesNodelet::imageCallbackWithInfo, this, _1, _2, _3));
@@ -130,13 +131,13 @@ namespace opencv_apps {
       } else {
         if (approximate_sync_) {
           async_ = boost::make_shared<
-            message_filters::Synchronizer<ApproxSyncPolicy> >(100);
+            message_filters::Synchronizer<ApproxSyncPolicy> >(queue_size_);
           async_->connectInput(sub_image1_, sub_image2_);
           async_->registerCallback(
             boost::bind(&AddingImagesNodelet::imageCallback, this, _1, _2));
         } else {
           sync_ =
-            boost::make_shared<message_filters::Synchronizer<SyncPolicy> >(100);
+            boost::make_shared<message_filters::Synchronizer<SyncPolicy> >(queue_size_);
           sync_->connectInput(sub_image1_, sub_image2_);
           sync_->registerCallback(
             boost::bind(&AddingImagesNodelet::imageCallback, this, _1, _2));
@@ -251,6 +252,7 @@ namespace opencv_apps {
       reconfigure_server_->setCallback(f);
 
       pnh_->param("approximate_sync", approximate_sync_, true);
+      pnh_->param("queue_size", queue_size_, 100);
       img_pub_ = advertiseImage(*pnh_, "image", 1);
       onInitPostProcess();
     }
