@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(opencv_apps)
 
-find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp sensor_msgs)
+find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp sensor_msgs std_msgs std_srvs)
 
 find_package(OpenCV REQUIRED)
 message(STATUS "OpenCV VERSION: ${OpenCV_VERSION}")
@@ -99,7 +99,7 @@ generate_messages(
   std_msgs
 )
 
-catkin_package(CATKIN_DEPENDS std_msgs
+catkin_package(CATKIN_DEPENDS message_runtime sensor_msgs std_msgs
 #                DEPENDS OpenCV
                INCLUDE_DIRS include
                LIBRARIES ${PROJECT_NAME}
@@ -351,7 +351,8 @@ install(DIRECTORY launch test scripts
 
 ## test
 if(CATKIN_ENABLE_TESTING)
-  find_package(catkin REQUIRED COMPONENTS rostest roslaunch)
+  find_package(rostest REQUIRED)
+  find_package(roslaunch REQUIRED)
   if(roslaunch_VERSION VERSION_LESS "1.11.1")
     message(WARNING "roslaunch_add_file check fails with unsupported doc attributes ${roslaunch_VERSION}")
   else()
