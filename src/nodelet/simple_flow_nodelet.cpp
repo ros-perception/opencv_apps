@@ -3,11 +3,11 @@
 *
 *  Copyright (c) 2014, Kei Okada.
 *  All rights reserved.
-* 
+*
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions
 *  are met:
-* 
+*
 *   * Redistributions of source code must retain the above copyright
 *     notice, this list of conditions and the following disclaimer.
 *   * Redistributions in binary form must reproduce the above
@@ -17,7 +17,7 @@
 *   * Neither the name of the Kei Okada nor the names of its
 *     contributors may be used to endorse or promote products derived
 *     from this software without specific prior written permission.
-* 
+*
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -54,7 +54,8 @@
 #include "opencv_apps/SimpleFlowConfig.h"
 #include "opencv_apps/FlowArrayStamped.h"
 
-namespace opencv_apps {
+namespace opencv_apps
+{
 class SimpleFlowNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -77,16 +78,16 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
   std::string window_name_;
   static bool need_config_update_;
   int scale_;
-  
+
   cv::Mat gray, prevGray;
 
-  void reconfigureCallback(Config &new_config, uint32_t level)
+  void reconfigureCallback(Config& new_config, uint32_t level)
   {
     config_ = new_config;
     scale_ = config_.scale;
   }
 
-  const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
+  const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
   {
     if (frame.empty())
       return image_frame;
@@ -97,13 +98,13 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
   {
     do_work(msg, cam_info->header.frame_id);
   }
-  
+
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
     do_work(msg, msg->header.frame_id);
   }
 
-  static void trackbarCallback( int, void* )
+  static void trackbarCallback(int, void*)
   {
     need_config_update_ = true;
   }
@@ -118,22 +119,28 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
 
       /// Convert it to gray
       cv::Mat frame;
-      if ( frame_src.channels() > 1 ) {
+      if (frame_src.channels() > 1)
+      {
         frame = frame_src;
-      } else {
-        cv::cvtColor( frame_src, frame, cv::COLOR_GRAY2BGR );
+      }
+      else
+      {
+        cv::cvtColor(frame_src, frame, cv::COLOR_GRAY2BGR);
       }
 
-      cv::resize(frame, gray, cv::Size(frame.cols/(double)MAX(1,scale_), frame.rows/(double)MAX(1,scale_)), 0, 0, CV_INTER_AREA);
-      if(prevGray.empty())
+      cv::resize(frame, gray, cv::Size(frame.cols / (double)MAX(1, scale_), frame.rows / (double)MAX(1, scale_)), 0, 0,
+                 CV_INTER_AREA);
+      if (prevGray.empty())
         gray.copyTo(prevGray);
 
-      if (gray.rows != prevGray.rows && gray.cols != prevGray.cols) {
+      if (gray.rows != prevGray.rows && gray.cols != prevGray.cols)
+      {
         NODELET_WARN("Images should be of equal sizes");
         gray.copyTo(prevGray);
       }
 
-      if (frame.type() != 16) {
+      if (frame.type() != 16)
+      {
         NODELET_ERROR("Images should be of equal type CV_8UC3");
       }
       // Messages
@@ -143,10 +150,12 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
       // Do the work
       cv::Mat flow;
 
-      if( debug_view_) {
-        cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
-        cv::createTrackbar( "Scale", window_name_, &scale_, 24, trackbarCallback);
-        if (need_config_update_) {
+      if (debug_view_)
+      {
+        cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
+        cv::createTrackbar("Scale", window_name_, &scale_, 24, trackbarCallback);
+        if (need_config_update_)
+        {
           config_.scale = scale_;
           reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
@@ -159,42 +168,45 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
 #else
       cv::calcOpticalFlowSF(gray, prevGray,
 #endif
-                            flow,
-                            3, 2, 4, 4.1, 25.5, 18, 55.0, 25.5, 0.35, 18, 55.0, 25.5, 10);
+                                     flow, 3, 2, 4, 4.1, 25.5, 18, 55.0, 25.5, 0.35, 18, 55.0, 25.5, 10);
       NODELET_INFO("calcOpticalFlowSF : %lf sec", (cv::getTickCount() - start) / cv::getTickFrequency());
 
-      //writeOpticalFlowToFile(flow, file);
+      // writeOpticalFlowToFile(flow, file);
       int cols = flow.cols;
       int rows = flow.rows;
-      double scale_col = frame.cols/(double)flow.cols;
-      double scale_row = frame.rows/(double)flow.rows;
+      double scale_col = frame.cols / (double)flow.cols;
+      double scale_row = frame.rows / (double)flow.rows;
 
-
-      for (int i= 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
+      for (int i = 0; i < rows; ++i)
+      {
+        for (int j = 0; j < cols; ++j)
+        {
           cv::Vec2f flow_at_point = flow.at<cv::Vec2f>(i, j);
-          cv::line(frame, cv::Point(scale_col*j, scale_row*i), cv::Point(scale_col*(j+flow_at_point[0]), scale_row*(i+flow_at_point[1])), cv::Scalar(0,255,0), 1, 8, 0 );
+          cv::line(frame, cv::Point(scale_col * j, scale_row * i),
+                   cv::Point(scale_col * (j + flow_at_point[0]), scale_row * (i + flow_at_point[1])),
+                   cv::Scalar(0, 255, 0), 1, 8, 0);
 
           opencv_apps::Flow flow_msg;
           opencv_apps::Point2D point_msg;
           opencv_apps::Point2D velocity_msg;
-          point_msg.x = scale_col*j;
-          point_msg.y = scale_row*i;
-          velocity_msg.x = scale_col*flow_at_point[0];
-          velocity_msg.y = scale_row*flow_at_point[1];
+          point_msg.x = scale_col * j;
+          point_msg.y = scale_row * i;
+          velocity_msg.x = scale_col * flow_at_point[0];
+          velocity_msg.y = scale_row * flow_at_point[1];
           flow_msg.point = point_msg;
           flow_msg.velocity = velocity_msg;
           flows_msg.flow.push_back(flow_msg);
         }
       }
 
-      //cv::cvtColor( frame, src_gray, cv::COLOR_BGR2GRAY );
+      // cv::cvtColor( frame, src_gray, cv::COLOR_BGR2GRAY );
       /// Apply Canny edge detector
-      //Canny( src_gray, edges, 50, 200, 3 );
+      // Canny( src_gray, edges, 50, 200, 3 );
 
       //-- Show what you got
-      if ( debug_view_) {
-        cv::imshow( window_name_, frame );
+      if (debug_view_)
+      {
+        cv::imshow(window_name_, frame);
         int c = cv::waitKey(1);
       }
 
@@ -204,7 +216,7 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
       img_pub_.publish(out_img);
       msg_pub_.publish(flows_msg);
     }
-    catch (cv::Exception &e)
+    catch (cv::Exception& e)
     {
       NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
     }
@@ -236,7 +248,8 @@ public:
 
     pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
-    if (debug_view_) {
+    if (debug_view_)
+    {
       always_subscribe_ = true;
     }
     prev_stamp_ = ros::Time(0, 0);
@@ -246,9 +259,9 @@ public:
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-      boost::bind(&SimpleFlowNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&SimpleFlowNodelet::reconfigureCallback, this, _1, _2);
     reconfigure_server_->setCallback(f);
-    
+
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::FlowArrayStamped>(*pnh_, "flows", 1);
 
@@ -256,18 +269,21 @@ public:
   }
 };
 bool SimpleFlowNodelet::need_config_update_ = false;
-} // namespace opencv_apps
+}  // namespace opencv_apps
 
-namespace simple_flow {
-class SimpleFlowNodelet : public opencv_apps::SimpleFlowNodelet {
+namespace simple_flow
+{
+class SimpleFlowNodelet : public opencv_apps::SimpleFlowNodelet
+{
 public:
-  virtual void onInit() {
+  virtual void onInit()
+  {
     ROS_WARN("DeprecationWarning: Nodelet simple_flow/simple_flow is deprecated, "
              "and renamed to opencv_apps/simple_flow.");
     opencv_apps::SimpleFlowNodelet::onInit();
   }
 };
-} // namespace simple_flow
+}  // namespace simple_flow
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::SimpleFlowNodelet, nodelet::Nodelet);

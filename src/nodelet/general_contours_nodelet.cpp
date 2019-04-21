@@ -55,7 +55,8 @@
 #include "opencv_apps/RotatedRectArray.h"
 #include "opencv_apps/RotatedRectArrayStamped.h"
 
-namespace opencv_apps {
+namespace opencv_apps
+{
 class GeneralContoursNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -79,13 +80,13 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
   std::string window_name_;
   static bool need_config_update_;
 
-  void reconfigureCallback(Config &new_config, uint32_t level)
+  void reconfigureCallback(Config& new_config, uint32_t level)
   {
     config_ = new_config;
     threshold_ = config_.threshold;
   }
 
-  const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
+  const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
   {
     if (frame.empty())
       return image_frame;
@@ -102,7 +103,7 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
     do_work(msg, msg->header.frame_id);
   }
 
-  static void trackbarCallback( int, void* )
+  static void trackbarCallback(int, void*)
   {
     need_config_update_ = true;
   }
@@ -124,16 +125,20 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
       cv::Mat src_gray;
 
       /// Convert image to gray and blur it
-      if ( frame.channels() > 1 ) {
-        cv::cvtColor( frame, src_gray, cv::COLOR_RGB2GRAY );
-      } else {
+      if (frame.channels() > 1)
+      {
+        cv::cvtColor(frame, src_gray, cv::COLOR_RGB2GRAY);
+      }
+      else
+      {
         src_gray = frame;
       }
-      cv::blur( src_gray, src_gray, cv::Size(3,3) );
+      cv::blur(src_gray, src_gray, cv::Size(3, 3));
 
       /// Create window
-      if( debug_view_) {
-        cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
+      if (debug_view_)
+      {
+        cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
       }
 
       cv::Mat threshold_output;
@@ -143,34 +148,38 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
       cv::RNG rng(12345);
 
       /// Detect edges using Threshold
-      cv::threshold( src_gray, threshold_output, threshold_, 255, cv::THRESH_BINARY );
+      cv::threshold(src_gray, threshold_output, threshold_, 255, cv::THRESH_BINARY);
 
       /// Find contours
-      cv::findContours( threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
+      cv::findContours(threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
       /// Find the rotated rectangles and ellipses for each contour
-      std::vector<cv::RotatedRect> minRect( contours.size() );
-      std::vector<cv::RotatedRect> minEllipse( contours.size() );
+      std::vector<cv::RotatedRect> minRect(contours.size());
+      std::vector<cv::RotatedRect> minEllipse(contours.size());
 
-      for( size_t i = 0; i < contours.size(); i++ )
-      { minRect[i] = cv::minAreaRect( cv::Mat(contours[i]) );
-        if( contours[i].size() > 5 )
-        { minEllipse[i] = cv::fitEllipse( cv::Mat(contours[i]) ); }
+      for (size_t i = 0; i < contours.size(); i++)
+      {
+        minRect[i] = cv::minAreaRect(cv::Mat(contours[i]));
+        if (contours[i].size() > 5)
+        {
+          minEllipse[i] = cv::fitEllipse(cv::Mat(contours[i]));
+        }
       }
 
       /// Draw contours + rotated rects + ellipses
-      cv::Mat drawing = cv::Mat::zeros( threshold_output.size(), CV_8UC3 );
-      for( size_t i = 0; i< contours.size(); i++ )
+      cv::Mat drawing = cv::Mat::zeros(threshold_output.size(), CV_8UC3);
+      for (size_t i = 0; i < contours.size(); i++)
       {
-        cv::Scalar color = cv::Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+        cv::Scalar color = cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
         // contour
-        cv::drawContours( drawing, contours, (int)i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
+        cv::drawContours(drawing, contours, (int)i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
         // ellipse
-        cv::ellipse( drawing, minEllipse[i], color, 2, 8 );
+        cv::ellipse(drawing, minEllipse[i], color, 2, 8);
         // rotated rectangle
-        cv::Point2f rect_points[4]; minRect[i].points( rect_points );
-        for( int j = 0; j < 4; j++ )
-          cv::line( drawing, rect_points[j], rect_points[(j+1)%4], color, 1, 8 );
+        cv::Point2f rect_points[4];
+        minRect[i].points(rect_points);
+        for (int j = 0; j < 4; j++)
+          cv::line(drawing, rect_points[j], rect_points[(j + 1) % 4], color, 1, 8);
 
         opencv_apps::RotatedRect rect_msg;
         opencv_apps::Point2D rect_center;
@@ -198,25 +207,28 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
       }
 
       /// Create a Trackbar for user to enter threshold
-      if( debug_view_) {
-        if (need_config_update_) {
+      if (debug_view_)
+      {
+        if (need_config_update_)
+        {
           config_.threshold = threshold_;
           reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
-        cv::createTrackbar( "Threshold:", window_name_, &threshold_, max_thresh, trackbarCallback);
+        cv::createTrackbar("Threshold:", window_name_, &threshold_, max_thresh, trackbarCallback);
 
-        cv::imshow( window_name_, drawing );
+        cv::imshow(window_name_, drawing);
         int c = cv::waitKey(1);
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, drawing).toImageMsg();
+      sensor_msgs::Image::Ptr out_img =
+          cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, drawing).toImageMsg();
       img_pub_.publish(out_img);
       rects_pub_.publish(rects_msg);
       ellipses_pub_.publish(ellipses_msg);
     }
-    catch (cv::Exception &e)
+    catch (cv::Exception& e)
     {
       NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
     }
@@ -248,7 +260,8 @@ public:
 
     pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
-    if (debug_view_) {
+    if (debug_view_)
+    {
       always_subscribe_ = true;
     }
     prev_stamp_ = ros::Time(0, 0);
@@ -258,9 +271,9 @@ public:
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-      boost::bind(&GeneralContoursNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&GeneralContoursNodelet::reconfigureCallback, this, _1, _2);
     reconfigure_server_->setCallback(f);
-    
+
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     rects_pub_ = advertise<opencv_apps::RotatedRectArrayStamped>(*pnh_, "rectangles", 1);
     ellipses_pub_ = advertise<opencv_apps::RotatedRectArrayStamped>(*pnh_, "ellipses", 1);
@@ -269,19 +282,21 @@ public:
   }
 };
 bool GeneralContoursNodelet::need_config_update_ = false;
-} // namespace opencv_apps
+}  // namespace opencv_apps
 
-namespace general_contours {
-class GeneralContoursNodelet : public opencv_apps::GeneralContoursNodelet {
+namespace general_contours
+{
+class GeneralContoursNodelet : public opencv_apps::GeneralContoursNodelet
+{
 public:
-  virtual void onInit() {
+  virtual void onInit()
+  {
     ROS_WARN("DeprecationWarning: Nodelet general_contours/general_contours is deprecated, "
              "and renamed to opencv_apps/general_contours.");
     opencv_apps::GeneralContoursNodelet::onInit();
   }
 };
-} // namespace general_contours
-
+}  // namespace general_contours
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::GeneralContoursNodelet, nodelet::Nodelet);

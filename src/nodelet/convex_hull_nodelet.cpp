@@ -55,7 +55,8 @@
 #include "opencv_apps/ContourArray.h"
 #include "opencv_apps/ContourArrayStamped.h"
 
-namespace opencv_apps {
+namespace opencv_apps
+{
 class ConvexHullNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -79,13 +80,13 @@ class ConvexHullNodelet : public opencv_apps::Nodelet
   std::string window_name_;
   static bool need_config_update_;
 
-  void reconfigureCallback(Config &new_config, uint32_t level)
+  void reconfigureCallback(Config& new_config, uint32_t level)
   {
     config_ = new_config;
     threshold_ = config_.threshold;
   }
 
-  const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
+  const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
   {
     if (frame.empty())
       return image_frame;
@@ -102,7 +103,7 @@ class ConvexHullNodelet : public opencv_apps::Nodelet
     do_work(msg, msg->header.frame_id);
   }
 
-  static void trackbarCallback( int, void* )
+  static void trackbarCallback(int, void*)
   {
     need_config_update_ = true;
   }
@@ -123,16 +124,20 @@ class ConvexHullNodelet : public opencv_apps::Nodelet
       cv::Mat src_gray;
 
       /// Convert image to gray and blur it
-      if ( frame.channels() > 1 ) {
-        cv::cvtColor( frame, src_gray, cv::COLOR_RGB2GRAY );
-      } else {
+      if (frame.channels() > 1)
+      {
+        cv::cvtColor(frame, src_gray, cv::COLOR_RGB2GRAY);
+      }
+      else
+      {
         src_gray = frame;
       }
-      cv::blur( src_gray, src_gray, cv::Size(3,3) );
+      cv::blur(src_gray, src_gray, cv::Size(3, 3));
 
       /// Create window
-      if( debug_view_) {
-        cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
+      if (debug_view_)
+      {
+        cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
       }
 
       cv::Mat threshold_output;
@@ -142,26 +147,29 @@ class ConvexHullNodelet : public opencv_apps::Nodelet
       cv::RNG rng(12345);
 
       /// Detect edges using Threshold
-      cv::threshold( src_gray, threshold_output, threshold_, 255, cv::THRESH_BINARY );
+      cv::threshold(src_gray, threshold_output, threshold_, 255, cv::THRESH_BINARY);
 
       /// Find contours
-      cv::findContours( threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
+      cv::findContours(threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
       /// Find the convex hull object for each contour
-      std::vector<std::vector<cv::Point> >hull( contours.size() );
-      for( size_t i = 0; i < contours.size(); i++ )
-      {   cv::convexHull( cv::Mat(contours[i]), hull[i], false ); }
+      std::vector<std::vector<cv::Point> > hull(contours.size());
+      for (size_t i = 0; i < contours.size(); i++)
+      {
+        cv::convexHull(cv::Mat(contours[i]), hull[i], false);
+      }
 
       /// Draw contours + hull results
-      cv::Mat drawing = cv::Mat::zeros( threshold_output.size(), CV_8UC3 );
-      for( size_t i = 0; i< contours.size(); i++ )
+      cv::Mat drawing = cv::Mat::zeros(threshold_output.size(), CV_8UC3);
+      for (size_t i = 0; i < contours.size(); i++)
       {
-        cv::Scalar color = cv::Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
-        cv::drawContours( drawing, contours, (int)i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
-        cv::drawContours( drawing, hull, (int)i, color, 4, 8, std::vector<cv::Vec4i>(), 0, cv::Point() );
+        cv::Scalar color = cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
+        cv::drawContours(drawing, contours, (int)i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
+        cv::drawContours(drawing, hull, (int)i, color, 4, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
 
         opencv_apps::Contour contour_msg;
-        for ( size_t j = 0; j < hull[i].size(); j++ ) {
+        for (size_t j = 0; j < hull[i].size(); j++)
+        {
           opencv_apps::Point2D point_msg;
           point_msg.x = hull[i][j].x;
           point_msg.y = hull[i][j].y;
@@ -171,24 +179,27 @@ class ConvexHullNodelet : public opencv_apps::Nodelet
       }
 
       /// Create a Trackbar for user to enter threshold
-      if( debug_view_) {
-        if (need_config_update_) {
+      if (debug_view_)
+      {
+        if (need_config_update_)
+        {
           config_.threshold = threshold_;
           reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
-        cv::createTrackbar( "Threshold:", window_name_, &threshold_, max_thresh, trackbarCallback);
+        cv::createTrackbar("Threshold:", window_name_, &threshold_, max_thresh, trackbarCallback);
 
-        cv::imshow( window_name_, drawing );
+        cv::imshow(window_name_, drawing);
         int c = cv::waitKey(1);
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, drawing).toImageMsg();
+      sensor_msgs::Image::Ptr out_img =
+          cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, drawing).toImageMsg();
       img_pub_.publish(out_img);
       msg_pub_.publish(contours_msg);
     }
-    catch (cv::Exception &e)
+    catch (cv::Exception& e)
     {
       NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
     }
@@ -212,7 +223,6 @@ class ConvexHullNodelet : public opencv_apps::Nodelet
     cam_sub_.shutdown();
   }
 
-
 public:
   virtual void onInit()
   {
@@ -221,17 +231,18 @@ public:
 
     pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
-    if (debug_view_) {
+    if (debug_view_)
+    {
       always_subscribe_ = true;
     }
     prev_stamp_ = ros::Time(0, 0);
 
     window_name_ = "Hull Demo";
     threshold_ = 100;
-    
+
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-      boost::bind(&ConvexHullNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&ConvexHullNodelet::reconfigureCallback, this, _1, _2);
     reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
@@ -240,19 +251,21 @@ public:
   }
 };
 bool ConvexHullNodelet::need_config_update_ = false;
-} // namespace opencv_apps
+}  // namespace opencv_apps
 
-namespace convex_hull {
-class ConvexHullNodelet : public opencv_apps::ConvexHullNodelet {
+namespace convex_hull
+{
+class ConvexHullNodelet : public opencv_apps::ConvexHullNodelet
+{
 public:
-  virtual void onInit() {
+  virtual void onInit()
+  {
     ROS_WARN("DeprecationWarning: Nodelet convex_hull/convex_hull is deprecated, "
              "and renamed to opencv_apps/convex_hull.");
     opencv_apps::ConvexHullNodelet::onInit();
   }
 };
-} // namespace convex_hull
-
+}  // namespace convex_hull
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::ConvexHullNodelet, nodelet::Nodelet);

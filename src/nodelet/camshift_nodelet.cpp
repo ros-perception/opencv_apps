@@ -3,11 +3,11 @@
 *
 *  Copyright (c) 2014, Kei Okada.
 *  All rights reserved.
-* 
+*
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions
 *  are met:
-* 
+*
 *   * Redistributions of source code must retain the above copyright
 *     notice, this list of conditions and the following disclaimer.
 *   * Redistributions in binary form must reproduce the above
@@ -17,7 +17,7 @@
 *   * Neither the name of the Kei Okada nor the names of its
 *     contributors may be used to endorse or promote products derived
 *     from this software without specific prior written permission.
-* 
+*
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -56,7 +56,8 @@
 #include "opencv_apps/CamShiftConfig.h"
 #include "opencv_apps/RotatedRectStamped.h"
 
-namespace opencv_apps {
+namespace opencv_apps
+{
 class CamShiftNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_, bproj_pub_;
@@ -96,9 +97,9 @@ class CamShiftNodelet : public opencv_apps::Nodelet
   float hranges[2];
   const float* phranges;
   cv::Mat hist, histimg;
-  //cv::Mat hsv;
-  
-  static void onMouse( int event, int x, int y, int, void* )
+  // cv::Mat hsv;
+
+  static void onMouse(int event, int x, int y, int, void*)
   {
     on_mouse_update_ = true;
     on_mouse_event_ = event;
@@ -106,7 +107,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
     on_mouse_y_ = y;
   }
 
-  void reconfigureCallback(Config &new_config, uint32_t level)
+  void reconfigureCallback(Config& new_config, uint32_t level)
   {
     config_ = new_config;
     vmin_ = config_.vmin;
@@ -114,7 +115,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
     smin_ = config_.smin;
   }
 
-  const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
+  const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
   {
     if (frame.empty())
       return image_frame;
@@ -125,13 +126,13 @@ class CamShiftNodelet : public opencv_apps::Nodelet
   {
     do_work(msg, cam_info->header.frame_id);
   }
-  
+
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
     do_work(msg, msg->header.frame_id);
   }
 
-  static void trackbarCallback( int, void* )
+  static void trackbarCallback(int, void*)
   {
     need_config_update_ = true;
   }
@@ -144,24 +145,26 @@ class CamShiftNodelet : public opencv_apps::Nodelet
       // Convert the image into something opencv can handle.
       cv::Mat frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
       cv::Mat backproj;
-      
+
       // Messages
       opencv_apps::RotatedRectStamped rect_msg;
       rect_msg.header = msg->header;
 
       // Do the work
-      
-      if( debug_view_) {
+
+      if (debug_view_)
+      {
         /// Create Trackbars for Thresholds
 
-        cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
+        cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
 
-        cv::setMouseCallback( window_name_, onMouse, 0 );
-        cv::createTrackbar( "Vmin", window_name_, &vmin_, 256, trackbarCallback);
-        cv::createTrackbar( "Vmax", window_name_, &vmax_, 256, trackbarCallback);
-        cv::createTrackbar( "Smin", window_name_, &smin_, 256, trackbarCallback);
+        cv::setMouseCallback(window_name_, onMouse, 0);
+        cv::createTrackbar("Vmin", window_name_, &vmin_, 256, trackbarCallback);
+        cv::createTrackbar("Vmax", window_name_, &vmax_, 256, trackbarCallback);
+        cv::createTrackbar("Smin", window_name_, &smin_, 256, trackbarCallback);
 
-        if (need_config_update_) {
+        if (need_config_update_)
+        {
           config_.vmin = vmin_;
           config_.vmax = vmax_;
           config_.smin = smin_;
@@ -170,12 +173,13 @@ class CamShiftNodelet : public opencv_apps::Nodelet
         }
       }
 
-      if ( on_mouse_update_ ) {
+      if (on_mouse_update_)
+      {
         int event = on_mouse_event_;
         int x = on_mouse_x_;
         int y = on_mouse_y_;
 
-        if( selectObject )
+        if (selectObject)
         {
           selection.x = MIN(x, origin.x);
           selection.y = MIN(y, origin.y);
@@ -185,45 +189,47 @@ class CamShiftNodelet : public opencv_apps::Nodelet
           selection &= cv::Rect(0, 0, frame.cols, frame.rows);
         }
 
-        switch( event )
+        switch (event)
         {
           case cv::EVENT_LBUTTONDOWN:
-            origin = cv::Point(x,y);
-            selection = cv::Rect(x,y,0,0);
+            origin = cv::Point(x, y);
+            selection = cv::Rect(x, y, 0, 0);
             selectObject = true;
             break;
           case cv::EVENT_LBUTTONUP:
             selectObject = false;
-            if( selection.width > 0 && selection.height > 0 )
+            if (selection.width > 0 && selection.height > 0)
               trackObject = -1;
             break;
         }
         on_mouse_update_ = false;
       }
 
-      if( !paused )
+      if (!paused)
       {
         cv::Mat hsv, hue, mask;
         cv::cvtColor(frame, hsv, cv::COLOR_BGR2HSV);
 
-        if( trackObject )
+        if (trackObject)
         {
           int _vmin = vmin_, _vmax = vmax_;
 
-          cv::inRange(hsv, cv::Scalar(0, smin_, MIN(_vmin,_vmax)),
-                      cv::Scalar(180, 256, MAX(_vmin, _vmax)), mask);
-          int ch[] = {0, 0};
+          cv::inRange(hsv, cv::Scalar(0, smin_, MIN(_vmin, _vmax)), cv::Scalar(180, 256, MAX(_vmin, _vmax)), mask);
+          int ch[] = { 0, 0 };
           hue.create(hsv.size(), hsv.depth());
           cv::mixChannels(&hsv, 1, &hue, 1, ch, 1);
 
-          if( trackObject < 0 )
+          if (trackObject < 0)
           {
             cv::Mat roi(hue, selection), maskroi(mask, selection);
             cv::calcHist(&roi, 1, 0, maskroi, hist, 1, &hsize, &phranges);
             cv::normalize(hist, hist, 0, 255, cv::NORM_MINMAX);
             std::vector<float> hist_value;
             hist_value.resize(hsize);
-            for(int i = 0; i < hsize; i ++) { hist_value[i] = hist.at<float>(i);}
+            for (int i = 0; i < hsize; i++)
+            {
+              hist_value[i] = hist.at<float>(i);
+            }
             pnh_->setParam("histogram", hist_value);
 
             trackWindow = selection;
@@ -232,41 +238,38 @@ class CamShiftNodelet : public opencv_apps::Nodelet
             histimg = cv::Scalar::all(0);
             int binW = histimg.cols / hsize;
             cv::Mat buf(1, hsize, CV_8UC3);
-            for( int i = 0; i < hsize; i++ )
-              buf.at<cv::Vec3b>(i) = cv::Vec3b(cv::saturate_cast<uchar>(i*180./hsize), 255, 255);
+            for (int i = 0; i < hsize; i++)
+              buf.at<cv::Vec3b>(i) = cv::Vec3b(cv::saturate_cast<uchar>(i * 180. / hsize), 255, 255);
             cv::cvtColor(buf, buf, cv::COLOR_HSV2BGR);
 
-            for( int i = 0; i < hsize; i++ )
+            for (int i = 0; i < hsize; i++)
             {
-              int val = cv::saturate_cast<int>(hist.at<float>(i)*histimg.rows/255);
-              cv::rectangle( histimg, cv::Point(i*binW,histimg.rows),
-                             cv::Point((i+1)*binW,histimg.rows - val),
-                             cv::Scalar(buf.at<cv::Vec3b>(i)), -1, 8 );
+              int val = cv::saturate_cast<int>(hist.at<float>(i) * histimg.rows / 255);
+              cv::rectangle(histimg, cv::Point(i * binW, histimg.rows), cv::Point((i + 1) * binW, histimg.rows - val),
+                            cv::Scalar(buf.at<cv::Vec3b>(i)), -1, 8);
             }
           }
 
           cv::calcBackProject(&hue, 1, 0, hist, backproj, &phranges);
           backproj &= mask;
-          cv::RotatedRect trackBox = cv::CamShift(backproj, trackWindow,
-                                                  cv::TermCriteria( cv::TermCriteria::EPS + cv::TermCriteria::MAX_ITER, 10, 1 ));
-          if( trackWindow.area() <= 1 )
+          cv::RotatedRect trackBox = cv::CamShift(
+              backproj, trackWindow, cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::MAX_ITER, 10, 1));
+          if (trackWindow.area() <= 1)
           {
-            int cols = backproj.cols, rows = backproj.rows, r = (MIN(cols, rows) + 5)/6;
-            //trackWindow = cv::Rect(trackWindow.x - r, trackWindow.y - r,
+            int cols = backproj.cols, rows = backproj.rows, r = (MIN(cols, rows) + 5) / 6;
+            // trackWindow = cv::Rect(trackWindow.x - r, trackWindow.y - r,
             //                       trackWindow.x + r, trackWindow.y + r) &
-            trackWindow = cv::Rect(cols/2 - r, rows/2 - r,
-                                   cols/2 + r, rows/2 + r) &
-              cv::Rect(0, 0, cols, rows);
+            trackWindow = cv::Rect(cols / 2 - r, rows / 2 - r, cols / 2 + r, rows / 2 + r) & cv::Rect(0, 0, cols, rows);
           }
 
-          if( backprojMode )
-            cv::cvtColor( backproj, frame, cv::COLOR_GRAY2BGR );
+          if (backprojMode)
+            cv::cvtColor(backproj, frame, cv::COLOR_GRAY2BGR);
 #ifndef CV_VERSION_EPOCH
-          cv::ellipse( frame, trackBox, cv::Scalar(0,0,255), 3, cv::LINE_AA );
+          cv::ellipse(frame, trackBox, cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
 #else
-          cv::ellipse( frame, trackBox, cv::Scalar(0,0,255), 3, CV_AA );
+          cv::ellipse(frame, trackBox, cv::Scalar(0, 0, 255), 3, CV_AA);
 #endif
-          
+
           rect_msg.rect.angle = trackBox.angle;
           opencv_apps::Point2D point_msg;
           opencv_apps::Size size_msg;
@@ -278,23 +281,24 @@ class CamShiftNodelet : public opencv_apps::Nodelet
           rect_msg.rect.size = size_msg;
         }
       }
-      else if( trackObject < 0 )
+      else if (trackObject < 0)
         paused = false;
 
-      if( selectObject && selection.width > 0 && selection.height > 0 )
+      if (selectObject && selection.width > 0 && selection.height > 0)
       {
         cv::Mat roi(frame, selection);
         bitwise_not(roi, roi);
       }
 
-      if( debug_view_ ) {
-        cv::imshow( window_name_, frame );
-        cv::imshow( histogram_name_, histimg );
+      if (debug_view_)
+      {
+        cv::imshow(window_name_, frame);
+        cv::imshow(histogram_name_, histimg);
 
         char c = (char)cv::waitKey(1);
-        //if( c == 27 )
+        // if( c == 27 )
         //  break;
-        switch(c)
+        switch (c)
         {
           case 'b':
             backprojMode = !backprojMode;
@@ -305,28 +309,28 @@ class CamShiftNodelet : public opencv_apps::Nodelet
             break;
           case 'h':
             showHist = !showHist;
-            if( !showHist )
-              cv::destroyWindow( histogram_name_ );
+            if (!showHist)
+              cv::destroyWindow(histogram_name_);
             else
-              cv::namedWindow( histogram_name_, 1 );
+              cv::namedWindow(histogram_name_, 1);
             break;
           case 'p':
             paused = !paused;
             break;
-          default:
-            ;
+          default:;
         }
       }
 
       // Publish the image.
       sensor_msgs::Image::Ptr out_img1 = cv_bridge::CvImage(msg->header, msg->encoding, frame).toImageMsg();
-      sensor_msgs::Image::Ptr out_img2 = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::MONO8, backproj).toImageMsg();
+      sensor_msgs::Image::Ptr out_img2 =
+          cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::MONO8, backproj).toImageMsg();
       img_pub_.publish(out_img1);
       bproj_pub_.publish(out_img2);
-      if( trackObject )
+      if (trackObject)
         msg_pub_.publish(rect_msg);
     }
-    catch (cv::Exception &e)
+    catch (cv::Exception& e)
     {
       NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
     }
@@ -358,7 +362,8 @@ public:
 
     pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
-    if (debug_view_) {
+    if (debug_view_)
+    {
       always_subscribe_ = true;
     }
     prev_stamp_ = ros::Time(0, 0);
@@ -366,7 +371,9 @@ public:
     window_name_ = "CamShift Demo";
     histogram_name_ = "Histogram";
 
-    vmin_ = 10; vmax_ = 256; smin_ = 30;
+    vmin_ = 10;
+    vmax_ = 256;
+    smin_ = 30;
     backprojMode = false;
     selectObject = false;
     trackObject = 0;
@@ -381,14 +388,13 @@ public:
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-      boost::bind(&CamShiftNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&CamShiftNodelet::reconfigureCallback, this, _1, _2);
     reconfigure_server_->setCallback(f);
 
-    
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     bproj_pub_ = advertiseImage(*pnh_, "back_project", 1);
     msg_pub_ = advertise<opencv_apps::RotatedRectStamped>(*pnh_, "track_box", 1);
-    
+
     NODELET_INFO("Hot keys: ");
     NODELET_INFO("\tESC - quit the program");
     NODELET_INFO("\tc - stop the tracking");
@@ -399,26 +405,28 @@ public:
 
     std::vector<float> hist_value;
     pnh_->getParam("histogram", hist_value);
-    if ( hist_value.size() == hsize ) {
+    if (hist_value.size() == hsize)
+    {
       hist.create(hsize, 1, CV_32F);
-      for(int i = 0; i < hsize; i ++) { hist.at<float>(i) = hist_value[i];}
+      for (int i = 0; i < hsize; i++)
+      {
+        hist.at<float>(i) = hist_value[i];
+      }
       trackObject = 1;
-      trackWindow = cv::Rect(0, 0, 640, 480); //
-      
+      trackWindow = cv::Rect(0, 0, 640, 480);  //
 
       histimg = cv::Scalar::all(0);
       int binW = histimg.cols / hsize;
       cv::Mat buf(1, hsize, CV_8UC3);
-      for( int i = 0; i < hsize; i++ )
-        buf.at<cv::Vec3b>(i) = cv::Vec3b(cv::saturate_cast<uchar>(i*180./hsize), 255, 255);
+      for (int i = 0; i < hsize; i++)
+        buf.at<cv::Vec3b>(i) = cv::Vec3b(cv::saturate_cast<uchar>(i * 180. / hsize), 255, 255);
       cv::cvtColor(buf, buf, cv::COLOR_HSV2BGR);
-      
-      for( int i = 0; i < hsize; i++ )
+
+      for (int i = 0; i < hsize; i++)
       {
-        int val = cv::saturate_cast<int>(hist.at<float>(i)*histimg.rows/255);
-        cv::rectangle( histimg, cv::Point(i*binW,histimg.rows),
-                       cv::Point((i+1)*binW,histimg.rows - val),
-                       cv::Scalar(buf.at<cv::Vec3b>(i)), -1, 8 );
+        int val = cv::saturate_cast<int>(hist.at<float>(i) * histimg.rows / 255);
+        cv::rectangle(histimg, cv::Point(i * binW, histimg.rows), cv::Point((i + 1) * binW, histimg.rows - val),
+                      cv::Scalar(buf.at<cv::Vec3b>(i)), -1, 8);
       }
     }
     onInitPostProcess();
@@ -429,19 +437,21 @@ bool CamShiftNodelet::on_mouse_update_ = false;
 int CamShiftNodelet::on_mouse_event_ = 0;
 int CamShiftNodelet::on_mouse_x_ = 0;
 int CamShiftNodelet::on_mouse_y_ = 0;
-} // namespace opencv_apps
+}  // namespace opencv_apps
 
-namespace camshift {
-class CamShiftNodelet : public opencv_apps::CamShiftNodelet {
+namespace camshift
+{
+class CamShiftNodelet : public opencv_apps::CamShiftNodelet
+{
 public:
-  virtual void onInit() {
+  virtual void onInit()
+  {
     ROS_WARN("DeprecationWarning: Nodelet camshift/camshift is deprecated, "
              "and renamed to opencv_apps/camshift.");
     opencv_apps::CamShiftNodelet::onInit();
   }
 };
-} // namespace camshift
-
+}  // namespace camshift
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::CamShiftNodelet, nodelet::Nodelet);
