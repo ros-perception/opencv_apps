@@ -134,12 +134,12 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
 
   void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
   {
-    do_work(msg, cam_info->header.frame_id);
+    doWork(msg, cam_info->header.frame_id);
   }
 
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
-    do_work(msg, msg->header.frame_id);
+    doWork(msg, msg->header.frame_id);
   }
 
   static void trackbarCallback(int value, void* userdata)
@@ -147,7 +147,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
     need_config_update_ = true;
   }
 
-  void do_work(const sensor_msgs::ImageConstPtr& msg, const std::string input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -250,10 +250,10 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
       }
 
       // clone the colour, input image for displaying purposes
-      for (size_t i = 0; i < circles.size(); i++)
+      for (const cv::Vec3f& i : circles)
       {
-        cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-        int radius = cvRound(circles[i][2]);
+        cv::Point center(cvRound(i[0]), cvRound(i[1]));
+        int radius = cvRound(i[2]);
         // circle center
         circle(out_image, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0);
         // circle outline
@@ -314,7 +314,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()
+  void subscribe() override
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
@@ -323,7 +323,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
       img_sub_ = it_->subscribe("image", queue_size_, &HoughCirclesNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe() override
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -331,7 +331,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
+  void onInit() override
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
@@ -378,7 +378,7 @@ namespace hough_circles
 class HoughCirclesNodelet : public opencv_apps::HoughCirclesNodelet
 {
 public:
-  virtual void onInit()
+  void onInit() override
   {
     ROS_WARN("DeprecationWarning: Nodelet hough_circles/hough_circles is deprecated, "
              "and renamed to opencv_apps/hough_circles.");

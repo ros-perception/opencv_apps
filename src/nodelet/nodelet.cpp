@@ -79,9 +79,8 @@ void Nodelet::connectionCallback(const ros::SingleSubscriberPublisher& pub)
   if (!always_subscribe_)
   {
     boost::mutex::scoped_lock lock(connection_mutex_);
-    for (size_t i = 0; i < publishers_.size(); i++)
+    for (const ros::Publisher& pub : publishers_)
     {
-      ros::Publisher pub = publishers_[i];
       if (pub.getNumSubscribers() > 0)
       {
         if (!ever_subscribed_)
@@ -121,9 +120,8 @@ void Nodelet::imageConnectionCallback(const image_transport::SingleSubscriberPub
   if (!always_subscribe_)
   {
     boost::mutex::scoped_lock lock(connection_mutex_);
-    for (size_t i = 0; i < image_publishers_.size(); i++)
+    for (const image_transport::Publisher& pub : image_publishers_)
     {
-      image_transport::Publisher pub = image_publishers_[i];
       if (pub.getNumSubscribers() > 0)
       {
         if (!ever_subscribed_)
@@ -173,9 +171,8 @@ void Nodelet::cameraConnectionBaseCallback()
   if (!always_subscribe_)
   {
     boost::mutex::scoped_lock lock(connection_mutex_);
-    for (size_t i = 0; i < camera_publishers_.size(); i++)
+    for (const image_transport::CameraPublisher& pub : camera_publishers_)
     {
-      image_transport::CameraPublisher pub = camera_publishers_[i];
       if (pub.getNumSubscribers() > 0)
       {
         if (!ever_subscribed_)
@@ -205,4 +202,4 @@ void Nodelet::cameraConnectionBaseCallback()
     }
   }
 }
-}
+}  // namespace opencv_apps

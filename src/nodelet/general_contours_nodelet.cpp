@@ -95,20 +95,20 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
 
   void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
   {
-    do_work(msg, cam_info->header.frame_id);
+    doWork(msg, cam_info->header.frame_id);
   }
 
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
-    do_work(msg, msg->header.frame_id);
+    doWork(msg, msg->header.frame_id);
   }
 
-  static void trackbarCallback(int, void*)
+  static void trackbarCallback(int /*unused*/, void* /*unused*/)
   {
     need_config_update_ = true;
   }
 
-  void do_work(const sensor_msgs::ImageConstPtr& msg, const std::string input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -154,15 +154,15 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
       cv::findContours(threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
       /// Find the rotated rectangles and ellipses for each contour
-      std::vector<cv::RotatedRect> minRect(contours.size());
-      std::vector<cv::RotatedRect> minEllipse(contours.size());
+      std::vector<cv::RotatedRect> min_rect(contours.size());
+      std::vector<cv::RotatedRect> min_ellipse(contours.size());
 
       for (size_t i = 0; i < contours.size(); i++)
       {
-        minRect[i] = cv::minAreaRect(cv::Mat(contours[i]));
+        min_rect[i] = cv::minAreaRect(cv::Mat(contours[i]));
         if (contours[i].size() > 5)
         {
-          minEllipse[i] = cv::fitEllipse(cv::Mat(contours[i]));
+          min_ellipse[i] = cv::fitEllipse(cv::Mat(contours[i]));
         }
       }
 
@@ -174,33 +174,33 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
         // contour
         cv::drawContours(drawing, contours, (int)i, color, 1, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
         // ellipse
-        cv::ellipse(drawing, minEllipse[i], color, 2, 8);
+        cv::ellipse(drawing, min_ellipse[i], color, 2, 8);
         // rotated rectangle
         cv::Point2f rect_points[4];
-        minRect[i].points(rect_points);
+        min_rect[i].points(rect_points);
         for (int j = 0; j < 4; j++)
           cv::line(drawing, rect_points[j], rect_points[(j + 1) % 4], color, 1, 8);
 
         opencv_apps::RotatedRect rect_msg;
         opencv_apps::Point2D rect_center;
         opencv_apps::Size rect_size;
-        rect_center.x = minRect[i].center.x;
-        rect_center.y = minRect[i].center.y;
-        rect_size.width = minRect[i].size.width;
-        rect_size.height = minRect[i].size.height;
+        rect_center.x = min_rect[i].center.x;
+        rect_center.y = min_rect[i].center.y;
+        rect_size.width = min_rect[i].size.width;
+        rect_size.height = min_rect[i].size.height;
         rect_msg.center = rect_center;
         rect_msg.size = rect_size;
-        rect_msg.angle = minRect[i].angle;
+        rect_msg.angle = min_rect[i].angle;
         opencv_apps::RotatedRect ellipse_msg;
         opencv_apps::Point2D ellipse_center;
         opencv_apps::Size ellipse_size;
-        ellipse_center.x = minEllipse[i].center.x;
-        ellipse_center.y = minEllipse[i].center.y;
-        ellipse_size.width = minEllipse[i].size.width;
-        ellipse_size.height = minEllipse[i].size.height;
+        ellipse_center.x = min_ellipse[i].center.x;
+        ellipse_center.y = min_ellipse[i].center.y;
+        ellipse_size.width = min_ellipse[i].size.width;
+        ellipse_size.height = min_ellipse[i].size.height;
         ellipse_msg.center = ellipse_center;
         ellipse_msg.size = ellipse_size;
-        ellipse_msg.angle = minEllipse[i].angle;
+        ellipse_msg.angle = min_ellipse[i].angle;
 
         rects_msg.rects.push_back(rect_msg);
         ellipses_msg.rects.push_back(ellipse_msg);
@@ -236,7 +236,7 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()
+  void subscribe() override
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
@@ -245,7 +245,7 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
       img_sub_ = it_->subscribe("image", queue_size_, &GeneralContoursNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe() override
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -253,7 +253,7 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
+  void onInit() override
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
@@ -289,7 +289,7 @@ namespace general_contours
 class GeneralContoursNodelet : public opencv_apps::GeneralContoursNodelet
 {
 public:
-  virtual void onInit()
+  void onInit() override
   {
     ROS_WARN("DeprecationWarning: Nodelet general_contours/general_contours is deprecated, "
              "and renamed to opencv_apps/general_contours.");

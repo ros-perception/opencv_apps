@@ -99,7 +99,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
   cv::Mat hist, histimg;
   // cv::Mat hsv;
 
-  static void onMouse(int event, int x, int y, int, void*)
+  static void onMouse(int event, int x, int y, int /*unused*/, void* /*unused*/)
   {
     on_mouse_update_ = true;
     on_mouse_event_ = event;
@@ -124,20 +124,20 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
   void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
   {
-    do_work(msg, cam_info->header.frame_id);
+    doWork(msg, cam_info->header.frame_id);
   }
 
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
-    do_work(msg, msg->header.frame_id);
+    doWork(msg, msg->header.frame_id);
   }
 
-  static void trackbarCallback(int, void*)
+  static void trackbarCallback(int /*unused*/, void* /*unused*/)
   {
     need_config_update_ = true;
   }
 
-  void do_work(const sensor_msgs::ImageConstPtr& msg, const std::string input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -158,7 +158,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
         cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
 
-        cv::setMouseCallback(window_name_, onMouse, 0);
+        cv::setMouseCallback(window_name_, onMouse, nullptr);
         cv::createTrackbar("Vmin", window_name_, &vmin_, 256, trackbarCallback);
         cv::createTrackbar("Vmax", window_name_, &vmax_, 256, trackbarCallback);
         cv::createTrackbar("Smin", window_name_, &smin_, 256, trackbarCallback);
@@ -212,9 +212,9 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
         if (trackObject)
         {
-          int _vmin = vmin_, _vmax = vmax_;
+          int vmin = vmin_, vmax = vmax_;
 
-          cv::inRange(hsv, cv::Scalar(0, smin_, MIN(_vmin, _vmax)), cv::Scalar(180, 256, MAX(_vmin, _vmax)), mask);
+          cv::inRange(hsv, cv::Scalar(0, smin_, MIN(vmin, vmax)), cv::Scalar(180, 256, MAX(vmin, vmax)), mask);
           int ch[] = { 0, 0 };
           hue.create(hsv.size(), hsv.depth());
           cv::mixChannels(&hsv, 1, &hue, 1, ch, 1);
@@ -222,7 +222,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
           if (trackObject < 0)
           {
             cv::Mat roi(hue, selection), maskroi(mask, selection);
-            cv::calcHist(&roi, 1, 0, maskroi, hist, 1, &hsize, &phranges);
+            cv::calcHist(&roi, 1, nullptr, maskroi, hist, 1, &hsize, &phranges);
             cv::normalize(hist, hist, 0, 255, cv::NORM_MINMAX);
             std::vector<float> hist_value;
             hist_value.resize(hsize);
@@ -236,7 +236,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
             trackObject = 1;
 
             histimg = cv::Scalar::all(0);
-            int binW = histimg.cols / hsize;
+            int bin_w = histimg.cols / hsize;
             cv::Mat buf(1, hsize, CV_8UC3);
             for (int i = 0; i < hsize; i++)
               buf.at<cv::Vec3b>(i) = cv::Vec3b(cv::saturate_cast<uchar>(i * 180. / hsize), 255, 255);
@@ -245,14 +245,14 @@ class CamShiftNodelet : public opencv_apps::Nodelet
             for (int i = 0; i < hsize; i++)
             {
               int val = cv::saturate_cast<int>(hist.at<float>(i) * histimg.rows / 255);
-              cv::rectangle(histimg, cv::Point(i * binW, histimg.rows), cv::Point((i + 1) * binW, histimg.rows - val),
+              cv::rectangle(histimg, cv::Point(i * bin_w, histimg.rows), cv::Point((i + 1) * bin_w, histimg.rows - val),
                             cv::Scalar(buf.at<cv::Vec3b>(i)), -1, 8);
             }
           }
 
-          cv::calcBackProject(&hue, 1, 0, hist, backproj, &phranges);
+          cv::calcBackProject(&hue, 1, nullptr, hist, backproj, &phranges);
           backproj &= mask;
-          cv::RotatedRect trackBox = cv::CamShift(
+          cv::RotatedRect track_box = cv::CamShift(
               backproj, trackWindow, cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::MAX_ITER, 10, 1));
           if (trackWindow.area() <= 1)
           {
@@ -265,18 +265,18 @@ class CamShiftNodelet : public opencv_apps::Nodelet
           if (backprojMode)
             cv::cvtColor(backproj, frame, cv::COLOR_GRAY2BGR);
 #ifndef CV_VERSION_EPOCH
-          cv::ellipse(frame, trackBox, cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
+          cv::ellipse(frame, track_box, cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
 #else
-          cv::ellipse(frame, trackBox, cv::Scalar(0, 0, 255), 3, CV_AA);
+          cv::ellipse(frame, track_box, cv::Scalar(0, 0, 255), 3, CV_AA);
 #endif
 
-          rect_msg.rect.angle = trackBox.angle;
+          rect_msg.rect.angle = track_box.angle;
           opencv_apps::Point2D point_msg;
           opencv_apps::Size size_msg;
-          point_msg.x = trackBox.center.x;
-          point_msg.y = trackBox.center.y;
-          size_msg.width = trackBox.size.width;
-          size_msg.height = trackBox.size.height;
+          point_msg.x = track_box.center.x;
+          point_msg.y = track_box.center.y;
+          size_msg.width = track_box.size.width;
+          size_msg.height = track_box.size.height;
           rect_msg.rect.center = point_msg;
           rect_msg.rect.size = size_msg;
         }
@@ -338,7 +338,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()
+  void subscribe() override
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
@@ -347,7 +347,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
       img_sub_ = it_->subscribe("image", queue_size_, &CamShiftNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe() override
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -355,7 +355,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
+  void onInit() override
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
@@ -416,7 +416,7 @@ public:
       trackWindow = cv::Rect(0, 0, 640, 480);  //
 
       histimg = cv::Scalar::all(0);
-      int binW = histimg.cols / hsize;
+      int bin_w = histimg.cols / hsize;
       cv::Mat buf(1, hsize, CV_8UC3);
       for (int i = 0; i < hsize; i++)
         buf.at<cv::Vec3b>(i) = cv::Vec3b(cv::saturate_cast<uchar>(i * 180. / hsize), 255, 255);
@@ -425,7 +425,7 @@ public:
       for (int i = 0; i < hsize; i++)
       {
         int val = cv::saturate_cast<int>(hist.at<float>(i) * histimg.rows / 255);
-        cv::rectangle(histimg, cv::Point(i * binW, histimg.rows), cv::Point((i + 1) * binW, histimg.rows - val),
+        cv::rectangle(histimg, cv::Point(i * bin_w, histimg.rows), cv::Point((i + 1) * bin_w, histimg.rows - val),
                       cv::Scalar(buf.at<cv::Vec3b>(i)), -1, 8);
       }
     }
@@ -444,7 +444,7 @@ namespace camshift
 class CamShiftNodelet : public opencv_apps::CamShiftNodelet
 {
 public:
-  virtual void onInit()
+  void onInit() override
   {
     ROS_WARN("DeprecationWarning: Nodelet camshift/camshift is deprecated, "
              "and renamed to opencv_apps/camshift.");

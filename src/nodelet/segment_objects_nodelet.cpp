@@ -100,20 +100,20 @@ class SegmentObjectsNodelet : public opencv_apps::Nodelet
 
   void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
   {
-    do_work(msg, cam_info->header.frame_id);
+    doWork(msg, cam_info->header.frame_id);
   }
 
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
-    do_work(msg, msg->header.frame_id);
+    doWork(msg, msg->header.frame_id);
   }
 
-  static void trackbarCallback(int, void*)
+  static void trackbarCallback(int /*unused*/, void* /*unused*/)
   {
     need_config_update_ = true;
   }
 
-  void do_work(const sensor_msgs::ImageConstPtr& msg, const std::string input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -160,37 +160,37 @@ class SegmentObjectsNodelet : public opencv_apps::Nodelet
 
       out_frame = cv::Mat::zeros(frame.size(), CV_8UC3);
 
-      if (contours.size() == 0)
+      if (contours.empty())
         return;
 
       // iterate through all the top-level contours,
       // draw each connected component with its own random color
-      int idx = 0, largestComp = 0;
-      double maxArea = 0;
+      int idx = 0, largest_comp = 0;
+      double max_area = 0;
 
       for (; idx >= 0; idx = hierarchy[idx][0])
       {
         const std::vector<cv::Point>& c = contours[idx];
         double area = fabs(cv::contourArea(cv::Mat(c)));
-        if (area > maxArea)
+        if (area > max_area)
         {
-          maxArea = area;
-          largestComp = idx;
+          max_area = area;
+          largest_comp = idx;
         }
       }
       cv::Scalar color(0, 0, 255);
-      cv::drawContours(out_frame, contours, largestComp, color, CV_FILLED, 8, hierarchy);
+      cv::drawContours(out_frame, contours, largest_comp, color, CV_FILLED, 8, hierarchy);
 
       std_msgs::Float64 area_msg;
-      area_msg.data = maxArea;
-      for (size_t i = 0; i < contours.size(); i++)
+      area_msg.data = max_area;
+      for (const std::vector<cv::Point>& contour : contours)
       {
         opencv_apps::Contour contour_msg;
-        for (size_t j = 0; j < contours[i].size(); j++)
+        for (const cv::Point& j : contour)
         {
           opencv_apps::Point2D point_msg;
-          point_msg.x = contours[i][j].x;
-          point_msg.y = contours[i][j].y;
+          point_msg.x = j.x;
+          point_msg.y = j.y;
           contour_msg.points.push_back(point_msg);
         }
         contours_msg.contours.push_back(contour_msg);
@@ -225,14 +225,14 @@ class SegmentObjectsNodelet : public opencv_apps::Nodelet
     prev_stamp_ = msg->header.stamp;
   }
 
-  bool update_bg_model_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+  bool updateBgModelCb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
   {
     update_bg_model = !update_bg_model;
     NODELET_INFO("Learn background is in state = %d", update_bg_model);
     return true;
   }
 
-  void subscribe()
+  void subscribe() override
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
@@ -241,7 +241,7 @@ class SegmentObjectsNodelet : public opencv_apps::Nodelet
       img_sub_ = it_->subscribe("image", queue_size_, &SegmentObjectsNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe() override
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -249,7 +249,7 @@ class SegmentObjectsNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
+  void onInit() override
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
@@ -279,8 +279,7 @@ public:
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::ContourArrayStamped>(*pnh_, "contours", 1);
     area_pub_ = advertise<std_msgs::Float64>(*pnh_, "area", 1);
-    update_bg_model_service_ =
-        pnh_->advertiseService("update_bg_model", &SegmentObjectsNodelet::update_bg_model_cb, this);
+    update_bg_model_service_ = pnh_->advertiseService("update_bg_model", &SegmentObjectsNodelet::updateBgModelCb, this);
 
     onInitPostProcess();
   }
@@ -293,7 +292,7 @@ namespace segment_objects
 class SegmentObjectsNodelet : public opencv_apps::SegmentObjectsNodelet
 {
 public:
-  virtual void onInit()
+  void onInit() override
   {
     ROS_WARN("DeprecationWarning: Nodelet segment_objects/segment_objects is deprecated, "
              "and renamed to opencv_apps/segment_objects.");

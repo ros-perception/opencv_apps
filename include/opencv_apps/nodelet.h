@@ -40,6 +40,11 @@
 #include <boost/thread.hpp>
 #include <image_transport/image_transport.h>
 
+// https://stackoverflow.com/questions/10496824/how-to-define-nullptr-for-supporting-both-c03-and-c11
+#if !defined(nullptr)
+#define nullptr NULL
+#endif
+
 namespace opencv_apps
 {
 /** @brief

@@ -105,20 +105,20 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
 
   void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
   {
-    do_work(msg, cam_info->header.frame_id);
+    doWork(msg, cam_info->header.frame_id);
   }
 
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
-    do_work(msg, msg->header.frame_id);
+    doWork(msg, msg->header.frame_id);
   }
 
-  static void trackbarCallback(int, void*)
+  static void trackbarCallback(int /*unused*/, void* /*unused*/)
   {
     need_config_update_ = true;
   }
 
-  void do_work(const sensor_msgs::ImageConstPtr& msg, const std::string input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -195,9 +195,9 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
           cv::HoughLines(in_image, s_lines, rho_, theta_ * CV_PI / 180, threshold_, minLineLength_, maxLineGap_);
 
           /// Show the result
-          for (size_t i = 0; i < s_lines.size(); i++)
+          for (const cv::Vec2f& s_line : s_lines)
           {
-            float r = s_lines[i][0], t = s_lines[i][1];
+            float r = s_line[0], t = s_line[1];
             double cos_t = cos(t), sin_t = sin(t);
             double x0 = r * cos_t, y0 = r * sin_t;
             double alpha = 1000;
@@ -228,9 +228,8 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
           cv::HoughLinesP(in_image, p_lines, rho_, theta_ * CV_PI / 180, threshold_, minLineLength_, maxLineGap_);
 
           /// Show the result
-          for (size_t i = 0; i < p_lines.size(); i++)
+          for (const cv::Vec4i& l : p_lines)
           {
-            cv::Vec4i l = p_lines[i];
 #ifndef CV_VERSION_EPOCH
             cv::line(out_image, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(255, 0, 0), 3, cv::LINE_AA);
 #else
@@ -268,7 +267,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()
+  void subscribe() override
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
@@ -277,7 +276,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
       img_sub_ = it_->subscribe("image", queue_size_, &HoughLinesNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe() override
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -285,7 +284,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
+  void onInit() override
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
@@ -322,7 +321,7 @@ namespace hough_lines
 class HoughLinesNodelet : public opencv_apps::HoughLinesNodelet
 {
 public:
-  virtual void onInit()
+  void onInit() override
   {
     ROS_WARN("DeprecationWarning: Nodelet hough_lines/hough_lines is deprecated, "
              "and renamed to opencv_apps/hough_lines.");

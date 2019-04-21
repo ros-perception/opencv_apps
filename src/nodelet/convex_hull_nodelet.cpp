@@ -95,20 +95,20 @@ class ConvexHullNodelet : public opencv_apps::Nodelet
 
   void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
   {
-    do_work(msg, cam_info->header.frame_id);
+    doWork(msg, cam_info->header.frame_id);
   }
 
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
-    do_work(msg, msg->header.frame_id);
+    doWork(msg, msg->header.frame_id);
   }
 
-  static void trackbarCallback(int, void*)
+  static void trackbarCallback(int /*unused*/, void* /*unused*/)
   {
     need_config_update_ = true;
   }
 
-  void do_work(const sensor_msgs::ImageConstPtr& msg, const std::string input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -168,11 +168,11 @@ class ConvexHullNodelet : public opencv_apps::Nodelet
         cv::drawContours(drawing, hull, (int)i, color, 4, 8, std::vector<cv::Vec4i>(), 0, cv::Point());
 
         opencv_apps::Contour contour_msg;
-        for (size_t j = 0; j < hull[i].size(); j++)
+        for (const cv::Point& j : hull[i])
         {
           opencv_apps::Point2D point_msg;
-          point_msg.x = hull[i][j].x;
-          point_msg.y = hull[i][j].y;
+          point_msg.x = j.x;
+          point_msg.y = j.y;
           contour_msg.points.push_back(point_msg);
         }
         contours_msg.contours.push_back(contour_msg);
@@ -207,7 +207,7 @@ class ConvexHullNodelet : public opencv_apps::Nodelet
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()
+  void subscribe() override
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
@@ -216,7 +216,7 @@ class ConvexHullNodelet : public opencv_apps::Nodelet
       img_sub_ = it_->subscribe("image", queue_size_, &ConvexHullNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe() override
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -224,7 +224,7 @@ class ConvexHullNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
+  void onInit() override
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
@@ -258,7 +258,7 @@ namespace convex_hull
 class ConvexHullNodelet : public opencv_apps::ConvexHullNodelet
 {
 public:
-  virtual void onInit()
+  void onInit() override
   {
     ROS_WARN("DeprecationWarning: Nodelet convex_hull/convex_hull is deprecated, "
              "and renamed to opencv_apps/convex_hull.");

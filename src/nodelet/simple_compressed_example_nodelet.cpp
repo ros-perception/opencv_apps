@@ -71,9 +71,9 @@ public:
     image_sub_ = nh_.subscribe("image/compressed", queue_size_, &ImageConverter::imageCb, this);
     image_pub_ = nh_.advertise<sensor_msgs::CompressedImage>("/image_converter/output_video/compressed", 1);
 
-    ros::NodeHandle pnh_("~");
-    pnh_.param("queue_size", queue_size_, 3);
-    pnh_.param("debug_view", debug_view_, false);
+    ros::NodeHandle pnh("~");
+    pnh.param("queue_size", queue_size_, 3);
+    pnh.param("debug_view", debug_view_, false);
     if (debug_view_)
     {
       cv::namedWindow(OPENCV_WINDOW);
@@ -226,7 +226,7 @@ https://github.com/ros-perception/vision_opencv/pull/70
 class SimpleCompressedExampleNodelet : public nodelet::Nodelet
 {
 public:
-  virtual void onInit()
+  void onInit() override
   {
     simple_compressed_example::ImageConverter ic;
     ros::spin();
@@ -240,7 +240,7 @@ namespace simple_compressed_example
 class SimpleCompressedExampleNodelet : public opencv_apps::SimpleCompressedExampleNodelet
 {
 public:
-  virtual void onInit()
+  void onInit() override
   {
     ROS_WARN("DeprecationWarning: Nodelet simple_compressed_example/simple_compressed_example is deprecated, "
              "and renamed to opencv_apps/simple_compressed_example.");

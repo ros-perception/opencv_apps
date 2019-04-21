@@ -91,15 +91,15 @@ class PyramidsNodelet : public opencv_apps::Nodelet
 
   void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
   {
-    do_work(msg, cam_info->header.frame_id);
+    doWork(msg, cam_info->header.frame_id);
   }
 
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
-    do_work(msg, msg->header.frame_id);
+    doWork(msg, msg->header.frame_id);
   }
 
-  void do_work(const sensor_msgs::ImageConstPtr& image_msg, const std::string input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& image_msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -148,7 +148,7 @@ class PyramidsNodelet : public opencv_apps::Nodelet
     }
   }
 
-  void subscribe()
+  void subscribe() override
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
@@ -157,7 +157,7 @@ class PyramidsNodelet : public opencv_apps::Nodelet
       img_sub_ = it_->subscribe("image", queue_size_, &PyramidsNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe() override
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -165,7 +165,7 @@ class PyramidsNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
+  void onInit() override
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
@@ -197,7 +197,7 @@ namespace pyramids
 class PyramidsNodelet : public opencv_apps::PyramidsNodelet
 {
 public:
-  virtual void onInit()
+  void onInit() override
   {
     ROS_WARN("DeprecationWarning: Nodelet pyramids/pyramids is deprecated, "
              "and renamed to opencv_apps/pyramids.");

@@ -69,9 +69,9 @@ public:
     image_sub_ = it_.subscribe("image", queue_size_, &ImageConverter::imageCb, this);
     image_pub_ = it_.advertise("/image_converter/output_video/raw", 1);
 
-    ros::NodeHandle pnh_("~");
-    pnh_.param("queue_size", queue_size_, 1);
-    pnh_.param("debug_view", debug_view_, false);
+    ros::NodeHandle pnh("~");
+    pnh.param("queue_size", queue_size_, 1);
+    pnh.param("debug_view", debug_view_, false);
     if (debug_view_)
     {
       cv::namedWindow(OPENCV_WINDOW);
@@ -115,12 +115,12 @@ public:
   }
 };
 
-}  // namesapce simple_example
+}  // namespace simple_example
 
 class SimpleExampleNodelet : public nodelet::Nodelet
 {
 public:
-  virtual void onInit()
+  void onInit() override
   {
     simple_example::ImageConverter ic;
     ros::spin();
@@ -134,7 +134,7 @@ namespace simple_example
 class SimpleExampleNodelet : public opencv_apps::SimpleExampleNodelet
 {
 public:
-  virtual void onInit()
+  void onInit() override
   {
     ROS_WARN("DeprecationWarning: Nodelet simple_example/simple_example is deprecated, "
              "and renamed to opencv_apps/simple_example.");

@@ -103,7 +103,7 @@ path user_expanded_path(const path& p)
   if (user_dir.length() == 1)
   {
     homedir = getenv("HOME");
-    if (homedir == NULL)
+    if (homedir == nullptr)
     {
       homedir = getpwuid(getuid())->pw_dir;
     }
@@ -112,15 +112,15 @@ path user_expanded_path(const path& p)
   {
     std::string uname = user_dir.substr(1, user_dir.length());
     passwd* pw = getpwnam(uname.c_str());
-    if (pw == NULL)
+    if (pw == nullptr)
       return p;
     homedir = pw->pw_dir;
   }
   ret = path(std::string(homedir));
   return ret.append(++it, p.end(), path::codecvt());
 }
-}
-}  // end of utility for resolving paths
+}  // namespace filesystem
+}  // namespace boost
 
 namespace opencv_apps
 {
@@ -137,11 +137,11 @@ public:
       if (id < it->second)
         id = it->second + 1;
     }
-    for (size_t i = 0; i < l.size(); ++i)
+    for (const std::string& i : l)
     {
-      if (m_.find(l[i]) == m_.end())
+      if (m_.find(i) == m_.end())
       {
-        m_[l[i]] = id;
+        m_[i] = id;
         id++;
       }
     }
@@ -372,7 +372,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
       storage_->load(images, labels);
     }
 
-    if (images.size() == 0)
+    if (images.empty())
       return;
 
     std::vector<cv::Mat> resized_images(images.size());
@@ -461,7 +461,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
     try
     {
       std::vector<cv::Mat> images(req.images.size());
-      bool use_roi = req.rects.size() == 0 ? false : true;
+      bool use_roi = !req.rects.empty();
 
       if (use_roi && req.images.size() != req.rects.size())
       {
@@ -617,7 +617,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
     config_ = config;
   }
 
-  void subscribe()
+  void subscribe() override
   {
     NODELET_DEBUG("subscribe");
     img_sub_.subscribe(*it_, "image", 1);
@@ -636,7 +636,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
     }
   }
 
-  void unsubscribe()
+  void unsubscribe() override
   {
     NODELET_DEBUG("unsubscribe");
     img_sub_.unsubscribe();
@@ -644,7 +644,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
+  void onInit() override
   {
     Nodelet::onInit();
 
@@ -676,7 +676,7 @@ namespace face_recognition
 class FaceRecognitionNodelet : public opencv_apps::FaceRecognitionNodelet
 {
 public:
-  virtual void onInit()
+  void onInit() override
   {
     ROS_WARN("DeprecationWarning: Nodelet face_recognition/face_recognition is deprecated, "
              "and renamed to opencv_apps/face_recognition.");
