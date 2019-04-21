@@ -7,6 +7,7 @@
   <arg name="use_opencv3_2" default="false" />
   <arg name="use_opencv3_3" default="false" />
   <arg name="debug_view" default="true" />
+  <arg name="queue_size" default="100" doc="Specigy queue_size of input image subscribers" />
 
   <arg name="image" default="image" />
   <arg name="data_dir" default="~/.ros/opencv_apps/face_data" />
@@ -25,6 +26,7 @@
   <node name="face_recognition" pkg="opencv_apps" type="face_recognition"
         output="screen">
     <param name="data_dir" value="$(arg data_dir)" />
+    <param name="queue_size" value="$(arg queue_size)" />
     <remap from="image" to="$(arg image)" />
     <remap from="faces" to="face_detection/faces" />
   </node>
