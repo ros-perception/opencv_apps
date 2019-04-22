@@ -182,7 +182,7 @@ class CornerHarrisNodelet : public opencv_apps::Nodelet
     }
   }
 
-  void subscribe() override
+  void subscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
@@ -191,7 +191,7 @@ class CornerHarrisNodelet : public opencv_apps::Nodelet
       img_sub_ = it_->subscribe("image", queue_size_, &CornerHarrisNodelet::imageCallback, this);
   }
 
-  void unsubscribe() override
+  void unsubscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -199,7 +199,7 @@ class CornerHarrisNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
@@ -232,7 +232,7 @@ namespace corner_harris
 class CornerHarrisNodelet : public opencv_apps::CornerHarrisNodelet
 {
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     ROS_WARN("DeprecationWarning: Nodelet corner_harris/corner_harris is deprecated, "
              "and renamed to opencv_apps/corner_harris.");

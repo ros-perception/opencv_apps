@@ -226,7 +226,7 @@ https://github.com/ros-perception/vision_opencv/pull/70
 class SimpleCompressedExampleNodelet : public nodelet::Nodelet
 {
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     simple_compressed_example::ImageConverter ic;
     ros::spin();
@@ -240,7 +240,7 @@ namespace simple_compressed_example
 class SimpleCompressedExampleNodelet : public opencv_apps::SimpleCompressedExampleNodelet
 {
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     ROS_WARN("DeprecationWarning: Nodelet simple_compressed_example/simple_compressed_example is deprecated, "
              "and renamed to opencv_apps/simple_compressed_example.");

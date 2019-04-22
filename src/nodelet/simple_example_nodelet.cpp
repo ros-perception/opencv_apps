@@ -120,7 +120,7 @@ public:
 class SimpleExampleNodelet : public nodelet::Nodelet
 {
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     simple_example::ImageConverter ic;
     ros::spin();
@@ -134,7 +134,7 @@ namespace simple_example
 class SimpleExampleNodelet : public opencv_apps::SimpleExampleNodelet
 {
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     ROS_WARN("DeprecationWarning: Nodelet simple_example/simple_example is deprecated, "
              "and renamed to opencv_apps/simple_example.");

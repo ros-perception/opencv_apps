@@ -148,7 +148,7 @@ protected:
       NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
     }
   }
-  void subscribe() override
+  void subscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
@@ -157,7 +157,7 @@ protected:
       img_sub_ = it_->subscribe("image", queue_size_, &ColorFilterNodelet::imageCallback, this);
   }
 
-  void unsubscribe() override
+  void unsubscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -165,7 +165,7 @@ protected:
   }
 
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
@@ -201,7 +201,7 @@ protected:
   int g_min_;
   int g_max_;
 
-  void reconfigureCallback(opencv_apps::RGBColorFilterConfig& config, uint32_t level) override
+  void reconfigureCallback(opencv_apps::RGBColorFilterConfig& config, uint32_t level)  // NOLINT(modernize-use-override)
   {
     boost::mutex::scoped_lock lock(mutex_);
     config_ = config;
@@ -226,13 +226,13 @@ protected:
     upper_color_range_ = cv::Scalar(b_max_, g_max_, r_max_);
   }
 
-  void filter(const cv::Mat& input_image, cv::Mat& output_image) override
+  void filter(const cv::Mat& input_image, cv::Mat& output_image)  // NOLINT(modernize-use-override)
   {
     cv::inRange(input_image, lower_color_range_, upper_color_range_, output_image);
   }
 
 protected:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     r_max_ = 255;
     r_min_ = 0;
@@ -258,7 +258,7 @@ protected:
   int l_min_;
   int l_max_;
 
-  void reconfigureCallback(opencv_apps::HLSColorFilterConfig& config, uint32_t level) override
+  void reconfigureCallback(opencv_apps::HLSColorFilterConfig& config, uint32_t level)  // NOLINT(modernize-use-override)
   {
     boost::mutex::scoped_lock lock(mutex_);
     config_ = config;
@@ -281,7 +281,7 @@ protected:
     upper_color_range_ = cv::Scalar(h_max_ / 2, l_max_, s_max_, 0);
   }
 
-  void filter(const cv::Mat& input_image, cv::Mat& output_image) override
+  void filter(const cv::Mat& input_image, cv::Mat& output_image)  // NOLINT(modernize-use-override)
   {
     cv::Mat hls_image;
     cv::cvtColor(input_image, hls_image, cv::COLOR_BGR2HLS);
@@ -303,7 +303,7 @@ protected:
   }
 
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     h_max_ = 360;
     h_min_ = 0;
@@ -326,7 +326,7 @@ protected:
   int v_min_;
   int v_max_;
 
-  void reconfigureCallback(opencv_apps::HSVColorFilterConfig& config, uint32_t level) override
+  void reconfigureCallback(opencv_apps::HSVColorFilterConfig& config, uint32_t level)  // NOLINT(modernize-use-override)
   {
     boost::mutex::scoped_lock lock(mutex_);
     config_ = config;
@@ -349,7 +349,7 @@ protected:
     upper_color_range_ = cv::Scalar(h_max_ / 2, s_max_, v_max_, 0);
   }
 
-  void filter(const cv::Mat& input_image, cv::Mat& output_image) override
+  void filter(const cv::Mat& input_image, cv::Mat& output_image)  // NOLINT(modernize-use-override)
   {
     cv::Mat hsv_image;
     cv::cvtColor(input_image, hsv_image, cv::COLOR_BGR2HSV);
@@ -371,7 +371,7 @@ protected:
   }
 
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     h_max_ = 360;
     h_min_ = 0;
@@ -391,7 +391,7 @@ namespace color_filter
 class RGBColorFilterNodelet : public opencv_apps::RGBColorFilterNodelet
 {
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     ROS_WARN("DeprecationWarning: Nodelet rgb_color_filter/rgb_color_filter is deprecated, "
              "and renamed to opencv_apps/rgb_color_filter.");
@@ -401,7 +401,7 @@ public:
 class HLSColorFilterNodelet : public opencv_apps::HLSColorFilterNodelet
 {
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     ROS_WARN("DeprecationWarning: Nodelet hls_color_filter/hls_color_filter is deprecated, "
              "and renamed to opencv_apps/hls_color_filter.");
@@ -411,7 +411,7 @@ public:
 class HSVColorFilterNodelet : public opencv_apps::HSVColorFilterNodelet
 {
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     ROS_WARN("DeprecationWarning: Nodelet hsv_color_filter/hsv_color_filter is deprecated, "
              "and renamed to opencv_apps/hsv_color_filter.");

@@ -109,7 +109,7 @@ private:
     doWork(msg1, msg2, msg1->header.frame_id);
   }
 
-  void subscribe() override
+  void subscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Subscribing to image topic.");
     sub_image1_.subscribe(*it_, "image1", 3);
@@ -148,7 +148,7 @@ private:
     }
   }
 
-  void unsubscribe() override
+  void unsubscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     sub_image1_.unsubscribe();
@@ -241,7 +241,7 @@ private:
   }
 
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
@@ -275,7 +275,7 @@ namespace adding_images
 class AddingImagesNodelet : public opencv_apps::AddingImagesNodelet
 {
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     ROS_WARN("DeprecationWarning: Nodelet adding_images/adding_images is deprecated, "
              "and renamed to opencv_apps/adding_images.");

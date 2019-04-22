@@ -189,7 +189,7 @@ class SmoothingNodelet : public opencv_apps::Nodelet
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe() override
+  void subscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
@@ -198,7 +198,7 @@ class SmoothingNodelet : public opencv_apps::Nodelet
       img_sub_ = it_->subscribe("image", queue_size_, &SmoothingNodelet::imageCallback, this);
   }
 
-  void unsubscribe() override
+  void unsubscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -206,7 +206,7 @@ class SmoothingNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
@@ -240,7 +240,7 @@ namespace smoothing
 class SmoothingNodelet : public opencv_apps::SmoothingNodelet
 {
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     ROS_WARN("DeprecationWarning: Nodelet smoothing/smoothing is deprecated, "
              "and renamed to opencv_apps/smoothing.");

@@ -617,7 +617,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
     config_ = config;
   }
 
-  void subscribe() override
+  void subscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("subscribe");
     img_sub_.subscribe(*it_, "image", 1);
@@ -636,7 +636,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
     }
   }
 
-  void unsubscribe() override
+  void unsubscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("unsubscribe");
     img_sub_.unsubscribe();
@@ -644,7 +644,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     Nodelet::onInit();
 
@@ -676,7 +676,7 @@ namespace face_recognition
 class FaceRecognitionNodelet : public opencv_apps::FaceRecognitionNodelet
 {
 public:
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     ROS_WARN("DeprecationWarning: Nodelet face_recognition/face_recognition is deprecated, "
              "and renamed to opencv_apps/face_recognition.");
