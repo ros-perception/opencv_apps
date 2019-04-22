@@ -1,7 +1,23 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(opencv_apps)
 
-find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp sensor_msgs)
+## https://stackoverflow.com/questions/10984442/how-to-detect-c11-support-of-a-compiler-with-cmake
+if(CMAKE_COMPILER_IS_GNUCXX)
+  execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+  if (GCC_VERSION VERSION_GREATER 4.7 OR GCC_VERSION VERSION_EQUAL 4.7)
+    message(STATUS "C++11 activated.")
+    add_definitions("-std=gnu++11")
+  elseif(GCC_VERSION VERSION_GREATER 4.3 OR GCC_VERSION VERSION_EQUAL 4.3)
+    message(WARNING "C++0x activated. If you get any errors update to a compiler which fully supports C++11")
+    add_definitions("-std=gnu++0x")
+  else ()
+    message(FATAL_ERROR "C++11 needed. Therefore a gcc compiler with a version higher than 4.3 is needed.")
+  endif()
+else(CMAKE_COMPILER_IS_GNUCXX)
+  add_definitions("-std=c++0x")
+endif(CMAKE_COMPILER_IS_GNUCXX)
+
+find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp sensor_msgs std_msgs std_srvs)
 
 find_package(OpenCV REQUIRED)
 message(STATUS "OpenCV VERSION: ${OpenCV_VERSION}")
@@ -99,7 +115,7 @@ generate_messages(
   std_msgs
 )
 
-catkin_package(CATKIN_DEPENDS std_msgs
+catkin_package(CATKIN_DEPENDS message_runtime sensor_msgs std_msgs
 #                DEPENDS OpenCV
                INCLUDE_DIRS include
                LIBRARIES ${PROJECT_NAME}
@@ -351,7 +367,8 @@ install(DIRECTORY launch test scripts
 
 ## test
 if(CATKIN_ENABLE_TESTING)
-  find_package(catkin REQUIRED COMPONENTS rostest roslaunch)
+  find_package(rostest REQUIRED)
+  find_package(roslaunch REQUIRED)
   if(roslaunch_VERSION VERSION_LESS "1.11.1")
     message(WARNING "roslaunch_add_file check fails with unsupported doc attributes ${roslaunch_VERSION}")
   else()
