@@ -2,8 +2,8 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.1 (2019-04-22)
+------------------
 * support catkin_lint and clang-format tests in travis.yml (`#93 <https://github.com/ros-perception/opencv_apps/issues/93>`_)
 
   * override is not supported gcc4.6 (12.04), remove this fix and add NOLINT
