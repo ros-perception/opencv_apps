@@ -54,14 +54,15 @@
 #include "opencv_apps/MomentArray.h"
 #include "opencv_apps/MomentArrayStamped.h"
 
-namespace opencv_apps {
-
+namespace opencv_apps
+{
 // https://stackoverflow.com/questions/13495207/opencv-c-sorting-contours-by-their-contourarea
 // comparison function object
-bool compareContourAreas ( std::vector<cv::Point> contour1, std::vector<cv::Point> contour2 ) {
-  double i = fabs( contourArea(cv::Mat(contour1)) );
-  double j = fabs( contourArea(cv::Mat(contour2)) );
-  return ( i > j );
+bool compareContourAreas(const std::vector<cv::Point>& contour1, const std::vector<cv::Point>& contour2)
+{
+  double i = fabs(contourArea(cv::Mat(contour1)));
+  double j = fabs(contourArea(cv::Mat(contour2)));
+  return (i > j);
 }
 
 class ContourMomentsNodelet : public opencv_apps::Nodelet
@@ -78,6 +79,7 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
+  int queue_size_;
   bool debug_view_;
   ros::Time prev_stamp_;
 
@@ -86,13 +88,13 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
   std::string window_name_;
   static bool need_config_update_;
 
-  void reconfigureCallback(Config &new_config, uint32_t level)
+  void reconfigureCallback(Config& new_config, uint32_t level)
   {
     config_ = new_config;
     low_threshold_ = config_.canny_low_threshold;
   }
 
-  const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
+  const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
   {
     if (frame.empty())
       return image_frame;
@@ -101,20 +103,20 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
 
   void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
   {
-    do_work(msg, cam_info->header.frame_id);
+    doWork(msg, cam_info->header.frame_id);
   }
 
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
-    do_work(msg, msg->header.frame_id);
+    doWork(msg, msg->header.frame_id);
   }
 
-  static void trackbarCallback( int, void* )
+  static void trackbarCallback(int /*unused*/, void* /*unused*/)
   {
     need_config_update_ = true;
   }
 
-  void do_work(const sensor_msgs::ImageConstPtr& msg, const std::string input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -129,16 +131,20 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
       // Do the work
       cv::Mat src_gray;
       /// Convert image to gray and blur it
-      if ( frame.channels() > 1 ) {
-        cv::cvtColor( frame, src_gray, cv::COLOR_BGR2GRAY );
-      } else {
+      if (frame.channels() > 1)
+      {
+        cv::cvtColor(frame, src_gray, cv::COLOR_BGR2GRAY);
+      }
+      else
+      {
         src_gray = frame;
       }
-      cv::blur( src_gray, src_gray, cv::Size(3,3) );
+      cv::blur(src_gray, src_gray, cv::Size(3, 3));
 
       /// Create window
-      if( debug_view_) {
-        cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
+      if (debug_view_)
+      {
+        cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
       }
 
       cv::Mat canny_output;
@@ -147,14 +153,15 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
       cv::RNG rng(12345);
 
       /// Detect edges using canny
-      cv::Canny( src_gray, canny_output, low_threshold_ , low_threshold_ *2, 3 );
+      cv::Canny(src_gray, canny_output, low_threshold_, low_threshold_ * 2, 3);
       /// Find contours
-      cv::findContours( canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
+      cv::findContours(canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
       /// Draw contours
       cv::Mat drawing;
-      if( debug_view_) {
-        drawing = cv::Mat::zeros( canny_output.size(), CV_8UC3 );
+      if (debug_view_)
+      {
+        drawing = cv::Mat::zeros(canny_output.size(), CV_8UC3);
       }
 
       /// Calculate the area with the moments 00 and compare with the result of the OpenCV function
@@ -163,24 +170,31 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
       // https://stackoverflow.com/questions/13495207/opencv-c-sorting-contours-by-their-contourarea
       std::sort(contours.begin(), contours.end(), compareContourAreas);
 
-      std::vector<cv::Moments> mu(contours.size() );
-      std::vector<cv::Point2f> mc( contours.size() );
-      for( size_t i = 0; i< contours.size(); i++ )
+      std::vector<cv::Moments> mu(contours.size());
+      std::vector<cv::Point2f> mc(contours.size());
+      for (size_t i = 0; i < contours.size(); i++)
       {
         /// Get the moments
-        for( size_t i = 0; i < contours.size(); i++ )
-        { mu[i] = moments( contours[i], false ); }
+        for (size_t i = 0; i < contours.size(); i++)
+        {
+          mu[i] = moments(contours[i], false);
+        }
 
         ///  Get the mass centers:
-        for( size_t i = 0; i < contours.size(); i++ )
-        { mc[i] = cv::Point2f( static_cast<float>(mu[i].m10/mu[i].m00) , static_cast<float>(mu[i].m01/mu[i].m00) ); }
-
-        if( debug_view_) {
-          cv::Scalar color = cv::Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
-          cv::drawContours( drawing, contours, (int)i, color, 2, 8, hierarchy, 0, cv::Point() );
-          cv::circle( drawing, mc[i], 4, color, -1, 8, 0 );
+        for (size_t i = 0; i < contours.size(); i++)
+        {
+          mc[i] = cv::Point2f(static_cast<float>(mu[i].m10 / mu[i].m00), static_cast<float>(mu[i].m01 / mu[i].m00));
         }
-        NODELET_INFO(" * Contour[%d] - Area (M_00) = %.2f - Area OpenCV: %.2f - Length: %.2f - Center (%.2f, %.2f)", (int)i, mu[i].m00, cv::contourArea(contours[i]), cv::arcLength( contours[i], true ), mc[i].x, mc[i].y );
+
+        if (debug_view_)
+        {
+          cv::Scalar color = cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
+          cv::drawContours(drawing, contours, (int)i, color, 2, 8, hierarchy, 0, cv::Point());
+          cv::circle(drawing, mc[i], 4, color, -1, 8, 0);
+        }
+        NODELET_INFO(" * Contour[%d] - Area (M_00) = %.2f - Area OpenCV: %.2f - Length: %.2f - Center (%.2f, %.2f)",
+                     (int)i, mu[i].m00, cv::contourArea(contours[i]), cv::arcLength(contours[i], true), mc[i].x,
+                     mc[i].y);
 
         opencv_apps::Moment moment_msg;
         moment_msg.m00 = mu[i].m00;
@@ -216,8 +230,9 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
         moments_msg.moments.push_back(moment_msg);
       }
 
-      if( debug_view_) {
-        cv::imshow( window_name_, drawing );
+      if (debug_view_)
+      {
+        cv::imshow(window_name_, drawing);
         int c = cv::waitKey(1);
       }
 
@@ -226,7 +241,7 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
       img_pub_.publish(out_img);
       msg_pub_.publish(moments_msg);
     }
-    catch (cv::Exception &e)
+    catch (cv::Exception& e)
     {
       NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
     }
@@ -234,16 +249,16 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()
+  void subscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", 3, &ContourMomentsNodelet::imageCallbackWithInfo, this);
+      cam_sub_ = it_->subscribeCamera("image", queue_size_, &ContourMomentsNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", 3, &ContourMomentsNodelet::imageCallback, this);
+      img_sub_ = it_->subscribe("image", queue_size_, &ContourMomentsNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -251,23 +266,25 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
 
+    pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
-    if (debug_view_) {
+    if (debug_view_)
+    {
       always_subscribe_ = true;
     }
     prev_stamp_ = ros::Time(0, 0);
 
     window_name_ = "Contours";
-    low_threshold_ = 100; // only for canny
-    
+    low_threshold_ = 100;  // only for canny
+
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-      boost::bind(&ContourMomentsNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&ContourMomentsNodelet::reconfigureCallback, this, _1, _2);
     reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
@@ -276,19 +293,21 @@ public:
   }
 };
 bool ContourMomentsNodelet::need_config_update_ = false;
-} // namespace opencv_apps
+}  // namespace opencv_apps
 
-namespace contour_moments {
-class ContourMomentsNodelet : public opencv_apps::ContourMomentsNodelet {
+namespace contour_moments
+{
+class ContourMomentsNodelet : public opencv_apps::ContourMomentsNodelet
+{
 public:
-  virtual void onInit() {
+  virtual void onInit()  // NOLINT(modernize-use-override)
+  {
     ROS_WARN("DeprecationWarning: Nodelet contour_moments/contour_moments is deprecated, "
              "and renamed to opencv_apps/contour_moments.");
     opencv_apps::ContourMomentsNodelet::onInit();
   }
 };
-} // namespace contour_moments
-
+}  // namespace contour_moments
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::ContourMomentsNodelet, nodelet::Nodelet);

@@ -53,7 +53,8 @@
 #include "opencv_apps/Point2D.h"
 #include "opencv_apps/Point2DArrayStamped.h"
 
-namespace opencv_apps {
+namespace opencv_apps
+{
 class GoodfeatureTrackNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -68,6 +69,7 @@ class GoodfeatureTrackNodelet : public opencv_apps::Nodelet
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
+  int queue_size_;
   bool debug_view_;
   ros::Time prev_stamp_;
 
@@ -76,13 +78,13 @@ class GoodfeatureTrackNodelet : public opencv_apps::Nodelet
 
   int max_corners_;
 
-  void reconfigureCallback(Config &new_config, uint32_t level)
+  void reconfigureCallback(Config& new_config, uint32_t level)
   {
     config_ = new_config;
     max_corners_ = config_.max_corners;
   }
 
-  const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
+  const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
   {
     if (frame.empty())
       return image_frame;
@@ -91,20 +93,20 @@ class GoodfeatureTrackNodelet : public opencv_apps::Nodelet
 
   void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
   {
-    do_work(msg, cam_info->header.frame_id);
+    doWork(msg, cam_info->header.frame_id);
   }
 
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
-    do_work(msg, msg->header.frame_id);
+    doWork(msg, msg->header.frame_id);
   }
 
-  static void trackbarCallback( int, void* )
+  static void trackbarCallback(int /*unused*/, void* /*unused*/)
   {
     need_config_update_ = true;
   }
 
-  void do_work(const sensor_msgs::ImageConstPtr& msg, const std::string input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -118,20 +120,25 @@ class GoodfeatureTrackNodelet : public opencv_apps::Nodelet
 
       // Do the work
       cv::Mat src_gray;
-      int maxTrackbar = 100;
+      int max_trackbar = 100;
 
-      if ( frame.channels() > 1 ) {
-        cv::cvtColor( frame, src_gray, cv::COLOR_BGR2GRAY );
-      } else {
+      if (frame.channels() > 1)
+      {
+        cv::cvtColor(frame, src_gray, cv::COLOR_BGR2GRAY);
+      }
+      else
+      {
         src_gray = frame;
-        cv::cvtColor( src_gray, frame, cv::COLOR_GRAY2BGR );
+        cv::cvtColor(src_gray, frame, cv::COLOR_GRAY2BGR);
       }
 
-      if( debug_view_) {
+      if (debug_view_)
+      {
         /// Create Trackbars for Thresholds
-        cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
-        cv::createTrackbar( "Max corners", window_name_, &max_corners_, maxTrackbar, trackbarCallback);
-        if (need_config_update_) {
+        cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
+        cv::createTrackbar("Max corners", window_name_, &max_corners_, max_trackbar, trackbarCallback);
+        if (need_config_update_)
+        {
           config_.max_corners = max_corners_;
           reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
@@ -139,47 +146,47 @@ class GoodfeatureTrackNodelet : public opencv_apps::Nodelet
       }
 
       /// void goodFeaturesToTrack_Demo( int, void* )
-      if( max_corners_ < 1 ) { max_corners_ = 1; }
+      if (max_corners_ < 1)
+      {
+        max_corners_ = 1;
+      }
 
       /// Parameters for Shi-Tomasi algorithm
       std::vector<cv::Point2f> corners;
-      double qualityLevel = 0.01;
-      double minDistance = 10;
-      int blockSize = 3;
-      bool useHarrisDetector = false;
+      double quality_level = 0.01;
+      double min_distance = 10;
+      int block_size = 3;
+      bool use_harris_detector = false;
       double k = 0.04;
 
       cv::RNG rng(12345);
 
       /// Apply corner detection
-      cv::goodFeaturesToTrack( src_gray,
-                               corners,
-                               max_corners_,
-                               qualityLevel,
-                               minDistance,
-                               cv::Mat(),
-                               blockSize,
-                               useHarrisDetector,
-                               k );
-
+      cv::goodFeaturesToTrack(src_gray, corners, max_corners_, quality_level, min_distance, cv::Mat(), block_size,
+                              use_harris_detector, k);
 
       /// Draw corners detected
-      NODELET_INFO_STREAM("** Number of corners detected: "<<corners.size());
+      NODELET_INFO_STREAM("** Number of corners detected: " << corners.size());
       int r = 4;
-      for( size_t i = 0; i < corners.size(); i++ )
-      { cv::circle( frame, corners[i], r, cv::Scalar(rng.uniform(0,255), rng.uniform(0,255), rng.uniform(0,255)), -1, 8, 0 ); }
+      for (const cv::Point2f& corner : corners)
+      {
+        cv::circle(frame, corner, r, cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255)), -1, 8,
+                   0);
+      }
 
       //-- Show what you got
-      if( debug_view_) {
-        cv::imshow( window_name_, frame );
+      if (debug_view_)
+      {
+        cv::imshow(window_name_, frame);
         int c = cv::waitKey(1);
       }
 
       // Create msgs
-      for( size_t i = 0; i< corners.size(); i++ ) {
+      for (const cv::Point2f& i : corners)
+      {
         opencv_apps::Point2D corner;
-        corner.x = corners[i].x;
-        corner.y = corners[i].y;
+        corner.x = i.x;
+        corner.y = i.y;
         corners_msg.points.push_back(corner);
       }
       // Publish the image.
@@ -187,7 +194,7 @@ class GoodfeatureTrackNodelet : public opencv_apps::Nodelet
       img_pub_.publish(out_img);
       msg_pub_.publish(corners_msg);
     }
-    catch (cv::Exception &e)
+    catch (cv::Exception& e)
     {
       NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
     }
@@ -195,16 +202,16 @@ class GoodfeatureTrackNodelet : public opencv_apps::Nodelet
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()
+  void subscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", 3, &GoodfeatureTrackNodelet::imageCallbackWithInfo, this);
+      cam_sub_ = it_->subscribeCamera("image", queue_size_, &GoodfeatureTrackNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", 3, &GoodfeatureTrackNodelet::imageCallback, this);
+      img_sub_ = it_->subscribe("image", queue_size_, &GoodfeatureTrackNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -212,13 +219,15 @@ class GoodfeatureTrackNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
 
+    pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
-    if (debug_view_) {
+    if (debug_view_)
+    {
       always_subscribe_ = true;
     }
     prev_stamp_ = ros::Time(0, 0);
@@ -228,9 +237,9 @@ public:
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-      boost::bind(&GoodfeatureTrackNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&GoodfeatureTrackNodelet::reconfigureCallback, this, _1, _2);
     reconfigure_server_->setCallback(f);
-    
+
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::Point2DArrayStamped>(*pnh_, "corners", 1);
 
@@ -238,19 +247,21 @@ public:
   }
 };
 bool GoodfeatureTrackNodelet::need_config_update_ = false;
-} // namespace opencv_apps
+}  // namespace opencv_apps
 
-namespace goodfeature_track {
-class GoodfeatureTrackNodelet : public opencv_apps::GoodfeatureTrackNodelet {
+namespace goodfeature_track
+{
+class GoodfeatureTrackNodelet : public opencv_apps::GoodfeatureTrackNodelet
+{
 public:
-  virtual void onInit() {
+  virtual void onInit()  // NOLINT(modernize-use-override)
+  {
     ROS_WARN("DeprecationWarning: Nodelet goodfeature_track/goodfeature_track is deprecated, "
              "and renamed to opencv_apps/goodfeature_track.");
     opencv_apps::GoodfeatureTrackNodelet::onInit();
   }
 };
-} // namespace goodfeature_track
-
+}  // namespace goodfeature_track
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::GoodfeatureTrackNodelet, nodelet::Nodelet);

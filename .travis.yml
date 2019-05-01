@@ -2,6 +2,9 @@ sudo: required
 dist: trusty
 language: generic
 env:
+  - TEST=catkin_lint                   DOCKER_IMAGE=ubuntu:bionic
+  - TEST=clang-format                  DOCKER_IMAGE=ubuntu:bionic
+  - TEST=clang-tidy ROS_DISTRO=melodic DOCKER_IMAGE=ubuntu:bionic
   - ROS_DISTRO=hydro                   DOCKER_IMAGE=ubuntu:precise
   - OPENCV_VERSION=2 ROS_DISTRO=indigo DOCKER_IMAGE=ubuntu:trusty
   - OPENCV_VERSION=3 ROS_DISTRO=indigo DOCKER_IMAGE=ubuntu:trusty
@@ -12,7 +15,7 @@ script:
   - export CI_SOURCE_PATH=$(pwd)
   - export REPOSITORY_NAME=${PWD##*/}
   - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
-  - docker run --rm -i -v $CI_SOURCE_PATH:$CI_SOURCE_PATH -e "CI_SOURCE_PATH=$CI_SOURCE_PATH" -e "HOME=$HOME" -e "ROS_DISTRO=$ROS_DISTRO" -e "OPENCV_VERSION=$OPENCV_VERSION" -t $DOCKER_IMAGE sh -c "cd $CI_SOURCE_PATH; ./.travis.sh"
+  - docker run --rm -i -v $CI_SOURCE_PATH:$CI_SOURCE_PATH -e "CI_SOURCE_PATH=$CI_SOURCE_PATH" -e "HOME=$HOME" -e "ROS_DISTRO=$ROS_DISTRO" -e "OPENCV_VERSION=$OPENCV_VERSION" -e "TEST=$TEST" -t $DOCKER_IMAGE sh -c "cd $CI_SOURCE_PATH; /bin/bash .travis.sh"
 
 after_failure:
   - find ${HOME}/.ros/test_results -type f -exec echo "== {} ==" \; -exec cat {} \;

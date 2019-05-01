@@ -3,11 +3,11 @@
 *
 *  Copyright (c) 2014, Kei Okada.
 *  All rights reserved.
-* 
+*
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions
 *  are met:
-* 
+*
 *   * Redistributions of source code must retain the above copyright
 *     notice, this list of conditions and the following disclaimer.
 *   * Redistributions in binary form must reproduce the above
@@ -17,7 +17,7 @@
 *   * Neither the name of the Kei Okada nor the names of its
 *     contributors may be used to endorse or promote products derived
 *     from this software without specific prior written permission.
-* 
+*
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -53,7 +53,8 @@
 #include "opencv_apps/Rect.h"
 #include "opencv_apps/RectArrayStamped.h"
 
-namespace opencv_apps {
+namespace opencv_apps
+{
 class PeopleDetectNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -68,6 +69,7 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
+  int queue_size_;
   bool debug_view_;
   ros::Time prev_stamp_;
 
@@ -82,7 +84,7 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
   double scale0_;
   int group_threshold_;
 
-  void reconfigureCallback(Config &new_config, uint32_t level)
+  void reconfigureCallback(Config& new_config, uint32_t level)
   {
     config_ = new_config;
     hit_threshold_ = config_.hit_threshold;
@@ -92,7 +94,7 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
     group_threshold_ = config_.group_threshold;
   }
 
-  const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
+  const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
   {
     if (frame.empty())
       return image_frame;
@@ -101,20 +103,20 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
 
   void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
   {
-    do_work(msg, cam_info->header.frame_id);
-  }
-  
-  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
-  {
-    do_work(msg, msg->header.frame_id);
+    doWork(msg, cam_info->header.frame_id);
   }
 
-  static void trackbarCallback( int, void* )
+  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+  {
+    doWork(msg, msg->header.frame_id);
+  }
+
+  static void trackbarCallback(int /*unused*/, void* /*unused*/)
   {
     need_config_update_ = true;
   }
 
-  void do_work(const sensor_msgs::ImageConstPtr& msg, const std::string input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -127,8 +129,9 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
       found_msg.header = msg->header;
 
       // Do the work
-      if( debug_view_) {
-        cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
+      if (debug_view_)
+      {
+        cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
       }
 
       std::vector<cv::Rect> found, found_filtered;
@@ -136,29 +139,30 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
       // run the detector with default parameters. to get a higher hit-rate
       // (and more false alarms, respectively), decrease the hitThreshold and
       // groupThreshold (set groupThreshold to 0 to turn off the grouping completely).
-      hog_.detectMultiScale(frame, found, hit_threshold_, cv::Size(win_stride_, win_stride_), cv::Size(padding_, padding_), scale0_, group_threshold_);
+      hog_.detectMultiScale(frame, found, hit_threshold_, cv::Size(win_stride_, win_stride_),
+                            cv::Size(padding_, padding_), scale0_, group_threshold_);
       t = (double)cv::getTickCount() - t;
-      NODELET_INFO("tdetection time = %gms", t*1000./cv::getTickFrequency());
+      NODELET_INFO("tdetection time = %gms", t * 1000. / cv::getTickFrequency());
       size_t i, j;
-      for( i = 0; i < found.size(); i++ )
+      for (i = 0; i < found.size(); i++)
       {
         cv::Rect r = found[i];
-        for( j = 0; j < found.size(); j++ )
-          if( j != i && (r & found[j]) == r)
+        for (j = 0; j < found.size(); j++)
+          if (j != i && (r & found[j]) == r)
             break;
-        if( j == found.size() )
+        if (j == found.size())
           found_filtered.push_back(r);
       }
-      for( i = 0; i < found_filtered.size(); i++ )
+      for (i = 0; i < found_filtered.size(); i++)
       {
         cv::Rect r = found_filtered[i];
         // the HOG detector returns slightly larger rectangles than the real objects.
         // so we slightly shrink the rectangles to get a nicer output.
-        r.x += cvRound(r.width*0.1);
-        r.width = cvRound(r.width*0.8);
-        r.y += cvRound(r.height*0.07);
-        r.height = cvRound(r.height*0.8);
-        cv::rectangle(frame, r.tl(), r.br(), cv::Scalar(0,255,0), 3);
+        r.x += cvRound(r.width * 0.1);
+        r.width = cvRound(r.width * 0.8);
+        r.y += cvRound(r.height * 0.07);
+        r.height = cvRound(r.height * 0.8);
+        cv::rectangle(frame, r.tl(), r.br(), cv::Scalar(0, 255, 0), 3);
 
         opencv_apps::Rect rect_msg;
         rect_msg.x = r.x;
@@ -169,17 +173,18 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
       }
 
       //-- Show what you got
-      if( debug_view_) {
-        cv::imshow( window_name_, frame );
+      if (debug_view_)
+      {
+        cv::imshow(window_name_, frame);
         int c = cv::waitKey(1);
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, msg->encoding,frame).toImageMsg();
+      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, msg->encoding, frame).toImageMsg();
       img_pub_.publish(out_img);
       msg_pub_.publish(found_msg);
     }
-    catch (cv::Exception &e)
+    catch (cv::Exception& e)
     {
       NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
     }
@@ -187,16 +192,16 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()
+  void subscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", 3, &PeopleDetectNodelet::imageCallbackWithInfo, this);
+      cam_sub_ = it_->subscribeCamera("image", queue_size_, &PeopleDetectNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", 3, &PeopleDetectNodelet::imageCallback, this);
+      img_sub_ = it_->subscribe("image", queue_size_, &PeopleDetectNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -204,13 +209,15 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
 
+    pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
-    if (debug_view_) {
+    if (debug_view_)
+    {
       always_subscribe_ = true;
     }
     prev_stamp_ = ros::Time(0, 0);
@@ -219,11 +226,11 @@ public:
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-      boost::bind(&PeopleDetectNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&PeopleDetectNodelet::reconfigureCallback, this, _1, _2);
     reconfigure_server_->setCallback(f);
 
     hog_.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
-    
+
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::RectArrayStamped>(*pnh_, "found", 1);
 
@@ -231,19 +238,21 @@ public:
   }
 };
 bool PeopleDetectNodelet::need_config_update_ = false;
-} // namespace opencv_apps
+}  // namespace opencv_apps
 
-namespace people_detect {
-class PeopleDetectNodelet : public opencv_apps::PeopleDetectNodelet {
+namespace people_detect
+{
+class PeopleDetectNodelet : public opencv_apps::PeopleDetectNodelet
+{
 public:
-  virtual void onInit() {
+  virtual void onInit()  // NOLINT(modernize-use-override)
+  {
     ROS_WARN("DeprecationWarning: Nodelet people_detect/people_detect is deprecated, "
              "and renamed to opencv_apps/people_detect.");
     opencv_apps::PeopleDetectNodelet::onInit();
   }
 };
-} // namespace people_detect
-
+}  // namespace people_detect
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::PeopleDetectNodelet, nodelet::Nodelet);

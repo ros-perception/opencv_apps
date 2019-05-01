@@ -3,11 +3,11 @@
 *
 *  Copyright (c) 2015, Tal Regev.
 *  All rights reserved.
-* 
+*
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions
 *  are met:
-* 
+*
 *   * Redistributions of source code must retain the above copyright
 *     notice, this list of conditions and the following disclaimer.
 *   * Redistributions in binary form must reproduce the above
@@ -17,7 +17,7 @@
 *   * Neither the name of the Kei Okada nor the names of its
 *     contributors may be used to endorse or promote products derived
 *     from this software without specific prior written permission.
-* 
+*
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -31,7 +31,7 @@
 *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
-//http://wiki.ros.org/cv_bridge/Tutorials/UsingCvBridgeToConvertBetweenROSImagesAndOpenCVImages
+// http://wiki.ros.org/cv_bridge/Tutorials/UsingCvBridgeToConvertBetweenROSImagesAndOpenCVImages
 /**
  * This is a demo of Simple Example from wiki tutorial
  */
@@ -45,13 +45,12 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-
 #include <dynamic_reconfigure/server.h>
 
-namespace opencv_apps {
-
-namespace simple_example {
-
+namespace opencv_apps
+{
+namespace simple_example
+{
 static const std::string OPENCV_WINDOW = "Image window";
 
 class ImageConverter
@@ -60,27 +59,29 @@ class ImageConverter
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
+  int queue_size_;
   bool debug_view_;
 
 public:
-  ImageConverter()
-    : it_(nh_)
+  ImageConverter() : it_(nh_)
   {
     // Subscrive to input video feed and publish output video feed
-    image_sub_ = it_.subscribe("image", 1,
-      &ImageConverter::imageCb, this);
+    image_sub_ = it_.subscribe("image", queue_size_, &ImageConverter::imageCb, this);
     image_pub_ = it_.advertise("/image_converter/output_video/raw", 1);
 
-    ros::NodeHandle pnh_("~");
-    pnh_.param("debug_view", debug_view_, false);
-    if( debug_view_) {
+    ros::NodeHandle pnh("~");
+    pnh.param("queue_size", queue_size_, 1);
+    pnh.param("debug_view", debug_view_, false);
+    if (debug_view_)
+    {
       cv::namedWindow(OPENCV_WINDOW);
     }
   }
 
   ~ImageConverter()
   {
-    if( debug_view_) {
+    if (debug_view_)
+    {
       cv::destroyWindow(OPENCV_WINDOW);
     }
   }
@@ -100,9 +101,10 @@ public:
 
     // Draw an example circle on the video stream
     if (cv_ptr->image.rows > 110 && cv_ptr->image.cols > 110)
-      cv::circle(cv_ptr->image, cv::Point(cv_ptr->image.cols/2, cv_ptr->image.rows/2), 100, CV_RGB(255,0,0));
+      cv::circle(cv_ptr->image, cv::Point(cv_ptr->image.cols / 2, cv_ptr->image.rows / 2), 100, CV_RGB(255, 0, 0));
 
-    if( debug_view_) {
+    if (debug_view_)
+    {
       // Update GUI Window
       cv::imshow(OPENCV_WINDOW, cv_ptr->image);
       cv::waitKey(3);
@@ -113,33 +115,33 @@ public:
   }
 };
 
-} // namesapce simple_example
+}  // namespace simple_example
 
 class SimpleExampleNodelet : public nodelet::Nodelet
 {
-
-
 public:
-  virtual void onInit()
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
-      simple_example::ImageConverter ic;
-      ros::spin();
+    simple_example::ImageConverter ic;
+    ros::spin();
   }
 };
 
-} // namespace opencv_apps
+}  // namespace opencv_apps
 
-namespace simple_example {
-class SimpleExampleNodelet : public opencv_apps::SimpleExampleNodelet {
+namespace simple_example
+{
+class SimpleExampleNodelet : public opencv_apps::SimpleExampleNodelet
+{
 public:
-  virtual void onInit() {
+  virtual void onInit()  // NOLINT(modernize-use-override)
+  {
     ROS_WARN("DeprecationWarning: Nodelet simple_example/simple_example is deprecated, "
              "and renamed to opencv_apps/simple_example.");
     opencv_apps::SimpleExampleNodelet::onInit();
   }
 };
-} // namespace simple_example
-
+}  // namespace simple_example
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::SimpleExampleNodelet, nodelet::Nodelet);

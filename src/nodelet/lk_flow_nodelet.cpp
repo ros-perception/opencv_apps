@@ -53,7 +53,8 @@
 #include "opencv_apps/LKFlowConfig.h"
 #include "opencv_apps/FlowArrayStamped.h"
 
-namespace opencv_apps {
+namespace opencv_apps
+{
 class LKFlowNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -71,6 +72,7 @@ class LKFlowNodelet : public opencv_apps::Nodelet
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
+  int queue_size_;
   bool debug_view_;
   ros::Time prev_stamp_;
 
@@ -85,12 +87,21 @@ class LKFlowNodelet : public opencv_apps::Nodelet
   cv::Mat gray, prevGray;
   std::vector<cv::Point2f> points[2];
 
-  void reconfigureCallback(Config &new_config, uint32_t level)
+  float quality_level_;
+  int min_distance_;
+  int block_size_;
+  float harris_k_;
+
+  void reconfigureCallback(Config& new_config, uint32_t level)
   {
     config_ = new_config;
+    quality_level_ = config_.quality_level;
+    min_distance_ = config_.min_distance;
+    block_size_ = config_.block_size;
+    harris_k_ = config_.harris_k;
   }
 
-  const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
+  const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
   {
     if (frame.empty())
       return image_frame;
@@ -99,12 +110,12 @@ class LKFlowNodelet : public opencv_apps::Nodelet
 
   void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
   {
-    do_work(msg, cam_info->header.frame_id);
+    doWork(msg, cam_info->header.frame_id);
   }
 
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
-    do_work(msg, msg->header.frame_id);
+    doWork(msg, msg->header.frame_id);
   }
 #if 0
   static void onMouse( int event, int x, int y, int /*flags*/, void* /*param*/ )
@@ -116,12 +127,12 @@ class LKFlowNodelet : public opencv_apps::Nodelet
     }
   }
 #endif
-  static void trackbarCallback( int, void* )
+  static void trackbarCallback(int /*unused*/, void* /*unused*/)
   {
     need_config_update_ = true;
   }
 
-  void do_work(const sensor_msgs::ImageConstPtr& msg, const std::string input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -133,70 +144,83 @@ class LKFlowNodelet : public opencv_apps::Nodelet
       opencv_apps::FlowArrayStamped flows_msg;
       flows_msg.header = msg->header;
 
-      if( debug_view_) {
+      if (debug_view_)
+      {
         /// Create Trackbars for Thresholds
-        cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
-        //cv::setMouseCallback( window_name_, onMouse, 0 );
-        if (need_config_update_) {
+        cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
+
+        cv::createTrackbar("Min Distance", window_name_, &min_distance_, 100, trackbarCallback);
+        cv::createTrackbar("Block Size", window_name_, &block_size_, 100, trackbarCallback);
+
+        // cv::setMouseCallback( window_name_, onMouse, 0 );
+        if (need_config_update_)
+        {
           reconfigure_server_->updateConfig(config_);
+          config_.quality_level = quality_level_;
+          config_.min_distance = min_distance_;
+          config_.block_size = block_size_;
+          config_.harris_k = harris_k_;
           need_config_update_ = false;
         }
       }
 
       // Do the work
       cv::TermCriteria termcrit(cv::TermCriteria::MAX_ITER + cv::TermCriteria::EPS, 20, 0.03);
-      cv::Size subPixWinSize(10,10), winSize(31,31);
+      cv::Size sub_pix_win_size(10, 10), win_size(31, 31);
 
-      if ( image.channels() > 1 ) {
-        cv::cvtColor( image, gray, cv::COLOR_BGR2GRAY );
-      } else {
+      if (image.channels() > 1)
+      {
+        cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
+      }
+      else
+      {
         image.copyTo(gray);
       }
 
-      if( nightMode )
+      if (nightMode)
         image = cv::Scalar::all(0);
 
-      if( needToInit )
+      if (needToInit)
       {
         // automatic initialization
-        cv::goodFeaturesToTrack(gray, points[1], MAX_COUNT, 0.01, 10, cv::Mat(), 3, false, 0.04);
-        cv::cornerSubPix(gray, points[1], subPixWinSize, cv::Size(-1,-1), termcrit);
+        cv::goodFeaturesToTrack(gray, points[1], MAX_COUNT, quality_level_, min_distance_, cv::Mat(), block_size_,
+                                false, harris_k_);
+        cv::cornerSubPix(gray, points[1], sub_pix_win_size, cv::Size(-1, -1), termcrit);
         addRemovePt = false;
       }
-      else if( !points[0].empty() )
+      else if (!points[0].empty())
       {
         std::vector<uchar> status;
         std::vector<float> err;
-        if(prevGray.empty())
+        if (prevGray.empty())
           gray.copyTo(prevGray);
-        cv::calcOpticalFlowPyrLK(prevGray, gray, points[0], points[1], status, err, winSize,
-                                 3, termcrit, 0, 0.001);
+        cv::calcOpticalFlowPyrLK(prevGray, gray, points[0], points[1], status, err, win_size, 3, termcrit, 0, 0.001);
         size_t i, k;
-        for( i = k = 0; i < points[1].size(); i++ )
+        for (i = k = 0; i < points[1].size(); i++)
         {
-          if( addRemovePt )
+          if (addRemovePt)
           {
-            if( cv::norm(point - points[1][i]) <= 5 )
+            if (cv::norm(point - points[1][i]) <= 5)
             {
               addRemovePt = false;
               continue;
             }
           }
 
-          if( !status[i] )
+          if (!status[i])
             continue;
 
           points[1][k++] = points[1][i];
-          cv::circle( image, points[1][i], 3, cv::Scalar(0,255,0), -1, 8);
-          cv::line( image, points[1][i], points[0][i], cv::Scalar(0,255,0), 1, 8, 0);
+          cv::circle(image, points[1][i], 3, cv::Scalar(0, 255, 0), -1, 8);
+          cv::line(image, points[1][i], points[0][i], cv::Scalar(0, 255, 0), 1, 8, 0);
 
           opencv_apps::Flow flow_msg;
           opencv_apps::Point2D point_msg;
           opencv_apps::Point2D velocity_msg;
           point_msg.x = points[1][i].x;
           point_msg.y = points[1][i].y;
-          velocity_msg.x = points[1][i].x-points[0][i].x;
-          velocity_msg.y = points[1][i].y-points[0][i].y;
+          velocity_msg.x = points[1][i].x - points[0][i].x;
+          velocity_msg.y = points[1][i].y - points[0][i].y;
           flow_msg.point = point_msg;
           flow_msg.velocity = velocity_msg;
           flows_msg.flow.push_back(flow_msg);
@@ -204,24 +228,24 @@ class LKFlowNodelet : public opencv_apps::Nodelet
         points[1].resize(k);
       }
 
-      if( addRemovePt && points[1].size() < (size_t)MAX_COUNT )
-        {
-          std::vector<cv::Point2f> tmp;
-          tmp.push_back(point);
-          cv::cornerSubPix( gray, tmp, winSize, cv::Size(-1,-1), termcrit);
-          points[1].push_back(tmp[0]);
-          addRemovePt = false;
-        }
+      if (addRemovePt && points[1].size() < (size_t)MAX_COUNT)
+      {
+        std::vector<cv::Point2f> tmp;
+        tmp.push_back(point);
+        cv::cornerSubPix(gray, tmp, win_size, cv::Size(-1, -1), termcrit);
+        points[1].push_back(tmp[0]);
+        addRemovePt = false;
+      }
 
       needToInit = false;
-      if( debug_view_) {
-
+      if (debug_view_)
+      {
         cv::imshow(window_name_, image);
 
         char c = (char)cv::waitKey(1);
-        //if( c == 27 )
+        // if( c == 27 )
         //    break;
-        switch( c )
+        switch (c)
         {
           case 'r':
             needToInit = true;
@@ -243,7 +267,7 @@ class LKFlowNodelet : public opencv_apps::Nodelet
       img_pub_.publish(out_img);
       msg_pub_.publish(flows_msg);
     }
-    catch (cv::Exception &e)
+    catch (cv::Exception& e)
     {
       NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
     }
@@ -251,32 +275,35 @@ class LKFlowNodelet : public opencv_apps::Nodelet
     prev_stamp_ = msg->header.stamp;
   }
 
-  bool initialize_points_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response) {
+  bool initializePointsCb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+  {
     needToInit = true;
     return true;
   }
 
-  bool delete_points_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response) {
+  bool deletePointsCb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+  {
     points[0].clear();
     points[1].clear();
     return true;
   }
 
-  bool toggle_night_mode_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response) {
+  bool toggleNightModeCb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+  {
     nightMode = !nightMode;
     return true;
   }
 
-  void subscribe()
+  void subscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", 3, &LKFlowNodelet::imageCallbackWithInfo, this);
+      cam_sub_ = it_->subscribeCamera("image", queue_size_, &LKFlowNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", 3, &LKFlowNodelet::imageCallback, this);
+      img_sub_ = it_->subscribe("image", queue_size_, &LKFlowNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -284,13 +311,15 @@ class LKFlowNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
 
+    pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
-    if (debug_view_) {
+    if (debug_view_)
+    {
       always_subscribe_ = true;
     }
     prev_stamp_ = ros::Time(0, 0);
@@ -303,40 +332,41 @@ public:
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-      boost::bind(&LKFlowNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&LKFlowNodelet::reconfigureCallback, this, _1, _2);
     reconfigure_server_->setCallback(f);
-    
+
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::FlowArrayStamped>(*pnh_, "flows", 1);
-    initialize_points_service_ = pnh_->advertiseService("initialize_points", &LKFlowNodelet::initialize_points_cb, this);
-    delete_points_service_ = pnh_->advertiseService("delete_points", &LKFlowNodelet::delete_points_cb, this);
-    toggle_night_mode_service_ = pnh_->advertiseService("toggle_night_mode", &LKFlowNodelet::toggle_night_mode_cb, this);
-
+    initialize_points_service_ = pnh_->advertiseService("initialize_points", &LKFlowNodelet::initializePointsCb, this);
+    delete_points_service_ = pnh_->advertiseService("delete_points", &LKFlowNodelet::deletePointsCb, this);
+    toggle_night_mode_service_ = pnh_->advertiseService("toggle_night_mode", &LKFlowNodelet::toggleNightModeCb, this);
 
     NODELET_INFO("Hot keys: ");
     NODELET_INFO("\tESC - quit the program");
     NODELET_INFO("\tr - auto-initialize tracking");
     NODELET_INFO("\tc - delete all the points");
     NODELET_INFO("\tn - switch the \"night\" mode on/off");
-    //NODELET_INFO("To add/remove a feature point click it");
+    // NODELET_INFO("To add/remove a feature point click it");
 
     onInitPostProcess();
   }
 };
 bool LKFlowNodelet::need_config_update_ = false;
-} // namespace opencv_apps
+}  // namespace opencv_apps
 
-namespace lk_flow {
-class LKFlowNodelet : public opencv_apps::LKFlowNodelet {
+namespace lk_flow
+{
+class LKFlowNodelet : public opencv_apps::LKFlowNodelet
+{
 public:
-  virtual void onInit() {
+  virtual void onInit()  // NOLINT(modernize-use-override)
+  {
     ROS_WARN("DeprecationWarning: Nodelet lk_flow/lk_flow is deprecated, "
              "and renamed to opencv_apps/lk_flow.");
     opencv_apps::LKFlowNodelet::onInit();
   }
 };
-} // namespace lk_flow
-
+}  // namespace lk_flow
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::LKFlowNodelet, nodelet::Nodelet);

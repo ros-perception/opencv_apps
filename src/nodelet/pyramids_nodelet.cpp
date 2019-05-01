@@ -49,12 +49,13 @@
 #include <opencv2/highgui/highgui.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
 
-
 #include "opencv_apps/PyramidsConfig.h"
 #include <dynamic_reconfigure/server.h>
 
-namespace opencv_apps {
-class PyramidsNodelet : public opencv_apps::Nodelet {
+namespace opencv_apps
+{
+class PyramidsNodelet : public opencv_apps::Nodelet
+{
   image_transport::Publisher img_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
@@ -67,19 +68,21 @@ class PyramidsNodelet : public opencv_apps::Nodelet {
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
+  int queue_size_;
   bool debug_view_;
 
   int num_of_pyramids_;
 
   std::string window_name_;
 
-  void reconfigureCallback(Config& new_config, uint32_t level) {
+  void reconfigureCallback(Config& new_config, uint32_t level)
+  {
     config_ = new_config;
 
     num_of_pyramids_ = config_.num_of_pyramids;
   }
 
-  const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
+  const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
   {
     if (frame.empty())
       return image_frame;
@@ -88,34 +91,39 @@ class PyramidsNodelet : public opencv_apps::Nodelet {
 
   void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
   {
-    do_work(msg, cam_info->header.frame_id);
+    doWork(msg, cam_info->header.frame_id);
   }
 
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
-    do_work(msg, msg->header.frame_id);
+    doWork(msg, msg->header.frame_id);
   }
 
-  void do_work(const sensor_msgs::ImageConstPtr& image_msg, const std::string input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& image_msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
-    try {
+    try
+    {
       // Convert the image into something opencv can handle.
-      cv::Mat src_image =
-        cv_bridge::toCvShare(image_msg, image_msg->encoding)->image;
+      cv::Mat src_image = cv_bridge::toCvShare(image_msg, image_msg->encoding)->image;
 
       // Do the work
       int num = num_of_pyramids_;
-      switch (config_.pyramids_type) {
-        case opencv_apps::Pyramids_Up: {
-          while(num) {
+      switch (config_.pyramids_type)
+      {
+        case opencv_apps::Pyramids_Up:
+        {
+          while (num)
+          {
             num--;
             cv::pyrUp(src_image, src_image, cv::Size(src_image.cols * 2, src_image.rows * 2));
           }
           break;
         }
-        case opencv_apps::Pyramids_Down: {
-          while(num) {
+        case opencv_apps::Pyramids_Down:
+        {
+          while (num)
+          {
             num--;
             cv::pyrDown(src_image, src_image, cv::Size(src_image.cols / 2, src_image.rows / 2));
           }
@@ -124,32 +132,32 @@ class PyramidsNodelet : public opencv_apps::Nodelet {
       }
 
       //-- Show what you got
-      if(debug_view_) {
-        cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
+      if (debug_view_)
+      {
+        cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
         cv::imshow(window_name_, src_image);
         int c = cv::waitKey(1);
       }
 
       // Publish the image.
-      img_pub_.publish(cv_bridge::CvImage(image_msg->header,
-                                          image_msg->encoding,
-                                          src_image).toImageMsg());
+      img_pub_.publish(cv_bridge::CvImage(image_msg->header, image_msg->encoding, src_image).toImageMsg());
     }
-    catch (cv::Exception &e) {
+    catch (cv::Exception& e)
+    {
       NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
     }
   }
 
-  void subscribe()
+  void subscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", 3, &PyramidsNodelet::imageCallbackWithInfo, this);
+      cam_sub_ = it_->subscribeCamera("image", queue_size_, &PyramidsNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", 3, &PyramidsNodelet::imageCallback, this);
+      img_sub_ = it_->subscribe("image", queue_size_, &PyramidsNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -157,13 +165,16 @@ class PyramidsNodelet : public opencv_apps::Nodelet {
   }
 
 public:
-  virtual void onInit() {
+  virtual void onInit()  // NOLINT(modernize-use-override)
+  {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
 
+    pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
 
-    if (debug_view_) {
+    if (debug_view_)
+    {
       always_subscribe_ = true;
     }
 
@@ -171,7 +182,7 @@ public:
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-      boost::bind(&PyramidsNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&PyramidsNodelet::reconfigureCallback, this, _1, _2);
     reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
@@ -179,19 +190,21 @@ public:
     onInitPostProcess();
   }
 };
-} // namespace opencv_apps
+}  // namespace opencv_apps
 
-namespace pyramids {
-class PyramidsNodelet : public opencv_apps::PyramidsNodelet {
+namespace pyramids
+{
+class PyramidsNodelet : public opencv_apps::PyramidsNodelet
+{
 public:
-  virtual void onInit() {
+  virtual void onInit()  // NOLINT(modernize-use-override)
+  {
     ROS_WARN("DeprecationWarning: Nodelet pyramids/pyramids is deprecated, "
              "and renamed to opencv_apps/pyramids.");
     opencv_apps::PyramidsNodelet::onInit();
   }
 };
-} // namespace pyramids
-
+}  // namespace pyramids
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::PyramidsNodelet, nodelet::Nodelet);

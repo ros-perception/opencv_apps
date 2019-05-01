@@ -5,6 +5,7 @@
 
   <arg name="use_camera_info" default="false" doc="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
   <arg name="debug_view" default="true" doc="Specify whether the node displays a window to show edge image" />
+  <arg name="queue_size" default="3" doc="Specigy queue_size of input image subscribers" />
 
   <arg name="canny_threshold" default="200" doc="Upper threshold for the internal Canny edge detector." />
   <arg name="accumulator_threshold" default="50" doc="Threshold for center detection." />
@@ -20,6 +21,7 @@
     <remap from="image" to="$(arg image)" />
     <param name="use_camera_info" value="$(arg use_camera_info)" />
     <param name="debug_view" value="$(arg debug_view)" />
+    <param name="queue_size" value="$(arg queue_size)" />
     <param name="canny_threshold" value="$(arg canny_threshold)" />
     <param name="accumulator_threshold" value="$(arg accumulator_threshold)" />
     <param name="gaussian_blur_size" value="$(arg gaussian_blur_size)" />

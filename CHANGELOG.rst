@@ -2,6 +2,41 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.1 (2019-04-22)
+------------------
+* support catkin_lint and clang-format tests in travis.yml (`#93 <https://github.com/ros-perception/opencv_apps/issues/93>`_)
+
+  * override is not supported gcc4.6 (12.04), remove this fix and add NOLINT
+  * clang-tidy code need c++11
+  * fix code by run-clang-tidy -fix
+  * fix format by clang-format
+  * fix CMakeLists.txt and package.xml for catkin_lint
+  * support catkin_lint and clang-format tests
+
+* add queue_size parameter to all nodes, see `#83 <https://github.com/ros-perception/opencv_apps/issues/83>`_ (`#92 <https://github.com/ros-perception/opencv_apps/issues/92>`_)
+
+  * add queue_size arg to launch files
+  * sometimes simple_example_test fails with 'average rate (36.121Hz) exceeded maximum (35.000Hz)'
+
+* add queue_size parameter to all nodes, see `#83 <https://github.com/ros-perception/opencv_apps/issues/83>`_
+* add melodic badge
+* Contributors: Furushchev, Hironori Fujimoto, Kei Okada, higashide, iory, moju zhao
+* add melodic badge
+* Add lk flow params trackbar (`#78 <https://github.com/ros-perception/opencv_apps/issues/78>`_)
+* Remove duplication of add_library for simple_flow (`#88 <https://github.com/ros-perception/opencv_apps/issues/88>`_)
+   ${_opencv_apps_nodelet_cppfiles} adds simple_flow to library but also
+   ${${PROJECT_NAME}_EXTRA_FILES} does same thing
+
+* Do not pefrom face recognition process without the trained data (`#91 <https://github.com/ros-perception/opencv_apps/issues/91>`_)
+
+  * Add warning logger to prompt face data tranining
+  * Add a check to decide whether to perform the face recognition in callback function, according to the content of th
+
+* fback_flow: add option to set 'queue_size' (`#83 <https://github.com/ros-perception/opencv_apps/issues/83>`_)
+* travis.yml: add melodic and remove jade (`#84 <https://github.com/ros-perception/opencv_apps/issues/84>`_)
+* [face_detection.launch] Fixed path of haarcascade xml for OpenCV-3.3.1 (`#79 <https://github.com/ros-perception/opencv_apps/issues/79>`_)
+* Contributors: Yuki Furuta, Hironori Fujimoto, Kei Okada, Taichi Higashide, Iory Yanokura, Moju Zhao
+
 2.0.0 (2017-11-20)
 ------------------
 * Fix namespace and pkg name of nodelets (Closes (`#21 <https://github.com/ros-perception/opencv_apps/issues/21>`_)) (`#74 <https://github.com/ros-perception/opencv_apps/issues/74>`_)

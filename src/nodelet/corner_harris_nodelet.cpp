@@ -51,7 +51,8 @@
  * @author OpenCV team
  */
 
-namespace opencv_apps {
+namespace opencv_apps
+{
 class CornerHarrisNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -66,6 +67,7 @@ class CornerHarrisNodelet : public opencv_apps::Nodelet
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
+  int queue_size_;
   bool debug_view_;
 
   std::string window_name_;
@@ -73,13 +75,13 @@ class CornerHarrisNodelet : public opencv_apps::Nodelet
 
   int threshold_;
 
-  void reconfigureCallback(Config &new_config, uint32_t level)
+  void reconfigureCallback(Config& new_config, uint32_t level)
   {
     config_ = new_config;
     threshold_ = config_.threshold;
   }
 
-  const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
+  const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
   {
     if (frame.empty())
       return image_frame;
@@ -88,20 +90,20 @@ class CornerHarrisNodelet : public opencv_apps::Nodelet
 
   void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
   {
-    do_work(msg, cam_info->header.frame_id);
+    doWork(msg, cam_info->header.frame_id);
   }
 
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
-    do_work(msg, msg->header.frame_id);
+    doWork(msg, msg->header.frame_id);
   }
 
-  static void trackbarCallback( int, void* )
+  static void trackbarCallback(int /*unused*/, void* /*unused*/)
   {
     need_config_update_ = true;
   }
 
-  void do_work(const sensor_msgs::ImageConstPtr& image_msg, const std::string input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& image_msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -111,75 +113,85 @@ class CornerHarrisNodelet : public opencv_apps::Nodelet
 
       // Do the work
       cv::Mat dst, dst_norm, dst_norm_scaled;
-      dst = cv::Mat::zeros( frame.size(), CV_32FC1 );
+      dst = cv::Mat::zeros(frame.size(), CV_32FC1);
 
       cv::Mat src_gray;
 
-      if ( frame.channels() > 1 ) {
-        cv::cvtColor( frame, src_gray, cv::COLOR_BGR2GRAY );
-      } else {
+      if (frame.channels() > 1)
+      {
+        cv::cvtColor(frame, src_gray, cv::COLOR_BGR2GRAY);
+      }
+      else
+      {
         src_gray = frame;
-        cv::cvtColor( src_gray, frame, cv::COLOR_GRAY2BGR );
+        cv::cvtColor(src_gray, frame, cv::COLOR_GRAY2BGR);
       }
 
       /// Detector parameters
-      int blockSize = 2;
-      int apertureSize = 3;
+      int block_size = 2;
+      int aperture_size = 3;
       double k = 0.04;
 
       /// Detecting corners
-      cv::cornerHarris( src_gray, dst, blockSize, apertureSize, k, cv::BORDER_DEFAULT );
+      cv::cornerHarris(src_gray, dst, block_size, aperture_size, k, cv::BORDER_DEFAULT);
 
       /// Normalizing
-      cv::normalize( dst, dst_norm, 0, 255, cv::NORM_MINMAX, CV_32FC1, cv::Mat() );
-      cv::convertScaleAbs( dst_norm, dst_norm_scaled );
+      cv::normalize(dst, dst_norm, 0, 255, cv::NORM_MINMAX, CV_32FC1, cv::Mat());
+      cv::convertScaleAbs(dst_norm, dst_norm_scaled);
 
       /// Drawing a circle around corners
-      for( int j = 0; j < dst_norm.rows ; j++ ) {
-        for( int i = 0; i < dst_norm.cols; i++ ) {
-          if( (int) dst_norm.at<float>(j,i) > threshold_ ) {
-            cv::circle( frame, cv::Point(i, j), 5, cv::Scalar(0), 2, 8, 0 );
+      for (int j = 0; j < dst_norm.rows; j++)
+      {
+        for (int i = 0; i < dst_norm.cols; i++)
+        {
+          if ((int)dst_norm.at<float>(j, i) > threshold_)
+          {
+            cv::circle(frame, cv::Point(i, j), 5, cv::Scalar(0), 2, 8, 0);
           }
         }
       }
 
       /// Create window
-      if( debug_view_) {
-        cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
+      if (debug_view_)
+      {
+        cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
         const int max_threshold = 255;
-        if (need_config_update_) {
+        if (need_config_update_)
+        {
           config_.threshold = threshold_;
           reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
         }
-        cv::createTrackbar( "Threshold:", window_name_, &threshold_, max_threshold, trackbarCallback);
+        cv::createTrackbar("Threshold:", window_name_, &threshold_, max_threshold, trackbarCallback);
       }
 
-      if( debug_view_) {
-        cv::imshow( window_name_, frame );
+      if (debug_view_)
+      {
+        cv::imshow(window_name_, frame);
         int c = cv::waitKey(1);
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(image_msg->header, sensor_msgs::image_encodings::BGR8, frame).toImageMsg();
+      sensor_msgs::Image::Ptr out_img =
+          cv_bridge::CvImage(image_msg->header, sensor_msgs::image_encodings::BGR8, frame).toImageMsg();
       img_pub_.publish(out_img);
     }
-    catch (cv::Exception &e)
+    catch (cv::Exception& e)
     {
       NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
     }
   }
 
-  void subscribe()
+  void subscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", 3, &CornerHarrisNodelet::imageCallbackWithInfo, this);
+      cam_sub_ = it_->subscribeCamera("image", queue_size_, &CornerHarrisNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", 3, &CornerHarrisNodelet::imageCallback, this);
+      img_sub_ = it_->subscribe("image", queue_size_, &CornerHarrisNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -187,14 +199,16 @@ class CornerHarrisNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
 
+    pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
 
-    if (debug_view_) {
+    if (debug_view_)
+    {
       always_subscribe_ = true;
     }
 
@@ -202,7 +216,7 @@ public:
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-      boost::bind(&CornerHarrisNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&CornerHarrisNodelet::reconfigureCallback, this, _1, _2);
     reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
@@ -211,19 +225,21 @@ public:
   }
 };
 bool CornerHarrisNodelet::need_config_update_ = false;
-} // namespace opencv_apps
+}  // namespace opencv_apps
 
-namespace corner_harris {
-class CornerHarrisNodelet : public opencv_apps::CornerHarrisNodelet {
+namespace corner_harris
+{
+class CornerHarrisNodelet : public opencv_apps::CornerHarrisNodelet
+{
 public:
-  virtual void onInit() {
+  virtual void onInit()  // NOLINT(modernize-use-override)
+  {
     ROS_WARN("DeprecationWarning: Nodelet corner_harris/corner_harris is deprecated, "
              "and renamed to opencv_apps/corner_harris.");
     opencv_apps::CornerHarrisNodelet::onInit();
   }
 };
-} // namespace corner_harris
-
+}  // namespace corner_harris
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::CornerHarrisNodelet, nodelet::Nodelet);

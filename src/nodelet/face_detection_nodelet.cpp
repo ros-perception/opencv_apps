@@ -36,7 +36,8 @@
 /**
  * @file objectDetection.cpp
  * @author A. Huaman ( based in the classic facedetect.cpp in samples/c )
- * @brief A simplified version of facedetect.cpp, show how to load a cascade classifier and how to find objects (Face + eyes) in a video stream
+ * @brief A simplified version of facedetect.cpp, show how to load a cascade classifier and how to find objects (Face +
+ * eyes) in a video stream
  */
 
 #include <ros/ros.h>
@@ -55,7 +56,8 @@
 #include "opencv_apps/FaceArray.h"
 #include "opencv_apps/FaceArrayStamped.h"
 
-namespace opencv_apps {
+namespace opencv_apps
+{
 class FaceDetectionNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
@@ -71,18 +73,19 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
+  int queue_size_;
   bool debug_view_;
   ros::Time prev_stamp_;
 
   cv::CascadeClassifier face_cascade_;
   cv::CascadeClassifier eyes_cascade_;
 
-  void reconfigureCallback(Config &new_config, uint32_t level)
+  void reconfigureCallback(Config& new_config, uint32_t level)
   {
     config_ = new_config;
   }
 
-  const std::string &frameWithDefault(const std::string &frame, const std::string &image_frame)
+  const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
   {
     if (frame.empty())
       return image_frame;
@@ -91,15 +94,15 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
 
   void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
   {
-    do_work(msg, cam_info->header.frame_id);
+    doWork(msg, cam_info->header.frame_id);
   }
 
   void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   {
-    do_work(msg, msg->header.frame_id);
+    doWork(msg, msg->header.frame_id);
   }
 
-  void do_work(const sensor_msgs::ImageConstPtr& msg, const std::string input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -115,82 +118,93 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
       std::vector<cv::Rect> faces;
       cv::Mat frame_gray;
 
-      if ( frame.channels() > 1 ) {
-        cv::cvtColor( frame, frame_gray, cv::COLOR_BGR2GRAY );
-      } else {
+      if (frame.channels() > 1)
+      {
+        cv::cvtColor(frame, frame_gray, cv::COLOR_BGR2GRAY);
+      }
+      else
+      {
         frame_gray = frame;
       }
-      cv::equalizeHist( frame_gray, frame_gray );
-      //-- Detect faces
+      cv::equalizeHist(frame_gray, frame_gray);
+//-- Detect faces
 #ifndef CV_VERSION_EPOCH
-      face_cascade_.detectMultiScale( frame_gray, faces, 1.1, 2, 0, cv::Size(30, 30) );
+      face_cascade_.detectMultiScale(frame_gray, faces, 1.1, 2, 0, cv::Size(30, 30));
 #else
-      face_cascade_.detectMultiScale( frame_gray, faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, cv::Size(30, 30) );
+      face_cascade_.detectMultiScale(frame_gray, faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, cv::Size(30, 30));
 #endif
 
       cv::Mat face_image;
-      if (faces.size() > 0) {
+      if (!faces.empty())
+      {
         cv::Rect max_area = faces[0];
-        for ( size_t i = 0; i < faces.size(); i++ ) {
-          if (max_area.width * max_area.height > faces[i].width * faces[i].height) {
-            max_area = faces[i];
+        for (const cv::Rect& face : faces)
+        {
+          if (max_area.width * max_area.height > face.width * face.height)
+          {
+            max_area = face;
           }
         }
         face_image = frame(max_area).clone();
       }
 
-      for( size_t i = 0; i < faces.size(); i++ )
+      for (const cv::Rect& face : faces)
       {
-        cv::Point center( faces[i].x + faces[i].width/2, faces[i].y + faces[i].height/2 );
-        cv::ellipse( frame,  center, cv::Size( faces[i].width/2, faces[i].height/2), 0, 0, 360, cv::Scalar( 255, 0, 255 ), 2, 8, 0 );
+        cv::Point center(face.x + face.width / 2, face.y + face.height / 2);
+        cv::ellipse(frame, center, cv::Size(face.width / 2, face.height / 2), 0, 0, 360, cv::Scalar(255, 0, 255), 2, 8,
+                    0);
         opencv_apps::Face face_msg;
         face_msg.face.x = center.x;
         face_msg.face.y = center.y;
-        face_msg.face.width = faces[i].width;
-        face_msg.face.height = faces[i].height;
+        face_msg.face.width = face.width;
+        face_msg.face.height = face.height;
 
-        cv::Mat faceROI = frame_gray( faces[i] );
+        cv::Mat face_roi = frame_gray(face);
         std::vector<cv::Rect> eyes;
 
-        //-- In each face, detect eyes
+//-- In each face, detect eyes
 #ifndef CV_VERSION_EPOCH
-        eyes_cascade_.detectMultiScale( faceROI, eyes, 1.1, 2, 0, cv::Size(30, 30) );
+        eyes_cascade_.detectMultiScale(face_roi, eyes, 1.1, 2, 0, cv::Size(30, 30));
 #else
-        eyes_cascade_.detectMultiScale( faceROI, eyes, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, cv::Size(30, 30) );
+        eyes_cascade_.detectMultiScale(face_roi, eyes, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, cv::Size(30, 30));
 #endif
 
-        for( size_t j = 0; j < eyes.size(); j++ )
+        for (const cv::Rect& eye : eyes)
         {
-          cv::Point eye_center( faces[i].x + eyes[j].x + eyes[j].width/2, faces[i].y + eyes[j].y + eyes[j].height/2 );
-          int radius = cvRound( (eyes[j].width + eyes[j].height)*0.25 );
-          cv::circle( frame, eye_center, radius, cv::Scalar( 255, 0, 0 ), 3, 8, 0 );
+          cv::Point eye_center(face.x + eye.x + eye.width / 2, face.y + eye.y + eye.height / 2);
+          int radius = cvRound((eye.width + eye.height) * 0.25);
+          cv::circle(frame, eye_center, radius, cv::Scalar(255, 0, 0), 3, 8, 0);
 
           opencv_apps::Rect eye_msg;
           eye_msg.x = eye_center.x;
           eye_msg.y = eye_center.y;
-          eye_msg.width = eyes[j].width;
-          eye_msg.height = eyes[j].height;
+          eye_msg.width = eye.width;
+          eye_msg.height = eye.height;
           face_msg.eyes.push_back(eye_msg);
         }
 
         faces_msg.faces.push_back(face_msg);
       }
       //-- Show what you got
-      if( debug_view_) {
-        cv::imshow( "Face detection", frame );
+      if (debug_view_)
+      {
+        cv::imshow("Face detection", frame);
         int c = cv::waitKey(1);
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, frame).toImageMsg();
+      sensor_msgs::Image::Ptr out_img =
+          cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, frame).toImageMsg();
       img_pub_.publish(out_img);
       msg_pub_.publish(faces_msg);
-      if (faces.size() > 0) {
-        sensor_msgs::Image::Ptr out_face_img = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, face_image).toImageMsg();
+      if (!faces.empty())
+      {
+        sensor_msgs::Image::Ptr out_face_img =
+            cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, face_image).toImageMsg();
         face_img_pub_.publish(out_face_img);
       }
     }
-    catch (cv::Exception &e)
+    catch (cv::Exception& e)
     {
       NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
     }
@@ -198,16 +212,16 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()
+  void subscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", 3, &FaceDetectionNodelet::imageCallbackWithInfo, this);
+      cam_sub_ = it_->subscribeCamera("image", queue_size_, &FaceDetectionNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", 3, &FaceDetectionNodelet::imageCallback, this);
+      img_sub_ = it_->subscribe("image", queue_size_, &FaceDetectionNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -215,49 +229,61 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
 
+    pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
-    if (debug_view_ ) {
+    if (debug_view_)
+    {
       always_subscribe_ = true;
     }
     prev_stamp_ = ros::Time(0, 0);
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-      boost::bind(&FaceDetectionNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&FaceDetectionNodelet::reconfigureCallback, this, _1, _2);
     reconfigure_server_->setCallback(f);
-    
+
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     face_img_pub_ = advertiseImage(*pnh_, "face_image", 1);
     msg_pub_ = advertise<opencv_apps::FaceArrayStamped>(*pnh_, "faces", 1);
 
     std::string face_cascade_name, eyes_cascade_name;
-    pnh_->param("face_cascade_name", face_cascade_name, std::string("/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml"));
-    pnh_->param("eyes_cascade_name", eyes_cascade_name, std::string("/usr/share/opencv/haarcascades/haarcascade_eye_tree_eyeglasses.xml"));
+    pnh_->param("face_cascade_name", face_cascade_name,
+                std::string("/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml"));
+    pnh_->param("eyes_cascade_name", eyes_cascade_name,
+                std::string("/usr/share/opencv/haarcascades/haarcascade_eye_tree_eyeglasses.xml"));
 
-    if( !face_cascade_.load( face_cascade_name ) ){ NODELET_ERROR("--Error loading %s", face_cascade_name.c_str()); };
-    if( !eyes_cascade_.load( eyes_cascade_name ) ){ NODELET_ERROR("--Error loading %s", eyes_cascade_name.c_str()); };
+    if (!face_cascade_.load(face_cascade_name))
+    {
+      NODELET_ERROR("--Error loading %s", face_cascade_name.c_str());
+    };
+    if (!eyes_cascade_.load(eyes_cascade_name))
+    {
+      NODELET_ERROR("--Error loading %s", eyes_cascade_name.c_str());
+    };
 
     onInitPostProcess();
   }
 };
-} // namespace opencv_apps
+}  // namespace opencv_apps
 
-namespace face_detection {
-class FaceDetectionNodelet : public opencv_apps::FaceDetectionNodelet {
+namespace face_detection
+{
+class FaceDetectionNodelet : public opencv_apps::FaceDetectionNodelet
+{
 public:
-  virtual void onInit() {
+  virtual void onInit()  // NOLINT(modernize-use-override)
+  {
     ROS_WARN("DeprecationWarning: Nodelet face_detection/face_detection is deprecated, "
              "and renamed to opencv_apps/face_detection.");
     opencv_apps::FaceDetectionNodelet::onInit();
   }
 };
-} // namespace face_detection
-
+}  // namespace face_detection
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::FaceDetectionNodelet, nodelet::Nodelet);
