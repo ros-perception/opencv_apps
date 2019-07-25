@@ -3,11 +3,11 @@
 *
 *  Copyright (c) 2019, Hironori Fujimoto.
 *  All rights reserved.
-* 
+*
 *  Redistribution and use in source and binary forms, with or without
 *  modification, are permitted provided that the following conditions
 *  are met:
-* 
+*
 *   * Redistributions of source code must retain the above copyright
 *     notice, this list of conditions and the following disclaimer.
 *   * Redistributions in binary form must reproduce the above
@@ -17,7 +17,7 @@
 *   * Neither the name of the Kei Okada nor the names of its
 *     contributors may be used to endorse or promote products derived
 *     from this software without specific prior written permission.
-* 
+*
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
@@ -51,7 +51,8 @@
 #include "opencv_apps/DISFlowConfig.h"
 #include "opencv_apps/FlowArrayStamped.h"
 
-namespace opencv_apps {
+namespace opencv_apps
+{
 /**
  * @brief A nodelet for calculate dense optical flow by DIS optical flow algorithm
  *
@@ -75,12 +76,12 @@ class DISFlowNodelet : public opencv_apps::Nodelet
   bool debug_view_;
 
   std::string window_name_;
-  
+
   cv::Mat prev_gray_;
 
   cv::Ptr<cv::optflow::DISOpticalFlow> flow_calculator_;
 
-  void reconfigureCallback(Config &new_config, uint32_t level)
+  void reconfigureCallback(Config& new_config, uint32_t level)
   {
     config_ = new_config;
 
@@ -90,15 +91,15 @@ class DISFlowNodelet : public opencv_apps::Nodelet
 
   void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
   {
-    do_work(msg, cam_info->header.frame_id);
-  }
-  
-  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
-  {
-    do_work(msg, msg->header.frame_id);
+    doWork(msg, cam_info->header.frame_id);
   }
 
-  void do_work(const sensor_msgs::ImageConstPtr& msg, const std::string input_frame_from_msg)
+  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+  {
+    doWork(msg, msg->header.frame_id);
+  }
+
+  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -110,14 +111,14 @@ class DISFlowNodelet : public opencv_apps::Nodelet
       if (prev_gray_.empty())
         gray.copyTo(prev_gray_);
 
-      if (gray.rows != prev_gray_.rows && gray.cols != prev_gray_.cols) {
+      if (gray.rows != prev_gray_.rows && gray.cols != prev_gray_.cols)
+      {
         NODELET_WARN("Images should be of equal sizes");
         gray.copyTo(prev_gray_);
       }
 
-      if (debug_view_) {
-        cv::namedWindow( window_name_, cv::WINDOW_AUTOSIZE );
-      }
+      if (debug_view_)
+        cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
 
       cv::Mat flow;
 
@@ -127,13 +128,16 @@ class DISFlowNodelet : public opencv_apps::Nodelet
       NODELET_INFO("DISOpticalFlow::calc : %lf sec", (cv::getTickCount() - start) / cv::getTickFrequency());
 
       // Create and publish message
-      if (msg_pub_.getNumSubscribers() > 0) {
+      if (msg_pub_.getNumSubscribers() > 0)
+      {
         opencv_apps::FlowArrayStamped flows_msg;
         flows_msg.header = msg->header;
         flows_msg.flow.reserve(flow.total());
 
-        for (int y = 0; y < flow.rows; ++y) {
-          for (int x = 0; x < flow.cols; ++x) {
+        for (int y = 0; y < flow.rows; ++y)
+        {
+          for (int x = 0; x < flow.cols; ++x)
+          {
             opencv_apps::Point2D point_msg;
             point_msg.x = x;
             point_msg.y = y;
@@ -155,7 +159,8 @@ class DISFlowNodelet : public opencv_apps::Nodelet
 
       // Debug view
       // Visualize dense optical flow as HSV color space
-      if (debug_view_ || img_pub_.getNumSubscribers()) {
+      if (debug_view_ || img_pub_.getNumSubscribers())
+      {
         cv::Mat flow_xy[2];
         cv::split(flow, flow_xy);
 
@@ -185,27 +190,30 @@ class DISFlowNodelet : public opencv_apps::Nodelet
         cv::cvtColor(hsv_8u, output_cv, cv::COLOR_HSV2BGR);
 
         // Show OpenCV window
-        if (debug_view_) {
+        if (debug_view_)
+        {
           cv::imshow(window_name_, output_cv);
           cv::waitKey(1);
         }
 
         // Publish image
-        if (img_pub_.getNumSubscribers() > 0) {
-          sensor_msgs::Image::Ptr output_msg = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, output_cv).toImageMsg();
+        if (img_pub_.getNumSubscribers() > 0)
+        {
+          sensor_msgs::Image::Ptr output_msg =
+              cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, output_cv).toImageMsg();
           img_pub_.publish(output_msg);
         }
       }
 
       cv::swap(prev_gray_, gray);
     }
-    catch (cv::Exception &e)
+    catch (cv::Exception& e)
     {
       NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
     }
   }
 
-  void subscribe()
+  void subscribe() override
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
@@ -214,7 +222,7 @@ class DISFlowNodelet : public opencv_apps::Nodelet
       img_sub_ = it_->subscribe("image", 3, &DISFlowNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe() override
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
@@ -222,30 +230,29 @@ class DISFlowNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit()
+  virtual void onInit() override
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
 
     pnh_->param("debug_view", debug_view_, false);
-    if (debug_view_) {
+    if (debug_view_)
       always_subscribe_ = true;
-    }
 
     window_name_ = "disflow_demo";
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-      boost::bind(&DISFlowNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&DISFlowNodelet::reconfigureCallback, this, _1, _2);
     reconfigure_server_->setCallback(f);
-    
+
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::FlowArrayStamped>(*pnh_, "flows", 1);
 
     onInitPostProcess();
   }
 };
-} // namespace opencv_apps
+}  // namespace opencv_apps
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::DISFlowNodelet, nodelet::Nodelet);
