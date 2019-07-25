@@ -99,7 +99,7 @@ class DISFlowNodelet : public opencv_apps::Nodelet
     doWork(msg, msg->header.frame_id);
   }
 
-  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -230,7 +230,7 @@ class DISFlowNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual void onInit() override
+  void onInit() override
   {
     Nodelet::onInit();
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
