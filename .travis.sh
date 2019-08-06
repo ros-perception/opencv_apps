@@ -28,13 +28,18 @@ function setup {
     # Install ROS
     sudo sh -c "echo \"deb http://packages.ros.org/ros-shadow-fixed/ubuntu `lsb_release -cs` main\" > /etc/apt/sources.list.d/ros-latest.list"
     wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+    # Setup EoL repository
+    if [[ "$ROS_DISTRO" ==  "hydro" || "$ROS_DISTRO" ==  "jade" || "$ROS_DISTRO" ==  "lunar" ]]; then
+        sudo -E sh -c 'echo "deb http://snapshots.ros.org/$ROS_DISTRO/final/ubuntu `lsb_release -sc` main" >> /etc/apt/sources.list.d/ros-latest.list'
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key 0xCBF125EA
+    fi
     sudo apt-get update -qq
     # Install ROS
     sudo apt-get install -y -q python-catkin-pkg python-catkin-tools python-rosdep python-wstool python-rosinstall-generator ros-$ROS_DISTRO-catkin
     source /opt/ros/$ROS_DISTRO/setup.bash
     # Setup for rosdep
     sudo rosdep init
-    rosdep update
+    rosdep update --include-eol-distros
     travis_time_end
 
     travis_time_start setup.install
