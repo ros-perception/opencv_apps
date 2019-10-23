@@ -179,7 +179,11 @@ class SegmentObjectsNodelet : public opencv_apps::Nodelet
         }
       }
       cv::Scalar color(0, 0, 255);
+#if CV_MAJOR_VERSION > 3
+      cv::drawContours(out_frame, contours, largest_comp, color, cv::FILLED, 8, hierarchy);
+#else
       cv::drawContours(out_frame, contours, largest_comp, color, CV_FILLED, 8, hierarchy);
+#endif
 
       std_msgs::Float64 area_msg;
       area_msg.data = max_area;

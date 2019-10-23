@@ -46,7 +46,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/tracking.hpp>
-#if CV_MAJOR_VERSION == 3
+#if CV_MAJOR_VERSION >= 3
 #include <opencv2/optflow.hpp>
 #endif
 
@@ -163,7 +163,7 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
       }
 
       float start = (float)cv::getTickCount();
-#if CV_MAJOR_VERSION == 3
+#if CV_MAJOR_VERSION >= 3
       cv::optflow::calcOpticalFlowSF(color, prevColor,
 #else
       cv::calcOpticalFlowSF(color, prevColor,
