@@ -34,6 +34,12 @@ function setup {
         sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key 0xCBF125EA
     fi
     sudo apt-get update -qq
+    ### HotFix: Hold python-vcs-tools for hydro (https://github.com/vcstools/vcstools/issues/157)
+    if [[ "$ROS_DISTRO" ==  "hydro" ]]; then
+        sudo apt-get install -y --force-yes -q python-vcstools=0.1.40-1
+        sudo apt-mark hold python-vcstools
+    fi
+    ###
     # Install ROS
     sudo apt-get install -y -q python-catkin-pkg python-catkin-tools python-rosdep python-wstool python-rosinstall-generator ros-$ROS_DISTRO-catkin
     source /opt/ros/$ROS_DISTRO/setup.bash
