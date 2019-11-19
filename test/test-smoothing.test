@@ -17,8 +17,10 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="smooth_homogeneous_filter_saver" pkg="image_view" type="image_saver" args="image:=smooth_homogeneous_filter/image" >
+    <node name="smooth_homogeneous_filter_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/smooth_homogeneous_filter.png"/>
+      <remap from="image" to="smooth_homogeneous_filter/image" />
+      <remap from="smooth_homogeneous_filter/camera_info" to="camera_info" />
     </node>
     <param name="smooth_homogeneous_filter_test/topic" value="smooth_homogeneous_filter/image" />    <!-- opencv_apps/FaceArrayStamped -->
     <test test-name="smooth_homogeneous_filter_test" pkg="rostest" type="hztest" name="smooth_homogeneous_filter_test" >
@@ -36,8 +38,10 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="smooth_gaussian_filter_saver" pkg="image_view" type="image_saver" args="image:=smooth_gaussian_filter/image" >
+    <node name="smooth_gaussian_filter_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/smooth_gaussian_filter.png"/>
+      <remap from="image" to="smooth_gaussian_filter/image" />
+      <remap from="smooth_gaussian_filter/camera_info" to="camera_info" />
     </node>
     <param name="smooth_gaussian_filter_test/topic" value="smooth_gaussian_filter/image" />
     <test test-name="smooth_gaussian_filter_test" pkg="rostest" type="hztest" name="smooth_gaussian_filter_test" >
@@ -55,8 +59,10 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="smooth_median_filter_saver" pkg="image_view" type="image_saver" args="image:=smooth_median_filter/image" >
+    <node name="smooth_median_filter_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/smooth_median_filter.png"/>
+      <remap from="image" to="smooth_median_filter/image" />
+      <remap from="smooth_median_filter/camera_info" to="camera_info" />
     </node>
     <param name="smooth_median_filter_test/topic" value="smooth_median_filter/image" />
     <test test-name="smooth_median_filter_test" pkg="rostest" type="hztest" name="smooth_median_filter_test" >
@@ -74,8 +80,10 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="smooth_bilateral_filter_saver" pkg="image_view" type="image_saver" args="image:=smooth_bilateral_filter/image" >
+    <node name="smooth_bilateral_filter_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/smooth_bilateral_filter.png"/>
+      <remap from="image" to="smooth_bilateral_filter/image" />
+      <remap from="smooth_bilateral_filter/camera_info" to="camera_info" />
     </node>
     <param name="smooth_bilateral_filter_test/topic" value="smooth_bilateral_filter/image" />
     <test test-name="smooth_bilateral_filter_test" pkg="rostest" type="hztest" name="smooth_bilateral_filter_test" >
