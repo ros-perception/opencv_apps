@@ -13,8 +13,10 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="contour_moments_saver" pkg="image_view" type="image_saver" args="image:=contour_moments/image" >
+    <node name="contour_moments_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/contour_moments.png"/>
+      <remap from="image" to="contour_moments/image" />
+      <remap from="contour_moments/camera_info" to="camera_info" />
     </node>
     <param name="contour_moments_test/topic" value="contour_moments/moments" />    <!-- opencv_apps/MomentArrayStamped -->
     <test test-name="contour_moments_test" pkg="rostest" type="hztest" name="contour_moments_test" >
