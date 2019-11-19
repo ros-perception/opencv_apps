@@ -159,7 +159,9 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
 
       /// Draw contours
       cv::Mat drawing;
-      if (debug_view_)
+      /// Draw moment on drawing only when img_pub_ have subscribers
+      bool publish_drawing = (img_pub_.getNumSubscribers() > 0);
+      if (publish_drawing)
       {
         drawing = cv::Mat::zeros(canny_output.size(), CV_8UC3);
       }
@@ -186,7 +188,7 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
           mc[i] = cv::Point2f(static_cast<float>(mu[i].m10 / mu[i].m00), static_cast<float>(mu[i].m01 / mu[i].m00));
         }
 
-        if (debug_view_)
+        if (publish_drawing)
         {
           cv::Scalar color = cv::Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
           cv::drawContours(drawing, contours, (int)i, color, 2, 8, hierarchy, 0, cv::Point());
@@ -237,8 +239,11 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", drawing).toImageMsg();
-      img_pub_.publish(out_img);
+      if (publish_drawing)
+      {
+        sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", drawing).toImageMsg();
+        img_pub_.publish(out_img);
+      }
       msg_pub_.publish(moments_msg);
     }
     catch (cv::Exception& e)
