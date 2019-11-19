@@ -55,11 +55,41 @@
     <node name="pyramids_saver_result" pkg="image_view" type="image_saver" args="image:=adding_images_2/image" >
       <param name="filename_format" value="$(find opencv_apps)/test/pyramids_result.png"/>
     </node>
-    <param name="pyramids_test/topic" value="pyramids_zoomin_1/image" />
-    <test test-name="pyramids_test" pkg="rostest" type="hztest" name="pyramids_test" >
+    <test test-name="adding_images_0_test" pkg="rostest" type="hztest" name="adding_images_0_test" >
       <param name="hz" value="20" />
       <param name="hzerror" value="15" />
       <param name="test_duration" value="5.0" />
+      <param name="topic" value="adding_images_0/image" />
+    </test>
+    <test test-name="adding_images_1_test" pkg="rostest" type="hztest" name="adding_images_1_test" >
+      <param name="hz" value="20" />
+      <param name="hzerror" value="15" />
+      <param name="test_duration" value="5.0" />
+      <param name="topic" value="adding_images_1/image" />
+    </test>
+    <test test-name="adding_images_2_test" pkg="rostest" type="hztest" name="adding_images_2_test" >
+      <param name="hz" value="20" />
+      <param name="hzerror" value="15" />
+      <param name="test_duration" value="5.0" />
+      <param name="topic" value="adding_images_2/image" />
+    </test>
+    <test test-name="pyramids_zoomin_1_test" pkg="rostest" type="hztest" name="pyramids_zoomin_1_test" >
+      <param name="hz" value="20" />
+      <param name="hzerror" value="15" />
+      <param name="test_duration" value="5.0" />
+      <param name="topic" value="pyramids_zoomin_1/image" />
+    </test>
+    <test test-name="pyramids_zoomout_1_test" pkg="rostest" type="hztest" name="pyramids_zoomout_1_test" >
+      <param name="hz" value="20" />
+      <param name="hzerror" value="15" />
+      <param name="test_duration" value="5.0" />
+      <param name="topic" value="pyramids_zoomout_1/image" />
+    </test>
+    <test test-name="pyramids_zoomout_2_test" pkg="rostest" type="hztest" name="pyramids_zoomout_2_test" >
+      <param name="hz" value="20" />
+      <param name="hzerror" value="15" />
+      <param name="test_duration" value="5.0" />
+      <param name="topic" value="pyramids_zoomout_2/image" />
     </test>
   </group>
 </launch>
