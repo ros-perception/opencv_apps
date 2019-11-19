@@ -33,21 +33,21 @@
       <remap from="image1" to="pyramids_zoomin_1/image" />
       <remap from="image2" to="image_rect_color" />
       <param name="alpha" value="0" />
-      <param name="debug_view" value="false" />
+      <param name="debug_view" value="$(arg gui)" />
       <param name="approximate_sync" value="true" />
     </node>
     <node name="adding_images_1" pkg="opencv_apps" type="adding_images" >
       <remap from="image1" to="adding_images_0/image" />
       <remap from="image2" to="pyramids_zoomout_1/image" />
       <param name="alpha" value="0" />
-      <param name="debug_view" value="false" />
+      <param name="debug_view" value="$(arg gui)" />
       <param name="approximate_sync" value="true" />
     </node>
     <node name="adding_images_2" pkg="opencv_apps" type="adding_images" >
       <remap from="image1" to="adding_images_1/image" />
       <remap from="image2" to="pyramids_zoomout_2/image" />
       <param name="alpha" value="0" />
-      <param name="debug_view" value="true" />
+      <param name="debug_view" value="$(arg gui)" />
       <param name="approximate_sync" value="true" />
     </node>
 
