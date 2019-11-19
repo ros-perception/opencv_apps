@@ -195,14 +195,14 @@ private:
         int new_rows = std::max(image1.rows, image2.rows);
         int new_cols = std::max(image1.cols, image2.cols);
         // if ( new_rows != image1.rows || new_cols != image1.cols ) {
-        cv::Mat image1 = cv::Mat(new_rows, new_cols, image1.type());
-        image1.copyTo(image1(cv::Rect(0, 0, image1.cols, image1.rows)));
-        image1 = image1.clone();  // need clone becuase toCvShare??
+        cv::Mat image1_tmp = cv::Mat(new_rows, new_cols, image1.type());
+        image1.copyTo(image1_tmp(cv::Rect(0, 0, image1.cols, image1.rows)));
+        image1 = image1_tmp.clone();  // need clone because of toCvShare??
 
         // if ( new_rows != image2.rows || new_cols != image2.cols ) {
-        cv::Mat image2 = cv::Mat(new_rows, new_cols, image2.type());
-        image2.copyTo(image2(cv::Rect(0, 0, image2.cols, image2.rows)));
-        image2 = image2.clone();
+        cv::Mat image2_tmp = cv::Mat(new_rows, new_cols, image2.type());
+        image2.copyTo(image2_tmp(cv::Rect(0, 0, image2.cols, image2.rows)));
+        image2 = image2_tmp.clone();
       }
       cv::addWeighted(image1, alpha_, image2, beta_, gamma_, result_image);
       //-- Show what you got
