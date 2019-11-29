@@ -66,7 +66,6 @@ bool operator<(const cv::Scalar& a, const cv::Scalar& b)
 {
   bool result = true;
   // Do whatever you think a Scalar comparison must be.
-  std::cerr << a.depth << " " << a.channels << std::endl;
   for (size_t i = 0; i < 4; i++)
   {
     if (a[i] >= b[i])
