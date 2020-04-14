@@ -261,7 +261,7 @@ opencv_apps_add_nodelet(camshift src/nodelet/camshift_nodelet.cpp) # ./camshiftd
 # ./create_mask.cpp
 # ./dbt_face_detection.cpp
 # ./delaunay2.cpp
-# ./demhist.cpp
+opencv_apps_add_nodelet(intensity_histogram src/nodelet/intensity_histogram.cpp) # ./demhist.cpp
 # ./detect_blob.cpp
 # ./detect_mser.cpp
 # ./dft.cpp
