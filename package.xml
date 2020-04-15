@@ -45,7 +45,6 @@
   <test_depend>rosservice</test_depend>
   <test_depend>rostopic</test_depend>
   <test_depend>image_proc</test_depend>
-  <test_depend>image_view</test_depend>
   <test_depend>topic_tools</test_depend>
   <test_depend>compressed_image_transport</test_depend>
 
