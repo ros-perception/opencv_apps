@@ -55,17 +55,18 @@ namespace intensity_histogram
 
 static const std::string OPENCV_WINDOW = "Image histogram";
 
-cv::Mat grayHistogram(cv_bridge::CvImageConstPtr img)
+cv::Mat grayHistogram(const cv_bridge::CvImageConstPtr& img)
 {
-  /* Inspired by https://github.com/opencv/opencv/tree/3.4/samples/cpp/tutorial_code/Histograms_Matching/calcHist_Demo.cpp. */
+  /* Inspired by
+   * https://github.com/opencv/opencv/tree/3.4/samples/cpp/tutorial_code/Histograms_Matching/calcHist_Demo.cpp. */
   constexpr bool uniform = true;
   constexpr bool accumulate = false;
   constexpr int bin_count = 256;
 
-  float range[] = {0, 256}; //the upper boundary is exclusive
-  const float* hist_range = {range};
+  float range[] = { 0, 256 }; //the upper boundary is exclusive
+  const float* hist_range = { range };
   cv::Mat intensity_hist;
-  cv::calcHist(&img->image, 1, 0, cv::Mat(), intensity_hist, 1, &bin_count, &hist_range, uniform, accumulate);
+  cv::calcHist(&img->image, 1, nullptr, cv::Mat(), intensity_hist, 1, &bin_count, &hist_range, uniform, accumulate);
   int hist_w = 512;
   int hist_h = 400;
   int bin_w = cvRound(static_cast<double>(hist_w / bin_count));
@@ -74,16 +75,17 @@ cv::Mat grayHistogram(cv_bridge::CvImageConstPtr img)
   for (unsigned int i = 1; i < bin_count; i++)
   {
     cv::line(hist_image,
-        cv::Point(bin_w * (i-1), hist_h - cvRound(intensity_hist.at<float>(i-1))),
-        cv::Point(bin_w * (i), hist_h - cvRound(intensity_hist.at<float>(i))),
+        cv::Point(bin_w * (i - 1), hist_h - cvRound(intensity_hist.at<float>(i - 1))),
+        cv::Point(bin_w * i, hist_h - cvRound(intensity_hist.at<float>(i))),
         cv::Scalar(255), 2, 8, 0);
   }
   return hist_image;
 }
 
-cv::Mat bgrHistogram(cv_bridge::CvImageConstPtr img)
+cv::Mat bgrHistogram(const cv_bridge::CvImageConstPtr& img)
 {
-  /* Inspired by https://github.com/opencv/opencv/tree/3.4/samples/cpp/tutorial_code/Histograms_Matching/calcHist_Demo.cpp. */
+  /* Inspired by
+   * https://github.com/opencv/opencv/tree/3.4/samples/cpp/tutorial_code/Histograms_Matching/calcHist_Demo.cpp. */
   constexpr bool uniform = true;
   constexpr bool accumulate = false;
   constexpr int bin_count = 256;
@@ -96,9 +98,9 @@ cv::Mat bgrHistogram(cv_bridge::CvImageConstPtr img)
   cv::Mat b_hist;
   cv::Mat g_hist;
   cv::Mat r_hist;
-  cv::calcHist(&bgr_planes[0], 1, 0, cv::Mat(), b_hist, 1, &bin_count, &hist_range, uniform, accumulate);
-  cv::calcHist(&bgr_planes[1], 1, 0, cv::Mat(), g_hist, 1, &bin_count, &hist_range, uniform, accumulate);
-  cv::calcHist(&bgr_planes[2], 1, 0, cv::Mat(), r_hist, 1, &bin_count, &hist_range, uniform, accumulate);
+  cv::calcHist(&bgr_planes[0], 1, nullptr, cv::Mat(), b_hist, 1, &bin_count, &hist_range, uniform, accumulate);
+  cv::calcHist(&bgr_planes[1], 1, nullptr, cv::Mat(), g_hist, 1, &bin_count, &hist_range, uniform, accumulate);
+  cv::calcHist(&bgr_planes[2], 1, nullptr, cv::Mat(), r_hist, 1, &bin_count, &hist_range, uniform, accumulate);
   int hist_w = 512;
   int hist_h = 400;
   int bin_w = cvRound(static_cast<double>(hist_w / bin_count));
@@ -109,16 +111,16 @@ cv::Mat bgrHistogram(cv_bridge::CvImageConstPtr img)
   for (unsigned int i = 1; i < bin_count; i++)
   {
     cv::line(hist_image,
-        cv::Point(bin_w * (i-1), hist_h - cvRound(b_hist.at<float>(i-1))),
-        cv::Point(bin_w * (i), hist_h - cvRound(b_hist.at<float>(i))),
+        cv::Point(bin_w * (i - 1), hist_h - cvRound(b_hist.at<float>(i - 1))),
+        cv::Point(bin_w * i, hist_h - cvRound(b_hist.at<float>(i))),
         cv::Scalar(255, 0, 0), 2, 8, 0);
     cv::line(hist_image,
-        cv::Point(bin_w * (i-1), hist_h - cvRound(g_hist.at<float>(i-1))),
-        cv::Point(bin_w * (i), hist_h - cvRound(g_hist.at<float>(i))),
+        cv::Point(bin_w * (i - 1), hist_h - cvRound(g_hist.at<float>(i - 1))),
+        cv::Point(bin_w * i, hist_h - cvRound(g_hist.at<float>(i))),
         cv::Scalar(0, 255, 0), 2, 8, 0);
     cv::line(hist_image,
-        cv::Point(bin_w * (i-1), hist_h - cvRound(r_hist.at<float>(i-1))),
-        cv::Point(bin_w * (i), hist_h - cvRound(r_hist.at<float>(i))),
+        cv::Point(bin_w * (i - 1), hist_h - cvRound(r_hist.at<float>(i - 1))),
+        cv::Point(bin_w * i, hist_h - cvRound(r_hist.at<float>(i))),
         cv::Scalar(0, 0, 255), 2, 8, 0);
   }
   return hist_image;
@@ -127,95 +129,96 @@ cv::Mat bgrHistogram(cv_bridge::CvImageConstPtr img)
 class IntensityHistogram
 {
 
-  public:
+public:
 
-    IntensityHistogram() :
-      it_(nh_)
+  IntensityHistogram() :
+    it_(nh_)
+  {
+    ros::NodeHandle private_nh("~");
+    private_nh.param("queue_size", queue_size_, 1);
+    private_nh.param("debug_view", debug_view_, false);
+
+    image_sub_ = it_.subscribe("image", queue_size_, &IntensityHistogram::imageCallback, this);
+    hist_pub_ = it_.advertise("image_hist", queue_size_);
+
+    if (debug_view_)
     {
-      image_sub_ = it_.subscribe("image", queue_size_, &IntensityHistogram::imageCallback, this);
-      hist_pub_ = it_.advertise("image_hist", 1);
+      cv::namedWindow(OPENCV_WINDOW);
+    }
+  }
 
-      ros::NodeHandle private_nh("~");
-      private_nh.param("queue_size", queue_size_, 1);
-      private_nh.param("debug_view", debug_view_, false);
-      if (debug_view_)
-      {
-        cv::namedWindow(OPENCV_WINDOW);
-      }
+  ~IntensityHistogram()
+  {
+    if (debug_view_)
+    {
+      cv::destroyWindow(OPENCV_WINDOW);
+    }
+  }
+
+  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+  {
+    cv_bridge::CvImageConstPtr cv_ptr;
+    try
+    {
+      cv_ptr = cv_bridge::toCvShare(msg);
+    }
+    catch (cv_bridge::Exception& e)
+    {
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+      return;
     }
 
-    ~IntensityHistogram()
+    cv::Mat out_img;
+    sensor_msgs::Image::Ptr out_img_msg;
+    if (cv_ptr->image.channels() == 1)
     {
-      if (debug_view_)
-      {
-        cv::destroyWindow(OPENCV_WINDOW);
-      }
+      out_img = grayHistogram(cv_ptr);
+      out_img_msg = cv_bridge::CvImage(
+        msg->header, sensor_msgs::image_encodings::MONO8, out_img).toImageMsg();
+
+    }
+    else
+    {
+      out_img = bgrHistogram(cv_ptr);
+      out_img_msg = cv_bridge::CvImage(
+        msg->header, sensor_msgs::image_encodings::RGB8, out_img).toImageMsg();
     }
 
-    void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+    if (debug_view_)
     {
-      cv_bridge::CvImageConstPtr cv_ptr;
-      try
-      {
-        cv_ptr = cv_bridge::toCvShare(msg);
-      }
-      catch (cv_bridge::Exception& e)
-      {
-        ROS_ERROR("cv_bridge exception: %s", e.what());
-        return;
-      }
-
-      cv::Mat out_img;
-      sensor_msgs::Image::Ptr out_img_msg;
-      if (cv_ptr->image.channels() == 1)
-      {
-        out_img = grayHistogram(cv_ptr);
-        out_img_msg = cv_bridge::CvImage(
-          msg->header, sensor_msgs::image_encodings::MONO8, out_img).toImageMsg();
-
-      }
-      else
-      {
-        out_img = bgrHistogram(cv_ptr);
-        out_img_msg = cv_bridge::CvImage(
-          msg->header, sensor_msgs::image_encodings::RGB8, out_img).toImageMsg();
-      }
-
-      if (debug_view_)
-      {
-        // Update GUI Window
-        cv::imshow(OPENCV_WINDOW, out_img);
-        cv::waitKey(3);
-      }
-
-      hist_pub_.publish(out_img_msg);
+      // Update GUI Window
+      cv::imshow(OPENCV_WINDOW, out_img);
+      cv::waitKey(3);
     }
 
-  private:
+    hist_pub_.publish(out_img_msg);
+  }
 
-    ros::NodeHandle nh_;
-    image_transport::ImageTransport it_;
-    image_transport::Subscriber image_sub_;
-    image_transport::Publisher hist_pub_;
-    int queue_size_;
-    bool debug_view_;
+private:
+
+  ros::NodeHandle nh_;
+  image_transport::ImageTransport it_;
+  image_transport::Subscriber image_sub_;
+  image_transport::Publisher hist_pub_;
+  int queue_size_;
+  bool debug_view_;
 };
 
-}  /* namespace intensity_histogram. */
+} /* namespace intensity_histogram. */
 
 class IntensityHistogramNodelet : public nodelet::Nodelet
 {
 
-  public:
+public:
 
-    virtual void onInit()  // NOLINT(modernize-use-override)
-    {
-      intensity_histogram::IntensityHistogram ih;
-      ros::spin();
-    }
+  virtual void onInit()  // NOLINT(modernize-use-override)
+  {
+    intensity_histogram::IntensityHistogram ih;
+    ros::spin();
+  }
 };
 
-}  /* namespace opencv_apps. */
+} /* namespace opencv_apps. */
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::IntensityHistogramNodelet, nodelet::Nodelet);
