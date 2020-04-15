@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(opencv_apps)
 
+if(NOT CMAKE_BUILD_TYPE)
+  # Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
 ## https://stackoverflow.com/questions/10984442/how-to-detect-c11-support-of-a-compiler-with-cmake
 if(CMAKE_COMPILER_IS_GNUCXX)
   execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
