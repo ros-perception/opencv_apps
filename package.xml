@@ -31,6 +31,7 @@
   <run_depend>cv_bridge</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>image_transport</run_depend>
+  <run_depend>image_view</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>nodelet</run_depend>
   <run_depend>roscpp</run_depend>
@@ -44,7 +45,6 @@
   <test_depend>rosservice</test_depend>
   <test_depend>rostopic</test_depend>
   <test_depend>image_proc</test_depend>
-  <test_depend>image_view</test_depend>
   <test_depend>topic_tools</test_depend>
   <test_depend>compressed_image_transport</test_depend>
 
