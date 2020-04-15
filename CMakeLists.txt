@@ -115,7 +115,7 @@ generate_messages(
   std_msgs
 )
 
-catkin_package(CATKIN_DEPENDS message_runtime sensor_msgs std_msgs
+catkin_package(CATKIN_DEPENDS dynamic_reconfigure message_runtime nodelet roscpp sensor_msgs std_msgs std_srvs
 #                DEPENDS OpenCV
                INCLUDE_DIRS include
                LIBRARIES ${PROJECT_NAME}
