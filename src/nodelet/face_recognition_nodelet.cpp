@@ -74,6 +74,11 @@ namespace face = cv::face;
 namespace face = cv;
 #endif
 
+#if CV_MAJOR_VERSION >= 4
+#include <opencv2/imgcodecs/legacy/constants_c.h>  // include CV_LOAD_IMAGE_COLOR
+#include <opencv2/imgproc/imgproc_c.h>             // include CV_AA
+#endif
+
 // utility for resolving path
 namespace boost
 {
@@ -548,7 +553,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
         if (config.model_method == "eigen")
         {
 // https://docs.opencv.org/3.3.1/da/d60/tutorial_face_main.html
-#if CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 3
+#if (CV_MAJOR_VERSION >= 4) || (CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 3)
           model_ = face::EigenFaceRecognizer::create(config.model_num_components, config.model_threshold);
 #else
           model_ = face::createEigenFaceRecognizer(config.model_num_components, config.model_threshold);
@@ -556,7 +561,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
         }
         else if (config.model_method == "fisher")
         {
-#if CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 3
+#if (CV_MAJOR_VERSION >= 4) || (CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 3)
           model_ = face::FisherFaceRecognizer::create(config.model_num_components, config.model_threshold);
 #else
           model_ = face::createFisherFaceRecognizer(config.model_num_components, config.model_threshold);
@@ -564,7 +569,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
         }
         else if (config.model_method == "LBPH")
         {
-#if CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 3
+#if (CV_MAJOR_VERSION >= 4) || (CV_MAJOR_VERSION >= 3 && CV_MINOR_VERSION >= 3)
           model_ = face::LBPHFaceRecognizer::create(config.lbph_radius, config.lbph_neighbors, config.lbph_grid_x,
                                                     config.lbph_grid_y);
 #else
