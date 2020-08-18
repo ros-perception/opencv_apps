@@ -10,6 +10,7 @@ env:
   - OPENCV_VERSION=3 ROS_DISTRO=indigo DOCKER_IMAGE=ubuntu:trusty
   - ROS_DISTRO=kinetic                 DOCKER_IMAGE=ubuntu:xenial
   - ROS_DISTRO=melodic                 DOCKER_IMAGE=ubuntu:bionic
+  - ROS_DISTRO=melodic                 DOCKER_IMAGE=debian:stretch
 # Install system dependencies, namely ROS.
 script:
   - export CI_SOURCE_PATH=$(pwd)
