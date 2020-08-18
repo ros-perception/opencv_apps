@@ -82,7 +82,7 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
   static int on_mouse_y_;
   static int on_mouse_flags_;
 
-  cv::Mat markerMask;
+  cv::Mat markerMask, img_gray;
   cv::Point prevPt;
 
   static void onMouse(int event, int x, int y, int flags, void* /*unused*/)
@@ -135,15 +135,16 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
 
       // Do the work
       // std::vector<cv::Rect> faces;
-      cv::Mat img_gray;
 
       /// Initialize
       if (markerMask.empty())
       {
         cv::cvtColor(frame, markerMask, cv::COLOR_BGR2GRAY);
-        cv::cvtColor(markerMask, img_gray, cv::COLOR_GRAY2BGR);
         markerMask = cv::Scalar::all(0);
       }
+      cv::Mat tmp;
+      cv::cvtColor(frame, tmp, cv::COLOR_BGR2GRAY);
+      cv::cvtColor(tmp, img_gray, cv::COLOR_GRAY2BGR);
 
       if (debug_view_)
       {
