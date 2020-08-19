@@ -6,6 +6,7 @@
   <arg name="use_opencv3_1" default="false" />
   <arg name="use_opencv3_2" default="false" />
   <arg name="use_opencv3_3" default="false" />
+  <arg name="use_opencv4" default="false" />
   <arg name="debug_view" default="true" />
   <arg name="queue_size" default="100" doc="Specigy queue_size of input image subscribers" />
 
@@ -21,6 +22,7 @@
     <arg name="use_opencv3_1" value="$(arg use_opencv3_1)" />
     <arg name="use_opencv3_2" value="$(arg use_opencv3_2)" />
     <arg name="use_opencv3_3" value="$(arg use_opencv3_3)" />
+    <arg name="use_opencv4" value="$(arg use_opencv4)" />
   </include>
 
   <node name="face_recognition" pkg="opencv_apps" type="face_recognition"
