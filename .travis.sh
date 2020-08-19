@@ -41,7 +41,12 @@ function setup {
     fi
     ###
     # Install ROS
-    sudo apt-get install -y -q python-catkin-pkg python-catkin-tools python-rosdep python-wstool python-rosinstall-generator ros-$ROS_DISTRO-catkin
+    if [[ "$ROS_DISTRO" ==  "noetic" ]]; then
+        sudo apt-get install -y -q python3-catkin-pkg python3-catkin-tools python3-rosdep python3-wstool python3-rosinstall-generator python3-osrf-pycommon
+    else
+        sudo apt-get install -y -q python-catkin-pkg python-catkin-tools python-rosdep python-wstool python-rosinstall-generator
+    fi
+    sudo apt-get install -y -q ros-$ROS_DISTRO-catkin
     source /opt/ros/$ROS_DISTRO/setup.bash
     # Setup for rosdep
     sudo rosdep init

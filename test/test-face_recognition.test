@@ -4,6 +4,7 @@
   <arg name="use_opencv3_1" default="false" />
   <arg name="use_opencv3_2" default="false" />
   <arg name="use_opencv3_3" default="false" />
+  <arg name="use_opencv4" default="false" />
   <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag" />
 
   <group ns="wide_stereo/left" >
@@ -20,6 +21,7 @@
       <arg name="use_opencv3_1" value="$(arg use_opencv3_1)" />
       <arg name="use_opencv3_2" value="$(arg use_opencv3_2)" />
       <arg name="use_opencv3_3" value="$(arg use_opencv3_3)" />
+      <arg name="use_opencv4" value="$(arg use_opencv4)" />
       <arg name="data_dir" value="$(find opencv_apps)/test/face_data" />
     </include>
 
