@@ -2,8 +2,8 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.2 (2020-08-19)
+------------------
 * .travis.yml: add noetic test (`#108 <https://github.com/ros-perception/opencv_apps/issues/108>`_)
 
   * support oepncv4 for face detection launch/test files
