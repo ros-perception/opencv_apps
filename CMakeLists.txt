@@ -65,6 +65,8 @@ generate_dynamic_reconfigure_options(
   cfg/HLSColorFilter.cfg
   cfg/HSVColorFilter.cfg
   cfg/WatershedSegmentation.cfg
+  #
+  cfg/Sample.cfg
   )
 
 ## Generate messages in the 'msg' folder
@@ -341,6 +343,9 @@ endif()
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/video_dmtx.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/video_homography.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/videocapture_pvapi.cpp
+
+# SAMPLE
+opencv_apps_add_nodelet(sample src/nodelet/sample_nodelet.cpp)
 
 add_library(${PROJECT_NAME} SHARED
   src/nodelet/nodelet.cpp
