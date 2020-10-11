@@ -115,6 +115,10 @@
     <description>Nodelet to demonstrate the famous watershed segmentation algorithm in OpenCV: watershed()</description>
   </class>
 
+  <class name="opencv_apps/equalize_histogram" type="opencv_apps::EqualizeHistogramNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet for histogram equalization</description>
+  </class>
+
   <!--
       for backward compatibility, can be removed in M-turtle
   -->

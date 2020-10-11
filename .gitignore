@@ -6,3 +6,5 @@ build*/
 
 # ignore png image generated from test
 test/*.png
+test/*.bag
+test/face_data
