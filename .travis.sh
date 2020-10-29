@@ -28,13 +28,29 @@ function setup {
     # Install ROS
     sudo sh -c "echo \"deb http://packages.ros.org/ros-shadow-fixed/ubuntu `lsb_release -cs` main\" > /etc/apt/sources.list.d/ros-latest.list"
     wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+    # Setup EoL repository
+    if [[ "$ROS_DISTRO" ==  "hydro" || "$ROS_DISTRO" ==  "jade" || "$ROS_DISTRO" ==  "lunar" ]]; then
+        sudo -E sh -c 'echo "deb http://snapshots.ros.org/$ROS_DISTRO/final/ubuntu `lsb_release -sc` main" >> /etc/apt/sources.list.d/ros-latest.list'
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key 0xCBF125EA
+    fi
     sudo apt-get update -qq
+    ### HotFix: Hold python-vcs-tools for hydro (https://github.com/vcstools/vcstools/issues/157)
+    if [[ "$ROS_DISTRO" ==  "hydro" ]]; then
+        sudo apt-get install -y --force-yes -q python-vcstools=0.1.40-1
+        sudo apt-mark hold python-vcstools
+    fi
+    ###
     # Install ROS
-    sudo apt-get install -y -q python-catkin-pkg python-catkin-tools python-rosdep python-wstool python-rosinstall-generator ros-$ROS_DISTRO-catkin
+    if [[ "$ROS_DISTRO" ==  "noetic" ]]; then
+        sudo apt-get install -y -q python3-catkin-pkg python3-catkin-tools python3-rosdep python3-wstool python3-rosinstall-generator python3-osrf-pycommon
+    else
+        sudo apt-get install -y -q python-catkin-pkg python-catkin-tools python-rosdep python-wstool python-rosinstall-generator
+    fi
+    sudo apt-get install -y -q ros-$ROS_DISTRO-catkin
     source /opt/ros/$ROS_DISTRO/setup.bash
     # Setup for rosdep
     sudo rosdep init
-    rosdep update
+    rosdep update --include-eol-distros
     travis_time_end
 
     travis_time_start setup.install
@@ -103,7 +119,7 @@ apt-get update -qq && apt-get install -y -q wget sudo lsb-release gnupg # for do
 echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
 travis_time_end
 
-if [ $TEST == "catkin_lint" ]; then
+if [ "$TEST" == "catkin_lint" ]; then
 
     travis_time_start catkin_lint.script
     apt-get install -y -q python-pip
@@ -114,7 +130,7 @@ if [ $TEST == "catkin_lint" ]; then
     ROS_DISTRO=melodic catkin_lint --resolve-env --strict $CI_SOURCE_PATH
 
 
-elif [ $TEST == "clang-format" ]; then
+elif [ "$TEST" == "clang-format" ]; then
 
     travis_time_start clang_format.script
     apt-get install -y -q clang-format-3.9 git
@@ -123,7 +139,7 @@ elif [ $TEST == "clang-format" ]; then
     git -C $CI_SOURCE_PATH --no-pager diff
     git -C $CI_SOURCE_PATH diff-index --quiet HEAD -- .
 
-elif [ $TEST == "clang-tidy" ]; then
+elif [ "$TEST" == "clang-tidy" ]; then
 
     setup
 

@@ -1,7 +1,8 @@
 sudo: required
-dist: trusty
+dist: bionic
 language: generic
 env:
+  - CHECK_PYTHON3_COMPILE=true
   - TEST=catkin_lint                   DOCKER_IMAGE=ubuntu:bionic
   - TEST=clang-format                  DOCKER_IMAGE=ubuntu:bionic
   - TEST=clang-tidy ROS_DISTRO=melodic DOCKER_IMAGE=ubuntu:bionic
@@ -10,8 +11,10 @@ env:
   - OPENCV_VERSION=3 ROS_DISTRO=indigo DOCKER_IMAGE=ubuntu:trusty
   - ROS_DISTRO=kinetic                 DOCKER_IMAGE=ubuntu:xenial
   - ROS_DISTRO=melodic                 DOCKER_IMAGE=ubuntu:bionic
+  - ROS_DISTRO=noetic                  DOCKER_IMAGE=ubuntu:focal
 # Install system dependencies, namely ROS.
 script:
+  - if [ "${CHECK_PYTHON3_COMPILE}" == "true" ]; then python3 -m compileall .; exit $?; fi
   - export CI_SOURCE_PATH=$(pwd)
   - export REPOSITORY_NAME=${PWD##*/}
   - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"

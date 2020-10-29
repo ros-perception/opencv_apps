@@ -46,7 +46,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/tracking.hpp>
-#if CV_MAJOR_VERSION == 3
+#if CV_MAJOR_VERSION >= 3
 #include <opencv2/optflow.hpp>
 #endif
 
@@ -79,7 +79,7 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
   static bool need_config_update_;
   int scale_;
 
-  cv::Mat gray, prevGray;
+  cv::Mat color, prevColor;
 
   void reconfigureCallback(Config& new_config, uint32_t level)
   {
@@ -117,7 +117,7 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
       // Convert the image into something opencv can handle.
       cv::Mat frame_src = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
 
-      /// Convert it to gray
+      /// Convert it to 3 channel
       cv::Mat frame;
       if (frame_src.channels() > 1)
       {
@@ -128,18 +128,18 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
         cv::cvtColor(frame_src, frame, cv::COLOR_GRAY2BGR);
       }
 
-      cv::resize(frame, gray, cv::Size(frame.cols / (double)MAX(1, scale_), frame.rows / (double)MAX(1, scale_)), 0, 0,
+      cv::resize(frame, color, cv::Size(frame.cols / (double)MAX(1, scale_), frame.rows / (double)MAX(1, scale_)), 0, 0,
                  CV_INTER_AREA);
-      if (prevGray.empty())
-        gray.copyTo(prevGray);
+      if (prevColor.empty())
+        color.copyTo(prevColor);
 
-      if (gray.rows != prevGray.rows && gray.cols != prevGray.cols)
+      if (color.rows != prevColor.rows && color.cols != prevColor.cols)
       {
         NODELET_WARN("Images should be of equal sizes");
-        gray.copyTo(prevGray);
+        color.copyTo(prevColor);
       }
 
-      if (frame.type() != 16)
+      if (frame.type() != CV_8UC3)
       {
         NODELET_ERROR("Images should be of equal type CV_8UC3");
       }
@@ -163,10 +163,10 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
       }
 
       float start = (float)cv::getTickCount();
-#if CV_MAJOR_VERSION == 3
-      cv::optflow::calcOpticalFlowSF(gray, prevGray,
+#if CV_MAJOR_VERSION >= 3
+      cv::optflow::calcOpticalFlowSF(color, prevColor,
 #else
-      cv::calcOpticalFlowSF(gray, prevGray,
+      cv::calcOpticalFlowSF(color, prevColor,
 #endif
                                      flow, 3, 2, 4, 4.1, 25.5, 18, 55.0, 25.5, 0.35, 18, 55.0, 25.5, 10);
       NODELET_INFO("calcOpticalFlowSF : %lf sec", (cv::getTickCount() - start) / cv::getTickFrequency());
@@ -210,7 +210,7 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
         int c = cv::waitKey(1);
       }
 
-      cv::swap(prevGray, gray);
+      cv::swap(prevColor, color);
       // Publish the image.
       sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", frame).toImageMsg();
       img_pub_.publish(out_img);

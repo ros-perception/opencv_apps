@@ -2,6 +2,38 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.0.2 (2020-08-19)
+------------------
+* .travis.yml: add noetic test (`#108 <https://github.com/ros-perception/opencv_apps/issues/108>`_)
+
+  * support oepncv4 for face detection launch/test files
+  * convert img_gray every loop, this fixes
+    [ERROR] [1597757072.115502734]: Image processing error: Matrix operand is an empty matrix. checkOperandsExist ../modules/core/src/matrix_expressions.cpp 23
+    errors
+  * check CV_VERSION_VERSION > 4
+  * add g++ static to package.xml
+  * use python3 for noetic
+  * .travis.yml : add CHECK_PYTHON3_COMPILE
+  * .travis.yml: add noetic test
+
+* fix travis (`#106 <https://github.com/ros-perception/opencv_apps/issues/106>`_)
+
+  * add more package to CATKIN_DEPENDS
+  * add image_view to run_depends
+
+* add hot fix for hydro test (`#98 <https://github.com/ros-perception/opencv_apps/issues/98>`_)
+
+  * add doublequote arount $TEST
+  * add hot fix for hydro test
+
+* Improved variable names and comments (`#95 <https://github.com/ros-perception/opencv_apps/issues/95>`_)
+
+  * Improved variable names and comments: The comments and variable names were the opposite of what was functionally happening in the code. No functional change to this commit, just better readability and maintainability.
+
+* setup EoL repository (`#96 <https://github.com/ros-perception/opencv_apps/issues/96>`_)
+
+* Contributors: Gus Crowards, Kei Okada
+
 2.0.1 (2019-04-22)
 ------------------
 * support catkin_lint and clang-format tests in travis.yml (`#93 <https://github.com/ros-perception/opencv_apps/issues/93>`_)

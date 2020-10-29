@@ -41,6 +41,9 @@ add_rostest(test-convex_hull.test ARGS gui:=false)
 add_rostest(test-general_contours.test ARGS gui:=false)
 add_rostest(test-contour_moments.test ARGS gui:=false)
 if(cv_bridge_VERSION VERSION_LESS "1.11.9") # hydro skip face_detection.test
+elseif("$ENV{ROS_DISTRO}" STREQUAL "noetic") # noetic uses opencv4 (need to use_opencv3 for some reason...)
+  add_rostest(test-face_detection.test ARGS gui:=false use_opencv3:=true use_opencv4:=true)
+  add_rostest(test-face_recognition.test ARGS gui:=false use_opencv3:=true use_opencv4:=true)
 elseif("$ENV{ROS_DISTRO}" STREQUAL "melodic") # melodic uses opencv3
   add_rostest(test-face_detection.test ARGS gui:=false)
   add_rostest(test-face_recognition.test ARGS gui:=false)
