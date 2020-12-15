@@ -121,13 +121,17 @@ private:
         async_with_info_ =
             boost::make_shared<message_filters::Synchronizer<ApproxSyncPolicyWithCameraInfo> >(queue_size_);
         async_with_info_->connectInput(sub_image1_, sub_image2_, sub_camera_info_);
-        async_with_info_->registerCallback(boost::bind(&AddingImagesNodelet::imageCallbackWithInfo, this, _1, _2, _3));
+        async_with_info_->registerCallback(boost::bind(&AddingImagesNodelet::imageCallbackWithInfo, this,
+                                                       boost::placeholders::_1, boost::placeholders::_2,
+                                                       boost::placeholders::_3));
       }
       else
       {
         sync_with_info_ = boost::make_shared<message_filters::Synchronizer<SyncPolicyWithCameraInfo> >(queue_size_);
         sync_with_info_->connectInput(sub_image1_, sub_image2_, sub_camera_info_);
-        sync_with_info_->registerCallback(boost::bind(&AddingImagesNodelet::imageCallbackWithInfo, this, _1, _2, _3));
+        sync_with_info_->registerCallback(boost::bind(&AddingImagesNodelet::imageCallbackWithInfo, this,
+                                                      boost::placeholders::_1, boost::placeholders::_2,
+                                                      boost::placeholders::_3));
       }
     }
     else
@@ -136,13 +140,15 @@ private:
       {
         async_ = boost::make_shared<message_filters::Synchronizer<ApproxSyncPolicy> >(queue_size_);
         async_->connectInput(sub_image1_, sub_image2_);
-        async_->registerCallback(boost::bind(&AddingImagesNodelet::imageCallback, this, _1, _2));
+        async_->registerCallback(
+            boost::bind(&AddingImagesNodelet::imageCallback, this, boost::placeholders::_1, boost::placeholders::_2));
       }
       else
       {
         sync_ = boost::make_shared<message_filters::Synchronizer<SyncPolicy> >(queue_size_);
         sync_->connectInput(sub_image1_, sub_image2_);
-        sync_->registerCallback(boost::bind(&AddingImagesNodelet::imageCallback, this, _1, _2));
+        sync_->registerCallback(
+            boost::bind(&AddingImagesNodelet::imageCallback, this, boost::placeholders::_1, boost::placeholders::_2));
       }
     }
   }
@@ -258,7 +264,7 @@ public:
     ////////////////////////////////////////////////////////
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&AddingImagesNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&AddingImagesNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
     reconfigure_server_->setCallback(f);
 
     pnh_->param("approximate_sync", approximate_sync_, true);
