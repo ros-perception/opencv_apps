@@ -111,6 +111,10 @@
     <description>Nodelet of hsv color filter</description>
    </class>
 
+   <class name="opencv_apps/lab_color_filter" type="opencv_apps::LabColorFilterNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of lab color filter</description>
+   </class>
+
   <class name="opencv_apps/watershed_segmentation" type="opencv_apps::WatershedSegmentationNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to demonstrate the famous watershed segmentation algorithm in OpenCV: watershed()</description>
   </class>
