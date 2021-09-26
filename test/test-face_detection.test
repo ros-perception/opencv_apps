@@ -22,7 +22,7 @@
       <arg name="use_opencv4" value="$(arg use_opencv4)" />
     </include>
 
-    <node name="face_image_viewer" pkg="image_view" type="image_view">
+    <node name="face_image_viewer" pkg="image_view" type="image_view" if="$(arg gui)">
       <remap from="image" to="face_detection/face_image" />
     </node>
     <!-- Test Codes -->
