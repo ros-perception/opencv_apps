@@ -1,7 +1,7 @@
 <launch>
   <arg name="gui" default="true" />
-  <arg name="use_sim_time" default="true" />
-  <node name="play_face_bag" pkg="rosbag" type="play" args="--clock -l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag" />
+  <param name="use_sim_time" value="true" />
+  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.05" />
 
   <group ns="wide_stereo/left" >
     <node name="image_proc" pkg="image_proc" type="image_proc" />
@@ -22,9 +22,9 @@
     </node>
     <param name="smooth_homogeneous_filter_test/topic" value="smooth_homogeneous_filter/image" />    <!-- opencv_apps/FaceArrayStamped -->
     <test test-name="smooth_homogeneous_filter_test" pkg="rostest" type="hztest" name="smooth_homogeneous_filter_test" >
-      <param name="hz" value="20" />
-      <param name="hzerror" value="10" />
-      <param name="test_duration" value="5.0" /> 
+      <param name="hz" value="30" />
+      <param name="hzerror" value="5.0" />
+      <param name="test_duration" value="2.0" />
     </test>
 
     <!-- 1: Gaussian blur -->
@@ -41,9 +41,9 @@
     </node>
     <param name="smooth_gaussian_filter_test/topic" value="smooth_gaussian_filter/image" />
     <test test-name="smooth_gaussian_filter_test" pkg="rostest" type="hztest" name="smooth_gaussian_filter_test" >
-      <param name="hz" value="20" />
-      <param name="hzerror" value="10" />
-      <param name="test_duration" value="5.0" />
+      <param name="hz" value="30" />
+      <param name="hzerror" value="5.0" />
+      <param name="test_duration" value="2.0" />
     </test>
 
     <!-- 2: Median blur -->
@@ -60,9 +60,9 @@
     </node>
     <param name="smooth_median_filter_test/topic" value="smooth_median_filter/image" />
     <test test-name="smooth_median_filter_test" pkg="rostest" type="hztest" name="smooth_median_filter_test" >
-      <param name="hz" value="15" />
-      <param name="hzerror" value="14" />
-      <param name="test_duration" value="5.0" />
+      <param name="hz" value="30" />
+      <param name="hzerror" value="5.0" />
+      <param name="test_duration" value="2.0" />
     </test>
 
     <!-- 3: Bilateral blur -->
@@ -79,9 +79,9 @@
     </node>
     <param name="smooth_bilateral_filter_test/topic" value="smooth_bilateral_filter/image" />
     <test test-name="smooth_bilateral_filter_test" pkg="rostest" type="hztest" name="smooth_bilateral_filter_test" >
-      <param name="hz" value="15" />
-      <param name="hzerror" value="14" />
-      <param name="test_duration" value="5.0" />
+      <param name="hz" value="30" />
+      <param name="hzerror" value="5.0" />
+      <param name="test_duration" value="2.0" />
     </test>
 
 
