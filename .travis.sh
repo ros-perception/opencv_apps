@@ -114,7 +114,8 @@ function build_install {
 }
 
 travis_time_start apt.before_install
-apt-get update -qq && apt-get install -y -q wget sudo lsb-release gnupg # for docker
+apt-get -y -qq update || if [ $? -eq 100 ]; then sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list; apt-get -y -qq update; fi
+apt-get install -y -q wget sudo lsb-release gnupg # for docker
 # set DEBIAN_FRONTEND=noninteractive
 echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
 travis_time_end

@@ -53,7 +53,7 @@ class RGBColorFilterNodelet;
 class HLSColorFilterNodelet;
 class HSVColorFilterNodelet;
 class LabColorFilterNodelet;
-}
+}  // namespace color_filter
 
 namespace opencv_apps
 {
