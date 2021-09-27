@@ -409,8 +409,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
     model_->predict(resized_img, label, confidence);
   }
 
-  void faceImageCallback(const sensor_msgs::Image::ConstPtr& image,
-                         const opencv_apps::FaceArrayStamped::ConstPtr& faces)
+  void faceImageCallback(const sensor_msgs::Image::ConstPtr& image, const opencv_apps::FaceArrayStamped::ConstPtr& faces)
   {
     NODELET_DEBUG("faceImageCallback");
     boost::mutex::scoped_lock lock(mutex_);

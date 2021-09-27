@@ -284,6 +284,6 @@ protected:
 
 private:
 };
-}
+}  // namespace opencv_apps
 
 #endif
