@@ -98,7 +98,7 @@ function run_test {
     travis_time_start run_test.script
     source /opt/ros/$ROS_DISTRO/setup.bash
     cd ~/catkin_ws
-    catkin run_tests -p1 -j1 --no-status opencv_apps --no-deps
+    catkin run_tests -p1 -j1 --no-status -i opencv_apps --no-deps
     catkin_test_results --verbose build || catkin_test_results --all build
     travis_time_end
 }
