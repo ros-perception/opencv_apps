@@ -134,8 +134,8 @@ if [ "$TEST" == "catkin_lint" ]; then
 elif [ "$TEST" == "clang-format" ]; then
 
     travis_time_start clang_format.script
-    apt-get install -y -q clang-format-3.9 git
-    find $CI_SOURCE_PATH -name '*.h' -or -name '*.hpp' -or -name '*.cpp' | xargs clang-format-3.9 -i -style=file
+    apt-get install -y -q clang-format git
+    find $CI_SOURCE_PATH -name '*.h' -or -name '*.hpp' -or -name '*.cpp' | xargs clang-format -i -style=file
     travis_time_end
     git -C $CI_SOURCE_PATH --no-pager diff
     git -C $CI_SOURCE_PATH diff-index --quiet HEAD -- .
