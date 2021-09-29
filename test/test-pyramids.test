@@ -1,7 +1,7 @@
 <launch>
   <arg name="gui" default="true" />
   <param name="use_sim_time" value="true" />
-  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.05" />
+  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.1" />
 
   <group ns="wide_stereo/left" >
     <node name="image_proc" pkg="image_proc" type="image_proc" />
@@ -59,8 +59,8 @@
     <param name="pyramids_test/topic" value="pyramids_zoomin_1/image" />
     <test test-name="pyramids_test" pkg="rostest" type="hztest" name="pyramids_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="5.0" />
-      <param name="test_duration" value="2.0" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
     </test>
   </group>
 </launch>

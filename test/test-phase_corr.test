@@ -20,8 +20,8 @@
     <param name="phase_corr_test/topic" value="phase_corr/shift" />    <!-- opencv_apps/Point2DStamped -->
     <test test-name="phase_corr_test" pkg="rostest" type="hztest" name="phase_corr_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="5.0" />
-      <param name="test_duration" value="2.0" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
     </test>
   </group>
 </launch>
