@@ -21,8 +21,8 @@
     <param name="find_contours_test/topic" value="find_contours/contours" />    <!-- opencv_apps/ContorArrayStamped -->
     <test test-name="find_contours_test" pkg="rostest" type="hztest" name="find_contours_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="5.0" />
-      <param name="test_duration" value="2.0" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
     </test>
   </group>
 </launch>

@@ -23,7 +23,7 @@
     <test test-name="lk_flow_test" pkg="rostest" type="hztest" name="lk_flow_test" >
       <param name="hz" value="5" />
       <param name="hzerror" value="3.0" />
-      <param name="test_duration" value="2.0" />
+      <param name="test_duration" value="1.0" />
     </test>
   </group>
 </launch>

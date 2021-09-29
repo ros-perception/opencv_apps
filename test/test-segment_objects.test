@@ -21,8 +21,8 @@
     <param name="segment_objects_test/topic" value="segment_objects/contours" />    <!-- opencv_apps/ContoruArrayStamped -->
     <test test-name="segment_objects_test" pkg="rostest" type="hztest" name="segment_objects_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="5.0" />
-      <param name="test_duration" value="2.0" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
     </test>
   </group>
 </launch>
