@@ -21,8 +21,8 @@
     <param name="simple_flow_test/topic" value="simple_flow/flows" />    <!-- opencv_apps/FlowArrayStamped -->
     <test test-name="simple_flow_test" pkg="rostest" type="hztest" name="simple_flow_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="5.0" />
-      <param name="test_duration" value="2.0" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
     </test>
   </group>
 </launch>

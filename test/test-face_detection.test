@@ -6,7 +6,7 @@
   <arg name="use_opencv3_3" default="false" />
   <arg name="use_opencv4" default="false" />
   <param name="use_sim_time" value="true" />
-  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.01" />
+  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.05" />
 
   <group ns="wide_stereo/left" >
     <node name="image_proc" pkg="image_proc" type="image_proc" />
@@ -36,15 +36,15 @@
       <param name="filename_format" value="$(find opencv_apps)/test/face.png" />
     </node>
     <param name="face_detection_test/topic" value="face_detection/faces" />    <!-- opencv_apps/FaceArrayStamped -->
-    <test test-name="face_detection_test" pkg="rostest" type="hztest" name="face_detection_test" time-limit="120" >
+    <test test-name="face_detection_test" pkg="rostest" type="hztest" name="face_detection_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="5.0" />
+      <param name="hzerror" value="10.0" />
       <param name="test_duration" value="1.0" />
     </test>
     <param name="face_detection_image_test/topic" value="face_detection/face_image" />
-    <test test-name="face_detection_image_test" pkg="rostest" type="hztest" name="face_detection_image_test" time-limit="120" >
+    <test test-name="face_detection_image_test" pkg="rostest" type="hztest" name="face_detection_image_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="5.0" />
+      <param name="hzerror" value="10.0" />
       <param name="test_duration" value="1.0" />
     </test>
   </group>

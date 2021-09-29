@@ -20,7 +20,7 @@
     <param name="discrete_fourier_transform_test/topic" value="discrete_fourier_transform/image" />
     <test test-name="discrete_fourier_transform_test" pkg="rostest" type="hztest" name="discrete_fourier_transform_test" time-limit="120" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="5.0" />
+      <param name="hzerror" value="10.0" />
       <param name="test_duration" value="5.0" />
     </test>
   </group>

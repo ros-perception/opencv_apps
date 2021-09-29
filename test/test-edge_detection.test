@@ -1,7 +1,7 @@
 <launch>
   <arg name="gui" default="true" />
   <param name="use_sim_time" value="true" />
-  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.05" />
+  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.1" />
 
   <group ns="wide_stereo/left" >
     <node name="image_proc" pkg="image_proc" type="image_proc" />
@@ -23,8 +23,8 @@
     <param name="edge_sobel_detection_test/topic" value="edge_sobel_detection/image" />    <!-- opencv_apps/FaceArrayStamped -->
     <test test-name="edge_sobel_detection_test" pkg="rostest" type="hztest" name="edge_sobel_detection_test" time-limit="120" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="5.0" />
-      <param name="test_duration" value="5.0" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
     </test>
     <!-- 1: Laplace -->
     <include file="$(find opencv_apps)/launch/edge_detection.launch" >
@@ -41,8 +41,8 @@
     <param name="edge_laplace_detection_test/topic" value="edge_laplace_detection/image" />    <!-- opencv_apps/FaceArrayStamped -->
     <test test-name="edge_laplace_detection_test" pkg="rostest" type="hztest" name="edge_laplace_detection_test" time-limit="120" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="5.0" />
-      <param name="test_duration" value="5.0" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
     </test>
     <!-- 2: Canny -->
     <include file="$(find opencv_apps)/launch/edge_detection.launch" >
@@ -59,8 +59,8 @@
     <param name="edge_canny_detection_test/topic" value="edge_canny_detection/image" />    <!-- opencv_apps/FaceArrayStamped -->
     <test test-name="edge_canny_detection_test" pkg="rostest" type="hztest" name="edge_canny_detection_test" time-limit="120" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="5.0" />
-      <param name="test_duration" value="5.0" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
     </test>
   </group>
 </launch>

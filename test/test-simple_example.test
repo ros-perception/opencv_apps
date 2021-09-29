@@ -19,8 +19,8 @@
     <param name="simple_example_test/topic" value="/image_converter/output_video/raw" />
     <test test-name="simple_example_test" pkg="rostest" type="hztest" name="simple_example_test" retry="3" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="5.0" />
-      <param name="test_duration" value="2.0" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
     </test>
   </group>
 </launch>
