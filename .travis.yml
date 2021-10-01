@@ -4,7 +4,7 @@ language: generic
 env:
   - CHECK_PYTHON3_COMPILE=true
   - TEST=catkin_lint                   DOCKER_IMAGE=ubuntu:bionic
-  - TEST=clang-format                  DOCKER_IMAGE=ubuntu:bionic
+  - TEST=clang-format                  DOCKER_IMAGE=ubuntu:focal
   - TEST=clang-tidy ROS_DISTRO=melodic DOCKER_IMAGE=ubuntu:bionic
   - ROS_DISTRO=hydro                   DOCKER_IMAGE=ubuntu:precise
   - OPENCV_VERSION=2 ROS_DISTRO=indigo DOCKER_IMAGE=ubuntu:trusty

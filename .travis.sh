@@ -98,7 +98,7 @@ function run_test {
     travis_time_start run_test.script
     source /opt/ros/$ROS_DISTRO/setup.bash
     cd ~/catkin_ws
-    catkin run_tests -p1 -j1 --no-status opencv_apps --no-deps
+    catkin run_tests -p1 -j1 --no-status -i opencv_apps --no-deps
     catkin_test_results --verbose build || catkin_test_results --all build
     travis_time_end
 }
@@ -114,7 +114,8 @@ function build_install {
 }
 
 travis_time_start apt.before_install
-apt-get update -qq && apt-get install -y -q wget sudo lsb-release gnupg # for docker
+apt-get -y -qq update || if [ $? -eq 100 ]; then sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list; apt-get -y -qq update; fi
+apt-get install -y -q wget sudo lsb-release gnupg # for docker
 # set DEBIAN_FRONTEND=noninteractive
 echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
 travis_time_end
@@ -133,8 +134,8 @@ if [ "$TEST" == "catkin_lint" ]; then
 elif [ "$TEST" == "clang-format" ]; then
 
     travis_time_start clang_format.script
-    apt-get install -y -q clang-format-3.9 git
-    find $CI_SOURCE_PATH -name '*.h' -or -name '*.hpp' -or -name '*.cpp' | xargs clang-format-3.9 -i -style=file
+    apt-get install -y -q clang-format git
+    find $CI_SOURCE_PATH -name '*.h' -or -name '*.hpp' -or -name '*.cpp' | xargs clang-format -i -style=file
     travis_time_end
     git -C $CI_SOURCE_PATH --no-pager diff
     git -C $CI_SOURCE_PATH diff-index --quiet HEAD -- .
