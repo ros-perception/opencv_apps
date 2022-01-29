@@ -67,6 +67,7 @@ namespace opencv_apps
 class BlobDetectionNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
+  image_transport::Publisher thresholded_img_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
   ros::Publisher msg_pub_;
@@ -559,8 +560,13 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
 
       // Publish the image.
       // Publish the image.
+      cv::Mat out_thresholded_image;
+      cv::cvtColor(thresholded_image, out_thresholded_image, cv::COLOR_GRAY2BGR);
       sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", out_image).toImageMsg();
+      sensor_msgs::Image::Ptr out_thresholded_img = cv_bridge::CvImage(msg->header, "bgr8", out_thresholded_image).toImageMsg();
+      
       img_pub_.publish(out_img);
+      thresholded_img_pub_.publish(out_thresholded_img);
       msg_pub_.publish(blobs_msg); //s
     }
     catch (cv::Exception& e)
@@ -622,6 +628,7 @@ public:
     reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
+    thresholded_img_pub_ = advertiseImage(*pnh_, "thresholded_image", 1);
     msg_pub_ = advertise<opencv_apps::BlobArrayStamped>(*pnh_, "blobs", 1);
 
     onInitPostProcess();
