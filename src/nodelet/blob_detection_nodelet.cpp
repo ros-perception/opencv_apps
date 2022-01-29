@@ -648,4 +648,3 @@ public:
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::BlobDetectionNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(blob_detection::BlobDetectionNodelet, nodelet::Nodelet);
-
