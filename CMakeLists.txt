@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(opencv_apps)
 
 ## https://stackoverflow.com/questions/10984442/how-to-detect-c11-support-of-a-compiler-with-cmake
-if(CMAKE_COMPILER_IS_GNUCXX)
+if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7")
   execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
   if (GCC_VERSION VERSION_GREATER 4.7 OR GCC_VERSION VERSION_EQUAL 4.7)
     message(STATUS "C++11 activated.")
@@ -13,8 +13,6 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   else ()
     message(FATAL_ERROR "C++11 needed. Therefore a gcc compiler with a version higher than 4.3 is needed.")
   endif()
-else(CMAKE_COMPILER_IS_GNUCXX)
-  add_definitions("-std=c++0x")
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp sensor_msgs std_msgs std_srvs)
