@@ -7,6 +7,8 @@
   <arg name="debug_view" default="true" doc="Specify whether the node displays a window to show debug image" />
   <arg name="queue_size" default="3" doc="Specigy queue_size of input image subscribers" />
 
+  <arg name="morphology_ex_type" default="off" doc="off opening closing Specigy queue_size of input image subscribers" />
+  <arg name="morphology_ex_kernel_size" default="3" doc="opening closing Specigy queue_size of input image subscribers" />
   <!-- <arg name="opening" default="true" doc="Morphological Transformations erosion followed by dilation." />
   <arg name="closing" default="false" doc="Morphological Transformations Dilation followed by Erosion." /> -->
 
@@ -27,6 +29,8 @@
     <param name="debug_view" value="$(arg debug_view)" />
     <param name="queue_size" value="$(arg queue_size)" />
 
+    <param name="morphology_ex_type" value="$(arg morphology_ex_type)" />
+    <param name="morphology_ex_kernel_size" value="$(arg morphology_ex_kernel_size)" />
     <!-- <param name="opening" value="$(arg opening)" />
     <param name="closing" value="$(arg closing)" /> -->
     <!-- <param name="canny_threshold" value="$(arg canny_threshold)" />

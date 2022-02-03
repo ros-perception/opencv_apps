@@ -68,6 +68,9 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
   image_transport::Publisher thresholded_img_pub_;
+  image_transport::Publisher thresholded_img_with_mask_pub_;
+  image_transport::Publisher morphology_ex_img_pub_;
+
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
   ros::Publisher msg_pub_;
@@ -83,7 +86,7 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
   bool debug_view_;
   ros::Time prev_stamp_;
 
-  std::string window_name_, thresholded_image_name_, thresholded_image_with_mask_name_, blob_detector_params_name_, opening_image_name_, closing_image_name_; // reference to camshift_nodelet
+  std::string window_name_, thresholded_image_name_, thresholded_image_with_mask_name_, blob_detector_params_name_, morphology_ex_image_name_; // reference to camshift_nodelet
   static bool need_config_update_;
 
   cv::SimpleBlobDetector::Params params_; //
@@ -104,6 +107,9 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
   int highVal;
 
   std::string morphology_ex_type_;
+  std::string prev_morphology_ex_type_;
+  std::string morphology_ex_type_default_value_;
+  //char morphology_ex_type_;
   int morphology_ex_kernel_size_;
   int morphology_ex_kernel_size_initial_value_;
 
@@ -176,7 +182,6 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
     return true;
   }
 
-
   void reconfigureCallback(Config& new_config, uint32_t level)
   {
     config_ = new_config;
@@ -189,7 +194,7 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
     highVal = config_.highVal;
 
     morphology_ex_kernel_size_ = config_.morphology_ex_kernel_size;
-
+    morphology_ex_type_ = config_.morphology_ex_type;
     params_.filterByColor = config_.filterByColor;
     params_.blobColor = config_.blobColor;
 
@@ -300,18 +305,33 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
         cv::namedWindow(thresholded_image_name_, cv::WINDOW_AUTOSIZE);
         cv::namedWindow(thresholded_image_with_mask_name_, cv::WINDOW_AUTOSIZE);
         cv::namedWindow(blob_detector_params_name_, cv::WINDOW_AUTOSIZE);
-        
-        if (morphology_ex_type_ == "opening")
+
+        if (morphology_ex_type_ != prev_morphology_ex_type_)
         {
-          cv::namedWindow(opening_image_name_, cv::WINDOW_AUTOSIZE);
-          cv::createTrackbar("morphology_ex_kernel_size", opening_image_name_, &morphology_ex_kernel_size_, 100, trackbarCallback);
+          cv::destroyWindow(morphology_ex_image_name_);
+          morphology_ex_kernel_size_ = morphology_ex_kernel_size_initial_value_;
+          config_.morphology_ex_type = morphology_ex_type_;
+          config_.morphology_ex_kernel_size = morphology_ex_kernel_size_;
+          reconfigure_server_->updateConfig(config_);
         }
 
-        else if (morphology_ex_type_ == "closing")
-        {
-          cv::namedWindow(closing_image_name_, cv::WINDOW_AUTOSIZE);
-          cv::createTrackbar("morphology_ex_kernel_size", closing_image_name_, &morphology_ex_kernel_size_, 100, trackbarCallback);
+        if (morphology_ex_type_ == "opening" || morphology_ex_type_ == "closing")
+        { 
+          if (morphology_ex_type_ == "opening")
+          {
+            morphology_ex_image_name_ = "Opening Image";
+          }
+
+          else if (morphology_ex_type_ == "closing")
+          {
+            morphology_ex_image_name_ = "Closing Image";
+          }
+
+          cv::namedWindow(morphology_ex_image_name_, cv::WINDOW_AUTOSIZE);
+          cv::createTrackbar("morphology_ex_kernel_size", morphology_ex_image_name_, &morphology_ex_kernel_size_, 100, trackbarCallback);
         }
+
+        prev_morphology_ex_type_ = morphology_ex_type_;
 
         cv::createTrackbar("lowHue", thresholded_image_name_, &lowHue, 179, trackbarCallback);// should we increase the range? const int max_value_H = 360/2; https://docs.opencv.org/3.4/da/d97/tutorial_threshold_inRange.html
         cv::createTrackbar("lowSat", thresholded_image_name_, &lowSat, 255, trackbarCallback);
@@ -409,11 +429,10 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
         //Point(morph_size, morph_size));
 
       cv::Mat kernel; 
-      cv::Mat opening_image;
-      cv::Mat closing_image;
+      cv::Mat morphology_ex_image;
 
-      if (morphology_ex_type_ == "opening")
-      {
+      if (morphology_ex_type_ == "opening" || morphology_ex_type_ == "closing")
+      { 
         if (morphology_ex_kernel_size_ % 2 != 1)
         {
           morphology_ex_kernel_size_ = morphology_ex_kernel_size_ + 1;
@@ -421,28 +440,25 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
 
         kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(morphology_ex_kernel_size_, morphology_ex_kernel_size_), cv::Point(-1, -1));
 
+        if (morphology_ex_type_ == "opening")
+        {
+          cv::morphologyEx(thresholded_image, morphology_ex_image, cv::MORPH_OPEN, kernel);
+        }
 
-        cv::morphologyEx(thresholded_image, opening_image, cv::MORPH_OPEN, kernel);
+        else if (morphology_ex_type_ == "closing")
+        {
+          cv::morphologyEx(thresholded_image, morphology_ex_image, cv::MORPH_CLOSE, kernel);
+        }
+      }
+
       //morphologyEx(img, open, CV_MOP_OPEN, kernel);
 
           //morphologyEx( src, dst, MORPH_TOPHAT, element, Point(-1,-1), i );   
     //morphologyEx( src, dst, MORPH_TOPHAT, element ); // here iteration=1
 //MORPH_OPEN
-      }
-
-      else if (morphology_ex_type_ == "closing")
-      {
-        if (morphology_ex_kernel_size_ % 2 != 1)
-        {
-          morphology_ex_kernel_size_ = morphology_ex_kernel_size_ + 1;
-        }
-
-        kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(morphology_ex_kernel_size_, morphology_ex_kernel_size_), cv::Point(-1, -1));
 
       //morphologyEx(img, close, CV_MOP_CLOSE, kernel);
       //morphologyEx(image, output, MORPH_CLOSE, element,Point(-1, -1), 2);
-        cv::morphologyEx(thresholded_image, closing_image, cv::MORPH_CLOSE, kernel);
-      }
 
      // Serena : not related to us, or later we use the same way to check on something if needed
       // those paramaters cannot be =0
@@ -461,14 +477,9 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
       // will hold the results of the detection
       std::vector<cv::KeyPoint> keypoints;
       // runs the actual detection
-      if (morphology_ex_type_ == "opening")
+      if (morphology_ex_type_ == "opening" || morphology_ex_type_ == "closing")
       {
-        detector->detect(opening_image, keypoints);
-      }
-
-      else if (morphology_ex_type_ == "closing")
-      {
-        detector->detect(closing_image, keypoints);
+        detector->detect(morphology_ex_image, keypoints);
       }
 
       else
@@ -482,8 +493,6 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
       {
         std::cout << "test if there is keypoint detected : " << keypoints[0].size << std::endl;
       }
-
-
 
       // cv::Mat out_image;
       // will we encounter this situation ?? if (frame.channels() == 1)
@@ -523,14 +532,9 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
         cv::imshow(thresholded_image_name_, thresholded_image);
         cv::imshow(thresholded_image_with_mask_name_, thresholded_image_with_mask);
 
-        if (morphology_ex_type_ == "opening")
+        if (morphology_ex_type_ == "opening" || morphology_ex_type_ == "closing")
         {
-          cv::imshow(opening_image_name_, opening_image);
-        }
-
-        else if (morphology_ex_type_ == "closing")
-        {
-          cv::imshow(closing_image_name_, closing_image);
+          cv::imshow(morphology_ex_image_name_, morphology_ex_image);
         }
         
         char c = (char)cv::waitKey(1);
@@ -541,32 +545,51 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
         {
           case 'o':
             morphology_ex_type_ = "opening";
-            cv::destroyWindow(closing_image_name_);
-            morphology_ex_kernel_size_ = morphology_ex_kernel_size_initial_value_;
+            //morphology_ex_kernel_size_ = morphology_ex_kernel_size_initial_value_;
             break;
           case 'c':
             morphology_ex_type_ = "closing";
-            cv::destroyWindow(opening_image_name_);
-            morphology_ex_kernel_size_ = morphology_ex_kernel_size_initial_value_;
+            //morphology_ex_kernel_size_ = morphology_ex_kernel_size_initial_value_;
             break;
           case 'n':
             morphology_ex_type_ = "off";
-            cv::destroyWindow(opening_image_name_);
-            cv::destroyWindow(closing_image_name_);
-            morphology_ex_kernel_size_ = morphology_ex_kernel_size_initial_value_;
+            //morphology_ex_kernel_size_ = morphology_ex_kernel_size_initial_value_;
             break;
         }
       }
 
+      if (thresholded_img_pub_.getNumSubscribers() > 0)
+      {
+        cv::Mat out_thresholded_image;
+        cv::cvtColor(thresholded_image, out_thresholded_image, cv::COLOR_GRAY2BGR);
+        sensor_msgs::Image::Ptr out_thresholded_img = cv_bridge::CvImage(msg->header, "bgr8", out_thresholded_image).toImageMsg();
+        thresholded_img_pub_.publish(out_thresholded_img);
+      }
       // Publish the image.
       // Publish the image.
-      cv::Mat out_thresholded_image;
-      cv::cvtColor(thresholded_image, out_thresholded_image, cv::COLOR_GRAY2BGR);
+
+      if (thresholded_img_with_mask_pub_.getNumSubscribers() > 0)
+      {
+        //cv::Mat out_thresholded_image_with_mask;
+        //cv::cvtColor(thresholded_image_with_mask, out_thresholded_image_with_mask, cv::COLOR_GRAY2BGR);
+        sensor_msgs::Image::Ptr out_thresholded_img_with_mask = cv_bridge::CvImage(msg->header, "bgr8", thresholded_image_with_mask).toImageMsg();
+        thresholded_img_with_mask_pub_.publish(out_thresholded_img_with_mask);
+      }
+
+      if (morphology_ex_img_pub_.getNumSubscribers() > 0)
+      {
+        if (morphology_ex_type_ == "opening" || morphology_ex_type_ == "closing")
+        {
+          cv::Mat out_morphology_ex_image;
+          cv::cvtColor(morphology_ex_image, out_morphology_ex_image, cv::COLOR_GRAY2BGR);
+          sensor_msgs::Image::Ptr out_morphology_ex_img = cv_bridge::CvImage(msg->header, "bgr8", out_morphology_ex_image).toImageMsg();
+          morphology_ex_img_pub_.publish(out_morphology_ex_img);
+        }
+      }
+
       sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", out_image).toImageMsg();
-      sensor_msgs::Image::Ptr out_thresholded_img = cv_bridge::CvImage(msg->header, "bgr8", out_thresholded_image).toImageMsg();
-      
+
       img_pub_.publish(out_img);
-      thresholded_img_pub_.publish(out_thresholded_img);
       msg_pub_.publish(blobs_msg); //s
     }
     catch (cv::Exception& e)
@@ -601,6 +624,7 @@ public:
 
     pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
+    pnh_->param("morphology_ex_type", morphology_ex_type_, morphology_ex_type_default_value_);
 
     if (debug_view_)
     {
@@ -611,12 +635,13 @@ public:
     window_name_ = "Blob Detection Demo";
     thresholded_image_name_ = "Thresholded Image";
     thresholded_image_with_mask_name_ = "Thresholded Image With Mask";
-    opening_image_name_ = "Opening Image";
-    closing_image_name_ = "Closing Image";
+    morphology_ex_image_name_ = "Opening Image";
     blob_detector_params_name_ = "Blob Detector Params";
     // delete output screen in launch file.
     ROS_INFO("test for oninit.");
     
+    prev_morphology_ex_type_ = "off";
+    morphology_ex_type_default_value_ = "off";
     morphology_ex_kernel_size_initial_value_ = 3;
     max_minArea_ = 10000; // if 2560*1600 = 4096000
     max_maxArea_ = 10000; // if 2560*1600 = 4096000
@@ -629,6 +654,9 @@ public:
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     thresholded_img_pub_ = advertiseImage(*pnh_, "thresholded_image", 1);
+    thresholded_img_with_mask_pub_ = advertiseImage(*pnh_, "thresholded_image_with_mask", 1);
+    morphology_ex_img_pub_ = advertiseImage(*pnh_, "morphology_ex_image", 1);
+
     msg_pub_ = advertise<opencv_apps::BlobArrayStamped>(*pnh_, "blobs", 1);
 
     onInitPostProcess();
