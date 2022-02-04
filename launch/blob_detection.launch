@@ -7,21 +7,16 @@
   <arg name="debug_view" default="true" doc="Specify whether the node displays a window to show debug image" />
   <arg name="queue_size" default="3" doc="Specigy queue_size of input image subscribers" />
 
+
+  <arg name="hue_lower_limit" default="0" doc="The minimum allowed field value Hue" />
+  <arg name="hue_upper_limit" default="179" doc="The maximum allowed field value Hue" />
+  <arg name="sat_lower_limit" default="0" doc="The minimum allowed field value Saturation" />
+  <arg name="sat_upper_limit" default="255" doc="The maximum allowed field value Saturation" />
+  <arg name="val_lower_limit" default="0" doc="The minimum allowed field value Value" />
+  <arg name="val_upper_limit" default="255" doc="The maximum allowed field value Value" />
+
   <arg name="morphology_ex_type" default="off" doc="off opening closing Specigy queue_size of input image subscribers" />
   <arg name="morphology_ex_kernel_size" default="3" doc="opening closing Specigy queue_size of input image subscribers" />
-  <!-- <arg name="opening" default="true" doc="Morphological Transformations erosion followed by dilation." />
-  <arg name="closing" default="false" doc="Morphological Transformations Dilation followed by Erosion." /> -->
-
-  <!-- 
-  <arg name="lowHue" default="0" doc="lowHue." />
-  <arg name="highHue" default="179" doc="highHue" />
-  <arg name="lowSat" default="0" doc="lowSat" />
-  <arg name="highSat" default="255" doc="highSat" />
-  <arg name="lowVal" default="0" doc="lowVal" />
-  <arg name="highVal" default="255" doc="highVal" />
-
-  <arg name="max_circle_radius" default="0" doc="The maximum size of the circle, If unknown, put zero as default." /> -->
-
   <!-- blob_detection.cpp -->
   <node name="$(arg node_name)" pkg="opencv_apps" type="blob_detection" output="screen">
     <remap from="image" to="$(arg image)" />
@@ -29,17 +24,14 @@
     <param name="debug_view" value="$(arg debug_view)" />
     <param name="queue_size" value="$(arg queue_size)" />
 
+    <param name="hue_lower_limit" value="$(arg hue_lower_limit)" />
+    <param name="hue_upper_limit" value="$(arg hue_upper_limit)" />
+    <param name="sat_lower_limit" value="$(arg sat_lower_limit)" />
+    <param name="sat_upper_limit" value="$(arg sat_upper_limit)" />
+    <param name="val_lower_limit" value="$(arg val_lower_limit)" />
+    <param name="val_upper_limit" value="$(arg val_upper_limit)" />
+
     <param name="morphology_ex_type" value="$(arg morphology_ex_type)" />
     <param name="morphology_ex_kernel_size" value="$(arg morphology_ex_kernel_size)" />
-    <!-- <param name="opening" value="$(arg opening)" />
-    <param name="closing" value="$(arg closing)" /> -->
-    <!-- <param name="canny_threshold" value="$(arg canny_threshold)" />
-    <param name="accumulator_threshold" value="$(arg accumulator_threshold)" />
-    <param name="gaussian_blur_size" value="$(arg gaussian_blur_size)" />
-    <param name="gaussian_sigma_x" value="$(arg gaussian_sigma_x)" />
-    <param name="gaussian_sigma_y" value="$(arg gaussian_sigma_y)" />
-    <param name="dp" value="$(arg dp)" />
-    <param name="min_circle_radius" value="$(arg min_circle_radius)" />
-    <param name="max_circle_radius" value="$(arg max_circle_radius)" /> -->
   </node>
 </launch>
