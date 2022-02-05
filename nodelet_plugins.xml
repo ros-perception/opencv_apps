@@ -151,5 +151,4 @@
    <class name="hls_color_filter/hls_color_filter" type="color_filter::HLSColorFilterNodelet" base_class_type="nodelet::Nodelet"/>
    <class name="hsv_color_filter/hsv_color_filter" type="color_filter::HSVColorFilterNodelet" base_class_type="nodelet::Nodelet"/>
   <class name="watershed_segmentation/watershed_segmentation" type="watershed_segmentation::WatershedSegmentationNodelet" base_class_type="nodelet::Nodelet"/>
-  <class name="blob_detection/blob_detection" type="blob_detection::BlobDetectionNodelet" base_class_type="nodelet::Nodelet"/>
 </library>
