@@ -166,6 +166,20 @@ elif [ "$TEST" == "clang-tidy" ]; then
     git -C $CI_SOURCE_PATH --no-pager diff
     git -C $CI_SOURCE_PATH diff-index --quiet HEAD -- .
 
+elif [ "$TEST" == "debian-unstable" ]; then
+
+    grep ^deb /etc/apt/sources.list  | sed 's/deb http/deb-src http/' >> /etc/apt/sources.list
+    apt update
+    apt-get -y build-dep ros-opencv-apps
+
+    travis_time_start build_debian_unstable.script
+    cd $CI_SOURCE_PATH
+    mkdir build
+    cd build
+    cmake ..
+    make VERBOSE=1
+    travis_time_end
+
 else
     # Compile and test.
     setup
