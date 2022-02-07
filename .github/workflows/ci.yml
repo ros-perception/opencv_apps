@@ -28,7 +28,7 @@ jobs:
           - ROS_DISTRO : noetic
             DOCKER_IMAGE : ubuntu:focal
           - TEST : debian-unstable
-            DOCKER_IMAGE : debian:buster
+            DOCKER_IMAGE : debian:unstable
     steps:
       - name: Chcekout
         uses: actions/checkout@v2
