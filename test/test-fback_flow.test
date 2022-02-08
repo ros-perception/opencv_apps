@@ -20,7 +20,7 @@
     <param name="fback_flow_test/topic" value="fback_flow/flows" />    <!-- opencv_apps/FlowArrayStamped -->
     <test test-name="fback_flow_test" pkg="rostest" type="hztest" name="fback_flow_test" retry="2" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="20.0" />
       <param name="test_duration" value="0.5" />
     </test>
   </group>

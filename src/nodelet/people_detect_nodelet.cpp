@@ -226,7 +226,7 @@ public:
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&PeopleDetectNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&PeopleDetectNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
     reconfigure_server_->setCallback(f);
 
     hog_.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());

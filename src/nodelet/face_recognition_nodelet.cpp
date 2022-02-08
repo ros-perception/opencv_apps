@@ -630,13 +630,15 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
     {
       async_ = boost::make_shared<message_filters::Synchronizer<ApproximateSyncPolicy> >(queue_size_);
       async_->connectInput(img_sub_, face_sub_);
-      async_->registerCallback(boost::bind(&FaceRecognitionNodelet::faceImageCallback, this, _1, _2));
+      async_->registerCallback(boost::bind(&FaceRecognitionNodelet::faceImageCallback, this, boost::placeholders::_1,
+                                           boost::placeholders::_2));
     }
     else
     {
       sync_ = boost::make_shared<message_filters::Synchronizer<SyncPolicy> >(queue_size_);
       sync_->connectInput(img_sub_, face_sub_);
-      sync_->registerCallback(boost::bind(&FaceRecognitionNodelet::faceImageCallback, this, _1, _2));
+      sync_->registerCallback(boost::bind(&FaceRecognitionNodelet::faceImageCallback, this, boost::placeholders::_1,
+                                          boost::placeholders::_2));
     }
   }
 
@@ -657,7 +659,8 @@ public:
 
     // dynamic reconfigures
     cfg_srv_ = boost::make_shared<Server>(*pnh_);
-    Server::CallbackType f = boost::bind(&FaceRecognitionNodelet::configCallback, this, _1, _2);
+    Server::CallbackType f =
+        boost::bind(&FaceRecognitionNodelet::configCallback, this, boost::placeholders::_1, boost::placeholders::_2);
     cfg_srv_->setCallback(f);
 
     // parameters
