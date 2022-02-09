@@ -119,6 +119,10 @@
     <description>Nodelet to demonstrate the famous watershed segmentation algorithm in OpenCV: watershed()</description>
   </class>
 
+   <class name="opencv_apps/intensity_histogram" type="opencv_apps::IntensityHistogramNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of intensity histogram</description>
+  </class>
+
   <!--
       for backward compatibility, can be removed in M-turtle
   -->
