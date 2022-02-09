@@ -43,6 +43,7 @@ generate_dynamic_reconfigure_options(
   cfg/DiscreteFourierTransform.cfg
   cfg/AddingImages.cfg
   cfg/Smoothing.cfg
+  cfg/Morphology.cfg
   cfg/Pyramids.cfg
   cfg/EdgeDetection.cfg cfg/HoughLines.cfg cfg/HoughCircles.cfg
   cfg/FindContours.cfg cfg/ConvexHull.cfg cfg/GeneralContours.cfg cfg/ContourMoments.cfg
@@ -178,7 +179,7 @@ opencv_apps_add_nodelet(discrete_fourier_transform src/nodelet/discrete_fourier_
   # ./tutorial_code/ImgProc/BasicLinearTransforms.cpp
   # ./tutorial_code/ImgProc/Morphology_1.cpp
   # ./tutorial_code/ImgProc/Morphology_2.cpp
-  # ./tutorial_code/ImgProc/Morphology_3.cpp
+opencv_apps_add_nodelet(morphology src/nodelet/morphology_nodelet.cpp)  # ./tutorial_code/ImgProc/Morphology_3.cpp
 opencv_apps_add_nodelet(pyramids src/nodelet/pyramids_nodelet.cpp)  # ./tutorial_code/ImgProc/Pyramids.cpp
 opencv_apps_add_nodelet(smoothing src/nodelet/smoothing_nodelet.cpp)  # ./tutorial_code/ImgProc/Smoothing.cpp
 opencv_apps_add_nodelet(threshold src/nodelet/threshold_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold.cpp
