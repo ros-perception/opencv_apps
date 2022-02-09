@@ -62,6 +62,7 @@ generate_dynamic_reconfigure_options(
   cfg/RGBColorFilter.cfg
   cfg/HLSColorFilter.cfg
   cfg/HSVColorFilter.cfg
+  cfg/LabColorFilter.cfg
   cfg/WatershedSegmentation.cfg
   )
 
@@ -184,6 +185,7 @@ opencv_apps_add_nodelet(threshold src/nodelet/threshold_nodelet.cpp)  # ./tutori
 opencv_apps_add_nodelet(rgb_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
 opencv_apps_add_nodelet(hls_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
 opencv_apps_add_nodelet(hsv_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
+opencv_apps_add_nodelet(lab_color_filter src/nodelet/color_filter_nodelet.cpp)
 
 # ImgTrans
 opencv_apps_add_nodelet(edge_detection src/nodelet/edge_detection_nodelet.cpp) # ./tutorial_code/ImgTrans/CannyDetector_Demo.cpp
