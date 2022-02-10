@@ -1,7 +1,7 @@
 <launch>
   <arg name="gui" default="true" />
   <param name="use_sim_time" value="true" />
-  <node name="play_vslam_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/vslam_tutorial.bag -s 5 --topics /narrow_stereo/left/image_rect /clock" />
+  <node name="play_vslam_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/vslam_tutorial.bag -s 5 -r 0.2 --topics /narrow_stereo/left/image_rect /clock" />
 
   <group ns="narrow_stereo/left" >
     <node name="input" pkg="image_view" type="image_view" args="image:=image_rect" if="$(arg gui)" />
@@ -18,9 +18,9 @@
     </node>
     <param name="simple_example_test/topic" value="/image_converter/output_video/raw" />
     <test test-name="simple_example_test" pkg="rostest" type="hztest" name="simple_example_test" retry="3" >
-      <param name="hz" value="20" />
-      <param name="hzerror" value="20" />
-      <param name="test_duration" value="5.0" /> 
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
     </test>
   </group>
 </launch>

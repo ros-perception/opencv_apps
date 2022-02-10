@@ -1,8 +1,8 @@
-// -*- coding:utf-8-unix; mode: c++; indent-tabs-mode: nil; c-basic-offset: 2; -*-
+// -*- mode: c++ -*-
 /*********************************************************************
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2016, JSK Lab
+ *  Copyright (c) 2022, JSK Lab
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -33,28 +33,33 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-// https://github.com/opencv/opencv/blob/master/samples/cpp/tutorial_code/ImgProc/Pyramids/Pyramids.cpp
-// https://github.com/opencv/opencv/blob/2.4.13.4/samples/cpp/tutorial_code/ImgProc/Pyramids.cpp
+// https://docs.opencv.org/3.4/d3/dbe/tutorial_opening_closing_hats.html
+// https://github.com/opencv/opencv/blob/2.4/samples/cpp/tutorial_code/ImgProc/Morphology_2.cpp
 /**
- * @file Pyramids.cpp
- * @brief Sample code of image pyramids (pyrDown and pyrUp)
- * @author OpenCV team
+ * file Morphology_2.cpp
+ * brief Advanced morphology Transformations sample code
+ * author OpenCV team
  */
 
+#include <ros/ros.h>
 #include "opencv_apps/nodelet.h"
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
 #include <cv_bridge/cv_bridge.h>
 
-#include <opencv2/highgui/highgui.hpp>
-#include "opencv2/imgproc/imgproc.hpp"
+#include <iostream>
+#include <vector>
 
-#include "opencv_apps/PyramidsConfig.h"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/features2d/features2d.hpp"
+
 #include <dynamic_reconfigure/server.h>
+#include "opencv_apps/MorphologyConfig.h"
 
 namespace opencv_apps
 {
-class PyramidsNodelet : public opencv_apps::Nodelet
+class MorphologyNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
   image_transport::Subscriber img_sub_;
@@ -63,23 +68,20 @@ class PyramidsNodelet : public opencv_apps::Nodelet
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
-  typedef opencv_apps::PyramidsConfig Config;
+  typedef opencv_apps::MorphologyConfig Config;
   typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
   int queue_size_;
   bool debug_view_;
-
-  int num_of_pyramids_;
+  ros::Time prev_stamp_;
 
   std::string window_name_;
 
   void reconfigureCallback(Config& new_config, uint32_t level)
   {
     config_ = new_config;
-
-    num_of_pyramids_ = config_.num_of_pyramids;
   }
 
   const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
@@ -99,62 +101,60 @@ class PyramidsNodelet : public opencv_apps::Nodelet
     doWork(msg, msg->header.frame_id);
   }
 
-  void doWork(const sensor_msgs::ImageConstPtr& image_msg, const std::string& input_frame_from_msg)
+  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
     {
       // Convert the image into something opencv can handle.
-      cv::Mat src_image = cv_bridge::toCvShare(image_msg, image_msg->encoding)->image;
+      cv::Mat in_image = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
 
-      // Do the work
-      int num = num_of_pyramids_;
-      switch (config_.pyramids_type)
+      if (debug_view_)
       {
-        case opencv_apps::Pyramids_Up:
-        {
-          while (num)
-          {
-            num--;
-            cv::pyrUp(src_image, src_image, cv::Size(src_image.cols * 2, src_image.rows * 2));
-          }
-          break;
-        }
-        case opencv_apps::Pyramids_Down:
-        {
-          while (num)
-          {
-            num--;
-            cv::pyrDown(src_image, src_image, cv::Size(src_image.cols / 2, src_image.rows / 2));
-          }
-          break;
-        }
+        cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
       }
+
+      cv::Mat out_image = in_image.clone();
+
+      int morph_operator = config_.morph_operator;
+      int morph_element = config_.morph_element;
+      int morph_size = config_.morph_size;
+
+      ROS_DEBUG_STREAM("Applying morphology transforms with operator " << morph_operator << ", element "
+                                                                       << morph_element << ", and size " << morph_size);
+
+      cv::Mat element = cv::getStructuringElement(morph_element, cv::Size(2 * morph_size + 1, 2 * morph_size + 1),
+                                                  cv::Point(morph_size, morph_size));
+
+      // Since MORPH_X : 2,3,4,5 and 6
+      cv::morphologyEx(in_image, out_image, morph_operator + 2, element);
 
       //-- Show what you got
       if (debug_view_)
       {
-        cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
-        cv::imshow(window_name_, src_image);
+        cv::imshow(window_name_, out_image);
         int c = cv::waitKey(1);
       }
 
       // Publish the image.
-      img_pub_.publish(cv_bridge::CvImage(image_msg->header, image_msg->encoding, src_image).toImageMsg());
+      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", out_image).toImageMsg();
+      img_pub_.publish(out_img);
     }
     catch (cv::Exception& e)
     {
       NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
     }
+
+    prev_stamp_ = msg->header.stamp;
   }
 
   void subscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", queue_size_, &PyramidsNodelet::imageCallbackWithInfo, this);
+      cam_sub_ = it_->subscribeCamera("image", queue_size_, &MorphologyNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", queue_size_, &PyramidsNodelet::imageCallback, this);
+      img_sub_ = it_->subscribe("image", queue_size_, &MorphologyNodelet::imageCallback, this);
   }
 
   void unsubscribe()  // NOLINT(modernize-use-override)
@@ -172,17 +172,16 @@ public:
 
     pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
-
     if (debug_view_)
     {
       always_subscribe_ = true;
     }
+    prev_stamp_ = ros::Time(0, 0);
 
-    window_name_ = "Image Pyramids Demo";
-
+    window_name_ = "Morphology Demo (" + ros::this_node::getName() + ")";
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&PyramidsNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
+        boost::bind(&MorphologyNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
     reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
@@ -192,20 +191,20 @@ public:
 };
 }  // namespace opencv_apps
 
-namespace pyramids
+namespace morphology
 {
-class PyramidsNodelet : public opencv_apps::PyramidsNodelet
+class MorphologyNodelet : public opencv_apps::MorphologyNodelet
 {
 public:
   virtual void onInit()  // NOLINT(modernize-use-override)
   {
-    ROS_WARN("DeprecationWarning: Nodelet pyramids/pyramids is deprecated, "
-             "and renamed to opencv_apps/pyramids.");
-    opencv_apps::PyramidsNodelet::onInit();
+    ROS_WARN("DeprecationWarning: Nodelet morphology/morphology is deprecated, "
+             "and renamed to opencv_apps/morphology.");
+    opencv_apps::MorphologyNodelet::onInit();
   }
 };
-}  // namespace pyramids
+}  // namespace morphology
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(opencv_apps::PyramidsNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(pyramids::PyramidsNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(opencv_apps::MorphologyNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(morphology::MorphologyNodelet, nodelet::Nodelet);

@@ -64,8 +64,7 @@ private:
 
   typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo>
       SyncPolicyWithCameraInfo;
-  typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image,
-                                                          sensor_msgs::CameraInfo>
+  typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo>
       ApproxSyncPolicyWithCameraInfo;
   typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::Image> SyncPolicy;
   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> ApproxSyncPolicy;
@@ -122,13 +121,17 @@ private:
         async_with_info_ =
             boost::make_shared<message_filters::Synchronizer<ApproxSyncPolicyWithCameraInfo> >(queue_size_);
         async_with_info_->connectInput(sub_image1_, sub_image2_, sub_camera_info_);
-        async_with_info_->registerCallback(boost::bind(&AddingImagesNodelet::imageCallbackWithInfo, this, _1, _2, _3));
+        async_with_info_->registerCallback(boost::bind(&AddingImagesNodelet::imageCallbackWithInfo, this,
+                                                       boost::placeholders::_1, boost::placeholders::_2,
+                                                       boost::placeholders::_3));
       }
       else
       {
         sync_with_info_ = boost::make_shared<message_filters::Synchronizer<SyncPolicyWithCameraInfo> >(queue_size_);
         sync_with_info_->connectInput(sub_image1_, sub_image2_, sub_camera_info_);
-        sync_with_info_->registerCallback(boost::bind(&AddingImagesNodelet::imageCallbackWithInfo, this, _1, _2, _3));
+        sync_with_info_->registerCallback(boost::bind(&AddingImagesNodelet::imageCallbackWithInfo, this,
+                                                      boost::placeholders::_1, boost::placeholders::_2,
+                                                      boost::placeholders::_3));
       }
     }
     else
@@ -137,13 +140,15 @@ private:
       {
         async_ = boost::make_shared<message_filters::Synchronizer<ApproxSyncPolicy> >(queue_size_);
         async_->connectInput(sub_image1_, sub_image2_);
-        async_->registerCallback(boost::bind(&AddingImagesNodelet::imageCallback, this, _1, _2));
+        async_->registerCallback(
+            boost::bind(&AddingImagesNodelet::imageCallback, this, boost::placeholders::_1, boost::placeholders::_2));
       }
       else
       {
         sync_ = boost::make_shared<message_filters::Synchronizer<SyncPolicy> >(queue_size_);
         sync_->connectInput(sub_image1_, sub_image2_);
-        sync_->registerCallback(boost::bind(&AddingImagesNodelet::imageCallback, this, _1, _2));
+        sync_->registerCallback(
+            boost::bind(&AddingImagesNodelet::imageCallback, this, boost::placeholders::_1, boost::placeholders::_2));
       }
     }
   }
@@ -195,14 +200,14 @@ private:
         int new_rows = std::max(image1.rows, image2.rows);
         int new_cols = std::max(image1.cols, image2.cols);
         // if ( new_rows != image1.rows || new_cols != image1.cols ) {
-        cv::Mat image1 = cv::Mat(new_rows, new_cols, image1.type());
-        image1.copyTo(image1(cv::Rect(0, 0, image1.cols, image1.rows)));
-        image1 = image1.clone();  // need clone becuase toCvShare??
+        cv::Mat image1_tmp = cv::Mat(new_rows, new_cols, image1.type());
+        image1.copyTo(image1_tmp(cv::Rect(0, 0, image1.cols, image1.rows)));
+        image1 = image1_tmp.clone();  // need clone because of toCvShare??
 
         // if ( new_rows != image2.rows || new_cols != image2.cols ) {
-        cv::Mat image2 = cv::Mat(new_rows, new_cols, image2.type());
-        image2.copyTo(image2(cv::Rect(0, 0, image2.cols, image2.rows)));
-        image2 = image2.clone();
+        cv::Mat image2_tmp = cv::Mat(new_rows, new_cols, image2.type());
+        image2.copyTo(image2_tmp(cv::Rect(0, 0, image2.cols, image2.rows)));
+        image2 = image2_tmp.clone();
       }
       cv::addWeighted(image1, alpha_, image2, beta_, gamma_, result_image);
       //-- Show what you got
@@ -259,7 +264,7 @@ public:
     ////////////////////////////////////////////////////////
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&AddingImagesNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&AddingImagesNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
     reconfigure_server_->setCallback(f);
 
     pnh_->param("approximate_sync", approximate_sync_, true);

@@ -34,6 +34,26 @@
  *********************************************************************/
 
 #include "opencv_apps/nodelet.h"
+#if BOOST_VERSION < 106000  // since 1.60.0, boost uses placeholders namesapce for _1,_2...
+#ifndef BOOST_PLAEHOLDERS
+#define BOOST_PLAEHOLDERS
+namespace boost
+{
+namespace placeholders
+{
+boost::arg<1> _1;
+boost::arg<2> _2;
+boost::arg<3> _3;
+boost::arg<4> _4;
+boost::arg<5> _5;
+boost::arg<6> _6;
+boost::arg<7> _7;
+boost::arg<8> _8;
+boost::arg<9> _9;
+}  // namespace placeholders
+}  // namespace boost
+#endif  // BOOST_PLAEHOLDERS
+#endif  // BOOST_VERSION < 106000
 
 namespace opencv_apps
 {

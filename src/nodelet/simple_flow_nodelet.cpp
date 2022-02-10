@@ -46,7 +46,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/tracking.hpp>
-#if CV_MAJOR_VERSION == 3
+#if CV_MAJOR_VERSION >= 3
 #include <opencv2/optflow.hpp>
 #endif
 
@@ -163,7 +163,7 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
       }
 
       float start = (float)cv::getTickCount();
-#if CV_MAJOR_VERSION == 3
+#if CV_MAJOR_VERSION >= 3
       cv::optflow::calcOpticalFlowSF(color, prevColor,
 #else
       cv::calcOpticalFlowSF(color, prevColor,
@@ -259,7 +259,7 @@ public:
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&SimpleFlowNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&SimpleFlowNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
     reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);

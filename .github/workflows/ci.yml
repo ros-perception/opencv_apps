@@ -1,0 +1,65 @@
+on: [push, pull_request]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    name: ci
+    strategy:
+      matrix:
+        include:
+          - CHECK_PYTHON3_COMPILE : true
+          - TEST : catkin_lint
+          - TEST : clang-format
+          - TEST : clang-tidy
+            ROS_DISTRO : melodic
+            DOCKER_IMAGE : ubuntu:bionic
+          - ROS_DISTRO : hydro
+            DOCKER_IMAGE : ubuntu:precise
+          - OPENCV_VERSION : 2
+            ROS_DISTRO : indigo
+            DOCKER_IMAGE : ubuntu:trusty
+          - OPENCV_VERSION : 3
+            ROS_DISTRO : indigo
+            DOCKER_IMAGE : ubuntu:trusty
+          - ROS_DISTRO : kinetic
+            DOCKER_IMAGE : ubuntu:xenial
+          - ROS_DISTRO : melodic
+            DOCKER_IMAGE : ubuntu:bionic
+          - ROS_DISTRO : noetic
+            DOCKER_IMAGE : ubuntu:focal
+          - TEST : debian-unstable
+            DOCKER_IMAGE : debian:unstable
+    steps:
+      - name: Chcekout
+        uses: actions/checkout@v2
+      # python3_check
+      - name: python3_check
+        if: matrix.CHECK_PYTHON3_COMPILE  == true
+        run: python3 -m compileall .
+      # catkin_lint
+      - name: catkin_lint setup
+        if: matrix.TEST == 'catkin_lint'
+        run: |
+          sudo apt-get install -y -q python3-pip
+          sudo pip3 install catkin_lint rosdep
+          sudo rosdep init
+          rosdep update
+      - name: catkin_lint test
+        if: matrix.TEST == 'catkin_lint'
+        run: |
+          ROS_DISTRO=melodic catkin_lint --resolve-env --strict $PWD
+      # clang-format
+      - name: clang-format setup
+        if: matrix.TEST == 'clang-format'
+        run: |
+          sudo apt-get install -y -q clang-format git
+      - name: clang-format test
+        if: matrix.TEST == 'clang-format'
+        run: |
+          find $PWD -name '*.h' -or -name '*.hpp' -or -name '*.cpp' | xargs clang-format -i -style=file
+          git -C $PWD --no-pager diff
+          git -C $PWD diff-index --quiet HEAD -- .
+      - name: script
+        if: matrix.DOCKER_IMAGE
+        run: |
+          docker run --rm -i -v $PWD:$PWD -e "CI_SOURCE_PATH=$PWD" -e "HOME=$HOME" -e "ROS_DISTRO=${{ matrix.ROS_DISTRO }}" -e "OPENCV_VERSION=${{ matrix.OPENCV_VERSION }}" -e "TEST=${{ matrix.TEST }}" ${{ matrix.DOCKER_IMAGE }} sh -c "cd $PWD; /bin/bash .travis.sh"

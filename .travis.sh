@@ -41,10 +41,21 @@ function setup {
     fi
     ###
     # Install ROS
-    sudo apt-get install -y -q python-catkin-pkg python-catkin-tools python-rosdep python-wstool python-rosinstall-generator ros-$ROS_DISTRO-catkin
+    if [[ "$ROS_DISTRO" ==  "noetic" ]]; then
+        sudo apt-get install -y -q python3-catkin-pkg python3-catkin-tools python3-rosdep python3-wstool python3-rosinstall-generator python3-osrf-pycommon
+    else
+        sudo apt-get install -y -q python-catkin-pkg python-catkin-tools python-rosdep python-wstool python-rosinstall-generator
+    fi
+    sudo apt-get install -y -q ros-$ROS_DISTRO-catkin
     source /opt/ros/$ROS_DISTRO/setup.bash
     # Setup for rosdep
     sudo rosdep init
+    # use snapshot of rosdep list
+    # https://github.com/ros/rosdistro/pull/31570#issuecomment-1000497517
+    if [[ "$ROS_DISTRO" =~ "hydro"|"indigo"|"jade"|"kinetic"|"lunar" ]]; then
+        sudo rm /etc/ros/rosdep/sources.list.d/20-default.list
+        sudo wget https://gist.githubusercontent.com/cottsay/b27a46e53b8f7453bf9ff637d32ea283/raw/476b3714bb90cfbc6b8b9d068162fc6408fa7f76/30-xenial.list -O /etc/ros/rosdep/sources.list.d/30-xenial.list
+    fi
     rosdep update --include-eol-distros
     travis_time_end
 
@@ -93,7 +104,7 @@ function run_test {
     travis_time_start run_test.script
     source /opt/ros/$ROS_DISTRO/setup.bash
     cd ~/catkin_ws
-    catkin run_tests -p1 -j1 --no-status opencv_apps --no-deps
+    catkin run_tests -p1 -j1 --no-status -i opencv_apps --no-deps
     catkin_test_results --verbose build || catkin_test_results --all build
     travis_time_end
 }
@@ -109,7 +120,8 @@ function build_install {
 }
 
 travis_time_start apt.before_install
-apt-get update -qq && apt-get install -y -q wget sudo lsb-release gnupg # for docker
+apt-get -y -qq update || if [ $? -eq 100 ]; then sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list; apt-get -y -qq update; fi
+apt-get install -y -q wget sudo lsb-release gnupg # for docker
 # set DEBIAN_FRONTEND=noninteractive
 echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
 travis_time_end
@@ -128,8 +140,8 @@ if [ "$TEST" == "catkin_lint" ]; then
 elif [ "$TEST" == "clang-format" ]; then
 
     travis_time_start clang_format.script
-    apt-get install -y -q clang-format-3.9 git
-    find $CI_SOURCE_PATH -name '*.h' -or -name '*.hpp' -or -name '*.cpp' | xargs clang-format-3.9 -i -style=file
+    apt-get install -y -q clang-format git
+    find $CI_SOURCE_PATH -name '*.h' -or -name '*.hpp' -or -name '*.cpp' | xargs clang-format -i -style=file
     travis_time_end
     git -C $CI_SOURCE_PATH --no-pager diff
     git -C $CI_SOURCE_PATH diff-index --quiet HEAD -- .
@@ -153,6 +165,20 @@ elif [ "$TEST" == "clang-tidy" ]; then
     travis_time_end
     git -C $CI_SOURCE_PATH --no-pager diff
     git -C $CI_SOURCE_PATH diff-index --quiet HEAD -- .
+
+elif [ "$TEST" == "debian-unstable" ]; then
+
+    grep ^deb /etc/apt/sources.list  | sed 's/deb http/deb-src http/' >> /etc/apt/sources.list
+    apt update
+    apt-get -y build-dep ros-opencv-apps
+
+    travis_time_start build_debian_unstable.script
+    cd $CI_SOURCE_PATH
+    mkdir build
+    cd build
+    cmake ..
+    make VERBOSE=1
+    travis_time_end
 
 else
     # Compile and test.
