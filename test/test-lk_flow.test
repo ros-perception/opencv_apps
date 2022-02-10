@@ -14,8 +14,11 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="lk_flow_saver" pkg="image_view" type="image_saver" args="image:=lk_flow/image" >
+    <node name="lk_flow_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/lk_flow.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="lk_flow/image" />
+      <remap from="lk_flow/camera_info" to="camera_info" />
     </node>
     <node name="lk_flow_initialize" pkg="rosservice" type="rosservice" args="call --wait lk_flow/initialize_points"
           respawn="true" respawn_delay="2" />

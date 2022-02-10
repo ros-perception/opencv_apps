@@ -53,8 +53,11 @@
     </node>
 
     <!-- Test Codes -->
-    <node name="pyramids_saver_result" pkg="image_view" type="image_saver" args="image:=adding_images_2/image" >
+    <node name="pyramids_saver_result" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/pyramids_result.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="adding_images_2/image" />
+      <remap from="adding_images_2/camera_info" to="camera_info" />
     </node>
     <param name="pyramids_test/topic" value="pyramids_zoomin_1/image" />
     <test test-name="pyramids_test" pkg="rostest" type="hztest" name="pyramids_test" >

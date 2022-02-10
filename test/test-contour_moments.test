@@ -16,6 +16,7 @@
     <!-- Test Codes -->
     <node name="contour_moments_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/contour_moments.png"/>
+      <param name="queue_size" value="5" />
       <remap from="image" to="contour_moments/image" />
       <remap from="contour_moments/camera_info" to="camera_info" />
     </node>

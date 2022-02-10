@@ -20,8 +20,11 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="hsv_color_filter_saver" pkg="image_view" type="image_saver" args="image:=hsv_color_filter/image" >
+    <node name="hsv_color_filter_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/hsv_color_filter.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="hsv_color_filter/image" />
+      <remap from="hsv_color_filter/camera_info" to="camera_info" />
     </node>
     <param name="hsv_color_filter_test/topic" value="hsv_color_filter/image" />
     <test test-name="hsv_color_filter_test" pkg="rostest" type="hztest" name="hsv_color_filter_test" >

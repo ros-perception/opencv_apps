@@ -56,17 +56,29 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="color_filter_saver" pkg="image_view" type="image_saver" args="image:=lab_color_filter/image" >
+    <node name="color_filter_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/blob_extraction_color_filter.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="lab_color_filter/image" />
+      <remap from="lab_color_filter/camera_info" to="camera_info" />
     </node>
-    <node name="blob_extraction_opening_saver" pkg="image_view" type="image_saver" args="image:=opening/image" >
+    <node name="blob_extraction_opening_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/blob_extraction_opening.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="opening/image" />
+      <remap from="opening/camera_info" to="camera_info" />
     </node>
-    <node name="blob_extraction_closing_saver" pkg="image_view" type="image_saver" args="image:=closing/image" >
+    <node name="blob_extraction_closing_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/blob_extraction_closing.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="closing/image" />
+      <remap from="closing/camera_info" to="camera_info" />
     </node>
-    <node name="blob_extraction_ellipses_saver" pkg="image_view" type="image_saver" args="image:=blob_extraction/image" >
+    <node name="blob_extraction_ellipses_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/blob_extraction_ellipses.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="blob_extraction/image" />
+      <remap from="blob_extraction/camera_info" to="camera_info" />
     </node>
     <param name="blob_extraction_test/topic" value="blob_extraction/ellipses" />
     <test test-name="blob_extraction_test" pkg="rostest" type="hztest" name="blob_extraction_test" >

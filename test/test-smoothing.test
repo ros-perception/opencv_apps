@@ -19,6 +19,7 @@
     <!-- Test Codes -->
     <node name="smooth_homogeneous_filter_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/smooth_homogeneous_filter.png"/>
+      <param name="queue_size" value="5" />
       <remap from="image" to="smooth_homogeneous_filter/image" />
       <remap from="smooth_homogeneous_filter/camera_info" to="camera_info" />
     </node>
@@ -40,6 +41,7 @@
     <!-- Test Codes -->
     <node name="smooth_gaussian_filter_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/smooth_gaussian_filter.png"/>
+      <param name="queue_size" value="5" />
       <remap from="image" to="smooth_gaussian_filter/image" />
       <remap from="smooth_gaussian_filter/camera_info" to="camera_info" />
     </node>
@@ -61,6 +63,7 @@
     <!-- Test Codes -->
     <node name="smooth_median_filter_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/smooth_median_filter.png"/>
+      <param name="queue_size" value="5" />
       <remap from="image" to="smooth_median_filter/image" />
       <remap from="smooth_median_filter/camera_info" to="camera_info" />
     </node>
@@ -82,6 +85,7 @@
     <!-- Test Codes -->
     <node name="smooth_bilateral_filter_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/smooth_bilateral_filter.png"/>
+      <param name="queue_size" value="5" />
       <remap from="image" to="smooth_bilateral_filter/image" />
       <remap from="smooth_bilateral_filter/camera_info" to="camera_info" />
     </node>

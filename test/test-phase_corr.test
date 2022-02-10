@@ -14,8 +14,11 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="phase_corr_saver" pkg="image_view" type="image_saver" args="image:=phase_corr/image" >
+    <node name="phase_corr_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/phase_corr.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="phase_corr/image" />
+      <remap from="phase_corr/camera_info" to="camera_info" />
     </node>
     <param name="phase_corr_test/topic" value="phase_corr/shift" />    <!-- opencv_apps/Point2DStamped -->
     <test test-name="phase_corr_test" pkg="rostest" type="hztest" name="phase_corr_test" >
