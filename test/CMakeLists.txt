@@ -24,7 +24,11 @@ add_custom_target(face_data DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/face_data)
 add_dependencies(tests face_data)
 
 #add_rostest(test-apps.test)
-add_rostest(test-adding_images.test ARGS gui:=false)
+find_package(image_proc)
+message(STATUS "check image_proc version (${image_proc_VERSION}), test-adding_images.test check_resize:=true only available since indigo(1.12.0)")
+if("${image_proc_VERSION}" VERSION_GREATER "1.12.0") # test-adding_image.test uses image_proc/resize, which only available since indigo
+  add_rostest(test-adding_images.test ARGS gui:=false)
+endif()
 add_rostest(test-discrete_fourier_transform.test ARGS gui:=false)
 add_rostest(test-smoothing.test ARGS gui:=false)
 add_rostest(test-pyramids.test ARGS gui:=false)
