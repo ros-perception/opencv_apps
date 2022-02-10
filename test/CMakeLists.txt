@@ -3,14 +3,30 @@ catkin_download_test_data(face_detector_withface_test_diamondback.bag http://dow
   DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
   MD5 59126117e049e69d577b7ee27251a6f8
   )
-catkin_download_test_data(vslam_tutorial.bag http://download.ros.org/data/vslam_system/vslam_tutorial.bag
+
+# sensor_msgs/CameraInfo
+catkin_download_test_data(vslam_tutorial_old.bag http://download.ros.org/data/vslam_system/vslam_tutorial.bag
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+  FILENAME vslam_tutorial_old.bag
   MD5 f5aece448b7af00a38a993eb71400806
   )
-add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag
-  DEPENDS vslam_tutorial.bag
-  COMMAND rosbag reindex vslam_tutorial.bag --output-dir ${CMAKE_CURRENT_SOURCE_DIR}
-)
+if(sensor_msgs_VERSION VERSION_LESS "1.12.0") # reindex bag file
+  catkin_download_test_data(vslam_tutorial.bag http://download.ros.org/data/vslam_system/vslam_tutorial.bag
+    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+    MD5 f5aece448b7af00a38a993eb71400806
+    )
+  add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag
+    DEPENDS vslam_tutorial_old.bag
+    COMMAND rosbag reindex vslam_tutorial_old.bag --output-dir ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND mv ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial_old.bag ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag
+    )
+else()  # CameraInfo changes since 1.4.0 so we need fix bag file
+  add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag
+    DEPENDS vslam_tutorial_old.bag
+    COMMAND rosbag fix --force vslam_tutorial_old.bag  ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag
+    )
+endif()
+
 add_custom_target(vslam_tutorial_bag DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag)
 add_dependencies(tests vslam_tutorial_bag)
 
