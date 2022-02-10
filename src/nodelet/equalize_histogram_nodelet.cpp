@@ -52,7 +52,14 @@
 #include <sensor_msgs/image_encodings.h>
 #include <cv_bridge/cv_bridge.h>
 
+#if CV_MAJOR_VERSION >= 3
 #include "opencv2/core/ocl.hpp"
+#else  // OpenCV Version 2 does not have UMat, use Mat instead
+namespace cv
+{
+typedef Mat UMat;
+}
+#endif
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -81,7 +88,9 @@ class EqualizeHistogramNodelet : public opencv_apps::Nodelet
 
   int queue_size_;
   bool debug_view_;
+#if CV_MAJOR_VERSION >= 3
   bool use_opencl_;
+#endif
 
   cv::Size clahe_tile_size_;
   double clahe_clip_limit_;
@@ -109,10 +118,17 @@ class EqualizeHistogramNodelet : public opencv_apps::Nodelet
     {
       // Convert the image into something opencv can handle.
       cv::UMat frame;
+#if CV_MAJOR_VERSION >= 3
       if (msg->encoding == sensor_msgs::image_encodings::BGR8)
         frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image.getUMat(cv::ACCESS_RW);
       else if (msg->encoding == sensor_msgs::image_encodings::MONO8)
         frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8)->image.getUMat(cv::ACCESS_RW);
+#else
+      if (msg->encoding == sensor_msgs::image_encodings::BGR8)
+        frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
+      else if (msg->encoding == sensor_msgs::image_encodings::MONO8)
+        frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8)->image;
+#endif
 
       if (debug_view_)
       {
@@ -152,8 +168,13 @@ class EqualizeHistogramNodelet : public opencv_apps::Nodelet
       }
 
       // Publish the image.
+#if CV_MAJOR_VERSION >= 3
       sensor_msgs::Image::Ptr out_img =
           cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::MONO8, dst.getMat(cv::ACCESS_READ)).toImageMsg();
+#else
+      sensor_msgs::Image::Ptr out_img =
+          cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::MONO8, dst).toImageMsg();
+#endif
       out_img->header.frame_id = input_frame_from_msg;
       img_pub_.publish(out_img);
     }
@@ -185,7 +206,9 @@ class EqualizeHistogramNodelet : public opencv_apps::Nodelet
     it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
     pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
+#if CV_MAJOR_VERSION >= 3
     pnh_->param("use_opencl", use_opencl_, true);
+#endif
 
     window_name_ = "Equalize Histogram Window (" + ros::this_node::getName() + ")";
 
@@ -196,7 +219,9 @@ class EqualizeHistogramNodelet : public opencv_apps::Nodelet
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
 
+#if CV_MAJOR_VERSION >= 3
     cv::ocl::setUseOpenCL(use_opencl_);
+#endif
 
     onInitPostProcess();
   }
