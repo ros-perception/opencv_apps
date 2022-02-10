@@ -1,5 +1,6 @@
 <launch>
   <arg name="gui" default="true" />
+  <arg name="check_resize" default="true" />
   <param name="use_sim_time" value="true" />
   <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.1" />
 
@@ -26,7 +27,8 @@
     <!-- Check bug introduced in 4c4caef. when image1.rows != image2.rows || image1.cols != image2.cols)
          see https://github.com/ros-perception/opencv_apps/issues/99 -->
     <node pkg="nodelet" type="nodelet" name="resize"
-          args="standalone image_proc/resize" output="screen">
+          args="standalone image_proc/resize" output="screen"
+          if="$(arg check_resize)" >
       <remap from="image" to="image_rect_color" />
       <param name="scale_height" value="0.5" />
       <param name="scale_width" value="0.5" />
@@ -52,7 +54,7 @@
       <param name="test_duration" value="1.0" />
     </test>
     <param name="adding_images_test_resize/topic" value="adding_images_resize/image" />
-    <test test-name="adding_images_test_resize" pkg="rostest" type="hztest" name="adding_images_test_resize" time-limit="120" >
+    <test test-name="adding_images_test_resize" pkg="rostest" type="hztest" name="adding_images_test_resize" time-limit="120" if="$(arg check_resize)" >
       <param name="hz" value="30" />
       <param name="hzerror" value="10.0" />
       <param name="test_duration" value="1.0" />
