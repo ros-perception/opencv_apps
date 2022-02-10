@@ -30,6 +30,8 @@ if("${image_proc_VERSION}" VERSION_GREATER "1.12.0") # test-adding_image.test us
   add_rostest(test-adding_images.test ARGS gui:=false)
 endif()
 add_rostest(test-discrete_fourier_transform.test ARGS gui:=false)
+add_rostest(test-morphology.test ARGS gui:=false)
+add_rostest(test-blob-extraction.test ARGS gui:=false)
 add_rostest(test-smoothing.test ARGS gui:=false)
 add_rostest(test-pyramids.test ARGS gui:=false)
 add_rostest(test-threshold.test ARGS gui:=false)
