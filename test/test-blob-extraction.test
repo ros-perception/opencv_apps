@@ -83,7 +83,7 @@
     <param name="blob_extraction_test/topic" value="blob_extraction/ellipses" />
     <test test-name="blob_extraction_test" pkg="rostest" type="hztest" name="blob_extraction_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="15.0" />
       <param name="test_duration" value="1.0" />
     </test>
   </group>
