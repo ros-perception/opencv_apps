@@ -34,21 +34,21 @@
       <remap from="image1" to="pyramids_zoomin_1/image" />
       <remap from="image2" to="image_rect_color" />
       <param name="alpha" value="0" />
-      <param name="debug_view" value="false" />
+      <param name="debug_view" value="$(arg gui)" />
       <param name="approximate_sync" value="true" />
     </node>
     <node name="adding_images_1" pkg="opencv_apps" type="adding_images" >
       <remap from="image1" to="adding_images_0/image" />
       <remap from="image2" to="pyramids_zoomout_1/image" />
       <param name="alpha" value="0" />
-      <param name="debug_view" value="false" />
+      <param name="debug_view" value="$(arg gui)" />
       <param name="approximate_sync" value="true" />
     </node>
     <node name="adding_images_2" pkg="opencv_apps" type="adding_images" >
       <remap from="image1" to="adding_images_1/image" />
       <remap from="image2" to="pyramids_zoomout_2/image" />
       <param name="alpha" value="0" />
-      <param name="debug_view" value="true" />
+      <param name="debug_view" value="$(arg gui)" />
       <param name="approximate_sync" value="true" />
     </node>
 
@@ -59,11 +59,41 @@
       <remap from="image" to="adding_images_2/image" />
       <remap from="adding_images_2/camera_info" to="camera_info" />
     </node>
-    <param name="pyramids_test/topic" value="pyramids_zoomin_1/image" />
-    <test test-name="pyramids_test" pkg="rostest" type="hztest" name="pyramids_test" >
-      <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
-      <param name="test_duration" value="1.0" />
+    <test test-name="adding_images_0_test" pkg="rostest" type="hztest" name="adding_images_0_test" >
+      <param name="hz" value="20" />
+      <param name="hzerror" value="15" />
+      <param name="test_duration" value="5.0" />
+      <param name="topic" value="adding_images_0/image" />
+    </test>
+    <test test-name="adding_images_1_test" pkg="rostest" type="hztest" name="adding_images_1_test" >
+      <param name="hz" value="20" />
+      <param name="hzerror" value="15" />
+      <param name="test_duration" value="5.0" />
+      <param name="topic" value="adding_images_1/image" />
+    </test>
+    <test test-name="adding_images_2_test" pkg="rostest" type="hztest" name="adding_images_2_test" >
+      <param name="hz" value="20" />
+      <param name="hzerror" value="15" />
+      <param name="test_duration" value="5.0" />
+      <param name="topic" value="adding_images_2/image" />
+    </test>
+    <test test-name="pyramids_zoomin_1_test" pkg="rostest" type="hztest" name="pyramids_zoomin_1_test" >
+      <param name="hz" value="20" />
+      <param name="hzerror" value="15" />
+      <param name="test_duration" value="5.0" />
+      <param name="topic" value="pyramids_zoomin_1/image" />
+    </test>
+    <test test-name="pyramids_zoomout_1_test" pkg="rostest" type="hztest" name="pyramids_zoomout_1_test" >
+      <param name="hz" value="20" />
+      <param name="hzerror" value="15" />
+      <param name="test_duration" value="5.0" />
+      <param name="topic" value="pyramids_zoomout_1/image" />
+    </test>
+    <test test-name="pyramids_zoomout_2_test" pkg="rostest" type="hztest" name="pyramids_zoomout_2_test" >
+      <param name="hz" value="20" />
+      <param name="hzerror" value="15" />
+      <param name="test_duration" value="5.0" />
+      <param name="topic" value="pyramids_zoomout_2/image" />
     </test>
   </group>
 </launch>
