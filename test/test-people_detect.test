@@ -14,8 +14,11 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="people_detect_saver" pkg="image_view" type="image_saver" args="image:=people_detect/image" >
+    <node name="people_detect_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/people_detect.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="people_detect/image" />
+      <remap from="people_detect/camera_info" to="camera_info" />
     </node>
     <param name="people_detect_test/topic" value="people_detect/found" />    <!-- opencv_apps/RectArrayStamped -->
     <test test-name="people_detect_test" pkg="rostest" type="hztest" name="people_detect_test" time-limit="120" >

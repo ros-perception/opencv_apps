@@ -44,8 +44,11 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="adding_images_saver_result" pkg="image_view" type="image_saver" args="image:=adding_images/image" >
+    <node name="adding_images_saver_result" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/adding_images_result.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="adding_images/image" />
+      <remap from="adding_images/camera_info" to="camera_info" />
     </node>
     <param name="adding_images_test/topic" value="adding_images/image" />
     <test test-name="adding_images_test" pkg="rostest" type="hztest" name="adding_images_test" time-limit="120" >

@@ -14,8 +14,11 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="fback_flow_saver" pkg="image_view" type="image_saver" args="image:=fback_flow/image" >
+    <node name="fback_flow_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/fback_flow.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="fback_flow/image" />
+      <remap from="fback_flow/camera_info" to="camera_info" />
     </node>
     <param name="fback_flow_test/topic" value="fback_flow/flows" />    <!-- opencv_apps/FlowArrayStamped -->
     <test test-name="fback_flow_test" pkg="rostest" type="hztest" name="fback_flow_test" retry="2" >

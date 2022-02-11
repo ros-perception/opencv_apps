@@ -29,10 +29,14 @@
     <!-- Test Codes -->
     <node name="face_detection_saver" pkg="image_view" type="image_saver">
       <remap from="image" to="face_detection/image" />
+      <remap from="face_detection/camera_info" to="camera_info" />
+      <param name="queue_size" value="5" />
       <param name="filename_format" value="$(find opencv_apps)/test/face_detection.png"/>
     </node>
     <node name="face_image_saver" pkg="image_view" type="image_saver">
       <remap from="image" to="face_detection/face_image" />
+      <remap from="face_detection/camera_info" to="camera_info" />
+      <param name="queue_size" value="5" />
       <param name="filename_format" value="$(find opencv_apps)/test/face.png" />
     </node>
     <param name="face_detection_test/topic" value="face_detection/faces" />    <!-- opencv_apps/FaceArrayStamped -->
