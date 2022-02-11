@@ -57,6 +57,7 @@ generate_dynamic_reconfigure_options(
   cfg/GoodfeatureTrack.cfg
   cfg/CornerHarris.cfg
   #
+  cfg/EqualizeHistogram.cfg
   cfg/CamShift.cfg
   cfg/FBackFlow.cfg
   cfg/LKFlow.cfg
@@ -174,7 +175,7 @@ opencv_apps_add_nodelet(discrete_fourier_transform src/nodelet/discrete_fourier_
   # ./tutorial_code/Histograms_Matching/calcBackProject_Demo2.cpp
   # ./tutorial_code/Histograms_Matching/calcHist_Demo.cpp
   #  ./tutorial_code/Histograms_Matching/compareHist_Demo.cpp
-  # ./tutorial_code/Histograms_Matching/EqualizeHist_Demo.cpp
+  opencv_apps_add_nodelet(equalize_histogram src/nodelet/equalize_histogram_nodelet.cpp) # ./tutorial_code/Histograms_Matching/EqualizeHist_Demo.cpp
   # ./tutorial_code/Histograms_Matching/MatchTemplate_Demo.cpp
 
 # imagecodecs
@@ -334,6 +335,18 @@ opencv_apps_add_nodelet(watershed_segmentation src/nodelet/watershed_segmentatio
 # ros examples
 opencv_apps_add_nodelet(simple_example src/nodelet/simple_example_nodelet.cpp)
 opencv_apps_add_nodelet(simple_compressed_example src/nodelet/simple_compressed_example_nodelet.cpp)
+
+
+# TApi
+# ./tapi/bgfg_segm.cpp
+# ./tapi/camshift.cpp
+# opencv_apps_add_nodelet(equalize_histogram src/nodelet/equalize_histogram_nodelet.cpp) ./tapi/clahe.cpp
+# ./tapi/dense_optical_flow.cpp
+# ./tapi/hog.cpp
+# ./tapi/opencl_custom_kernel.cpp
+# ./tapi/pyrlk_optical_flow.cpp
+# ./tapi/squares.cpp
+# ./tapi/ufacedetect.cpp
 
 # https://github.com/Itseez/opencv/blob/2.4/samples/cpp/simpleflow_demo.cpp
 # simple flow requires opencv-contrib https://github.com/ros-perception/vision_opencv/issues/108
