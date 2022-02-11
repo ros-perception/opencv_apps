@@ -1,6 +1,7 @@
 <launch>
   <arg name="gui" default="true" />
-  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag" />
+  <param name="use_sim_time" value="true" />
+  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.1" />
 
   <group ns="wide_stereo/left" >
     <node name="image_proc" pkg="image_proc" type="image_proc" />
@@ -19,14 +20,17 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="rgb_color_filter_saver" pkg="image_view" type="image_saver" args="image:=rgb_color_filter/image" >
+    <node name="rgb_color_filter_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/rgb_color_filter.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="rgb_color_filter/image" />
+      <remap from="rgb_color_filter/camera_info" to="camera_info" />
     </node>
     <param name="rgb_color_filter_test/topic" value="rgb_color_filter/image" />
     <test test-name="rgb_color_filter_test" pkg="rostest" type="hztest" name="rgb_color_filter_test" >
-      <param name="hz" value="20" />
-      <param name="hzerror" value="15" />
-      <param name="test_duration" value="5.0" />
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
     </test>
   </group>
 </launch>

@@ -1,6 +1,7 @@
 <launch>
   <arg name="gui" default="true" />
-  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag" />
+  <param name="use_sim_time" value="true" />
+  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.1" />
 
   <group ns="wide_stereo/left" >
     <node name="image_proc" pkg="image_proc" type="image_proc" />
@@ -17,17 +18,23 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="camshift_saver_result" pkg="image_view" type="image_saver" args="image:=camshift/image" >
+    <node name="camshift_saver_result" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/camshift_result.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="camshift/image" />
+      <remap from="camshift/camera_info" to="camera_info" />
     </node>
-    <node name="camshift_saver_back_project" pkg="image_view" type="image_saver" args="image:=camshift/back_project" >
+    <node name="camshift_saver_back_project" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/camshift_back_project.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="camshift/back_project" />
+      <remap from="camshift/camera_info" to="camera_info" />
     </node>
     <param name="camshift_test/topic" value="camshift/track_box" />    <!-- opencv_apps/Point2DArrayStamped -->
     <test test-name="camshift_test" pkg="rostest" type="hztest" name="camshift_test" >
-      <param name="hz" value="20" />
-      <param name="hzerror" value="15" />
-      <param name="test_duration" value="5.0" /> 
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
     </test>
   </group>
 </launch>

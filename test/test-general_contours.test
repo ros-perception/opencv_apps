@@ -1,6 +1,7 @@
 <launch>
   <arg name="gui" default="true" />
-  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag" />
+  <param name="use_sim_time" value="true" />
+  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.1" />
 
   <group ns="wide_stereo/left" >
     <node name="image_proc" pkg="image_proc" type="image_proc" />
@@ -14,20 +15,23 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="general_contours_saver" pkg="image_view" type="image_saver" args="image:=general_contours/image" >
+    <node name="general_contours_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/general_contours.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="general_contours/image" />
+      <remap from="general_contours/camera_info" to="camera_info" />
     </node>
     <param name="general_contours_rectangles_test/topic" value="general_contours/rectangles" />    <!-- opencv_apps/RotatedRectArrayStamped -->
     <test test-name="general_contours_rectangles_test" pkg="rostest" type="hztest" name="general_contours_rectangles_test" >
-      <param name="hz" value="20" />
-      <param name="hzerror" value="15" />
-      <param name="test_duration" value="5.0" /> 
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
     </test>
     <param name="general_contours_test_ellipses/topic" value="general_contours/ellipses" />    <!-- opencv_apps/RotatedRectArrayStamped -->
-    <test test-name="general_contours_ellipses_test" pkg="rostest" type="hztest" name="general_contours_test_ellipses" >
-      <param name="hz" value="20" />
-      <param name="hzerror" value="15" />
-      <param name="test_duration" value="5.0" /> 
+    <test test-name="general_contours_ellipses_test" pkg="rostest" type="hztest" name="general_contours_test_ellipses" time-limit="120" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="5.0" />
     </test>
   </group>
 </launch>

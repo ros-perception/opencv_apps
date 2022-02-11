@@ -1,7 +1,8 @@
 <launch>
   <arg name="gui" default="true" />
+  <arg name="check_resize" default="true" />
   <param name="use_sim_time" value="true" />
-  <node name="play_face_bag" pkg="rosbag" type="play" args="--clock -l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag" />
+  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.1" />
 
   <group ns="wide_stereo/left" >
     <node name="image_proc" pkg="image_proc" type="image_proc" />
@@ -23,15 +24,43 @@
       <arg name="approximate_sync" value="false" />
     </include>
 
+    <!-- Check bug introduced in 4c4caef. when image1.rows != image2.rows || image1.cols != image2.cols)
+         see https://github.com/ros-perception/opencv_apps/issues/99 -->
+    <node pkg="nodelet" type="nodelet" name="resize"
+          args="standalone image_proc/resize" output="screen"
+          if="$(arg check_resize)" >
+      <remap from="image" to="image_rect_color" />
+      <param name="scale_height" value="0.5" />
+      <param name="scale_width" value="0.5" />
+    </node>
+    <include file="$(find opencv_apps)/launch/adding_images.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image1" value="image_rect_color" />
+      <arg name="image2" value="resize/image" />
+      <arg name="alpha" value="0.5" />
+      <arg name="gamma" value="0" />
+      <arg name="approximate_sync" value="false" />
+      <arg name="node_name" default="adding_images_resize" />
+    </include>
+
     <!-- Test Codes -->
-    <node name="adding_images_saver_result" pkg="image_view" type="image_saver" args="image:=adding_images/image" >
+    <node name="adding_images_saver_result" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/adding_images_result.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="adding_images/image" />
+      <remap from="adding_images/camera_info" to="camera_info" />
     </node>
     <param name="adding_images_test/topic" value="adding_images/image" />
-    <test test-name="adding_images_test" pkg="rostest" type="hztest" name="adding_images_test" >
-      <param name="hz" value="20" />
-      <param name="hzerror" value="15" />
-      <param name="test_duration" value="5.0" />
+    <test test-name="adding_images_test" pkg="rostest" type="hztest" name="adding_images_test" time-limit="120" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
+    <param name="adding_images_test_resize/topic" value="adding_images_resize/image" />
+    <test test-name="adding_images_test_resize" pkg="rostest" type="hztest" name="adding_images_test_resize" time-limit="120" if="$(arg check_resize)" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
     </test>
   </group>
 </launch>

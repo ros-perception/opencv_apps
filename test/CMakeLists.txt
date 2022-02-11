@@ -3,14 +3,30 @@ catkin_download_test_data(face_detector_withface_test_diamondback.bag http://dow
   DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
   MD5 59126117e049e69d577b7ee27251a6f8
   )
-catkin_download_test_data(vslam_tutorial.bag http://download.ros.org/data/vslam_system/vslam_tutorial.bag
+
+# sensor_msgs/CameraInfo
+catkin_download_test_data(vslam_tutorial_old.bag http://download.ros.org/data/vslam_system/vslam_tutorial.bag
   DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+  FILENAME vslam_tutorial_old.bag
   MD5 f5aece448b7af00a38a993eb71400806
   )
-add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag
-  DEPENDS vslam_tutorial.bag
-  COMMAND rosbag reindex vslam_tutorial.bag --output-dir ${CMAKE_CURRENT_SOURCE_DIR}
-)
+if(sensor_msgs_VERSION VERSION_LESS "1.12.0") # reindex bag file
+  catkin_download_test_data(vslam_tutorial.bag http://download.ros.org/data/vslam_system/vslam_tutorial.bag
+    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+    MD5 f5aece448b7af00a38a993eb71400806
+    )
+  add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag
+    DEPENDS vslam_tutorial_old.bag
+    COMMAND rosbag reindex vslam_tutorial_old.bag --output-dir ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND mv ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial_old.bag ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag
+    )
+else()  # CameraInfo changes since 1.4.0 so we need fix bag file
+  add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag
+    DEPENDS vslam_tutorial_old.bag
+    COMMAND rosbag fix --force vslam_tutorial_old.bag  ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag
+    )
+endif()
+
 add_custom_target(vslam_tutorial_bag DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag)
 add_dependencies(tests vslam_tutorial_bag)
 
@@ -24,14 +40,21 @@ add_custom_target(face_data DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/face_data)
 add_dependencies(tests face_data)
 
 #add_rostest(test-apps.test)
-add_rostest(test-adding_images.test ARGS gui:=false)
+find_package(image_proc)
+message(STATUS "check image_proc version (${image_proc_VERSION}), test-adding_images.test check_resize:=true only available since indigo(1.12.0)")
+if("${image_proc_VERSION}" VERSION_GREATER "1.12.0") # test-adding_image.test uses image_proc/resize, which only available since indigo
+  add_rostest(test-adding_images.test ARGS gui:=false)
+endif()
 add_rostest(test-discrete_fourier_transform.test ARGS gui:=false)
+add_rostest(test-morphology.test ARGS gui:=false)
+add_rostest(test-blob-extraction.test ARGS gui:=false)
 add_rostest(test-smoothing.test ARGS gui:=false)
 add_rostest(test-pyramids.test ARGS gui:=false)
 add_rostest(test-threshold.test ARGS gui:=false)
 add_rostest(test-rgb_color_filter.test ARGS gui:=false)
 add_rostest(test-hls_color_filter.test ARGS gui:=false)
 add_rostest(test-hsv_color_filter.test ARGS gui:=false)
+add_rostest(test-lab_color_filter.test ARGS gui:=false)
 add_rostest(test-edge_detection.test ARGS gui:=false)
 
 add_rostest(test-hough_lines.test ARGS gui:=false)
@@ -41,6 +64,9 @@ add_rostest(test-convex_hull.test ARGS gui:=false)
 add_rostest(test-general_contours.test ARGS gui:=false)
 add_rostest(test-contour_moments.test ARGS gui:=false)
 if(cv_bridge_VERSION VERSION_LESS "1.11.9") # hydro skip face_detection.test
+elseif("$ENV{ROS_DISTRO}" STREQUAL "noetic") # noetic uses opencv4 (need to use_opencv3 for some reason...)
+  add_rostest(test-face_detection.test ARGS gui:=false use_opencv3:=true use_opencv4:=true)
+  add_rostest(test-face_recognition.test ARGS gui:=false use_opencv3:=true use_opencv4:=true)
 elseif("$ENV{ROS_DISTRO}" STREQUAL "melodic") # melodic uses opencv3
   add_rostest(test-face_detection.test ARGS gui:=false)
   add_rostest(test-face_recognition.test ARGS gui:=false)

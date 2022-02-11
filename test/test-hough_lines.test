@@ -1,6 +1,7 @@
 <launch>
   <arg name="gui" default="true" />
-  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag" />
+  <param name="use_sim_time" value="true" />
+  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.05" />
 
   <group ns="wide_stereo/left" >
     <node name="image_proc" pkg="image_proc" type="image_proc" />
@@ -17,14 +18,17 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="standard_hough_lines_saver" pkg="image_view" type="image_saver" args="image:=standard_hough_lines/image" >
+    <node name="standard_hough_lines_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/standard_hough_lines.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="standard_hough_lines/image" />
+      <remap from="standard_hough_lines/camera_info" to="camera_info" />
     </node>
     <param name="standard_hough_lines_test/topic" value="standard_hough_lines/lines" />    <!-- opencv_apps/LineArrayStamped -->
     <test test-name="standard_hough_lines_test" pkg="rostest" type="hztest" name="standard_hough_lines_test" >
-      <param name="hz" value="20" />
-      <param name="hzerror" value="19" />
-      <param name="test_duration" value="5.0" /> 
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="2.0" />
     </test>
 
     <!-- 1: Probabilistic Hough Line -->
@@ -37,14 +41,17 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="probabilistic_hough_lines_saver" pkg="image_view" type="image_saver" args="image:=probabilistic_hough_lines/image" >
+    <node name="probabilistic_hough_lines_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/probabilistic_hough_lines.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="probabilistic_hough_lines/image" />
+      <remap from="probabilistic_hough_lines/camera_info" to="camera_info" />
     </node>
     <param name="probabilistic_hough_lines_test/topic" value="probabilistic_hough_lines/lines" />    <!-- opencv_apps/LineArrayStamped -->
     <test test-name="probabilistic_hough_lines_test" pkg="rostest" type="hztest" name="probabilistic_hough_lines_test" >
-      <param name="hz" value="20" />
-      <param name="hzerror" value="19" />
-      <param name="test_duration" value="5.0" /> 
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="2.0" />
     </test>
   </group>
 </launch>
