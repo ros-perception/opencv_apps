@@ -19,8 +19,11 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="morphology_saver" pkg="image_view" type="image_saver" args="image:=morphology/image" >
+    <node name="morphology_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/morphology.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="morphology/image" />
+      <remap from="morphology/camera_info" to="camera_info" />
     </node>
     <param name="morphology_test/topic" value="morphology/image" />
     <test test-name="morphology_test" pkg="rostest" type="hztest" name="morphology_test" >
