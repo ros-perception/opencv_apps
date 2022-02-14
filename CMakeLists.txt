@@ -52,6 +52,7 @@ generate_dynamic_reconfigure_options(
   cfg/GoodfeatureTrack.cfg
   cfg/CornerHarris.cfg
   #
+  cfg/CompareHistogram.cfg
   cfg/EqualizeHistogram.cfg
   cfg/CamShift.cfg
   cfg/FBackFlow.cfg
@@ -169,7 +170,7 @@ opencv_apps_add_nodelet(discrete_fourier_transform src/nodelet/discrete_fourier_
   # ./tutorial_code/Histograms_Matching/calcBackProject_Demo1.cpp
   # ./tutorial_code/Histograms_Matching/calcBackProject_Demo2.cpp
   # ./tutorial_code/Histograms_Matching/calcHist_Demo.cpp
-  #  ./tutorial_code/Histograms_Matching/compareHist_Demo.cpp
+  opencv_apps_add_nodelet(compare_histogram src/nodelet/compare_histogram_nodelet.cpp)  #  ./tutorial_code/Histograms_Matching/compareHist_Demo.cpp
   opencv_apps_add_nodelet(equalize_histogram src/nodelet/equalize_histogram_nodelet.cpp) # ./tutorial_code/Histograms_Matching/EqualizeHist_Demo.cpp
   # ./tutorial_code/Histograms_Matching/MatchTemplate_Demo.cpp
 
@@ -263,7 +264,7 @@ opencv_apps_add_nodelet(camshift src/nodelet/camshift_nodelet.cpp) # ./camshiftd
 # ./create_mask.cpp
 # ./dbt_face_detection.cpp
 # ./delaunay2.cpp
-opencv_apps_add_nodelet(intensity_histogram src/nodelet/intensity_histogram.cpp) # ./demhist.cpp
+# ./demhist.cpp
 # ./detect_blob.cpp
 # ./detect_mser.cpp
 # ./dft.cpp

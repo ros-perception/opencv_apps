@@ -56,6 +56,7 @@ add_rostest(test-hls_color_filter.test ARGS gui:=false)
 add_rostest(test-hsv_color_filter.test ARGS gui:=false)
 add_rostest(test-lab_color_filter.test ARGS gui:=false)
 add_rostest(test-edge_detection.test ARGS gui:=false)
+add_rostest(test-compare_histogram.test ARGS gui:=false)
 add_rostest(test-equalize_histogram.test ARGS gui:=false)
 
 add_rostest(test-hough_lines.test ARGS gui:=false)
