@@ -170,8 +170,10 @@ opencv_apps_add_nodelet(discrete_fourier_transform src/nodelet/discrete_fourier_
   # ./tutorial_code/Histograms_Matching/calcBackProject_Demo1.cpp
   # ./tutorial_code/Histograms_Matching/calcBackProject_Demo2.cpp
   # ./tutorial_code/Histograms_Matching/calcHist_Demo.cpp
+if(OpenCV_VERSION VERSION_GREATER "3.0")
   opencv_apps_add_nodelet(compare_histogram src/nodelet/compare_histogram_nodelet.cpp)  #  ./tutorial_code/Histograms_Matching/compareHist_Demo.cpp
-  opencv_apps_add_nodelet(equalize_histogram src/nodelet/equalize_histogram_nodelet.cpp) # ./tutorial_code/Histograms_Matching/EqualizeHist_Demo.cpp
+endif()
+opencv_apps_add_nodelet(equalize_histogram src/nodelet/equalize_histogram_nodelet.cpp) # ./tutorial_code/Histograms_Matching/EqualizeHist_Demo.cpp
   # ./tutorial_code/Histograms_Matching/MatchTemplate_Demo.cpp
 
 # imagecodecs
