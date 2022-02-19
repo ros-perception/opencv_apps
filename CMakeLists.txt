@@ -66,6 +66,8 @@ generate_dynamic_reconfigure_options(
   cfg/HSVColorFilter.cfg
   cfg/LabColorFilter.cfg
   cfg/WatershedSegmentation.cfg
+  #
+  cfg/Tracking.cfg
   )
 
 ## Generate messages in the 'msg' folder
@@ -107,6 +109,7 @@ add_message_files(
 add_service_files(
   FILES
   FaceRecognitionTrain.srv
+  SetImages.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -327,6 +330,36 @@ opencv_apps_add_nodelet(segment_objects src/nodelet/segment_objects_nodelet.cpp)
 # ./videostab.cpp
 opencv_apps_add_nodelet(watershed_segmentation src/nodelet/watershed_segmentation_nodelet.cpp) # ./watershed.cpp
 
+# contrib modules (https://docs.opencv.org/4.x/d3/d81/tutorial_contrib_root.html)
+# alphamat. Information Flow Alpha Matting
+# aruco. ArUco marker detection (aruco module)
+# barcode. Tutorials for barcode module
+# bgsegm. Tutorials for bgsegm module
+# bioinspired. Discovering the human retina and its use for image processing
+# ccalib. Multi-camera Calibration
+# ccalib. Omnidirectional Camera Calibration
+# cvv. Interactive Visual Debugging of Computer Vision applications
+# dnn_objdetect. Object Detection using CNNs
+# dnn_superres. Super Resolution using CNNs
+# face. Tutorials for face module
+# face. Tutorial on Facial Landmark Detector API
+# fuzzy. Fuzzy image processing tutorials
+# hdf. The Hierarchical Data Format (hdf) I/O
+# julia. Introduction to Julia OpenCV Binding
+# line_descriptor. Line Features Tutorial
+# mcc. Color Correction Model
+# mcc. ColorChecker Detection
+# phase_unwrapping. Phase Unwrapping tutorial
+# sfm. Structure From Motion
+# stereo. Quasi Dense Stereo (stereo module)
+# structured_light. Structured Light tutorials
+# text. Text module
+# tracking. Customizing the CN Tracker
+if(OpenCV_VERSION VERSION_GREATER "4.0")
+  opencv_apps_add_nodelet(tracking src/nodelet/tracking_nodelet.cpp) # tracking. Introduction to OpenCV Tracker
+endif()
+# tracking. Using MultiTracker
+
 # ros examples
 opencv_apps_add_nodelet(simple_example src/nodelet/simple_example_nodelet.cpp)
 opencv_apps_add_nodelet(simple_compressed_example src/nodelet/simple_compressed_example_nodelet.cpp)
@@ -387,6 +420,9 @@ if(CATKIN_ENABLE_TESTING)
     message(WARNING "roslaunch_add_file check fails with unsupported doc attributes ${roslaunch_VERSION}")
   else()
     file(GLOB LAUNCH_FILES launch/*.launch)
+    if(NOT OpenCV_VERSION VERSION_GREATER "4.0")
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/tracking.launch)
+    endif()
     foreach(LAUNCH_FILE ${LAUNCH_FILES})
       roslaunch_add_file_check(${LAUNCH_FILE})
     endforeach()

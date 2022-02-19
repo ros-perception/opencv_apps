@@ -1,0 +1,20 @@
+<launch>
+  <arg name="node_name" default="tracking" />
+  <arg name="image" default="image" doc="The image topic. Should be remapped to the name of the real image topic." />
+
+  <arg name="use_camera_info" default="false" doc="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
+  <arg name="debug_view" default="true" doc="Specify whether the node displays a window to show edge image" />
+  <arg name="queue_size" default="3" doc="Specigy queue_size of input image subscribers" />
+
+  <arg name="tracking_algorithm" default="4" doc="Tracking algorithm 0: MIL, 1: Boosting, 2: Medianflow, 3: TLD, 4: KCF, 5: GOTURN, 6: MOSSE" />
+
+  <!-- threshold.cpp -->
+  <node name="$(arg node_name)" pkg="opencv_apps" type="tracking" output="screen">
+    <remap from="image" to="$(arg image)" />
+    <param name="use_camera_info" value="$(arg use_camera_info)" />
+    <param name="debug_view" value="$(arg debug_view)" />
+    <param name="queue_size" value="$(arg queue_size)" />
+    <param name="tracking_algorithm" value="$(arg tracking_algorithm)" />
+  </node>
+
+</launch>
