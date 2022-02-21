@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(opencv_apps)
 
 ## https://stackoverflow.com/questions/10984442/how-to-detect-c11-support-of-a-compiler-with-cmake
-if(CMAKE_COMPILER_IS_GNUCXX)
+if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7")
   execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
   if (GCC_VERSION VERSION_GREATER 4.7 OR GCC_VERSION VERSION_EQUAL 4.7)
     message(STATUS "C++11 activated.")
@@ -13,8 +13,6 @@ if(CMAKE_COMPILER_IS_GNUCXX)
   else ()
     message(FATAL_ERROR "C++11 needed. Therefore a gcc compiler with a version higher than 4.3 is needed.")
   endif()
-else(CMAKE_COMPILER_IS_GNUCXX)
-  add_definitions("-std=c++0x")
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
 find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp sensor_msgs std_msgs std_srvs)
@@ -45,6 +43,7 @@ generate_dynamic_reconfigure_options(
   cfg/DiscreteFourierTransform.cfg
   cfg/AddingImages.cfg
   cfg/Smoothing.cfg
+  cfg/Morphology.cfg
   cfg/Pyramids.cfg
   cfg/EdgeDetection.cfg cfg/HoughLines.cfg cfg/HoughCircles.cfg
   cfg/FindContours.cfg cfg/ConvexHull.cfg cfg/GeneralContours.cfg cfg/ContourMoments.cfg
@@ -53,6 +52,7 @@ generate_dynamic_reconfigure_options(
   cfg/GoodfeatureTrack.cfg
   cfg/CornerHarris.cfg
   #
+  cfg/EqualizeHistogram.cfg
   cfg/CamShift.cfg
   cfg/FBackFlow.cfg
   cfg/LKFlow.cfg
@@ -64,8 +64,8 @@ generate_dynamic_reconfigure_options(
   cfg/RGBColorFilter.cfg
   cfg/HLSColorFilter.cfg
   cfg/HSVColorFilter.cfg
+  cfg/LabColorFilter.cfg
   cfg/WatershedSegmentation.cfg
-  cfg/BlobDetection.cfg
   )
 
 ## Generate messages in the 'msg' folder
@@ -102,9 +102,6 @@ add_message_files(
    Contour.msg
    ContourArray.msg
    ContourArrayStamped.msg
-   Blob.msg
-   BlobArray.msg
-   BlobArrayStamped.msg
 )
 
 add_service_files(
@@ -173,7 +170,7 @@ opencv_apps_add_nodelet(discrete_fourier_transform src/nodelet/discrete_fourier_
   # ./tutorial_code/Histograms_Matching/calcBackProject_Demo2.cpp
   # ./tutorial_code/Histograms_Matching/calcHist_Demo.cpp
   #  ./tutorial_code/Histograms_Matching/compareHist_Demo.cpp
-  # ./tutorial_code/Histograms_Matching/EqualizeHist_Demo.cpp
+  opencv_apps_add_nodelet(equalize_histogram src/nodelet/equalize_histogram_nodelet.cpp) # ./tutorial_code/Histograms_Matching/EqualizeHist_Demo.cpp
   # ./tutorial_code/Histograms_Matching/MatchTemplate_Demo.cpp
 
 # imagecodecs
@@ -183,13 +180,14 @@ opencv_apps_add_nodelet(discrete_fourier_transform src/nodelet/discrete_fourier_
   # ./tutorial_code/ImgProc/BasicLinearTransforms.cpp
   # ./tutorial_code/ImgProc/Morphology_1.cpp
   # ./tutorial_code/ImgProc/Morphology_2.cpp
-  # ./tutorial_code/ImgProc/Morphology_3.cpp
+opencv_apps_add_nodelet(morphology src/nodelet/morphology_nodelet.cpp)  # ./tutorial_code/ImgProc/Morphology_3.cpp
 opencv_apps_add_nodelet(pyramids src/nodelet/pyramids_nodelet.cpp)  # ./tutorial_code/ImgProc/Pyramids.cpp
 opencv_apps_add_nodelet(smoothing src/nodelet/smoothing_nodelet.cpp)  # ./tutorial_code/ImgProc/Smoothing.cpp
 opencv_apps_add_nodelet(threshold src/nodelet/threshold_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold.cpp
 opencv_apps_add_nodelet(rgb_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
 opencv_apps_add_nodelet(hls_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
 opencv_apps_add_nodelet(hsv_color_filter src/nodelet/color_filter_nodelet.cpp)  # ./tutorial_code/ImgProc/Threshold_inRange.cpp
+opencv_apps_add_nodelet(lab_color_filter src/nodelet/color_filter_nodelet.cpp)
 
 # ImgTrans
 opencv_apps_add_nodelet(edge_detection src/nodelet/edge_detection_nodelet.cpp) # ./tutorial_code/ImgTrans/CannyDetector_Demo.cpp
@@ -329,11 +327,21 @@ opencv_apps_add_nodelet(segment_objects src/nodelet/segment_objects_nodelet.cpp)
 # ./videostab.cpp
 opencv_apps_add_nodelet(watershed_segmentation src/nodelet/watershed_segmentation_nodelet.cpp) # ./watershed.cpp
 
-opencv_apps_add_nodelet(blob_detection src/nodelet/blob_detection_nodelet.cpp)
-
 # ros examples
 opencv_apps_add_nodelet(simple_example src/nodelet/simple_example_nodelet.cpp)
 opencv_apps_add_nodelet(simple_compressed_example src/nodelet/simple_compressed_example_nodelet.cpp)
+
+
+# TApi
+# ./tapi/bgfg_segm.cpp
+# ./tapi/camshift.cpp
+# opencv_apps_add_nodelet(equalize_histogram src/nodelet/equalize_histogram_nodelet.cpp) ./tapi/clahe.cpp
+# ./tapi/dense_optical_flow.cpp
+# ./tapi/hog.cpp
+# ./tapi/opencl_custom_kernel.cpp
+# ./tapi/pyrlk_optical_flow.cpp
+# ./tapi/squares.cpp
+# ./tapi/ufacedetect.cpp
 
 # https://github.com/Itseez/opencv/blob/2.4/samples/cpp/simpleflow_demo.cpp
 # simple flow requires opencv-contrib https://github.com/ros-perception/vision_opencv/issues/108

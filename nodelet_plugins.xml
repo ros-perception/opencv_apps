@@ -7,6 +7,10 @@
     <description>Nodelet to fourier transform</description>
   </class>
 
+  <class name="opencv_apps/morphology" type="opencv_apps::MorphologyNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to apply morphological transformations</description>
+  </class>
+
   <class name="opencv_apps/smoothing" type="opencv_apps::SmoothingNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to smoothing by homogeneous filter, bilateral filter, gaussian filter, median filter</description>
   </class>
@@ -111,12 +115,16 @@
     <description>Nodelet of hsv color filter</description>
    </class>
 
+   <class name="opencv_apps/lab_color_filter" type="opencv_apps::LabColorFilterNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of lab color filter</description>
+   </class>
+
   <class name="opencv_apps/watershed_segmentation" type="opencv_apps::WatershedSegmentationNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to demonstrate the famous watershed segmentation algorithm in OpenCV: watershed()</description>
   </class>
 
-  <class name="opencv_apps/blob_detection" type="opencv_apps::BlobDetectionNodelet" base_class_type="nodelet::Nodelet">
-    <description>Nodelet to find blobs</description>
+  <class name="opencv_apps/equalize_histogram" type="opencv_apps::EqualizeHistogramNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet for histogram equalization</description>
   </class>
 
   <!--
