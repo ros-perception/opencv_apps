@@ -1,7 +1,7 @@
 <launch>
   <arg name="node_name" default="blob_detection" />
 
-  <arg name="debug_mode" default="ros" doc="Running mode, three values: debug_view, ros, deploy" />
+  <arg name="debug_mode" default="deploy" doc="Running mode, three values: debug_view, ros, deploy" />
 
   <arg name="image" default="image" doc="The image topic. Should be remapped to the name of the real image topic." />
 

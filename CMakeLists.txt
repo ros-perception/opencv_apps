@@ -66,6 +66,7 @@ generate_dynamic_reconfigure_options(
   cfg/HSVColorFilter.cfg
   cfg/LabColorFilter.cfg
   cfg/WatershedSegmentation.cfg
+  cfg/BlobDetection.cfg
   )
 
 ## Generate messages in the 'msg' folder
@@ -102,6 +103,9 @@ add_message_files(
    Contour.msg
    ContourArray.msg
    ContourArrayStamped.msg
+   Blob.msg
+   BlobArray.msg
+   BlobArrayStamped.msg
 )
 
 add_service_files(
@@ -326,6 +330,8 @@ opencv_apps_add_nodelet(segment_objects src/nodelet/segment_objects_nodelet.cpp)
 # ./tvl1_optical_flow.cpp
 # ./videostab.cpp
 opencv_apps_add_nodelet(watershed_segmentation src/nodelet/watershed_segmentation_nodelet.cpp) # ./watershed.cpp
+
+opencv_apps_add_nodelet(blob_detection src/nodelet/blob_detection_nodelet.cpp)
 
 # ros examples
 opencv_apps_add_nodelet(simple_example src/nodelet/simple_example_nodelet.cpp)
