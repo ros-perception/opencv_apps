@@ -1,0 +1,90 @@
+<launch>
+  <arg name="gui" default="true" />
+  <param name="use_sim_time" value="true" />
+  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.025" />
+
+  <group ns="wide_stereo/left" >
+    <node name="image_proc" pkg="image_proc" type="image_proc" />
+    <node name="image_view" pkg="image_view" type="image_view" args="image:=image_rect_color" if="$(arg gui)" />
+
+    <!-- 1: Gaussian blur -->
+    <include file="$(find opencv_apps)/launch/smoothing.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect_color" />
+      <arg name="filter_type" value="1" />
+      <arg name="node_name" value="smooth_gaussian_filter" />
+    </include>
+
+    <!-- color_filter.cpp  -->
+    <include file="$(find opencv_apps)/launch/lab_color_filter.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="smooth_gaussian_filter/image" />
+      <arg name="l_limit_max" value="67" />
+      <arg name="l_limit_min" value="0" />
+      <arg name="a_limit_max" value="131" />
+      <arg name="a_limit_min" value="90" />
+      <arg name="b_limit_max" value="140" />
+      <arg name="b_limit_min" value="98" />
+    </include>
+
+    <!-- Apply Opening -->
+    <include file="$(find opencv_apps)/launch/morphology.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="lab_color_filter/image" />
+      <arg name="morph_operator" value="0" />
+      <arg name="morph_element" value="2" />
+      <arg name="morph_size" value="6" />
+      <arg name="node_name" value="opening" />
+    </include>
+
+    <!-- Apply Closing -->
+    <include file="$(find opencv_apps)/launch/morphology.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="opening/image" />
+      <arg name="morph_operator" value="1" />
+      <arg name="morph_element" value="2" />
+      <arg name="morph_size" value="6" />
+      <arg name="node_name" value="closing" />
+    </include>
+
+    <!-- Calculate Contour Moments -->
+    <include file="$(find opencv_apps)/launch/general_contours.launch" >
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="closing/image" />
+      <arg name="threshold" value="20" />
+      <arg name="node_name" value="blob_extraction" />
+    </include>
+
+    <!-- Test Codes -->
+    <node name="color_filter_saver" pkg="image_view" type="image_saver" >
+      <param name="filename_format" value="$(find opencv_apps)/test/blob_extraction_color_filter.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="lab_color_filter/image" />
+      <remap from="lab_color_filter/camera_info" to="camera_info" />
+    </node>
+    <node name="blob_extraction_opening_saver" pkg="image_view" type="image_saver" >
+      <param name="filename_format" value="$(find opencv_apps)/test/blob_extraction_opening.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="opening/image" />
+      <remap from="opening/camera_info" to="camera_info" />
+    </node>
+    <node name="blob_extraction_closing_saver" pkg="image_view" type="image_saver" >
+      <param name="filename_format" value="$(find opencv_apps)/test/blob_extraction_closing.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="closing/image" />
+      <remap from="closing/camera_info" to="camera_info" />
+    </node>
+    <node name="blob_extraction_ellipses_saver" pkg="image_view" type="image_saver" >
+      <param name="filename_format" value="$(find opencv_apps)/test/blob_extraction_ellipses.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="blob_extraction/image" />
+      <remap from="blob_extraction/camera_info" to="camera_info" />
+    </node>
+    <param name="blob_extraction_test/topic" value="blob_extraction/ellipses" />
+    <test test-name="blob_extraction_test" pkg="rostest" type="hztest" name="blob_extraction_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="15.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
+  </group>
+</launch>

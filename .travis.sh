@@ -50,6 +50,12 @@ function setup {
     source /opt/ros/$ROS_DISTRO/setup.bash
     # Setup for rosdep
     sudo rosdep init
+    # use snapshot of rosdep list
+    # https://github.com/ros/rosdistro/pull/31570#issuecomment-1000497517
+    if [[ "$ROS_DISTRO" =~ "hydro"|"indigo"|"jade"|"kinetic"|"lunar" ]]; then
+        sudo rm /etc/ros/rosdep/sources.list.d/20-default.list
+        sudo wget https://gist.githubusercontent.com/cottsay/b27a46e53b8f7453bf9ff637d32ea283/raw/476b3714bb90cfbc6b8b9d068162fc6408fa7f76/30-xenial.list -O /etc/ros/rosdep/sources.list.d/30-xenial.list
+    fi
     rosdep update --include-eol-distros
     travis_time_end
 
@@ -159,6 +165,20 @@ elif [ "$TEST" == "clang-tidy" ]; then
     travis_time_end
     git -C $CI_SOURCE_PATH --no-pager diff
     git -C $CI_SOURCE_PATH diff-index --quiet HEAD -- .
+
+elif [ "$TEST" == "debian-unstable" ]; then
+
+    grep ^deb /etc/apt/sources.list  | sed 's/deb http/deb-src http/' >> /etc/apt/sources.list
+    apt update
+    apt-get -y build-dep ros-opencv-apps
+
+    travis_time_start build_debian_unstable.script
+    cd $CI_SOURCE_PATH
+    mkdir build
+    cd build
+    cmake ..
+    make VERBOSE=1
+    travis_time_end
 
 else
     # Compile and test.

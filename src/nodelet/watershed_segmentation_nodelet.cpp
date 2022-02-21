@@ -330,8 +330,8 @@ public:
     prevPt.y = -1;
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
-    dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&WatershedSegmentationNodelet::reconfigureCallback, this, _1, _2);
+    dynamic_reconfigure::Server<Config>::CallbackType f = boost::bind(
+        &WatershedSegmentationNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
     reconfigure_server_->setCallback(f);
 
     add_seed_points_sub_ = pnh_->subscribe("add_seed_points", 1, &WatershedSegmentationNodelet::addSeedPointCb, this);

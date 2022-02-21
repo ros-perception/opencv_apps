@@ -45,12 +45,14 @@
 #include "opencv_apps/RGBColorFilterConfig.h"
 #include "opencv_apps/HLSColorFilterConfig.h"
 #include "opencv_apps/HSVColorFilterConfig.h"
+#include "opencv_apps/LabColorFilterConfig.h"
 
 namespace color_filter
 {
 class RGBColorFilterNodelet;
 class HLSColorFilterNodelet;
 class HSVColorFilterNodelet;
+class LabColorFilterNodelet;
 }  // namespace color_filter
 
 namespace opencv_apps
@@ -58,6 +60,7 @@ namespace opencv_apps
 class RGBColorFilter;
 class HLSColorFilter;
 class HSVColorFilter;
+class LabColorFilter;
 
 template <typename Config>
 class ColorFilterNodelet : public opencv_apps::Nodelet
@@ -182,7 +185,7 @@ public:
 
     reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
     typename dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&ColorFilterNodelet::reconfigureCallback, this, _1, _2);
+        boost::bind(&ColorFilterNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
     reconfigure_server_->setCallback(f);
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
@@ -384,6 +387,62 @@ public:
   }
 };
 
+class LabColorFilterNodelet : public ColorFilterNodelet<opencv_apps::LabColorFilterConfig>
+{
+protected:
+  int l_min_;
+  int l_max_;
+  int a_min_;
+  int a_max_;
+  int b_min_;
+  int b_max_;
+
+  void reconfigureCallback(opencv_apps::LabColorFilterConfig& config, uint32_t level)  // NOLINT(modernize-use-override)
+  {
+    boost::mutex::scoped_lock lock(mutex_);
+    config_ = config;
+    l_max_ = config.l_limit_max;
+    l_min_ = config.l_limit_min;
+    a_max_ = config.a_limit_max;
+    a_min_ = config.a_limit_min;
+    b_max_ = config.b_limit_max;
+    b_min_ = config.b_limit_min;
+    updateCondition();
+  }
+
+  virtual void updateCondition()
+  {
+    if (l_max_ < l_min_)
+      std::swap(l_max_, l_min_);
+    if (a_max_ < a_min_)
+      std::swap(a_max_, a_min_);
+    if (b_max_ < b_min_)
+      std::swap(b_max_, b_min_);
+    lower_color_range_ = cv::Scalar(l_min_, a_min_, b_min_);
+    upper_color_range_ = cv::Scalar(l_max_, a_max_, b_max_);
+  }
+
+  void filter(const cv::Mat& input_image, cv::Mat& output_image)  // NOLINT(modernize-use-override)
+  {
+    cv::Mat lab_image;
+    cv::cvtColor(input_image, lab_image, cv::COLOR_BGR2Lab);
+    cv::inRange(lab_image, lower_color_range_, upper_color_range_, output_image);
+  }
+
+public:
+  virtual void onInit()  // NOLINT(modernize-use-override)
+  {
+    l_max_ = 255;
+    l_min_ = 0;
+    b_max_ = 255;
+    b_min_ = 0;
+    a_max_ = 255;
+    a_min_ = 0;
+
+    ColorFilterNodelet::onInit();
+  }
+};
+
 }  // namespace opencv_apps
 
 namespace color_filter
@@ -427,3 +486,4 @@ PLUGINLIB_EXPORT_CLASS(color_filter::HSVColorFilterNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::RGBColorFilterNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::HLSColorFilterNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(opencv_apps::HSVColorFilterNodelet, nodelet::Nodelet);
+PLUGINLIB_EXPORT_CLASS(opencv_apps::LabColorFilterNodelet, nodelet::Nodelet);

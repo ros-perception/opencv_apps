@@ -15,8 +15,11 @@
     </include>
 
     <!-- Test Codes -->
-    <node name="general_contours_saver" pkg="image_view" type="image_saver" args="image:=general_contours/image" >
+    <node name="general_contours_saver" pkg="image_view" type="image_saver" >
       <param name="filename_format" value="$(find opencv_apps)/test/general_contours.png"/>
+      <param name="queue_size" value="5" />
+      <remap from="image" to="general_contours/image" />
+      <remap from="general_contours/camera_info" to="camera_info" />
     </node>
     <param name="general_contours_rectangles_test/topic" value="general_contours/rectangles" />    <!-- opencv_apps/RotatedRectArrayStamped -->
     <test test-name="general_contours_rectangles_test" pkg="rostest" type="hztest" name="general_contours_rectangles_test" >
