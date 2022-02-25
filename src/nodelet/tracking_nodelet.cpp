@@ -44,6 +44,15 @@
 #include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/tracking.hpp>
+// Since 4.5.1, tracking has new API https://github.com/opencv/opencv_contrib/pull/2737
+#if (CV_VERSION_MAJOR >= 4 && CV_VERSION_MINOR >= 5)
+#include <opencv2/tracking/tracking_legacy.hpp>
+using namespace cv::legacy;
+#define TrackingAPI(f) upgradeTrackingAPI(f)
+#else
+using namespace cv;
+#define TrackingAPI(f) f
+#endif
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -85,7 +94,9 @@ class TrackingNodelet : public opencv_apps::Nodelet
   int tracking_algorithm_;
 
   cv::Ptr<cv::Tracker> tracker_;
-  cv::TrackerKCF::Params params_;
+#if (CV_VERSION_MAJOR >= 4 && CV_VERSION_MINOR >= 5)
+#define Rect2d Rect
+#endif
   cv::Rect2d roi_;
 
 public:
@@ -240,19 +251,19 @@ public:
         ROS_INFO("Create MIL (Multiple Instance Learning) tracker");
         break;
       case opencv_apps::Tracking_BOOSTING:
-        tracker_ = cv::TrackerBoosting::create();
+        tracker_ = TrackingAPI(TrackerBoosting::create());
         ROS_INFO("Create On-line version of the AdaBoost tracker");
         break;
       case opencv_apps::Tracking_MEDIANFLOW:
-        tracker_ = cv::TrackerMedianFlow::create();
+        tracker_ = TrackingAPI(TrackerMedianFlow::create());
         ROS_INFO("Create Median Flow tracker");
         break;
       case opencv_apps::Tracking_TLD:
-        tracker_ = cv::TrackerTLD::create();
+        tracker_ = TrackingAPI(TrackerTLD::create());
         ROS_INFO("Create TLD (Tracking, learning and detection) tracker");
         break;
       case opencv_apps::Tracking_KCF:
-        tracker_ = cv::TrackerKCF::create(params_);
+        tracker_ = cv::TrackerKCF::create();
         ROS_INFO("Create KCF (Kernelized Correlation Filter) tracker");
         break;
       case opencv_apps::Tracking_GOTURN:
@@ -278,7 +289,7 @@ public:
         }
         break;
       case opencv_apps::Tracking_MOSSE:
-        tracker_ = cv::TrackerMOSSE::create();
+        tracker_ = TrackingAPI(TrackerMOSSE::create());
         ROS_INFO("Create MOSSE (Minimum Output Sum of Squared Error) tracker");
         break;
     }
