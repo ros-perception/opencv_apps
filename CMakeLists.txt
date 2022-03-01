@@ -38,6 +38,8 @@ if(cv_bridge_VERSION VERSION_LESS "1.11.13")
   add_definitions("-DCV_BRIDGE_CVT_COLOR_FOR_DISPLAY_OPTION_IS_NOT_SUPPORTED")
 endif()
 
+catkin_python_setup()
+
 # generate the dynamic_reconfigure config file
 generate_dynamic_reconfigure_options(
   cfg/DiscreteFourierTransform.cfg
@@ -411,6 +413,12 @@ install(FILES nodelet_plugins.xml
 install(DIRECTORY launch test scripts
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         USE_SOURCE_PERMISSIONS)
+
+file(GLOB PROGRAM_FILES scripts/*.py)
+catkin_install_python(PROGRAMS
+  "${PROGRAM_FILES}"
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## test
 if(CATKIN_ENABLE_TESTING)
