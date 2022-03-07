@@ -5,11 +5,14 @@
 
   <arg name="use_camera_info" default="false" doc="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
   <arg name="debug_view" default="true" doc="Specify whether the node displays windows to show debug images" />
+  <arg name="debug_mode" default="deploy" doc="Debug mode, four values: not_assigned, debug_view, ros, deploy,
+  not_assigned will turn off this argument, debug_view for opencv debug view, ros for rviz and rqt_reconfigure view,
+  deploy for running the node with configured params loading from a yaml file" />
   <arg name="queue_size" default="3" doc="Specigy queue_size of input image subscribers" />
 
-  <arg name="min_area_upper_limit" default="300000" doc="The upper limit of the Min Area trackbar, put different value if needed." />
-  <arg name="max_area_upper_limit" default="300000" doc="The upper limit of the Max Area trackbar, put different value if needed." />
-  <arg name="min_dist_between_blobs_upper_limit" default="800" doc="The upper limit of the Min Dist Between Blobs trackbar, put different value if needed." />
+  <arg name="min_area_upper_limit" default="40000" doc="The upper limit of the Min Area trackbar, put different value if needed." />
+  <arg name="max_area_upper_limit" default="40000" doc="The upper limit of the Max Area trackbar, put different value if needed." />
+  <arg name="min_dist_between_blobs_upper_limit" default="200" doc="The upper limit of the Min Dist Between Blobs trackbar, put different value if needed." />
 
   <arg name="hue_lower_limit" default="0" doc="The minimum allowed field value Hue" />
   <arg name="hue_upper_limit" default="179" doc="The maximum allowed field value Hue" />
@@ -26,9 +29,9 @@
 
   <arg name="filter_by_area" default="true" doc="filter by area, use true/false to turn on/off the filtration" />
   <arg name="min_area" default="0" doc="Extracted blobs have an area between minArea (inclusive) and maxArea (exclusive)." />
-  <arg name="max_area" default="300000" doc="Extracted blobs have an area between minArea (inclusive) and maxArea (exclusive)." />
+  <arg name="max_area" default="40000" doc="Extracted blobs have an area between minArea (inclusive) and maxArea (exclusive)." />
 
-  <arg name="min_dist_between_blobs" default="800" doc="The blobs located closer than minDistBetweenBlobs are merged." />
+  <arg name="min_dist_between_blobs" default="0" doc="The blobs located closer than minDistBetweenBlobs are merged." />
 
   <arg name="filter_by_circularity" default="false" doc="filter by circularity, use true/false to turn on/off the filtration" />
   <arg name="min_circularity" default="0" doc="Extracted blobs have circularity between minCircularity (inclusive) and maxCircularity (exclusive)." />
@@ -43,45 +46,147 @@
   <arg name="max_convexity" default="1" doc="Extracted blobs have convexity between minConvexity (inclusive) and maxConvexity (exclusive)." />
 
   <!-- blob_detection.cpp -->
-  <node name="$(arg node_name)" pkg="opencv_apps" type="blob_detection" output="screen">
-    <remap from="image" to="$(arg image)" />
-    <param name="use_camera_info" value="$(arg use_camera_info)" />
-    <param name="debug_view" value="$(arg debug_view)" />
-    <param name="queue_size" value="$(arg queue_size)" />
+  <group if="$(eval debug_mode == 'not_assigned')">
+    <node name="$(arg node_name)" pkg="opencv_apps" type="blob_detection">
+      <remap from="image" to="$(arg image)" />
+      <param name="use_camera_info" value="$(arg use_camera_info)" />
+      <param name="debug_view" value="$(arg debug_view)" />
+      <param name="queue_size" value="$(arg queue_size)" />
 
-    <param name="hue_lower_limit" value="$(arg hue_lower_limit)" />
-    <param name="hue_upper_limit" value="$(arg hue_upper_limit)" />
-    <param name="sat_lower_limit" value="$(arg sat_lower_limit)" />
-    <param name="sat_upper_limit" value="$(arg sat_upper_limit)" />
-    <param name="val_lower_limit" value="$(arg val_lower_limit)" />
-    <param name="val_upper_limit" value="$(arg val_upper_limit)" />
+      <param name="hue_lower_limit" value="$(arg hue_lower_limit)" />
+      <param name="hue_upper_limit" value="$(arg hue_upper_limit)" />
+      <param name="sat_lower_limit" value="$(arg sat_lower_limit)" />
+      <param name="sat_upper_limit" value="$(arg sat_upper_limit)" />
+      <param name="val_lower_limit" value="$(arg val_lower_limit)" />
+      <param name="val_upper_limit" value="$(arg val_upper_limit)" />
 
-    <param name="morphology_ex_type" value="$(arg morphology_ex_type)" />
-    <param name="morphology_ex_kernel_size" value="$(arg morphology_ex_kernel_size)" />
+      <param name="morphology_ex_type" value="$(arg morphology_ex_type)" />
+      <param name="morphology_ex_kernel_size" value="$(arg morphology_ex_kernel_size)" />
 
-    <param name="filter_by_color" value="$(arg filter_by_color)" />
-    <param name="blob_color" value="$(arg blob_color)" />
+      <param name="filter_by_color" value="$(arg filter_by_color)" />
+      <param name="blob_color" value="$(arg blob_color)" />
 
-    <param name="filter_by_area" value="$(arg filter_by_area)" />
-    <param name="min_area" value="$(arg min_area)" />
-    <param name="max_area" value="$(arg max_area)" />
+      <param name="filter_by_area" value="$(arg filter_by_area)" />
+      <param name="min_area" value="$(arg min_area)" />
+      <param name="max_area" value="$(arg max_area)" />
 
-    <param name="min_dist_between_blobs" value="$(arg min_dist_between_blobs)" />
+      <param name="min_dist_between_blobs" value="$(arg min_dist_between_blobs)" />
 
-    <param name="filter_by_circularity" value="$(arg filter_by_circularity)" />
-    <param name="min_circularity" value="$(arg min_circularity)" />
-    <param name="max_circularity" value="$(arg max_circularity)" />
-    
-    <param name="filter_by_inertia" value="$(arg filter_by_inertia)" />
-    <param name="min_inertia_ratio" value="$(arg min_inertia_ratio)" />
-    <param name="max_inertia_ratio" value="$(arg max_inertia_ratio)" />
+      <param name="filter_by_circularity" value="$(arg filter_by_circularity)" />
+      <param name="min_circularity" value="$(arg min_circularity)" />
+      <param name="max_circularity" value="$(arg max_circularity)" />
 
-    <param name="filter_by_convexity" value="$(arg filter_by_convexity)" />
-    <param name="min_convexity" value="$(arg min_convexity)" />
-    <param name="max_convexity" value="$(arg max_convexity)" />
+      <param name="filter_by_inertia" value="$(arg filter_by_inertia)" />
+      <param name="min_inertia_ratio" value="$(arg min_inertia_ratio)" />
+      <param name="max_inertia_ratio" value="$(arg max_inertia_ratio)" />
 
-    <param name="min_area_upper_limit" value="$(arg min_area_upper_limit)" />
-    <param name="max_area_upper_limit" value="$(arg max_area_upper_limit)" />
-    <param name="min_dist_between_blobs_upper_limit" value="$(arg min_dist_between_blobs_upper_limit)" />
-  </node>
+      <param name="filter_by_convexity" value="$(arg filter_by_convexity)" />
+      <param name="min_convexity" value="$(arg min_convexity)" />
+      <param name="max_convexity" value="$(arg max_convexity)" />
+
+      <param name="min_area_upper_limit" value="$(arg min_area_upper_limit)" />
+      <param name="max_area_upper_limit" value="$(arg max_area_upper_limit)" />
+      <param name="min_dist_between_blobs_upper_limit" value="$(arg min_dist_between_blobs_upper_limit)" />
+    </node>
+  </group>
+
+  <group if="$(eval debug_mode == 'debug_view')">
+    <node name="$(arg node_name)" pkg="opencv_apps" type="blob_detection">
+      <remap from="image" to="$(arg image)" />
+      <param name="use_camera_info" value="$(arg use_camera_info)" />
+      <param name="debug_view" value="true" />
+      <param name="queue_size" value="$(arg queue_size)" />
+
+      <param name="hue_lower_limit" value="$(arg hue_lower_limit)" />
+      <param name="hue_upper_limit" value="$(arg hue_upper_limit)" />
+      <param name="sat_lower_limit" value="$(arg sat_lower_limit)" />
+      <param name="sat_upper_limit" value="$(arg sat_upper_limit)" />
+      <param name="val_lower_limit" value="$(arg val_lower_limit)" />
+      <param name="val_upper_limit" value="$(arg val_upper_limit)" />
+
+      <param name="morphology_ex_type" value="$(arg morphology_ex_type)" />
+      <param name="morphology_ex_kernel_size" value="$(arg morphology_ex_kernel_size)" />
+
+      <param name="filter_by_color" value="$(arg filter_by_color)" />
+      <param name="blob_color" value="$(arg blob_color)" />
+
+      <param name="filter_by_area" value="$(arg filter_by_area)" />
+      <param name="min_area" value="$(arg min_area)" />
+      <param name="max_area" value="$(arg max_area)" />
+
+      <param name="min_dist_between_blobs" value="$(arg min_dist_between_blobs)" />
+
+      <param name="filter_by_circularity" value="$(arg filter_by_circularity)" />
+      <param name="min_circularity" value="$(arg min_circularity)" />
+      <param name="max_circularity" value="$(arg max_circularity)" />
+
+      <param name="filter_by_inertia" value="$(arg filter_by_inertia)" />
+      <param name="min_inertia_ratio" value="$(arg min_inertia_ratio)" />
+      <param name="max_inertia_ratio" value="$(arg max_inertia_ratio)" />
+
+      <param name="filter_by_convexity" value="$(arg filter_by_convexity)" />
+      <param name="min_convexity" value="$(arg min_convexity)" />
+      <param name="max_convexity" value="$(arg max_convexity)" />
+
+      <param name="min_area_upper_limit" value="$(arg min_area_upper_limit)" />
+      <param name="max_area_upper_limit" value="$(arg max_area_upper_limit)" />
+      <param name="min_dist_between_blobs_upper_limit" value="$(arg min_dist_between_blobs_upper_limit)" />
+    </node>
+  </group>
+
+  <group if="$(eval debug_mode == 'ros')">
+    <node name="$(arg node_name)" pkg="opencv_apps" type="blob_detection">
+      <remap from="image" to="$(arg image)" />
+      <param name="use_camera_info" value="$(arg use_camera_info)" />
+      <param name="debug_view" value="false" />
+      <param name="queue_size" value="$(arg queue_size)" />
+
+      <param name="hue_lower_limit" value="$(arg hue_lower_limit)" />
+      <param name="hue_upper_limit" value="$(arg hue_upper_limit)" />
+      <param name="sat_lower_limit" value="$(arg sat_lower_limit)" />
+      <param name="sat_upper_limit" value="$(arg sat_upper_limit)" />
+      <param name="val_lower_limit" value="$(arg val_lower_limit)" />
+      <param name="val_upper_limit" value="$(arg val_upper_limit)" />
+
+      <param name="morphology_ex_type" value="$(arg morphology_ex_type)" />
+      <param name="morphology_ex_kernel_size" value="$(arg morphology_ex_kernel_size)" />
+  
+      <param name="filter_by_color" value="$(arg filter_by_color)" />
+      <param name="blob_color" value="$(arg blob_color)" />
+
+      <param name="filter_by_area" value="$(arg filter_by_area)" />
+      <param name="min_area" value="$(arg min_area)" />
+      <param name="max_area" value="$(arg max_area)" />
+  
+      <param name="min_dist_between_blobs" value="$(arg min_dist_between_blobs)" />
+
+      <param name="filter_by_circularity" value="$(arg filter_by_circularity)" />
+      <param name="min_circularity" value="$(arg min_circularity)" />
+      <param name="max_circularity" value="$(arg max_circularity)" />
+      
+      <param name="filter_by_inertia" value="$(arg filter_by_inertia)" />
+      <param name="min_inertia_ratio" value="$(arg min_inertia_ratio)" />
+      <param name="max_inertia_ratio" value="$(arg max_inertia_ratio)" />
+
+      <param name="filter_by_convexity" value="$(arg filter_by_convexity)" />
+      <param name="min_convexity" value="$(arg min_convexity)" />
+      <param name="max_convexity" value="$(arg max_convexity)" />
+
+      <param name="min_area_upper_limit" value="$(arg min_area_upper_limit)" />
+      <param name="max_area_upper_limit" value="$(arg max_area_upper_limit)" />
+      <param name="min_dist_between_blobs_upper_limit" value="$(arg min_dist_between_blobs_upper_limit)" />
+    </node>
+    <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find opencv_apps)/config/blob_detection.rviz"/>
+  </group>
+
+  <group if="$(eval debug_mode == 'deploy')">
+    <node name="$(arg node_name)" pkg="opencv_apps" type="blob_detection">
+      <remap from="image" to="$(arg image)" />
+      <param name="use_camera_info" value="$(arg use_camera_info)" />
+      <param name="debug_view" value="false" />
+      <param name="queue_size" value="$(arg queue_size)" />
+      <rosparam file="$(find opencv_apps)/config/blob_detection_config.yaml" />
+    </node>
+  </group>
 </launch>

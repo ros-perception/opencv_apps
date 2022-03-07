@@ -516,9 +516,9 @@ public:
     pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
     pnh_->param("morphology_ex_type", morphology_ex_type_, morphology_ex_type_default_value_);
-    pnh_->param("min_area_upper_limit", min_area_upper_limit_, 300000);
-    pnh_->param("max_area_upper_limit", max_area_upper_limit_, 300000);
-    pnh_->param("min_dist_between_blobs_upper_limit", min_dist_between_blobs_upper_limit_, 800);
+    pnh_->param("min_area_upper_limit", min_area_upper_limit_, 40000);
+    pnh_->param("max_area_upper_limit", max_area_upper_limit_, 40000);
+    pnh_->param("min_dist_between_blobs_upper_limit", min_dist_between_blobs_upper_limit_, 200);
 
     if (debug_view_)
     {
