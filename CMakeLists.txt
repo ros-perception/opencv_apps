@@ -66,6 +66,7 @@ generate_dynamic_reconfigure_options(
   cfg/HSVColorFilter.cfg
   cfg/LabColorFilter.cfg
   cfg/WatershedSegmentation.cfg
+  cfg/Objectness.cfg
   )
 
 ## Generate messages in the 'msg' folder
@@ -302,6 +303,7 @@ opencv_apps_add_nodelet(lk_flow src/nodelet/lk_flow_nodelet.cpp) # ./lkdemo.cpp
 # ./morphology2.cpp
 # ./neural_network.cpp
 # ./npr_demo.cpp
+opencv_apps_add_nodelet(objectness src/nodelet/objectness_nodelet.cpp)
 # ./opencv_version.cpp
 # ./openni_capture.cpp
 # ./pca.cpp
