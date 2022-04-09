@@ -9,23 +9,18 @@
   <arg name="queue_size" default="3" doc="Specigy queue_size of input image subscribers" />
 
   <arg name="training_path" doc="The path of trained model.
-                                 Please download from
+                                 Please download
                                  https://github.com/opencv/opencv_contrib/tree/3.4/modules/saliency/samples/ObjectnessTrainedModel"     />
-  <arg name="base" default="2.0" doc="Base for window size quantization" />
   <arg name="nss" default="2" doc="Size for non-maximal suppress" />
-  <arg name="w" default="8" doc="Size of feature window" />
 
   <!-- equalize_histogram.cpp  -->
-  <node name="$(arg node_name)" pkg="opencv_apps" type="objectness" output="screen"
-        launch-prefix="xterm -e gdb --args">
+  <node name="$(arg node_name)" pkg="opencv_apps" type="objectness" output="screen">
     <remap from="image" to="$(arg image)" />
     <param name="use_camera_info" value="$(arg use_camera_info)" />
     <param name="debug_view" value="$(arg debug_view)" />
     <param name="queue_size" value="$(arg queue_size)" />
     <param name="training_path" value="$(arg training_path)" />
-    <param name="base" value="$(arg base)" />
     <param name="nss" value="$(arg nss)" />
-    <param name="w" value="$(arg w)" />
     <!-- TODO add opencl? -->
     <!-- <param name="use_opencl" value="$(arg use_opencl)" /> -->
   </node>

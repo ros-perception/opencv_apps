@@ -68,19 +68,14 @@ namespace opencv_apps{
 
         boost::mutex mutex_;
 
-        std::string training_path_;
+        cv::Ptr<cv::saliency::Saliency> objectnessAlgorithm;
 
-        cv::Ptr<cv::saliency::Saliency> objectnessAlgorithm = cv::saliency::Objectness::create("BING"); // support just BING algorithm
-
-        double base_;
         int nss_;
-        int w_;
+        std::string training_path_;
 
         void reconfigureCallback(Config& new_config, uint32_t level){
             config_ = new_config;
-            base_ = config_.base;
-            nss_ = config_.base;
-            w_ = config_.w;
+            nss_ = config_.nss;
         }
 
         void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info){
@@ -96,7 +91,7 @@ namespace opencv_apps{
                 // declaration
                 std::vector<cv::Vec4i> objectnessBoxes;
                 std::vector<float> objectnessValues;
-                cv::UMat frame;
+                cv::Mat frame, frame_float_;
                 opencv_apps::RectArrayStamped rects;
 
                 // set header
@@ -104,26 +99,20 @@ namespace opencv_apps{
 
                 // convert the image msg to cv object
                 if (msg->encoding == sensor_msgs::image_encodings::BGR8){
-                    frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image.getUMat(cv::ACCESS_RW);
-                    NODELET_INFO("bgr8\n");
+                    frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
                 }else if(msg->encoding == sensor_msgs::image_encodings::RGB8){
-                    frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::RGB8)->image.getUMat(cv::ACCESS_RW);
-                    NODELET_INFO("rgb8\n");
+                    frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::RGB8)->image;
                 }else if(msg->encoding == sensor_msgs::image_encodings::MONO8){
-                    frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8)->image.getUMat(cv::ACCESS_RW);
-                    NODELET_INFO("mono\n");
+                    frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8)->image;
                 }else{
                     NODELET_ERROR_STREAM("Not supported image encoding: " << msg->encoding);
                 }
 
                 // reconfigure
-                objectnessAlgorithm.dynamicCast<cv::saliency::ObjectnessBING>()->setBase(base_);
                 objectnessAlgorithm.dynamicCast<cv::saliency::ObjectnessBING>()->setNSS(nss_);
-                objectnessAlgorithm.dynamicCast<cv::saliency::ObjectnessBING>()->setW(w_);
 
                 // detect
                 if(objectnessAlgorithm->computeSaliency(frame, objectnessBoxes)){
-                    NODELET_INFO("DETECTED!\n");
                     for(const cv::Vec4i& b : objectnessBoxes){
                         // array b has (minX, minY, maxX, maxY)
                         opencv_apps::Rect rect;
@@ -164,16 +153,15 @@ namespace opencv_apps{
         virtual void onInit(){
             Nodelet::onInit();
             it_ = std::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
-
             pnh_->param("queue_size", queue_size_, 3);
             pnh_->param("debug_view", debug_view_, false);
-            pnh_->param("training_path", training_path_);
-
-            if (debug_view_){
-                always_subscribe_ = true;
-            }
+            pnh_->getParam("training_path", training_path_);
 
             window_name_ = "Objectness View";
+
+            objectnessAlgorithm = cv::saliency::Objectness::create("BING"); // support BING
+            NODELET_WARN_STREAM("BING Training path: " << training_path_);
+            objectnessAlgorithm.dynamicCast<cv::saliency::ObjectnessBING>()->setTrainingPath(training_path_);
 
             reconfigure_server_ = std::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
             typename dynamic_reconfigure::Server<Config>::CallbackType f =
@@ -182,8 +170,6 @@ namespace opencv_apps{
 
             img_pub_ = advertiseImage(*pnh_, "image", 1);
             msg_pub_ = advertise<opencv_apps::RectArrayStamped>(*pnh_, "rect", 1);
-
-            objectnessAlgorithm.dynamicCast<cv::saliency::ObjectnessBING>()->setTrainingPath(training_path_);
 
             onInitPostProcess();
         }
