@@ -12,6 +12,7 @@
                                  Please download
                                  https://github.com/opencv/opencv_contrib/tree/3.4/modules/saliency/samples/ObjectnessTrainedModel"     />
   <arg name="nss" default="2" doc="Size for non-maximal suppress" />
+  <arg name="max_objectness" default="10" doc="Maximum number of objectness to be detected" />
 
   <!-- equalize_histogram.cpp  -->
   <node name="$(arg node_name)" pkg="opencv_apps" type="objectness" output="screen">
@@ -21,7 +22,6 @@
     <param name="queue_size" value="$(arg queue_size)" />
     <param name="training_path" value="$(arg training_path)" />
     <param name="nss" value="$(arg nss)" />
-    <!-- TODO add opencl? -->
-    <!-- <param name="use_opencl" value="$(arg use_opencl)" /> -->
+    <param name="max_objectness" value="$(arg max_objectness)" />
   </node>
 </launch>

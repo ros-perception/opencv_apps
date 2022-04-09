@@ -50,7 +50,7 @@ namespace opencv_apps{
     class ObjectnessNodelet : public opencv_apps::Nodelet
     {
         std::string window_name_;
-        image_transport::Publisher img_pub_;
+
         image_transport::Subscriber img_sub_;
         image_transport::CameraSubscriber cam_sub_;
         ros::Publisher msg_pub_;
@@ -72,10 +72,12 @@ namespace opencv_apps{
 
         int nss_;
         std::string training_path_;
+        int max_objectness_;
 
         void reconfigureCallback(Config& new_config, uint32_t level){
             config_ = new_config;
             nss_ = config_.nss;
+            max_objectness_ = config_.max_objectness;
         }
 
         void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info){
@@ -89,50 +91,59 @@ namespace opencv_apps{
         void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg){
             try{
                 // declaration
-                std::vector<cv::Vec4i> objectnessBoxes;
-                std::vector<float> objectnessValues;
-                cv::Mat frame, frame_float_;
-                opencv_apps::RectArrayStamped rects;
-
-                // set header
-                rects.header.frame_id = input_frame_from_msg;
+                std::vector<cv::Vec4i> objectnessBoxes_;
+                cv::Mat frame_, debug_frame_;
+                opencv_apps::RectArrayStamped rects_;
 
                 // convert the image msg to cv object
                 if (msg->encoding == sensor_msgs::image_encodings::BGR8){
-                    frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
+                    frame_ = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
                 }else if(msg->encoding == sensor_msgs::image_encodings::RGB8){
-                    frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::RGB8)->image;
+                    frame_ = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::RGB8)->image;
+                    cv::cvtColor(frame_, frame_, CV_RGB2BGR);
                 }else if(msg->encoding == sensor_msgs::image_encodings::MONO8){
-                    frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8)->image;
+                    frame_ = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8)->image;
                 }else{
                     NODELET_ERROR_STREAM("Not supported image encoding: " << msg->encoding);
+                }
+
+                if (debug_view_){
+                    cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
+                    debug_frame_ = frame_.clone();
                 }
 
                 // reconfigure
                 objectnessAlgorithm.dynamicCast<cv::saliency::ObjectnessBING>()->setNSS(nss_);
 
                 // detect
-                if(objectnessAlgorithm->computeSaliency(frame, objectnessBoxes)){
-                    for(const cv::Vec4i& b : objectnessBoxes){
+                if(objectnessAlgorithm->computeSaliency(frame_, objectnessBoxes_)){
+                    rects_.header.frame_id = input_frame_from_msg; // set header
+                    // for(const cv::Vec4i& b : objectnessBoxes_){
+                    for(int i=0; i<std::min((int)objectnessBoxes_.size(), max_objectness_); i++){
                         // array b has (minX, minY, maxX, maxY)
-                        opencv_apps::Rect rect;
-                        rect.x = float(b[0] + b[2]) / 2.0;
-                        rect.y = float(b[1] + b[3]) / 2.0;
-                        rect.width = b[2] - b[0];
-                        rect.height = b[3] - b[1];
-                        rects.rects.push_back(rect);
+                        cv::Vec4i& b = objectnessBoxes_.at(i);
+                        opencv_apps::Rect rect_;
+                        rect_.x = float(b[0] + b[2]) / 2.0;
+                        rect_.y = float(b[1] + b[3]) / 2.0;
+                        rect_.width = b[2] - b[0];
+                        rect_.height = b[3] - b[1];
+                        rects_.rects.push_back(rect_);
+                        // draw rect in debug view
+                        if(debug_view_)
+                            cv::rectangle(debug_frame_, cv::Vec2i(b[0], b[1]), cv::Vec2i(b[2], b[3]), cv::Vec3i(0, 0, 255), 3);
                     }
                     // publish
-                    msg_pub_.publish(rects);
+                    msg_pub_.publish(rects_);
                 }
 
                 if (debug_view_){
-                    // TODO add debug view, draw rect on current frame
-                    // cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
+                    cv::imshow(window_name_, debug_frame_);
+                    int c = cv::waitKey(1);
                 }
 
             }catch(cv::Exception& e){
-                NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+                NODELET_ERROR("Image processing error: %s %s %s %i\n", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+                NODELET_ERROR("Please check the training path set correctly at the same time\n");
             }
         }
 
@@ -159,8 +170,9 @@ namespace opencv_apps{
 
             window_name_ = "Objectness View";
 
-            objectnessAlgorithm = cv::saliency::Objectness::create("BING"); // support BING
-            NODELET_WARN_STREAM("BING Training path: " << training_path_);
+            objectnessAlgorithm = cv::saliency::ObjectnessBING::create(); // support BING
+
+            NODELET_INFO_STREAM("BING Training path: " << training_path_);
             objectnessAlgorithm.dynamicCast<cv::saliency::ObjectnessBING>()->setTrainingPath(training_path_);
 
             reconfigure_server_ = std::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
@@ -168,7 +180,6 @@ namespace opencv_apps{
                 std::bind(&ObjectnessNodelet::reconfigureCallback, this, std::placeholders::_1, std::placeholders::_2);
             reconfigure_server_->setCallback(f);
 
-            img_pub_ = advertiseImage(*pnh_, "image", 1);
             msg_pub_ = advertise<opencv_apps::RectArrayStamped>(*pnh_, "rect", 1);
 
             onInitPostProcess();
