@@ -161,7 +161,7 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
     catch (cv::Exception& e)
     {
       NODELET_ERROR("Image processing error: %s %s %s %i\n", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
-      NODELET_ERROR("Please check the training path set correctly at the same time\n");
+      NODELET_ERROR("Please check whether you set the training path correctly at the same time\n");
     }
   }
 

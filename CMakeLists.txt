@@ -23,6 +23,9 @@ message(STATUS "OpenCV Components: ${OpenCV_LIB_COMPONENTS}")
 if(OpenCV_VERSION VERSION_LESS "3.0" OR TARGET opencv_optflow)
   set(OPENCV_HAVE_OPTFLOW TRUE)
 endif()
+if(OpenCV_VERSION VERSION_GREATER "3.1")
+  set(OPENCV_HAVE_SALIENCY TRUE)
+endif()
 # Supporting CompressedImage in cv_bridge has been started from 1.11.9 (2015-11-29)
 # note : hydro 1.10.18, indigo : 1.11.13 ...
 # https://github.com/ros-perception/vision_opencv/pull/70
@@ -303,7 +306,6 @@ opencv_apps_add_nodelet(lk_flow src/nodelet/lk_flow_nodelet.cpp) # ./lkdemo.cpp
 # ./morphology2.cpp
 # ./neural_network.cpp
 # ./npr_demo.cpp
-opencv_apps_add_nodelet(objectness src/nodelet/objectness_nodelet.cpp)
 # ./opencv_version.cpp
 # ./openni_capture.cpp
 # ./pca.cpp
@@ -349,6 +351,9 @@ opencv_apps_add_nodelet(simple_compressed_example src/nodelet/simple_compressed_
 # simple flow requires opencv-contrib https://github.com/ros-perception/vision_opencv/issues/108
 if(OPENCV_HAVE_OPTFLOW)
   opencv_apps_add_nodelet(simple_flow src/nodelet/simple_flow_nodelet.cpp)
+endif()
+if(OPENCV_HAVE_SALIENCY)
+  opencv_apps_add_nodelet(objectness src/nodelet/objectness_nodelet.cpp)
 endif()
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/bgfg_gmg.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/hybridtrackingsample.cpp
