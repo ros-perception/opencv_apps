@@ -27,6 +27,44 @@ else()  # CameraInfo changes since 1.4.0 so we need fix bag file
     )
 endif()
 
+# Training data for objectness
+catkin_download_test_data(ObjNessB2W8HSV.idx.yml.gz https://github.com/opencv/opencv_contrib/raw/3.2.0/modules/saliency/samples/ObjectnessTrainedModel/ObjNessB2W8HSV.idx.yml.gz
+  DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+  MD5 e066c100d60246a3911d4559182d9d2a
+  )
+catkin_download_test_data(ObjNessB2W8HSV.wS1.yml.gz https://github.com/opencv/opencv_contrib/raw/3.2.0/modules/saliency/samples/ObjectnessTrainedModel/ObjNessB2W8HSV.wS1.yml.gz
+  DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+  MD5 728507d99521d7dba9b0eb114ccbb830
+  )
+catkin_download_test_data(ObjNessB2W8HSV.wS2.yml.gz https://github.com/opencv/opencv_contrib/raw/3.2.0/modules/saliency/samples/ObjectnessTrainedModel/ObjNessB2W8HSV.wS2.yml.gz
+  DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+  MD5 790e27251267d86168a12f2bd2d96f8d
+  )
+catkin_download_test_data(ObjNessB2W8I.idx.yml.gz https://github.com/opencv/opencv_contrib/raw/3.2.0/modules/saliency/samples/ObjectnessTrainedModel/ObjNessB2W8I.idx.yml.gz
+  DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+  MD5 9425dd4d31521fced82aeb6fc56ce4d5
+  )
+catkin_download_test_data(ObjNessB2W8I.wS1.yml.gz https://github.com/opencv/opencv_contrib/raw/3.2.0/modules/saliency/samples/ObjectnessTrainedModel/ObjNessB2W8I.wS1.yml.gz
+  DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+  MD5 a04d4b4504887fc16800b8b42bac9e70
+  )
+catkin_download_test_data(ObjNessB2W8I.wS2.yml.gz https://github.com/opencv/opencv_contrib/raw/3.2.0/modules/saliency/samples/ObjectnessTrainedModel/ObjNessB2W8I.wS2.yml.gz
+  DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+  MD5 f2e2f5726e352bfa16224066e2bdc7ad
+  )
+catkin_download_test_data(ObjNessB2W8MAXBGR.idx.yml.gz https://github.com/opencv/opencv_contrib/raw/3.2.0/modules/saliency/samples/ObjectnessTrainedModel/ObjNessB2W8MAXBGR.idx.yml.gz
+  DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+  MD5 ef2fbd5da0ffb5fe4332685b8529dc5c
+  )
+catkin_download_test_data(ObjNessB2W8MAXBGR.wS1.yml.gz https://github.com/opencv/opencv_contrib/raw/3.2.0/modules/saliency/samples/ObjectnessTrainedModel/ObjNessB2W8MAXBGR.wS1.yml.gz
+  DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+  MD5 cbe8147fca9a5885b7bb25d38fa5f4d1
+  )
+catkin_download_test_data(ObjNessB2W8MAXBGR.wS2.yml.gz https://github.com/opencv/opencv_contrib/raw/3.2.0/modules/saliency/samples/ObjectnessTrainedModel/ObjNessB2W8MAXBGR.wS2.yml.gz
+  DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+  MD5 02b76364df35cef862da041585b537de
+  )
+
 add_custom_target(vslam_tutorial_bag DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/vslam_tutorial.bag)
 add_dependencies(tests vslam_tutorial_bag)
 
@@ -57,6 +95,7 @@ add_rostest(test-hsv_color_filter.test ARGS gui:=false)
 add_rostest(test-lab_color_filter.test ARGS gui:=false)
 add_rostest(test-edge_detection.test ARGS gui:=false)
 add_rostest(test-equalize_histogram.test ARGS gui:=false)
+add_rostest(test-objectness.test ARGS gui:=false)
 
 add_rostest(test-hough_lines.test ARGS gui:=false)
 add_rostest(test-hough_circles.test ARGS gui:=false)
