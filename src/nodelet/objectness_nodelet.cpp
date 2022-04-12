@@ -201,7 +201,7 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
         std::bind(&ObjectnessNodelet::reconfigureCallback, this, std::placeholders::_1, std::placeholders::_2);
     reconfigure_server_->setCallback(f);
 
-    msg_pub_ = advertise<opencv_apps::RectArrayStamped>(*pnh_, "rect", 1);
+    msg_pub_ = advertise<opencv_apps::RectArrayStamped>(*pnh_, "rects", 1);
 
     onInitPostProcess();
   }
