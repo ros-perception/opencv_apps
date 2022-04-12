@@ -98,24 +98,24 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
     try
     {
       // declaration
-      std::vector<cv::Vec4i> objectnessBoxes_;
-      cv::Mat frame_, debug_frame_;
-      opencv_apps::RectArrayStamped rects_;
-      sensor_msgs::ImagePtr out_img_;
+      std::vector<cv::Vec4i> objectness_boxes;
+      cv::Mat frame, debug_frame;
+      opencv_apps::RectArrayStamped rects;
+      sensor_msgs::ImagePtr out_img;
 
       // convert the image msg to cv object
       if (msg->encoding == sensor_msgs::image_encodings::BGR8)
       {
-        frame_ = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
+        frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
       }
       else if (msg->encoding == sensor_msgs::image_encodings::RGB8)
       {
-        frame_ = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::RGB8)->image;
-        cv::cvtColor(frame_, frame_, CV_RGB2BGR);
+        frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::RGB8)->image;
+        cv::cvtColor(frame, frame, CV_RGB2BGR);
       }
       else if (msg->encoding == sensor_msgs::image_encodings::MONO8)
       {
-        frame_ = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8)->image;
+        frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::MONO8)->image;
       }
       else
       {
@@ -125,45 +125,45 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
       if (debug_view_)
       {
         cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
-        debug_frame_ = frame_.clone();
+        debug_frame = frame.clone();
       }
 
       // reconfigure
       objectnessAlgorithm.dynamicCast<cv::saliency::ObjectnessBING>()->setNSS(nss_);
 
       // detect
-      if (objectnessAlgorithm->computeSaliency(frame_, objectnessBoxes_))
+      if (objectnessAlgorithm->computeSaliency(frame, objectness_boxes))
       {
-        rects_.header.frame_id = input_frame_from_msg;  // set header
+        rects.header.frame_id = input_frame_from_msg;  // set header
         // for(const cv::Vec4i& b : objectnessBoxes_){
-        for (int i = 0; i < std::min((int)objectnessBoxes_.size(), max_objectness_); i++)
+        for (int i = 0; i < std::min((int)objectness_boxes.size(), max_objectness_); i++)
         {
           // array b has (minX, minY, maxX, maxY)
-          cv::Vec4i& b = objectnessBoxes_.at(i);
-          opencv_apps::Rect rect_;
-          rect_.x = float(b[0] + b[2]) / 2.0;
-          rect_.y = float(b[1] + b[3]) / 2.0;
-          rect_.width = b[2] - b[0];
-          rect_.height = b[3] - b[1];
-          rects_.rects.push_back(rect_);
+          cv::Vec4i& b = objectness_boxes.at(i);
+          opencv_apps::Rect rect;
+          rect.x = float(b[0] + b[2]) / 2.0;
+          rect.y = float(b[1] + b[3]) / 2.0;
+          rect.width = b[2] - b[0];
+          rect.height = b[3] - b[1];
+          rects.rects.push_back(rect);
           // draw rect in debug view
-          cv::rectangle(debug_frame_, cv::Vec2i(b[0], b[1]), cv::Vec2i(b[2], b[3]), cv::Vec3i(0, 0, 255), 3);
+          cv::rectangle(debug_frame, cv::Vec2i(b[0], b[1]), cv::Vec2i(b[2], b[3]), cv::Vec3i(0, 0, 255), 3);
         }
         // publish
-        msg_pub_.publish(rects_);
+        msg_pub_.publish(rects);
       }
 
       // publish image
-      if (!objectnessBoxes_.empty())
-        out_img_ = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, debug_frame_).toImageMsg();
+      if (!objectness_boxes.empty())
+        out_img = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, debug_frame).toImageMsg();
       else
-        out_img_ = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, frame_).toImageMsg();
-      img_pub_.publish(out_img_);
+        out_img = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, frame).toImageMsg();
+      img_pub_.publish(out_img);
 
       // draw debug window
       if (debug_view_)
       {
-        cv::imshow(window_name_, debug_frame_);
+        cv::imshow(window_name_, debug_frame);
         int c = cv::waitKey(1);
       }
     }
@@ -174,7 +174,7 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
     }
   }
 
-  void subscribe()
+  void subscribe() override
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
@@ -183,14 +183,14 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
       img_sub_ = it_->subscribe("image", queue_size_, &ObjectnessNodelet::imageCallback, this);
   }
 
-  void unsubscribe()
+  void unsubscribe() override
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
     cam_sub_.shutdown();
   }
 
-  virtual void onInit()
+  void onInit() override
   {
     Nodelet::onInit();
     it_ = std::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
