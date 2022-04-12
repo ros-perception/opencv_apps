@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <launch>
   <arg name="gui" default="true" />
-  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag" />
+  <param name="use_sim_time" value="true" />
+  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.5" />
 
   <group ns="wide_stereo/left" >
     <node name="image_proc" pkg="image_proc" type="image_proc" />
@@ -22,11 +23,12 @@
       <remap from="image" to="objectness/image" />
       <remap from="objectness/camera_info" to="camera_info" />
     </node>
-    <param name="objectness_test/topic" value="objectness/image" />
+    <!-- Check objectness_default/rects is published" -->
+    <param name="objectness_test/topic" value="objectness/rects" />
     <test test-name="objectness_test" pkg="rostest" type="hztest" name="objectness_test" >
-      <param name="hz" value="5" />
-      <param name="hzerror" value="10.0" />
-      <param name="test_duration" value="1.0" />
+      <param name="hz" value="10" />
+      <param name="hzerror" value="5" />
+      <param name="test_duration" value="5.0" />
     </test>
 
   </group>
