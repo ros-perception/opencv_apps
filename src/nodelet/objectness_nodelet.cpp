@@ -101,7 +101,6 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
       std::vector<cv::Vec4i> objectness_boxes;
       cv::Mat frame, debug_frame;
       opencv_apps::RectArrayStamped rects;
-      sensor_msgs::ImagePtr out_img;
 
       // convert the image msg to cv object
       if (msg->encoding == sensor_msgs::image_encodings::BGR8)
@@ -126,7 +125,7 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
       {
         cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
       }
-      debug_frame_ = frame_.clone();
+      debug_frame = frame.clone();
 
       // reconfigure
       objectnessAlgorithm.dynamicCast<cv::saliency::ObjectnessBING>()->setNSS(nss_);
@@ -147,23 +146,16 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
           rect.height = b[3] - b[1];
           rects.rects.push_back(rect);
           // draw rect in debug view
-          cv::rectangle(debug_frame_, cv::Vec2i(b[0], b[1]), cv::Vec2i(b[2], b[3]), cv::Vec3i(0, 0, 255), 3);
+          cv::rectangle(debug_frame, cv::Vec2i(b[0], b[1]), cv::Vec2i(b[2], b[3]), cv::Vec3i(0, 0, 255), 3);
         }
         // Publish the image.
         sensor_msgs::Image::Ptr out_img =
-            cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, debug_frame_).toImageMsg();
+            cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, debug_frame).toImageMsg();
         img_pub_.publish(out_img);
 
         // publish
         msg_pub_.publish(rects);
       }
-
-      // publish image
-      if (!objectness_boxes.empty())
-        out_img = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, debug_frame).toImageMsg();
-      else
-        out_img = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, frame).toImageMsg();
-      img_pub_.publish(out_img);
 
       // draw debug window
       if (debug_view_)
@@ -179,7 +171,7 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
     }
   }
 
-  void subscribe() override
+  void subscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Subscribing to image topic.");
     if (config_.use_camera_info)
@@ -188,14 +180,14 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
       img_sub_ = it_->subscribe("image", queue_size_, &ObjectnessNodelet::imageCallback, this);
   }
 
-  void unsubscribe() override
+  void unsubscribe()  // NOLINT(modernize-use-override)
   {
     NODELET_DEBUG("Unsubscribing from image topic.");
     img_sub_.shutdown();
     cam_sub_.shutdown();
   }
 
-  void onInit() override
+  virtual void onInit()  // NOLINT(modernize-use-override)
   {
     Nodelet::onInit();
     it_ = std::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
