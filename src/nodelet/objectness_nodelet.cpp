@@ -198,6 +198,9 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
     pnh_->param("debug_view", debug_view_, false);
     pnh_->getParam("training_path", training_path_);
 
+    if (training_path_.empty())
+      NODELET_FATAL("Please set the path to directory of training data");
+
     window_name_ = "Objectness View";
 
     objectnessAlgorithm = cv::saliency::ObjectnessBING::create();  // support BING

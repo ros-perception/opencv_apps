@@ -8,9 +8,9 @@
   <arg name="debug_view" default="true" doc="Specify whether the node displays a window to show image" />
   <arg name="queue_size" default="3" doc="Specigy queue_size of input image subscribers" />
 
-  <arg name="training_path" doc="The path of trained model.
-                                 Please download
-                                 https://github.com/opencv/opencv_contrib/tree/3.4/modules/saliency/samples/ObjectnessTrainedModel"     />
+  <arg name="training_path" default="" doc="The path of trained model.
+                                            Please download
+                                            https://github.com/opencv/opencv_contrib/tree/3.4/modules/saliency/samples/ObjectnessTrainedModel"     />
   <arg name="nss" default="2" doc="Size for non-maximal suppress" />
   <arg name="max_objectness" default="10" doc="Maximum number of objectness to be detected" />
 
