@@ -12,18 +12,18 @@
       <arg name="debug_view" value="$(arg gui)" />
       <arg name="image" value="image_rect_color" />
       <arg name="training_path" value="$(find opencv_apps)/test" />
-      <arg name="node_name" value="objectness_default" />
+      <arg name="node_name" value="objectness" />
     </include>
 
     <!-- Test Codes -->
     <node name="objectness_saver" pkg="image_view" type="image_saver" >
-      <param name="filename_format" value="$(find opencv_apps)/test/objectness_default.png"/>
+      <param name="filename_format" value="$(find opencv_apps)/test/objectness.png"/>
       <param name="queue_size" value="5" />
-      <remap from="image" to="objectness_default/image" />
-      <remap from="objectness_default/camera_info" to="camera_info" />
+      <remap from="image" to="objectness/image" />
+      <remap from="objectness/camera_info" to="camera_info" />
     </node>
-    <param name="objectness_default_test/topic" value="objectness_default/image" />
-    <test test-name="objectness_default_test" pkg="rostest" type="hztest" name="objectness_default_test" >
+    <param name="objectness_test/topic" value="objectness/image" />
+    <test test-name="objectness_test" pkg="rostest" type="hztest" name="objectness_test" >
       <param name="hz" value="10" />
       <param name="hzerror" value="5" />
       <param name="test_duration" value="5.0" />

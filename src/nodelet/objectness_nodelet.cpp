@@ -52,6 +52,7 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
 {
   std::string window_name_;
 
+  image_transport::Publisher img_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
   ros::Publisher msg_pub_;
@@ -100,6 +101,7 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
       std::vector<cv::Vec4i> objectnessBoxes_;
       cv::Mat frame_, debug_frame_;
       opencv_apps::RectArrayStamped rects_;
+      sensor_msgs::ImagePtr out_img_;
 
       // convert the image msg to cv object
       if (msg->encoding == sensor_msgs::image_encodings::BGR8)
@@ -145,13 +147,20 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
           rect_.height = b[3] - b[1];
           rects_.rects.push_back(rect_);
           // draw rect in debug view
-          if (debug_view_)
-            cv::rectangle(debug_frame_, cv::Vec2i(b[0], b[1]), cv::Vec2i(b[2], b[3]), cv::Vec3i(0, 0, 255), 3);
+          cv::rectangle(debug_frame_, cv::Vec2i(b[0], b[1]), cv::Vec2i(b[2], b[3]), cv::Vec3i(0, 0, 255), 3);
         }
         // publish
         msg_pub_.publish(rects_);
       }
 
+      // publish image
+      if (!objectnessBoxes_.empty())
+        out_img_ = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, debug_frame_).toImageMsg();
+      else
+        out_img_ = cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, frame_).toImageMsg();
+      img_pub_.publish(out_img_);
+
+      // draw debug window
       if (debug_view_)
       {
         cv::imshow(window_name_, debug_frame_);
@@ -160,8 +169,8 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
     }
     catch (cv::Exception& e)
     {
-      NODELET_ERROR("Image processing error: %s %s %s %i\n", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
-      NODELET_ERROR("Please check whether you set the training path correctly at the same time\n");
+      NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+      NODELET_ERROR("Please check whether you set the training path correctly at the same time");
     }
   }
 
@@ -201,6 +210,7 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
         std::bind(&ObjectnessNodelet::reconfigureCallback, this, std::placeholders::_1, std::placeholders::_2);
     reconfigure_server_->setCallback(f);
 
+    img_pub_ = advertiseImage(*pnh_, "image", 1);
     msg_pub_ = advertise<opencv_apps::RectArrayStamped>(*pnh_, "rects", 1);
 
     onInitPostProcess();
