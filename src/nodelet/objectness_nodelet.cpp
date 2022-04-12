@@ -125,8 +125,8 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
       if (debug_view_)
       {
         cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
-        debug_frame = frame.clone();
       }
+      debug_frame_ = frame_.clone();
 
       // reconfigure
       objectnessAlgorithm.dynamicCast<cv::saliency::ObjectnessBING>()->setNSS(nss_);
@@ -147,8 +147,13 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
           rect.height = b[3] - b[1];
           rects.rects.push_back(rect);
           // draw rect in debug view
-          cv::rectangle(debug_frame, cv::Vec2i(b[0], b[1]), cv::Vec2i(b[2], b[3]), cv::Vec3i(0, 0, 255), 3);
+          cv::rectangle(debug_frame_, cv::Vec2i(b[0], b[1]), cv::Vec2i(b[2], b[3]), cv::Vec3i(0, 0, 255), 3);
         }
+        // Publish the image.
+        sensor_msgs::Image::Ptr out_img =
+            cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, debug_frame_).toImageMsg();
+        img_pub_.publish(out_img);
+
         // publish
         msg_pub_.publish(rects);
       }
@@ -196,6 +201,10 @@ class ObjectnessNodelet : public opencv_apps::Nodelet
     it_ = std::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
     pnh_->param("queue_size", queue_size_, 3);
     pnh_->param("debug_view", debug_view_, false);
+    if (debug_view_)
+    {
+      always_subscribe_ = true;
+    }
     pnh_->getParam("training_path", training_path_);
 
     if (training_path_.empty())
