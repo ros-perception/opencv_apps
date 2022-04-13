@@ -66,6 +66,7 @@ generate_dynamic_reconfigure_options(
   cfg/HSVColorFilter.cfg
   cfg/LabColorFilter.cfg
   cfg/WatershedSegmentation.cfg
+  cfg/Objectness.cfg
   )
 
 ## Generate messages in the 'msg' folder
@@ -348,6 +349,9 @@ opencv_apps_add_nodelet(simple_compressed_example src/nodelet/simple_compressed_
 if(OPENCV_HAVE_OPTFLOW)
   opencv_apps_add_nodelet(simple_flow src/nodelet/simple_flow_nodelet.cpp)
 endif()
+if(OpenCV_VERSION VERSION_GREATER "3.1") # cv::saliency::ObjectnessBING is supported since 3.2
+  opencv_apps_add_nodelet(objectness src/nodelet/objectness_nodelet.cpp)
+endif()
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/bgfg_gmg.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/hybridtrackingsample.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/linemod.cpp
@@ -387,8 +391,15 @@ if(CATKIN_ENABLE_TESTING)
     message(WARNING "roslaunch_add_file check fails with unsupported doc attributes ${roslaunch_VERSION}")
   else()
     file(GLOB LAUNCH_FILES launch/*.launch)
+    if(OpenCV_VERSION VERSION_LESS "3.2")
+      list(REMOVE_ITEM LAUNCH_FILES ${PROJECT_SOURCE_DIR}/launch/objectness.launch)
+    endif()
     foreach(LAUNCH_FILE ${LAUNCH_FILES})
-      roslaunch_add_file_check(${LAUNCH_FILE})
+      set(ARGS "")
+      if("${LAUNCH_FILE}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}/launch/objectness.launch")
+        set(ARGS "training_path:=${CMAKE_CURRENT_SOURCE_DIR}/test")
+      endif()
+      roslaunch_add_file_check(${LAUNCH_FILE} ${ARGS})
     endforeach()
   endif()
   add_subdirectory(test)
