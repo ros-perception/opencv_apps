@@ -127,6 +127,10 @@
     <description>Nodelet for histogram equalization</description>
   </class>
 
+  <class name="opencv_apps/objectness" type="opencv_apps::ObjectnessNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet for detecting objectness</description>
+  </class>
+
   <!--
       for backward compatibility, can be removed in M-turtle
   -->
