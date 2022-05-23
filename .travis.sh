@@ -163,6 +163,7 @@ elif [ "$TEST" == "clang-tidy" ]; then
 	    run-clang-tidy -fix -p $(dirname $file)
     done
     travis_time_end
+    sudo chown -R $(whoami) $CI_SOURCE_PATH
     git -C $CI_SOURCE_PATH --no-pager diff
     git -C $CI_SOURCE_PATH diff-index --quiet HEAD -- .
 
