@@ -30,8 +30,18 @@ jobs:
           - TEST : debian-unstable
             DOCKER_IMAGE : debian:unstable
     steps:
+      - name: Setup OS
+        run: |
+          sudo apt-get update -y
+          sudo apt-get upgrade -y
+      - name: Setup Git
+        run: |
+          sudo apt-get install -y git
       - name: Chcekout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: recursive
       # python3_check
       - name: python3_check
         if: matrix.CHECK_PYTHON3_COMPILE  == true
