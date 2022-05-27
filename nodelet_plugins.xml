@@ -127,6 +127,10 @@
     <description>Nodelet for histogram equalization</description>
   </class>
 
+  <class name="opencv_apps/tracking" type="opencv_apps::TrackingNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet for tracking</description>
+  </class>
+
   <!--
       for backward compatibility, can be removed in M-turtle
   -->
