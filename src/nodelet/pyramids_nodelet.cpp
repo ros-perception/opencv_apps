@@ -206,6 +206,6 @@ public:
 };
 }  // namespace pyramids
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::PyramidsNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(pyramids::PyramidsNodelet, nodelet::Nodelet);

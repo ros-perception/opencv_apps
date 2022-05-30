@@ -249,6 +249,6 @@ public:
 };
 }  // namespace smoothing
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::SmoothingNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(smoothing::SmoothingNodelet, nodelet::Nodelet);

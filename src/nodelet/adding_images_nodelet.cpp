@@ -289,6 +289,6 @@ public:
 };
 }  // namespace adding_images
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::AddingImagesNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(adding_images::AddingImagesNodelet, nodelet::Nodelet);

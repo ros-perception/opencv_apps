@@ -692,6 +692,6 @@ public:
 };
 }  // namespace face_recognition
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::FaceRecognitionNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(face_recognition::FaceRecognitionNodelet, nodelet::Nodelet);

@@ -186,6 +186,6 @@ public:
 };
 }  // namespace threshold
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::ThresholdNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(threshold::ThresholdNodelet, nodelet::Nodelet);

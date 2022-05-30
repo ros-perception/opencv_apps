@@ -241,6 +241,6 @@ public:
 };
 }  // namespace corner_harris
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::CornerHarrisNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(corner_harris::CornerHarrisNodelet, nodelet::Nodelet);
