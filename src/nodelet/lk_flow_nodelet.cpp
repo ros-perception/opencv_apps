@@ -368,6 +368,6 @@ public:
 };
 }  // namespace lk_flow
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::LKFlowNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(lk_flow::LKFlowNodelet, nodelet::Nodelet);

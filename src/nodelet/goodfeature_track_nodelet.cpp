@@ -263,6 +263,6 @@ public:
 };
 }  // namespace goodfeature_track
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::GoodfeatureTrackNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(goodfeature_track::GoodfeatureTrackNodelet, nodelet::Nodelet);

@@ -336,6 +336,6 @@ public:
 };
 }  // namespace edge_detection
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::EdgeDetectionNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(edge_detection::EdgeDetectionNodelet, nodelet::Nodelet);

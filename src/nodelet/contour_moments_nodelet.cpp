@@ -314,6 +314,6 @@ public:
 };
 }  // namespace contour_moments
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::ContourMomentsNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(contour_moments::ContourMomentsNodelet, nodelet::Nodelet);

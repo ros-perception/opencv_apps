@@ -387,6 +387,6 @@ public:
 };
 }  // namespace hough_circles
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::HoughCirclesNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(hough_circles::HoughCirclesNodelet, nodelet::Nodelet);

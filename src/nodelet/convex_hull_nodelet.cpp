@@ -267,6 +267,6 @@ public:
 };
 }  // namespace convex_hull
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::ConvexHullNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(convex_hull::ConvexHullNodelet, nodelet::Nodelet);

@@ -304,6 +304,6 @@ public:
 };
 }  // namespace segment_objects
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::SegmentObjectsNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(segment_objects::SegmentObjectsNodelet, nodelet::Nodelet);

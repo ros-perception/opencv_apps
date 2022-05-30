@@ -225,6 +225,6 @@ public:
 };
 }  // namespace discrete_fourier_transform
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::DiscreteFourierTransformNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(discrete_fourier_transform::DiscreteFourierTransformNodelet, nodelet::Nodelet);

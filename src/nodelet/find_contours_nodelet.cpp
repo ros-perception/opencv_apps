@@ -263,6 +263,6 @@ public:
 };
 }  // namespace find_contours
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::FindContoursNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(find_contours::FindContoursNodelet, nodelet::Nodelet);

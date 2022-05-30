@@ -453,6 +453,6 @@ public:
 };
 }  // namespace camshift
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::CamShiftNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(camshift::CamShiftNodelet, nodelet::Nodelet);

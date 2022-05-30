@@ -205,6 +205,6 @@ public:
 };
 }  // namespace morphology
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::MorphologyNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(morphology::MorphologyNodelet, nodelet::Nodelet);

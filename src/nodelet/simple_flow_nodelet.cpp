@@ -285,6 +285,6 @@ public:
 };
 }  // namespace simple_flow
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::SimpleFlowNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(simple_flow::SimpleFlowNodelet, nodelet::Nodelet);

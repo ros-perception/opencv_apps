@@ -330,6 +330,6 @@ public:
 };
 }  // namespace hough_lines
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::HoughLinesNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(hough_lines::HoughLinesNodelet, nodelet::Nodelet);

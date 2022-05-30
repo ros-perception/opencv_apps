@@ -143,6 +143,6 @@ public:
 };
 }  // namespace simple_example
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::SimpleExampleNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(simple_example::SimpleExampleNodelet, nodelet::Nodelet);

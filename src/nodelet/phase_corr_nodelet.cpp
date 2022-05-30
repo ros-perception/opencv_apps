@@ -244,6 +244,6 @@ public:
 };
 }  // namespace phase_corr
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::PhaseCorrNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(phase_corr::PhaseCorrNodelet, nodelet::Nodelet);

@@ -298,6 +298,6 @@ public:
 };
 }  // namespace general_contours
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(opencv_apps::GeneralContoursNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(general_contours::GeneralContoursNodelet, nodelet::Nodelet);
