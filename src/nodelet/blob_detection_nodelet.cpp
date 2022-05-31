@@ -1,4 +1,5 @@
-// -*- coding:utf-8-unix; mode: c++; indent-tabs-mode: nil; c-basic-offset: 2; -*-
+// -*- coding:utf-8-unix; mode: c++; indent-tabs-mode: nil; c-basic-offset: 2;
+// -*-
 /*********************************************************************
 * Software License Agreement (BSD License)
 *
@@ -47,22 +48,21 @@
  * @author LearnOpenCV team
  */
 
-#include <ros/ros.h>
 #include "opencv_apps/nodelet.h"
-#include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
+#include <ros/ros.h>
 #include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <dynamic_reconfigure/server.h>
-#include "opencv_apps/BlobDetectionConfig.h"
 #include "opencv_apps/Blob.h"
 #include "opencv_apps/BlobArray.h"
 #include "opencv_apps/BlobArrayStamped.h"
-
+#include "opencv_apps/BlobDetectionConfig.h"
+#include <dynamic_reconfigure/server.h>
 
 namespace opencv_apps
 {
@@ -87,10 +87,11 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
   bool debug_view_;
   ros::Time prev_stamp_;
 
-  std::string window_name_, thresholded_image_name_, thresholded_image_with_mask_name_, morphology_ex_image_name_, blob_detector_params_name_;
+  std::string window_name_, thresholded_image_name_, thresholded_image_with_mask_name_, morphology_ex_image_name_,
+      blob_detector_params_name_;
   static bool need_config_update_;
 
-  cv::SimpleBlobDetector::Params params_; 
+  cv::SimpleBlobDetector::Params params_;
   cv::SimpleBlobDetector::Params prev_params_;
   cv::Ptr<cv::SimpleBlobDetector> detector_;
 
@@ -109,8 +110,8 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
   int morphology_ex_kernel_size_initial_value_;
 
   int filter_by_color_int;  // for trackbar, trackbar requires int type.
-  int blob_color_int;  // Filter by color.
-  int filter_by_area_int;  // Filter by Area.
+  int blob_color_int;       // Filter by color.
+  int filter_by_area_int;   // Filter by Area.
   int min_area_int;
   int max_area_int;
   int min_area_upper_limit_;
@@ -128,7 +129,8 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
   int max_convexity_int;
 
   // for checking if the blob detector params changes
-  bool compareBlobDetectorParams(const cv::SimpleBlobDetector::Params& params_1, const cv::SimpleBlobDetector::Params& params_2)
+  bool compareBlobDetectorParams(const cv::SimpleBlobDetector::Params& params_1,
+                                 const cv::SimpleBlobDetector::Params& params_2)
   {
     if (params_1.filterByColor != params_2.filterByColor)
       return false;
@@ -206,14 +208,14 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
     max_area_int = int(params_.maxArea);
     min_dist_between_blobs_int = int(params_.minDistBetweenBlobs);
     filter_by_circularity_int = int(params_.filterByCircularity);
-    min_circularity_int = int(params_.minCircularity*100);
-    max_circularity_int = int(params_.maxCircularity*100);
+    min_circularity_int = int(params_.minCircularity * 100);
+    max_circularity_int = int(params_.maxCircularity * 100);
     filter_by_inertia_int = int(params_.filterByInertia);
-    min_inertia_ratio_int = int(params_.minInertiaRatio*100);
-    max_inertia_ratio_int = int(params_.maxInertiaRatio*100);
+    min_inertia_ratio_int = int(params_.minInertiaRatio * 100);
+    max_inertia_ratio_int = int(params_.maxInertiaRatio * 100);
     filter_by_convexity_int = int(params_.filterByConvexity);
-    min_convexity_int = int(params_.minConvexity*100);
-    max_convexity_int = int(params_.maxConvexity*100);
+    min_convexity_int = int(params_.minConvexity * 100);
+    max_convexity_int = int(params_.maxConvexity * 100);
   }
 
   const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
@@ -284,7 +286,7 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
         }
 
         if (morphology_ex_type_ == "opening" || morphology_ex_type_ == "closing")
-        { 
+        {
           if (morphology_ex_type_ == "opening")
           {
             morphology_ex_image_name_ = "Opening Image";
@@ -295,7 +297,8 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
           }
 
           cv::namedWindow(morphology_ex_image_name_, cv::WINDOW_AUTOSIZE);
-          cv::createTrackbar("MorphologyEx Kernel Size", morphology_ex_image_name_, &morphology_ex_kernel_size_, 100, trackbarCallback);
+          cv::createTrackbar("MorphologyEx Kernel Size", morphology_ex_image_name_, &morphology_ex_kernel_size_, 100,
+                             trackbarCallback);
         }
 
         prev_morphology_ex_type_ = morphology_ex_type_;
@@ -310,16 +313,23 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
         cv::createTrackbar("Filter By Color", blob_detector_params_name_, &filter_by_color_int, 1, trackbarCallback);
         cv::createTrackbar("Blob Color", blob_detector_params_name_, &blob_color_int, 255, trackbarCallback);
         cv::createTrackbar("Filter By Area", blob_detector_params_name_, &filter_by_area_int, 1, trackbarCallback);
-        cv::createTrackbar("Min Area", blob_detector_params_name_, &min_area_int, min_area_upper_limit_, trackbarCallback);
-        cv::createTrackbar("Max Area", blob_detector_params_name_, &max_area_int, max_area_upper_limit_, trackbarCallback);
-        cv::createTrackbar("Min Dist Between Blobs", blob_detector_params_name_, &min_dist_between_blobs_int, min_dist_between_blobs_upper_limit_, trackbarCallback);
-        cv::createTrackbar("Filter By Circularity", blob_detector_params_name_, &filter_by_circularity_int, 1, trackbarCallback);
+        cv::createTrackbar("Min Area", blob_detector_params_name_, &min_area_int, min_area_upper_limit_,
+                           trackbarCallback);
+        cv::createTrackbar("Max Area", blob_detector_params_name_, &max_area_int, max_area_upper_limit_,
+                           trackbarCallback);
+        cv::createTrackbar("Min Dist Between Blobs", blob_detector_params_name_, &min_dist_between_blobs_int,
+                           min_dist_between_blobs_upper_limit_, trackbarCallback);
+        cv::createTrackbar("Filter By Circularity", blob_detector_params_name_, &filter_by_circularity_int, 1,
+                           trackbarCallback);
         cv::createTrackbar("Min Circularity", blob_detector_params_name_, &min_circularity_int, 100, trackbarCallback);
         cv::createTrackbar("Max Circularity", blob_detector_params_name_, &max_circularity_int, 100, trackbarCallback);
         cv::createTrackbar("Filter By Inertia", blob_detector_params_name_, &filter_by_inertia_int, 1, trackbarCallback);
-        cv::createTrackbar("Min Inertia Ratio", blob_detector_params_name_, &min_inertia_ratio_int, 100, trackbarCallback);
-        cv::createTrackbar("Max Inertia Ratio", blob_detector_params_name_, &max_inertia_ratio_int, 100, trackbarCallback);
-        cv::createTrackbar("Filter By Convexity", blob_detector_params_name_, &filter_by_convexity_int, 1, trackbarCallback);
+        cv::createTrackbar("Min Inertia Ratio", blob_detector_params_name_, &min_inertia_ratio_int, 100,
+                           trackbarCallback);
+        cv::createTrackbar("Max Inertia Ratio", blob_detector_params_name_, &max_inertia_ratio_int, 100,
+                           trackbarCallback);
+        cv::createTrackbar("Filter By Convexity", blob_detector_params_name_, &filter_by_convexity_int, 1,
+                           trackbarCallback);
         cv::createTrackbar("Min Convexity", blob_detector_params_name_, &min_convexity_int, 100, trackbarCallback);
         cv::createTrackbar("Max Convexity", blob_detector_params_name_, &max_convexity_int, 100, trackbarCallback);
 
@@ -341,14 +351,14 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
           config_.max_area = params_.maxArea = (float)max_area_int;
           config_.min_dist_between_blobs = params_.minDistBetweenBlobs = (float)min_dist_between_blobs_int;
           config_.filter_by_circularity = params_.filterByCircularity = (bool)filter_by_circularity_int;
-          config_.min_circularity = params_.minCircularity = (float)min_circularity_int/100;
-          config_.max_circularity = params_.maxCircularity = (float)max_circularity_int/100;
+          config_.min_circularity = params_.minCircularity = (float)min_circularity_int / 100;
+          config_.max_circularity = params_.maxCircularity = (float)max_circularity_int / 100;
           config_.filter_by_inertia = params_.filterByInertia = (bool)filter_by_inertia_int;
-          config_.min_inertia_ratio = params_.minInertiaRatio = (float)min_inertia_ratio_int/100;
-          config_.max_inertia_ratio = params_.maxInertiaRatio = (float)max_inertia_ratio_int/100;
+          config_.min_inertia_ratio = params_.minInertiaRatio = (float)min_inertia_ratio_int / 100;
+          config_.max_inertia_ratio = params_.maxInertiaRatio = (float)max_inertia_ratio_int / 100;
           config_.filter_by_convexity = params_.filterByConvexity = (bool)filter_by_convexity_int;
-          config_.min_convexity = params_.minConvexity = (float)min_convexity_int/100;
-          config_.max_convexity = params_.maxConvexity = (float)max_convexity_int/100;
+          config_.min_convexity = params_.minConvexity = (float)min_convexity_int / 100;
+          config_.max_convexity = params_.maxConvexity = (float)max_convexity_int / 100;
 
           reconfigure_server_->updateConfig(config_);
           need_config_update_ = false;
@@ -360,23 +370,25 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
       cv::cvtColor(frame, HSV_image, cv::COLOR_BGR2HSV);
       // threshold the HSV image
       cv::Mat thresholded_image;
-      cv::inRange(HSV_image, cv::Scalar(hue_lower_limit_, sat_lower_limit_, val_lower_limit_), cv::Scalar(hue_upper_limit_, sat_upper_limit_, val_upper_limit_), thresholded_image);
+      cv::inRange(HSV_image, cv::Scalar(hue_lower_limit_, sat_lower_limit_, val_lower_limit_),
+                  cv::Scalar(hue_upper_limit_, sat_upper_limit_, val_upper_limit_), thresholded_image);
       // thresholded image with a color mask
       cv::Mat thresholded_image_with_mask;
-      cv::bitwise_and(frame,frame,thresholded_image_with_mask,thresholded_image);
+      cv::bitwise_and(frame, frame, thresholded_image_with_mask, thresholded_image);
 
       // do morphological operation if required
       cv::Mat morphology_ex_image;
       if (morphology_ex_type_ == "opening" || morphology_ex_type_ == "closing")
-      { 
-        cv::Mat kernel; 
+      {
+        cv::Mat kernel;
         // morphology_ex_kernel_size_ must be odd number
         if (morphology_ex_kernel_size_ % 2 != 1)
         {
           morphology_ex_kernel_size_ = morphology_ex_kernel_size_ + 1;
         }
 
-        kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(morphology_ex_kernel_size_, morphology_ex_kernel_size_), cv::Point(-1, -1));
+        kernel = cv::getStructuringElement(
+            cv::MORPH_RECT, cv::Size(morphology_ex_kernel_size_, morphology_ex_kernel_size_), cv::Point(-1, -1));
 
         if (morphology_ex_type_ == "opening")
         {
@@ -420,7 +432,7 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
 
       // draw circles on the blobs detected, for displaying purposes
       cv::Mat out_image;
-      drawKeypoints(frame, keypoints, out_image, cv::Scalar(0,0,255), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+      drawKeypoints(frame, keypoints, out_image, cv::Scalar(0, 0, 255), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
 
       // shows the results
       if (debug_view_)
@@ -434,7 +446,8 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
           cv::imshow(morphology_ex_image_name_, morphology_ex_image);
         }
 
-        // a waitKey for switching between different types of morphological operations via keyboard input.
+        // a waitKey for switching between different types of morphological
+        // operations via keyboard input.
         // 'o' for opening, 'c' for closing, 'n' for no morphological operation
         char c = (char)cv::waitKey(1);
         switch (c)
@@ -456,13 +469,15 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
       {
         cv::Mat out_thresholded_image;
         cv::cvtColor(thresholded_image, out_thresholded_image, cv::COLOR_GRAY2BGR);
-        sensor_msgs::Image::Ptr out_thresholded_img = cv_bridge::CvImage(msg->header, "bgr8", out_thresholded_image).toImageMsg();
+        sensor_msgs::Image::Ptr out_thresholded_img =
+            cv_bridge::CvImage(msg->header, "bgr8", out_thresholded_image).toImageMsg();
         thresholded_img_pub_.publish(out_thresholded_img);
       }
 
       if (thresholded_img_with_mask_pub_.getNumSubscribers() > 0)
       {
-        sensor_msgs::Image::Ptr out_thresholded_img_with_mask = cv_bridge::CvImage(msg->header, "bgr8", thresholded_image_with_mask).toImageMsg();
+        sensor_msgs::Image::Ptr out_thresholded_img_with_mask =
+            cv_bridge::CvImage(msg->header, "bgr8", thresholded_image_with_mask).toImageMsg();
         thresholded_img_with_mask_pub_.publish(out_thresholded_img_with_mask);
       }
 
@@ -472,7 +487,8 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
         {
           cv::Mat out_morphology_ex_image;
           cv::cvtColor(morphology_ex_image, out_morphology_ex_image, cv::COLOR_GRAY2BGR);
-          sensor_msgs::Image::Ptr out_morphology_ex_img = cv_bridge::CvImage(msg->header, "bgr8", out_morphology_ex_image).toImageMsg();
+          sensor_msgs::Image::Ptr out_morphology_ex_img =
+              cv_bridge::CvImage(msg->header, "bgr8", out_morphology_ex_image).toImageMsg();
           morphology_ex_img_pub_.publish(out_morphology_ex_img);
         }
       }
@@ -536,7 +552,7 @@ public:
     prev_morphology_ex_type_ = "off";
     morphology_ex_kernel_size_initial_value_ = 3;
 
-    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
+    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config>>(*pnh_);
     dynamic_reconfigure::Server<Config>::CallbackType f =
         boost::bind(&BlobDetectionNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
     reconfigure_server_->setCallback(f);
