@@ -39,6 +39,8 @@
   <run_depend>sensor_msgs</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>std_srvs</run_depend>
+  <run_depend>rqt_reconfigure</run_depend>
+  <run_depend>rviz</run_depend>
 
   <test_depend>roslaunch</test_depend>
   <test_depend>rostest</test_depend>
