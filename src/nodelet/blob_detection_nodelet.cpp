@@ -366,11 +366,11 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
       }
 
       // convert the image to HSV image
-      cv::Mat HSV_image;
-      cv::cvtColor(frame, HSV_image, cv::COLOR_BGR2HSV);
+      cv::Mat hsv_image;
+      cv::cvtColor(frame, hsv_image, cv::COLOR_BGR2HSV);
       // threshold the HSV image
       cv::Mat thresholded_image;
-      cv::inRange(HSV_image, cv::Scalar(hue_lower_limit_, sat_lower_limit_, val_lower_limit_),
+      cv::inRange(hsv_image, cv::Scalar(hue_lower_limit_, sat_lower_limit_, val_lower_limit_),
                   cv::Scalar(hue_upper_limit_, sat_upper_limit_, val_upper_limit_), thresholded_image);
       // thresholded image with a color mask
       cv::Mat thresholded_image_with_mask;
