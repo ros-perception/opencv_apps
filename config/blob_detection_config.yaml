@@ -1,12 +1,12 @@
 blob_color: 255
-debug_view: false
+debug_view: true
 filter_by_area: true
-filter_by_circularity: true
+filter_by_circularity: false
 filter_by_color: true
-filter_by_convexity: true
-filter_by_inertia: true
-hue_lower_limit: 114
-hue_upper_limit: 121
+filter_by_convexity: false
+filter_by_inertia: false
+hue_lower_limit: 0
+hue_upper_limit: 179
 image:
   compressed:
     format: jpeg
@@ -21,18 +21,18 @@ image:
     optimize_for: 1
     quality: 31
     target_bitrate: 800000
-max_area: 39600.0
+max_area: 40000.0
 max_area_upper_limit: 40000
-max_circularity: 0.77
+max_circularity: 1.0
 max_convexity: 1.0
-max_inertia_ratio: 0.66
-min_area: 13200.0
+max_inertia_ratio: 1.0
+min_area: 0.0
 min_area_upper_limit: 40000
-min_circularity: 0.53
-min_convexity: 0.88
-min_dist_between_blobs: 200.0
+min_circularity: 0.0
+min_convexity: 0.0
+min_dist_between_blobs: 0.0
 min_dist_between_blobs_upper_limit: 200
-min_inertia_ratio: 0.42
+min_inertia_ratio: 0.0
 morphology_ex_image:
   compressed:
     format: jpeg
@@ -47,12 +47,12 @@ morphology_ex_image:
     optimize_for: 1
     quality: 31
     target_bitrate: 800000
-morphology_ex_kernel_size: 11
-morphology_ex_type: opening
+morphology_ex_kernel_size: 3
+morphology_ex_type: 'off'
 num_worker_threads: 1
 queue_size: 3
-sat_lower_limit: 131
-sat_upper_limit: 181
+sat_lower_limit: 0
+sat_upper_limit: 255
 thresholded_image:
   compressed:
     format: jpeg
@@ -82,5 +82,5 @@ thresholded_image_with_mask:
     quality: 31
     target_bitrate: 800000
 use_camera_info: false
-val_lower_limit: 131
-val_upper_limit: 169
+val_lower_limit: 0
+val_upper_limit: 255
