@@ -127,6 +127,10 @@
     <description>Nodelet for histogram equalization</description>
   </class>
 
+  <class name="opencv_apps/blob_detection" type="opencv_apps::BlobDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to find blobs</description>
+  </class>
+
   <!--
       for backward compatibility, can be removed in M-turtle
   -->

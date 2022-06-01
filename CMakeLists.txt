@@ -66,6 +66,7 @@ generate_dynamic_reconfigure_options(
   cfg/HSVColorFilter.cfg
   cfg/LabColorFilter.cfg
   cfg/WatershedSegmentation.cfg
+  cfg/BlobDetection.cfg
   )
 
 ## Generate messages in the 'msg' folder
@@ -102,6 +103,9 @@ add_message_files(
    Contour.msg
    ContourArray.msg
    ContourArrayStamped.msg
+   Blob.msg
+   BlobArray.msg
+   BlobArrayStamped.msg
 )
 
 add_service_files(
@@ -327,6 +331,10 @@ opencv_apps_add_nodelet(segment_objects src/nodelet/segment_objects_nodelet.cpp)
 # ./videostab.cpp
 opencv_apps_add_nodelet(watershed_segmentation src/nodelet/watershed_segmentation_nodelet.cpp) # ./watershed.cpp
 
+if(OpenCV_VERSION VERSION_GREATER "3.0")
+  opencv_apps_add_nodelet(blob_detection src/nodelet/blob_detection_nodelet.cpp) # ./blob_detection.cpp
+endif()
+
 # ros examples
 opencv_apps_add_nodelet(simple_example src/nodelet/simple_example_nodelet.cpp)
 opencv_apps_add_nodelet(simple_compressed_example src/nodelet/simple_compressed_example_nodelet.cpp)
@@ -387,6 +395,9 @@ if(CATKIN_ENABLE_TESTING)
     message(WARNING "roslaunch_add_file check fails with unsupported doc attributes ${roslaunch_VERSION}")
   else()
     file(GLOB LAUNCH_FILES launch/*.launch)
+    if(NOT OpenCV_VERSION VERSION_GREATER "3.0")
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/blob_detection.launch)
+    endif()
     foreach(LAUNCH_FILE ${LAUNCH_FILES})
       roslaunch_add_file_check(${LAUNCH_FILE})
     endforeach()
