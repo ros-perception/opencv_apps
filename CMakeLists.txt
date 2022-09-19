@@ -15,7 +15,7 @@ if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7")
   endif()
 endif(CMAKE_COMPILER_IS_GNUCXX)
 
-find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp sensor_msgs std_msgs std_srvs)
+find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp sensor_msgs std_msgs std_srvs class_loader)
 
 find_package(OpenCV REQUIRED)
 message(STATUS "OpenCV VERSION: ${OpenCV_VERSION}")
@@ -36,6 +36,9 @@ endif()
 # Supporting CvtColorForDisplayOptions in cv_bridge has been started from 1.11.13 (2016-07-11)
 if(cv_bridge_VERSION VERSION_LESS "1.11.13")
   add_definitions("-DCV_BRIDGE_CVT_COLOR_FOR_DISPLAY_OPTION_IS_NOT_SUPPORTED")
+endif()
+if(class_loader_VERSION VERSION_LESS "0.4.0")
+  add_definitions("-DUSE_PLUGINLIB_CLASS_LIST_MACROS_H")
 endif()
 
 # generate the dynamic_reconfigure config file

@@ -254,6 +254,10 @@ public:
 };
 }  // namespace people_detect
 
+#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
 #include <pluginlib/class_list_macros.h>
+#else
+#include <pluginlib/class_list_macros.hpp>
+#endif
 PLUGINLIB_EXPORT_CLASS(opencv_apps::PeopleDetectNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(people_detect::PeopleDetectNodelet, nodelet::Nodelet);
