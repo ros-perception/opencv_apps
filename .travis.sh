@@ -169,7 +169,7 @@ elif [ "$TEST" == "clang-tidy" ]; then
 
 elif [ "$TEST" == "debian-unstable" ]; then
 
-    grep ^deb /etc/apt/sources.list  | sed 's/deb http/deb-src http/' >> /etc/apt/sources.list
+    sed -i 's/Types: deb/Types: deb deb-src/' /etc/apt/sources.list.d/debian.sources
     apt update
     apt-get -y build-dep ros-opencv-apps
 
