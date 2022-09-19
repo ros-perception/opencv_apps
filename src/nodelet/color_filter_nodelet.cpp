@@ -479,7 +479,11 @@ public:
 };
 }  // namespace color_filter
 
+#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
 #include <pluginlib/class_list_macros.h>
+#else
+#include <pluginlib/class_list_macros.hpp>
+#endif
 PLUGINLIB_EXPORT_CLASS(color_filter::RGBColorFilterNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(color_filter::HLSColorFilterNodelet, nodelet::Nodelet);
 PLUGINLIB_EXPORT_CLASS(color_filter::HSVColorFilterNodelet, nodelet::Nodelet);
