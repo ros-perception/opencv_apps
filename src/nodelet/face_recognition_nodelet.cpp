@@ -650,7 +650,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  virtual ~FaceRecognitionNodelet()
+  ~FaceRecognitionNodelet()  // NOLINT(modernize-use-override)
   {
     sync_.reset();
     async_.reset();
