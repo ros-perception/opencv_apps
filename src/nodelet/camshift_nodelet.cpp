@@ -53,6 +53,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <dynamic_reconfigure/server.h>
+#include <std_msgs/Float64.h>
 #include "opencv_apps/CamShiftConfig.h"
 #include "opencv_apps/RotatedRectStamped.h"
 
@@ -63,7 +64,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
   image_transport::Publisher img_pub_, bproj_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
-  ros::Publisher msg_pub_;
+  ros::Publisher msg_pub_, conf_pub_;
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
@@ -348,6 +349,28 @@ class CamShiftNodelet : public opencv_apps::Nodelet
       bproj_pub_.publish(out_img2);
       if (trackObject)
         msg_pub_.publish(rect_msg);
+      // publish cnofidence
+      {
+        cv::RotatedRect track_box;
+        track_box.angle = rect_msg.rect.angle;
+        track_box.center.x = rect_msg.rect.center.x;
+        track_box.center.y = rect_msg.rect.center.y;
+        track_box.size.width = rect_msg.rect.size.width;
+        track_box.size.height = rect_msg.rect.size.height;
+        cv::Mat mask = backproj.clone();
+        mask.setTo(cv::Scalar(0));
+#ifndef CV_VERSION_EPOCH
+        cv::ellipse(mask, track_box, 255, -1, cv::LINE_AA);
+#else
+        cv::ellipse(mask, track_box, 255, -1, CV_AA);
+#endif
+        cv::bitwise_and(backproj, mask, backproj);
+        double confidence = cv::countNonZero(mask);
+        if ( confidence > 0 ) { confidence = cv::countNonZero(backproj) / confidence; }
+        std_msgs::Float64 msg; msg.data = confidence;
+        conf_pub_.publish(msg);
+        NODELET_DEBUG("Confidence of tracking %f", confidence);
+      }
     }
     catch (cv::Exception& e)
     {
@@ -413,6 +436,7 @@ public:
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     bproj_pub_ = advertiseImage(*pnh_, "back_project", 1);
+    conf_pub_ = advertise<std_msgs::Float64>(*pnh_, "confidence", 1);
     msg_pub_ = advertise<opencv_apps::RotatedRectStamped>(*pnh_, "track_box", 1);
 
     NODELET_INFO("Hot keys: ");
