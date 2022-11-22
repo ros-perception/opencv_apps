@@ -72,6 +72,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
+  boost::mutex mutex_;
   int queue_size_;
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -86,6 +87,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
   int vmin_, vmax_, smin_;
   bool backprojMode;
   bool selectObject;
+  int showSelected;
   int trackObject;
   bool showHist;
   cv::Point origin;
@@ -109,10 +111,18 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
   void reconfigureCallback(Config& new_config, uint32_t level)
   {
+    boost::mutex::scoped_lock lock(mutex_);
     config_ = new_config;
     vmin_ = config_.vmin;
     vmax_ = config_.vmax;
     smin_ = config_.smin;
+
+    selection.x = config_.x;
+    selection.y = config_.y;
+    selection.width = config_.width;
+    selection.height = config_.height;
+    selectObject = false;
+    trackObject = -1;
   }
 
   const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
@@ -139,6 +149,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
   void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
   {
+    boost::mutex::scoped_lock lock(mutex_);
     // Work on the image.
     try
     {
@@ -187,6 +198,12 @@ class CamShiftNodelet : public opencv_apps::Nodelet
           selection.height = std::abs(y - origin.y);
 
           selection &= cv::Rect(0, 0, frame.cols, frame.rows);
+
+          config_.x = selection.x;
+          config_.y = selection.y;
+          config_.width = selection.width;
+          config_.height = selection.height;
+          reconfigure_server_->updateConfig(config_);
         }
 
         switch (event)
@@ -234,6 +251,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
             trackWindow = selection;
             trackObject = 1;
+            showSelected = 10;
 
             histimg = cv::Scalar::all(0);
             int bin_w = histimg.cols / hsize;
@@ -284,11 +302,12 @@ class CamShiftNodelet : public opencv_apps::Nodelet
       else if (trackObject < 0)
         paused = false;
 
-      if (selectObject && selection.width > 0 && selection.height > 0)
+      if ((showSelected > 0 || selectObject) && selection.width > 0 && selection.height > 0)
       {
         cv::Mat roi(frame, selection);
         bitwise_not(roi, roi);
       }
+      if ( showSelected > 0 ) showSelected--;
 
       if (debug_view_)
       {
@@ -376,6 +395,7 @@ public:
     smin_ = 30;
     backprojMode = false;
     selectObject = false;
+    showSelected = 0;
     trackObject = 0;
     showHist = true;
     paused = false;
