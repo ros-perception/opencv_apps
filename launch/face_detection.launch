@@ -13,26 +13,26 @@
   <arg name="queue_size" default="3" doc="Specigy queue_size of input image subscribers" />
 
   <arg if="$(arg use_opencv3_1)"
-       name="face_cascade_name" default="$(find opencv3)/../OpenCV-3.1.0-dev/haarcascades/haarcascade_frontalface_alt.xml" doc="Face dtection cascade Filename" />
+       name="face_cascade_name" default="$(find opencv3)/../OpenCV-3.1.0-dev/haarcascades/haarcascade_frontalface_alt.xml" doc="Face detection cascade Filename" />
   <arg if="$(arg use_opencv3_1)"
-       name="eyes_cascade_name" default="$(find opencv3)/../OpenCV-3.1.0-dev/haarcascades/haarcascade_eye_tree_eyeglasses.xml" doc="Eye dtection cascade Filename" />
+       name="eyes_cascade_name" default="$(find opencv3)/../OpenCV-3.1.0-dev/haarcascades/haarcascade_eye_tree_eyeglasses.xml" doc="Eye detection cascade Filename" />
   <arg if="$(arg use_opencv3_2)"
-       name="face_cascade_name" default="$(find opencv3)/../OpenCV-3.2.0-dev/haarcascades/haarcascade_frontalface_alt.xml" doc="Face dtection cascade Filename" />
+       name="face_cascade_name" default="$(find opencv3)/../OpenCV-3.2.0-dev/haarcascades/haarcascade_frontalface_alt.xml" doc="Face detection cascade Filename" />
   <arg if="$(arg use_opencv3_2)"
-       name="eyes_cascade_name" default="$(find opencv3)/../OpenCV-3.2.0-dev/haarcascades/haarcascade_eye_tree_eyeglasses.xml" doc="Eye dtection cascade Filename" />
+       name="eyes_cascade_name" default="$(find opencv3)/../OpenCV-3.2.0-dev/haarcascades/haarcascade_eye_tree_eyeglasses.xml" doc="Eye detection cascade Filename" />
   <arg if="$(arg use_opencv3_3)"
-       name="face_cascade_name" default="$(find opencv3)/../OpenCV-3.3.1-dev/haarcascades/haarcascade_frontalface_alt.xml" doc="Face dtection cascade Filename" />
+       name="face_cascade_name" default="$(find opencv3)/../OpenCV-3.3.1-dev/haarcascades/haarcascade_frontalface_alt.xml" doc="Face detection cascade Filename" />
   <arg if="$(arg use_opencv3_3)"
-       name="eyes_cascade_name" default="$(find opencv3)/../OpenCV-3.3.1-dev/haarcascades/haarcascade_eye_tree_eyeglasses.xml" doc="Eye dtection cascade Filename" />
+       name="eyes_cascade_name" default="$(find opencv3)/../OpenCV-3.3.1-dev/haarcascades/haarcascade_eye_tree_eyeglasses.xml" doc="Eye detection cascade Filename" />
   <arg if="$(arg use_opencv4)"
-       name="face_cascade_name" default="/usr/share/opencv4/haarcascades/haarcascade_frontalface_alt.xml" doc="Face dtection cascade Filename" />
+       name="face_cascade_name" default="/usr/share/opencv4/haarcascades/haarcascade_frontalface_alt.xml" doc="Face detection cascade Filename" />
   <arg if="$(arg use_opencv4)"
-       name="eyes_cascade_name" default="/usr/share/opencv4/haarcascades/haarcascade_eye_tree_eyeglasses.xml" doc="Eye dtection cascade Filename" />
+       name="eyes_cascade_name" default="/usr/share/opencv4/haarcascades/haarcascade_eye_tree_eyeglasses.xml" doc="Eye detection cascade Filename" />
 
   <arg if="$(arg use_opencv3)"
-       name="face_cascade_name" default="/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml" doc="Face dtection cascade Filename" />
+       name="face_cascade_name" default="/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml" doc="Face detection cascade Filename" />
   <arg if="$(arg use_opencv3)"
-       name="eyes_cascade_name" default="/usr/share/opencv/haarcascades/haarcascade_eye_tree_eyeglasses.xml" doc="Eye dtection cascade Filename" />
+       name="eyes_cascade_name" default="/usr/share/opencv/haarcascades/haarcascade_eye_tree_eyeglasses.xml" doc="Eye detection cascade Filename" />
 
   <!-- face_detection.cpp -->
   <node name="$(arg node_name)" pkg="opencv_apps" type="face_detection"  >
