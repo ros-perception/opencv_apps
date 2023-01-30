@@ -51,7 +51,9 @@ jobs:
         if: matrix.TEST == 'catkin_lint'
         run: |
           sudo apt-get install -y -q python3-pip
-          sudo pip3 install catkin_lint rosdep
+          # See https://github.com/ros-perception/opencv_apps/pull/143
+          # In catkin_lint > 1.6.18, cmake_minimum_required >= 2.8.12
+          sudo pip3 install catkin_lint==1.6.18 rosdep
           sudo rosdep init
           rosdep update
       - name: catkin_lint test
