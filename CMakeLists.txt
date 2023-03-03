@@ -55,6 +55,7 @@ generate_dynamic_reconfigure_options(
   cfg/GoodfeatureTrack.cfg
   cfg/CornerHarris.cfg
   #
+  cfg/CompareHistogram.cfg
   cfg/EqualizeHistogram.cfg
   cfg/CamShift.cfg
   cfg/FBackFlow.cfg
@@ -172,8 +173,10 @@ opencv_apps_add_nodelet(discrete_fourier_transform src/nodelet/discrete_fourier_
   # ./tutorial_code/Histograms_Matching/calcBackProject_Demo1.cpp
   # ./tutorial_code/Histograms_Matching/calcBackProject_Demo2.cpp
   # ./tutorial_code/Histograms_Matching/calcHist_Demo.cpp
-  #  ./tutorial_code/Histograms_Matching/compareHist_Demo.cpp
-  opencv_apps_add_nodelet(equalize_histogram src/nodelet/equalize_histogram_nodelet.cpp) # ./tutorial_code/Histograms_Matching/EqualizeHist_Demo.cpp
+if(OpenCV_VERSION VERSION_GREATER "3.0")
+  opencv_apps_add_nodelet(compare_histogram src/nodelet/compare_histogram_nodelet.cpp)  #  ./tutorial_code/Histograms_Matching/compareHist_Demo.cpp
+endif()
+opencv_apps_add_nodelet(equalize_histogram src/nodelet/equalize_histogram_nodelet.cpp) # ./tutorial_code/Histograms_Matching/EqualizeHist_Demo.cpp
   # ./tutorial_code/Histograms_Matching/MatchTemplate_Demo.cpp
 
 # imagecodecs
@@ -390,6 +393,9 @@ if(CATKIN_ENABLE_TESTING)
     message(WARNING "roslaunch_add_file check fails with unsupported doc attributes ${roslaunch_VERSION}")
   else()
     file(GLOB LAUNCH_FILES launch/*.launch)
+    if(NOT OpenCV_VERSION VERSION_GREATER "3.0")
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/compare_histogram.launch)
+    endif()
     foreach(LAUNCH_FILE ${LAUNCH_FILES})
       roslaunch_add_file_check(${LAUNCH_FILE})
     endforeach()
