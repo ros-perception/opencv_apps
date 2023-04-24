@@ -263,7 +263,8 @@ class LKFlowNodelet : public opencv_apps::Nodelet
       cv::swap(prevGray, gray);
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, msg->encoding, image).toImageMsg();
+      sensor_msgs::Image::Ptr out_img =
+          cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, image).toImageMsg();
       img_pub_.publish(out_img);
       msg_pub_.publish(flows_msg);
     }
