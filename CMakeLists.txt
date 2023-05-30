@@ -17,10 +17,10 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 
 find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp sensor_msgs std_msgs std_srvs class_loader)
 
-find_package(OpenCV REQUIRED)
 message(STATUS "OpenCV VERSION: ${OpenCV_VERSION}")
 message(STATUS "OpenCV Components: ${OpenCV_LIB_COMPONENTS}")
-if(OpenCV_VERSION VERSION_LESS "3.0" OR TARGET opencv_optflow)
+list(FIND OpenCV_LIB_COMPONENTS opencv_optflow2 find_opencv_optflow)
+if(OpenCV_VERSION VERSION_LESS "3.0" OR find_opencv_optflow GREATER -1)
   set(OPENCV_HAVE_OPTFLOW TRUE)
 endif()
 # Supporting CompressedImage in cv_bridge has been started from 1.11.9 (2015-11-29)
