@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/thread.hpp>
 #include <boost/version.hpp>
@@ -89,15 +90,15 @@ namespace filesystem3
 namespace filesystem
 {
 #endif
-template <>
-path& path::append<typename path::iterator>(typename path::iterator lhs, typename path::iterator rhs,
-                                            const codecvt_type& cvt)
-{
-  for (; lhs != rhs; ++lhs)
-    *this /= *lhs;
-  return *this;
-}
-path user_expanded_path(const path& p)
+// template <>
+// path& path::append<typename path::iterator>(typename path::iterator lhs, typename path::iterator rhs,
+//                                             const codecvt_type& cvt)
+// {
+//   for (; lhs != rhs; ++lhs)
+//     *this /= *lhs;
+//   return *this;
+// }
+fs::path user_expanded_path(const path& p)
 {
   path::const_iterator it(p.begin());
   std::string user_dir = (*it).string();
@@ -122,7 +123,8 @@ path user_expanded_path(const path& p)
     homedir = pw->pw_dir;
   }
   ret = path(std::string(homedir));
-  return ret.append(++it, p.end(), path::codecvt());
+  // return ret.append(++it, p.end(), path::codecvt());
+  return ret / p;
 }
 }  // namespace filesystem
 }  // namespace boost
