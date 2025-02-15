@@ -216,6 +216,14 @@ elif [ "$TEST" == "debian-unstable" ]; then
     apt update
     apt-get -y build-dep ros-opencv-apps
 
+    # rebuild cv-bridge to fix '/usr/bin/ld: cannot find -lopencv_barcode: No such file or directory'
+    travis_time_start rebuild_cv_bridge_deb.script
+    apt source ros-vision-opencv
+    apt-get -y build-dep $(find -type d -iname "ros-vision-opencv*")
+    (cd $(find -type d -iname "ros-vision-opencv*") && dpkg-buildpackage -b -us -uc)
+    dpkg -i *.deb
+    travis_time_end
+
     travis_time_start build_debian_unstable.script
     cd $CI_SOURCE_PATH
     mkdir build
