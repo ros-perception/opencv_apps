@@ -5,10 +5,12 @@ jobs:
     runs-on: ubuntu-latest
     name: ci
     strategy:
+      fail-fast: false
       matrix:
         include:
           - CHECK_PYTHON3_COMPILE : true
           - TEST : catkin_lint
+            DOCKER_IMAGE : ubuntu:focal
           - TEST : clang-format
           - TEST : clang-tidy
             ROS_DISTRO : melodic
@@ -27,6 +29,10 @@ jobs:
             DOCKER_IMAGE : ubuntu:bionic
           - ROS_DISTRO : noetic
             DOCKER_IMAGE : ubuntu:focal
+          - ROS_DISTRO : one
+            DOCKER_IMAGE : ubuntu:jammy
+          - ROS_DISTRO : one
+            DOCKER_IMAGE : ubuntu:noble
           - TEST : debian-unstable
             DOCKER_IMAGE : debian:unstable
     steps:
@@ -48,7 +54,7 @@ jobs:
         run: python3 -m compileall .
       # catkin_lint
       - name: catkin_lint setup
-        if: matrix.TEST == 'catkin_lint'
+        if: matrix.TEST == 'catkin_lint' && matrix.DOCKER_IMAGE == ''
         run: |
           sudo apt-get install -y -q python3-pip
           # See https://github.com/ros-perception/opencv_apps/pull/143
@@ -57,7 +63,7 @@ jobs:
           sudo rosdep init
           rosdep update
       - name: catkin_lint test
-        if: matrix.TEST == 'catkin_lint'
+        if: matrix.TEST == 'catkin_lint' && matrix.DOCKER_IMAGE == ''
         run: |
           ROS_DISTRO=melodic catkin_lint --resolve-env --strict $PWD
       # clang-format
@@ -74,4 +80,4 @@ jobs:
       - name: script
         if: matrix.DOCKER_IMAGE
         run: |
-          docker run --rm -i -v $PWD:$PWD -e "CI_SOURCE_PATH=$PWD" -e "HOME=$HOME" -e "ROS_DISTRO=${{ matrix.ROS_DISTRO }}" -e "OPENCV_VERSION=${{ matrix.OPENCV_VERSION }}" -e "TEST=${{ matrix.TEST }}" ${{ matrix.DOCKER_IMAGE }} sh -c "cd $PWD; /bin/bash .travis.sh"
+          docker run --rm -i -v $PWD:$PWD -e "CI_SOURCE_PATH=$PWD" -e "HOME=$HOME" -e "ROS_DISTRO=${{ matrix.ROS_DISTRO }}" -e "OPENCV_VERSION=${{ matrix.OPENCV_VERSION }}" -e "TEST=${{ matrix.TEST }}" -e "DOCKER_IMAGE=${{ matrix.DOCKER_IMAGE }}" ${{ matrix.DOCKER_IMAGE }} sh -c "cd $PWD; /bin/bash .travis.sh"

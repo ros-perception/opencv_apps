@@ -29,9 +29,16 @@
   <arg if="$(arg use_opencv4)"
        name="eyes_cascade_name" default="/usr/share/opencv4/haarcascades/haarcascade_eye_tree_eyeglasses.xml" doc="Eye dtection cascade Filename" />
 
-  <arg unless="$(arg use_opencv3)"
+  <!-- if all use_opencv3 is true, but all other variable is false, then use /usr/share/opencv -->
+  <!-- eval requires roslaunch >= 1.12.1 -->
+  <arg if="$(eval use_opencv3 and not use_opencv3_1 and not use_opencv3_2 and not use_opencv3_3 and not use_opencv4)"
        name="face_cascade_name" default="/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml" doc="Face dtection cascade Filename" />
-  <arg unless="$(arg use_opencv3)"
+  <arg if="$(eval use_opencv3 and not use_opencv3_1 and not use_opencv3_2 and not use_opencv3_3 and not use_opencv4)"
+       name="eyes_cascade_name" default="/usr/share/opencv/haarcascades/haarcascade_eye_tree_eyeglasses.xml" doc="Eye dtection cascade Filename" />
+  <!-- if all use_opencv* variable is false, then use /usr/share/opencv -->
+  <arg unless="$(eval use_opencv3 or use_opencv3_1 or use_opencv3_2 or use_opencv3_3 or use_opencv4)"
+       name="face_cascade_name" default="/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml" doc="Face dtection cascade Filename" />
+  <arg unless="$(eval use_opencv3 or use_opencv3_1 or use_opencv3_2 or use_opencv3_3 or use_opencv4)"
        name="eyes_cascade_name" default="/usr/share/opencv/haarcascades/haarcascade_eye_tree_eyeglasses.xml" doc="Eye dtection cascade Filename" />
 
   <!-- face_detection.cpp -->
