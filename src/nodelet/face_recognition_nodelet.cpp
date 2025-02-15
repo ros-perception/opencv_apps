@@ -89,13 +89,27 @@ namespace filesystem3
 namespace filesystem
 {
 #endif
+#if BOOST_VERSION < 108300
+template <>
+path& path::append<typename path::iterator>(typename path::iterator lhs, typename path::iterator rhs,
+                                            const codecvt_type& cvt)
+{
+  for (; lhs != rhs; ++lhs)
+    *this /= *lhs;
+  return *this;
+}
+#endif
 path user_expanded_path(const path& p)
 {
+#if BOOST_VERSION < 108300
+  path::const_iterator it(p.begin());
+#else
   if (p.size() < 2)
     return p;
 
   auto it = p.begin();
   // Replace the tilda with the home directory
+#endif
   std::string user_dir = (*it).string();
   if (user_dir.length() == 0 || user_dir[0] != '~')
     return p;
@@ -120,12 +134,16 @@ path user_expanded_path(const path& p)
 
   // Append the rest of path
   ret = path(std::string(homedir));
+#if BOOST_VERSION < 108300
+  return ret.append(++it, p.end(), path::codecvt());
+#else
   ++it;
   for (; it != p.end(); ++it)
   {
     ret /= *it;
   }
   return ret;
+#endif
 }
 }  // namespace filesystem
 }  // namespace boost
