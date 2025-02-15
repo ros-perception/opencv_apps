@@ -112,7 +112,8 @@ rosdep update
     if [ "$OPENCV_VERSION" == 3 ]; then rosinstall_generator image_pipeline --upstream >> .rosinstall.opencv3; fi # need to recompile image_proc
     if [ "$OPENCV_VERSION" == 3 ]; then rosinstall_generator compressed_image_transport --upstream >> .rosinstall.opencv3; fi # need to recompile compressed_image_transport
     if [ "$OPENCV_VERSION" == 3 ]; then rosinstall_generator vision_opencv --upstream >> .rosinstall.opencv3; fi # need to recompile visoin_opencv
-    if [ "$OPENCV_VERSION" == 3 ]; then wstool merge .rosinstall.opencv3 || [ ! -s .rosinstall.opencv3 ] || vcs import . < .rosinstall.opencv3 ; fi # need to recompile visoin_opencv
+    if [ "$ROS_DISTRO" == "indigo" ]; then ROS_DISTRO=kinetic rosinstall_generator roslaunch >> .rosinstall.opencv3; fi # face_detection.launch requires roslaunch-check >= 1.12.1
+    if [[ "$OPENCV_VERSION" == 3 || "$ROS_DISTRO" == "indigo" ]]; then wstool merge .rosinstall.opencv3 || [ ! -s .rosinstall.opencv3 ] || vcs import . < .rosinstall.opencv3 ; fi # need to recompile visoin_opencv
     git config --global --add safe.directory $CI_SOURCE_PATH
     git config --global --add safe.directory ~/catkin_ws/src || echo "OK"
     wstool up || vcs pull
