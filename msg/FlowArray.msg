@@ -1,1 +1,2 @@
 Flow[] flow
+bool[] status
