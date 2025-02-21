@@ -165,6 +165,7 @@ class FBackFlowNodelet : public opencv_apps::Nodelet
             velocity_msg.y = fxy.y;
             flow_msg.point = point_msg;
             flow_msg.velocity = velocity_msg;
+            flows_msg.status.push_back(true);
             flows_msg.flow.push_back(flow_msg);
           }
       }

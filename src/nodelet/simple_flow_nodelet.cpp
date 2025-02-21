@@ -195,6 +195,7 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
           velocity_msg.y = scale_row * flow_at_point[1];
           flow_msg.point = point_msg;
           flow_msg.velocity = velocity_msg;
+          flows_msg.status.push_back(true);
           flows_msg.flow.push_back(flow_msg);
         }
       }
