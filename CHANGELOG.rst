@@ -2,6 +2,30 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* [lk_flow] Keep matching information for sparse optical flow (`#149 <https://github.com/ros-perception/opencv_apps/issues/149>`_)
+* use bgr8 for output visualization (`#145 <https://github.com/ros-perception/opencv_apps/issues/145>`_)
+* add ROS-O test (`#147 <https://github.com/ros-perception/opencv_apps/issues/147>`_)
+* Suppress cmake warning (`#146 <https://github.com/ros-perception/opencv_apps/issues/146>`_)
+* [TEST] Fix catkin_lint version 1.6.18 to avoid `cmake_minimum_required` error (`#143 <https://github.com/ros-perception/opencv_apps/issues/143>`_)
+* Add sync\_.reset/async\_.reset to destructor in face_recognition (`#139 <https://github.com/ros-perception/opencv_apps/issues/139>`_)
+* fix github actions (`#140 <https://github.com/ros-perception/opencv_apps/issues/140>`_)
+* fix missing .git directory (`#136 <https://github.com/ros-perception/opencv_apps/issues/136>`_)
+* Add histogram equalization default and clahe (`#126 <https://github.com/ros-perception/opencv_apps/issues/126>`_)
+* check all output of test/test-pyramids.test (`#127 <https://github.com/ros-perception/opencv_apps/issues/127>`_)
+* tests: properly remap camera_info (`#125 <https://github.com/ros-perception/opencv_apps/issues/125>`_)
+* add Morphology Transformations nodelet (`#122 <https://github.com/ros-perception/opencv_apps/issues/122>`_)
+* add test to check when adding two images, whcih has different size. (`#123 <https://github.com/ros-perception/opencv_apps/issues/123>`_)
+* contour_moments_nodelet: don't publish empty image (`#124 <https://github.com/ros-perception/opencv_apps/issues/124>`_)
+* Add Lab color filter (`#114 <https://github.com/ros-perception/opencv_apps/issues/114>`_)
+* add test to check on debain_unstable (`#121 <https://github.com/ros-perception/opencv_apps/issues/121>`_)
+* Remove timestamp from face_data.tar.gz (`#117 <https://github.com/ros-perception/opencv_apps/issues/117>`_)
+* use snapshot of rosdep list (`#120 <https://github.com/ros-perception/opencv_apps/issues/120>`_)
+* fix travis, speed up GA tests (`#116 <https://github.com/ros-perception/opencv_apps/issues/116>`_)
+* add .github/workflows (`#115 <https://github.com/ros-perception/opencv_apps/issues/115>`_)
+* Contributors: Aoi Nakane, Jochen Sprickerhof, Kei Okada, Martin Günther, Naoto Tsukamoto, Shingo Kitagawa, Yuki Furuta, Iori Yanokura, Ivan Oliveira Tarifa
+
 2.0.2 (2020-08-19)
 ------------------
 * .travis.yml: add noetic test (`#108 <https://github.com/ros-perception/opencv_apps/issues/108>`_)
