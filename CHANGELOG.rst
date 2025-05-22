@@ -2,8 +2,8 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.3 (2025-05-22)
+------------------
 * [lk_flow] Keep matching information for sparse optical flow (`#149 <https://github.com/ros-perception/opencv_apps/issues/149>`_)
 * use bgr8 for output visualization (`#145 <https://github.com/ros-perception/opencv_apps/issues/145>`_)
 * add ROS-O test (`#147 <https://github.com/ros-perception/opencv_apps/issues/147>`_)
