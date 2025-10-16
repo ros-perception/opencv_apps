@@ -10,8 +10,14 @@ def generate_launch_description():
     # Declare launch arguments
     node_name_arg = DeclareLaunchArgument(
         'node_name',
-        default_value='camshift',
+        default_value='camshift_node',
         description='Name of the node'
+    )
+
+    namespace_arg = DeclareLaunchArgument(
+        'namespace',
+        default_value='camshift',
+        description='Namespace for the node'
     )
 
     image_arg = DeclareLaunchArgument(
@@ -73,8 +79,12 @@ def generate_launch_description():
         package='opencv_apps',
         executable='camshift',
         name=LaunchConfiguration('node_name'),
+        namespace=LaunchConfiguration('namespace'),
         remappings=[
             ('image', LaunchConfiguration('image')),
+            ('track_box', '/camshift/track_box'),
+            ('image_out', '/camshift/image_out'),
+            ('back_project', '/camshift/back_project'),
         ],
         parameters=[{
             'use_camera_info': LaunchConfiguration('use_camera_info'),
@@ -90,6 +100,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         node_name_arg,
+        namespace_arg,
         image_arg,
         use_camera_info_arg,
         debug_view_arg,
