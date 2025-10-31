@@ -33,55 +33,29 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-// https://github.com/Itseez/opencv/blob/2.4/samples/cpp/tutorial_code/ImgTrans/
-/**
- * @file Sobel_Demo.cpp
- * @brief Sample code using Sobel and/orScharr OpenCV functions to make a simple Edge Detector
- * @author OpenCV team
- */
-/**
- * @file Laplace_Demo.cpp
- * @brief Sample code showing how to detect edges using the Laplace operator
- * @author OpenCV team
- */
-/**
- * @file CannyDetector_Demo.cpp
- * @brief Sample code showing how to detect edges using the Canny Detector
- * @author OpenCV team
- */
-
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include "opencv_apps/nodelet.h"
-#include <image_transport/image_transport.h>
-#include <sensor_msgs/image_encodings.h>
-#include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.hpp>
+#include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/image_encodings.hpp>
+#include <cv_bridge/cv_bridge.hpp>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-
-#include <dynamic_reconfigure/server.h>
-#include "opencv_apps/EdgeDetectionConfig.h"
 
 namespace opencv_apps
 {
 class EdgeDetectionNodelet : public opencv_apps::Nodelet
 {
-  image_transport::Publisher img_pub_;
-  image_transport::Subscriber img_sub_;
-  image_transport::CameraSubscriber cam_sub_;
-  ros::Publisher msg_pub_;
-
-  boost::shared_ptr<image_transport::ImageTransport> it_;
-
-  typedef opencv_apps::EdgeDetectionConfig Config;
-  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
-  Config config_;
-  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+  std::shared_ptr<image_transport::Publisher> img_pub_;
+  std::shared_ptr<image_transport::Subscriber> img_sub_;
+  std::shared_ptr<image_transport::CameraSubscriber> cam_sub_;
 
   int queue_size_;
   bool debug_view_;
-  ros::Time prev_stamp_;
+  rclcpp::Time prev_stamp_;
 
+  int edge_type_;
   int canny_threshold1_;
   int canny_threshold2_;
   int apertureSize_;
@@ -90,59 +64,93 @@ class EdgeDetectionNodelet : public opencv_apps::Nodelet
   bool apply_blur_post_;
   int postBlurSize_;
   double postBlurSigma_;
+  bool use_camera_info_;
 
   std::string window_name_;
-  static bool need_config_update_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr param_callback_handle_;
 
-  void reconfigureCallback(Config& new_config, uint32_t level)
+  rcl_interfaces::msg::SetParametersResult parameterCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    config_ = new_config;
-    canny_threshold1_ = config_.canny_threshold1;
-    canny_threshold2_ = config_.canny_threshold2;
-    apertureSize_ = 2 * ((config_.apertureSize / 2)) + 1;
-    L2gradient_ = config_.L2gradient;
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
 
-    apply_blur_pre_ = config_.apply_blur_pre;
-    apply_blur_post_ = config_.apply_blur_post;
-    postBlurSize_ = 2 * ((config_.postBlurSize) / 2) + 1;
-    postBlurSigma_ = config_.postBlurSigma;
+    for (const auto& param : parameters)
+    {
+      if (param.get_name() == "edge_type")
+      {
+        edge_type_ = param.as_int();
+        RCLCPP_INFO(this->get_logger(), "Updated edge_type to %d", edge_type_);
+      }
+      else if (param.get_name() == "canny_threshold1")
+      {
+        canny_threshold1_ = param.as_int();
+        RCLCPP_INFO(this->get_logger(), "Updated canny_threshold1 to %d", canny_threshold1_);
+      }
+      else if (param.get_name() == "canny_threshold2")
+      {
+        canny_threshold2_ = param.as_int();
+        RCLCPP_INFO(this->get_logger(), "Updated canny_threshold2 to %d", canny_threshold2_);
+      }
+      else if (param.get_name() == "apertureSize")
+      {
+        apertureSize_ = param.as_int();
+        RCLCPP_INFO(this->get_logger(), "Updated apertureSize to %d", apertureSize_);
+      }
+      else if (param.get_name() == "L2gradient")
+      {
+        L2gradient_ = param.as_bool();
+        RCLCPP_INFO(this->get_logger(), "Updated L2gradient to %s", L2gradient_ ? "true" : "false");
+      }
+      else if (param.get_name() == "apply_blur_pre")
+      {
+        apply_blur_pre_ = param.as_bool();
+        RCLCPP_INFO(this->get_logger(), "Updated apply_blur_pre to %s", apply_blur_pre_ ? "true" : "false");
+      }
+      else if (param.get_name() == "apply_blur_post")
+      {
+        apply_blur_post_ = param.as_bool();
+        RCLCPP_INFO(this->get_logger(), "Updated apply_blur_post to %s", apply_blur_post_ ? "true" : "false");
+      }
+      else if (param.get_name() == "postBlurSize")
+      {
+        postBlurSize_ = param.as_int();
+        RCLCPP_INFO(this->get_logger(), "Updated postBlurSize to %d", postBlurSize_);
+      }
+      else if (param.get_name() == "postBlurSigma")
+      {
+        postBlurSigma_ = param.as_double();
+        RCLCPP_INFO(this->get_logger(), "Updated postBlurSigma to %.2f", postBlurSigma_);
+      }
+      else if (param.get_name() == "debug_view")
+      {
+        debug_view_ = param.as_bool();
+        RCLCPP_INFO(this->get_logger(), "Updated debug_view to %s", debug_view_ ? "true" : "false");
+      }
+    }
+
+    return result;
   }
 
-  const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
-  {
-    if (frame.empty())
-      return image_frame;
-    return frame;
-  }
-
-  void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
+  void imageCallbackWithInfo(const sensor_msgs::msg::Image::ConstSharedPtr& msg,
+                             const sensor_msgs::msg::CameraInfo::ConstSharedPtr& cam_info)
   {
     doWork(msg, cam_info->header.frame_id);
   }
 
-  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& msg)
   {
     doWork(msg, msg->header.frame_id);
   }
 
-  static void trackbarCallback(int /*unused*/, void* /*unused*/)
+  void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& msg, const std::string& input_frame_from_msg)
   {
-    need_config_update_ = true;
-  }
-
-  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
-  {
-    // Work on the image.
     try
     {
-      // Convert the image into something opencv can handle.
       cv::Mat frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
 
-      // Do the work
       cv::Mat src_gray;
       cv::GaussianBlur(frame, frame, cv::Size(3, 3), 0, 0, cv::BORDER_DEFAULT);
 
-      /// Convert it to gray
       if (frame.channels() > 1)
       {
         cv::cvtColor(frame, src_gray, cv::COLOR_RGB2GRAY);
@@ -152,98 +160,55 @@ class EdgeDetectionNodelet : public opencv_apps::Nodelet
         src_gray = frame;
       }
 
-      /// Create window
       if (debug_view_)
       {
         cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
       }
 
-      std::string new_window_name;
       cv::Mat grad;
-      switch (config_.edge_type)
+      switch (edge_type_)
       {
-        case opencv_apps::EdgeDetection_Sobel:
+        case 0:  // Sobel
         {
-          /// Generate grad_x and grad_y
           cv::Mat grad_x, grad_y;
           cv::Mat abs_grad_x, abs_grad_y;
-
           int scale = 1;
           int delta = 0;
           int ddepth = CV_16S;
 
-          /// Gradient X
-          // Scharr( src_gray, grad_x, ddepth, 1, 0, scale, delta, BORDER_DEFAULT );
           cv::Sobel(src_gray, grad_x, ddepth, 1, 0, 3, scale, delta, cv::BORDER_DEFAULT);
           cv::convertScaleAbs(grad_x, abs_grad_x);
 
-          /// Gradient Y
-          // Scharr( src_gray, grad_y, ddepth, 0, 1, scale, delta, BORDER_DEFAULT );
           cv::Sobel(src_gray, grad_y, ddepth, 0, 1, 3, scale, delta, cv::BORDER_DEFAULT);
           cv::convertScaleAbs(grad_y, abs_grad_y);
 
-          /// Total Gradient (approximate)
           cv::addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad);
-
-          new_window_name = "Sobel Edge Detection Demo";
           break;
         }
-        case opencv_apps::EdgeDetection_Laplace:
+        case 1:  // Laplace
         {
           cv::Mat dst;
           int kernel_size = 3;
           int scale = 1;
           int delta = 0;
           int ddepth = CV_16S;
-          /// Apply Laplace function
 
           cv::Laplacian(src_gray, dst, ddepth, kernel_size, scale, delta, cv::BORDER_DEFAULT);
           convertScaleAbs(dst, grad);
-
-          new_window_name = "Laplace Edge Detection Demo";
           break;
         }
-        case opencv_apps::EdgeDetection_Canny:
+        case 2:  // Canny
         {
-          int edge_thresh = 1;
-          int kernel_size = 3;
-          int const max_canny_threshold1 = 500;
-          int const max_canny_threshold2 = 500;
-          cv::Mat detected_edges;
-
-          /// Reduce noise with a kernel 3x3
           if (apply_blur_pre_)
           {
             cv::blur(src_gray, src_gray, cv::Size(apertureSize_, apertureSize_));
           }
 
-          /// Canny detector
-          cv::Canny(src_gray, grad, canny_threshold1_, canny_threshold2_, kernel_size, L2gradient_);
+          cv::Canny(src_gray, grad, canny_threshold1_, canny_threshold2_, 3, L2gradient_);
+
           if (apply_blur_post_)
           {
-            cv::GaussianBlur(grad, grad, cv::Size(postBlurSize_, postBlurSize_), postBlurSigma_,
-                             postBlurSigma_);  // 0.3*(ksize/2 - 1) + 0.8
-          }
-
-          new_window_name = "Canny Edge Detection Demo";
-
-          /// Create a Trackbar for user to enter threshold
-          if (debug_view_)
-          {
-            if (need_config_update_)
-            {
-              config_.canny_threshold1 = canny_threshold1_;
-              config_.canny_threshold2 = canny_threshold2_;
-              reconfigure_server_->updateConfig(config_);
-              need_config_update_ = false;
-            }
-            if (window_name_ == new_window_name)
-            {
-              cv::createTrackbar("Min CannyThreshold1:", window_name_, &canny_threshold1_, max_canny_threshold1,
-                                 trackbarCallback);
-              cv::createTrackbar("Min CannyThreshold2:", window_name_, &canny_threshold2_, max_canny_threshold2,
-                                 trackbarCallback);
-            }
+            cv::GaussianBlur(grad, grad, cv::Size(postBlurSize_, postBlurSize_), postBlurSigma_, postBlurSigma_);
           }
           break;
         }
@@ -251,95 +216,117 @@ class EdgeDetectionNodelet : public opencv_apps::Nodelet
 
       if (debug_view_)
       {
-        if (window_name_ != new_window_name)
-        {
-          cv::destroyWindow(window_name_);
-          window_name_ = new_window_name;
-        }
         cv::imshow(window_name_, grad);
         int c = cv::waitKey(1);
       }
 
-      // Publish the image.
-      sensor_msgs::Image::Ptr out_img =
+      sensor_msgs::msg::Image::SharedPtr out_img =
           cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::MONO8, grad).toImageMsg();
-      img_pub_.publish(out_img);
+      img_pub_->publish(*out_img);
     }
     catch (cv::Exception& e)
     {
-      NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+      RCLCPP_ERROR(this->get_logger(), "Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(),
+                   e.file.c_str(), e.line);
     }
 
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()  // NOLINT(modernize-use-override)
+  void subscribe()
   {
-    NODELET_DEBUG("Subscribing to image topic.");
-    if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", queue_size_, &EdgeDetectionNodelet::imageCallbackWithInfo, this);
+    RCLCPP_DEBUG(this->get_logger(), "Subscribing to image topic.");
+    if (use_camera_info_)
+    {
+      cam_sub_ = std::make_shared<image_transport::CameraSubscriber>(
+        image_transport::create_camera_subscription(
+          this, "image",
+          std::bind(&EdgeDetectionNodelet::imageCallbackWithInfo, this,
+                    std::placeholders::_1, std::placeholders::_2),
+          "raw"));
+    }
     else
-      img_sub_ = it_->subscribe("image", queue_size_, &EdgeDetectionNodelet::imageCallback, this);
+    {
+      img_sub_ = std::make_shared<image_transport::Subscriber>(
+        image_transport::create_subscription(
+          this, "image",
+          std::bind(&EdgeDetectionNodelet::imageCallback, this, std::placeholders::_1),
+          "raw"));
+    }
   }
 
-  void unsubscribe()  // NOLINT(modernize-use-override)
+  void unsubscribe()
   {
-    NODELET_DEBUG("Unsubscribing from image topic.");
-    img_sub_.shutdown();
-    cam_sub_.shutdown();
+    RCLCPP_DEBUG(this->get_logger(), "Unsubscribing from image topic.");
+    img_sub_.reset();
+    cam_sub_.reset();
   }
 
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  EdgeDetectionNodelet(const rclcpp::NodeOptions& options = rclcpp::NodeOptions())
+    : Nodelet("edge_detection", options)
+  {
+  }
+
+  void onInit() override
   {
     Nodelet::onInit();
-    it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
 
-    pnh_->param("queue_size", queue_size_, 3);
-    pnh_->param("debug_view", debug_view_, false);
+    this->declare_parameter("queue_size", 3);
+    this->declare_parameter("debug_view", false);
+    this->declare_parameter("use_camera_info", false);
+    this->declare_parameter("edge_type", 0);
+    this->declare_parameter("canny_threshold1", 100);
+    this->declare_parameter("canny_threshold2", 200);
+    this->declare_parameter("apertureSize", 3);
+    this->declare_parameter("L2gradient", false);
+    this->declare_parameter("apply_blur_pre", true);
+    this->declare_parameter("apply_blur_post", false);
+    this->declare_parameter("postBlurSize", 13);
+    this->declare_parameter("postBlurSigma", 3.2);
+
+    this->get_parameter("queue_size", queue_size_);
+    this->get_parameter("debug_view", debug_view_);
+    this->get_parameter("use_camera_info", use_camera_info_);
+    this->get_parameter("edge_type", edge_type_);
+    this->get_parameter("canny_threshold1", canny_threshold1_);
+    this->get_parameter("canny_threshold2", canny_threshold2_);
+    this->get_parameter("apertureSize", apertureSize_);
+    this->get_parameter("L2gradient", L2gradient_);
+    this->get_parameter("apply_blur_pre", apply_blur_pre_);
+    this->get_parameter("apply_blur_post", apply_blur_post_);
+    this->get_parameter("postBlurSize", postBlurSize_);
+    this->get_parameter("postBlurSigma", postBlurSigma_);
 
     if (debug_view_)
     {
       always_subscribe_ = true;
     }
-    prev_stamp_ = ros::Time(0, 0);
+    prev_stamp_ = rclcpp::Time(0);
 
     window_name_ = "Edge Detection Demo";
-    canny_threshold1_ = 100;  // only for canny
-    canny_threshold2_ = 200;  // only for canny
 
-    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
-    dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&EdgeDetectionNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
-    reconfigure_server_->setCallback(f);
+    img_pub_ = advertiseImage("image", 1);
 
-    img_pub_ = advertiseImage(*pnh_, "image", 1);
-    // msg_pub_ = local_nh_.advertise<opencv_apps::LineArrayStamped>("lines", 1, msg_connect_cb, msg_disconnect_cb);
+    // Register parameter callback for runtime parameter changes
+    param_callback_handle_ = this->add_on_set_parameters_callback(
+      std::bind(&EdgeDetectionNodelet::parameterCallback, this, std::placeholders::_1));
 
     onInitPostProcess();
   }
 };
-bool EdgeDetectionNodelet::need_config_update_ = false;
+
 }  // namespace opencv_apps
 
-namespace edge_detection
-{
-class EdgeDetectionNodelet : public opencv_apps::EdgeDetectionNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet edge_detection/edge_detection is deprecated, "
-             "and renamed to opencv_apps/edge_detection.");
-    opencv_apps::EdgeDetectionNodelet::onInit();
-  }
-};
-}  // namespace edge_detection
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::EdgeDetectionNodelet)
 
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(opencv_apps::EdgeDetectionNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(edge_detection::EdgeDetectionNodelet, nodelet::Nodelet);
+int main(int argc, char** argv)
+{
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<opencv_apps::EdgeDetectionNodelet>();
+  node->onInit();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
+  return 0;
+}
