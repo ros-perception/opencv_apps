@@ -36,6 +36,7 @@
 #include "opencv_apps/nodelet.h"
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <cv_bridge/cv_bridge.h>
 
 #include <opencv2/highgui/highgui.hpp>
@@ -61,6 +62,20 @@ class RGBColorFilter;
 class HLSColorFilter;
 class HSVColorFilter;
 class LabColorFilter;
+
+// http://stackoverflow.com/questions/12703305/how-to-compare-scalars-in-opencv
+// Custom operator to compare cv::Scalar class...
+bool operator<(const cv::Scalar& a, const cv::Scalar& b)
+{
+  bool result = true;
+  // Do whatever you think a Scalar comparison must be.
+  for (size_t i = 0; i < 4; i++)
+  {
+    if (a[i] >= b[i])
+      result = false;
+  }
+  return result;
+}
 
 template <typename Config>
 class ColorFilterNodelet : public opencv_apps::Nodelet
@@ -88,6 +103,10 @@ protected:
   cv::Scalar upper_color_range_;
 
   boost::mutex mutex_;
+
+  // publisch color space
+  sensor_msgs::PointCloud2 color_space_msg_;
+  ros::Publisher color_space_pub_;
 
   virtual void reconfigureCallback(Config& new_config, uint32_t level) = 0;
 
@@ -190,6 +209,27 @@ public:
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
 
+    // to advertise you can do it like this (as above):
+    color_space_pub_ = pnh_->advertise<sensor_msgs::PointCloud2>("color_space", 1);
+    color_space_msg_.header.frame_id = "/map";
+    color_space_msg_.fields.resize(4);
+    color_space_msg_.fields[0].name = "x";
+    color_space_msg_.fields[0].offset = 0;
+    color_space_msg_.fields[0].datatype = sensor_msgs::PointField::FLOAT32;
+    color_space_msg_.fields[0].count = 1;
+    color_space_msg_.fields[1].name = "y";
+    color_space_msg_.fields[1].offset = 4;
+    color_space_msg_.fields[1].datatype = sensor_msgs::PointField::FLOAT32;
+    color_space_msg_.fields[1].count = 1;
+    color_space_msg_.fields[2].name = "z";
+    color_space_msg_.fields[2].offset = 8;
+    color_space_msg_.fields[2].datatype = sensor_msgs::PointField::FLOAT32;
+    color_space_msg_.fields[2].count = 1;
+    color_space_msg_.fields[3].name = "rgb";
+    color_space_msg_.fields[3].offset = 12;
+    color_space_msg_.fields[3].datatype = sensor_msgs::PointField::UINT32;
+    color_space_msg_.fields[3].count = 1;
+
     onInitPostProcess();
   }
 };
@@ -232,6 +272,39 @@ protected:
   void filter(const cv::Mat& input_image, cv::Mat& output_image)  // NOLINT(modernize-use-override)
   {
     cv::inRange(input_image, lower_color_range_, upper_color_range_, output_image);
+
+    if (color_space_pub_.getNumSubscribers() > 0)
+    {
+      /// publish color spaces
+      if (color_space_msg_.data.size() != 16 * input_image.rows * input_image.cols)
+      {
+        color_space_msg_.data.resize(16 * input_image.rows * input_image.cols);
+        color_space_msg_.width = input_image.cols;
+        color_space_msg_.height = input_image.rows;
+        color_space_msg_.point_step = 16;
+        color_space_msg_.row_step = color_space_msg_.width;
+      }
+      for (size_t i = 0; i < input_image.rows * input_image.cols; i++)
+      {
+        unsigned char r = input_image.at<cv::Vec3b>(i)[0];
+        unsigned char g = input_image.at<cv::Vec3b>(i)[1];
+        unsigned char b = input_image.at<cv::Vec3b>(i)[2];
+        float x = r / 255.0;
+        float y = g / 255.0;
+        float z = b / 255.0;
+        memcpy((void*)(&(color_space_msg_.data[i * 16 + 0])), (const void*)&x, sizeof(float));
+        memcpy((void*)(&(color_space_msg_.data[i * 16 + 4])), (const void*)&y, sizeof(float));
+        memcpy((void*)(&(color_space_msg_.data[i * 16 + 8])), (const void*)&z, sizeof(float));
+        if (output_image.at<unsigned char>(i) == 0)
+        {
+          unsigned char gray = 16 + (r / 3 + g / 3 + b / 3) * (255 - 16) / 255;
+          r = g = b = gray;
+        }
+        unsigned char rgb[4] = { r, g, b, 0 };
+        memcpy((void*)(&(color_space_msg_.data[i * 16 + 12])), (const void*)rgb, 4 * sizeof(unsigned char));
+      }
+      color_space_pub_.publish(color_space_msg_);
+    }
   }
 
 protected:
@@ -303,6 +376,42 @@ protected:
       cv::inRange(hls_image, lower_color_range_360, upper_color_range_360, output_image_360);
       output_image = output_image_0 | output_image_360;
     }
+
+    if (color_space_pub_.getNumSubscribers() > 0)
+    {
+      /// publish color spaces
+      if (color_space_msg_.data.size() != 16 * input_image.rows * input_image.cols)
+      {
+        color_space_msg_.data.resize(16 * input_image.rows * input_image.cols);
+        color_space_msg_.width = input_image.cols;
+        color_space_msg_.height = input_image.rows;
+        color_space_msg_.point_step = 16;
+        color_space_msg_.row_step = color_space_msg_.width;
+      }
+      for (size_t i = 0; i < input_image.rows * input_image.cols; i++)
+      {
+        unsigned char r = input_image.at<cv::Vec3b>(i)[0];
+        unsigned char g = input_image.at<cv::Vec3b>(i)[1];
+        unsigned char b = input_image.at<cv::Vec3b>(i)[2];
+        float h = hls_image.at<cv::Vec3b>(i)[0] * 2;
+        float l = hls_image.at<cv::Vec3b>(i)[1] / 255.0;
+        float s = hls_image.at<cv::Vec3b>(i)[2] / 255.0;
+        float x = s * cos(h * M_PI / 180.0);
+        float y = s * sin(h * M_PI / 180.0);
+        float z = l;
+        memcpy((void*)(&(color_space_msg_.data[i * 16 + 0])), (const void*)&x, sizeof(float));
+        memcpy((void*)(&(color_space_msg_.data[i * 16 + 4])), (const void*)&y, sizeof(float));
+        memcpy((void*)(&(color_space_msg_.data[i * 16 + 8])), (const void*)&z, sizeof(float));
+        if (output_image.at<unsigned char>(i) == 0)
+        {
+          unsigned char gray = 16 + (r / 3 + g / 3 + b / 3) * (255 - 16) / 255;
+          r = g = b = gray;
+        }
+        unsigned char rgb[4] = { r, g, b, 0 };
+        memcpy((void*)(&(color_space_msg_.data[i * 16 + 12])), (const void*)rgb, 4 * sizeof(unsigned char));
+      }
+      color_space_pub_.publish(color_space_msg_);
+    }
   }
 
 public:
@@ -370,6 +479,41 @@ protected:
       cv::inRange(hsv_image, lower_color_range_0, upper_color_range_0, output_image_0);
       cv::inRange(hsv_image, lower_color_range_360, upper_color_range_360, output_image_360);
       output_image = output_image_0 | output_image_360;
+    }
+    if (color_space_pub_.getNumSubscribers() > 0)
+    {
+      /// publish color spaces
+      if (color_space_msg_.data.size() != 16 * input_image.rows * input_image.cols)
+      {
+        color_space_msg_.data.resize(16 * input_image.rows * input_image.cols);
+        color_space_msg_.width = input_image.cols;
+        color_space_msg_.height = input_image.rows;
+        color_space_msg_.point_step = 16;
+        color_space_msg_.row_step = color_space_msg_.width;
+      }
+      for (size_t i = 0; i < input_image.rows * input_image.cols; i++)
+      {
+        unsigned char r = input_image.at<cv::Vec3b>(i)[0];
+        unsigned char g = input_image.at<cv::Vec3b>(i)[1];
+        unsigned char b = input_image.at<cv::Vec3b>(i)[2];
+        float h = hsv_image.at<cv::Vec3b>(i)[0] * 2;
+        float s = hsv_image.at<cv::Vec3b>(i)[1] / 255.0;
+        float v = hsv_image.at<cv::Vec3b>(i)[2] / 255.0;
+        float x = s * cos(h * M_PI / 180.0);
+        float y = s * sin(h * M_PI / 180.0);
+        float z = v;
+        memcpy((void*)(&(color_space_msg_.data[i * 16 + 0])), (const void*)&x, sizeof(float));
+        memcpy((void*)(&(color_space_msg_.data[i * 16 + 4])), (const void*)&y, sizeof(float));
+        memcpy((void*)(&(color_space_msg_.data[i * 16 + 8])), (const void*)&z, sizeof(float));
+        if (output_image.at<unsigned char>(i) == 0)
+        {
+          unsigned char gray = 16 + (r / 3 + g / 3 + b / 3) * (255 - 16) / 255;
+          r = g = b = gray;
+        }
+        unsigned char rgb[4] = { r, g, b, 0 };
+        memcpy((void*)(&(color_space_msg_.data[i * 16 + 12])), (const void*)rgb, 4 * sizeof(unsigned char));
+      }
+      color_space_pub_.publish(color_space_msg_);
     }
   }
 
