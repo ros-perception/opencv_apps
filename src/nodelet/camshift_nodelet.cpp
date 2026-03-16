@@ -53,6 +53,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <dynamic_reconfigure/server.h>
+#include <std_msgs/Float64.h>
 #include "opencv_apps/CamShiftConfig.h"
 #include "opencv_apps/RotatedRectStamped.h"
 
@@ -63,7 +64,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
   image_transport::Publisher img_pub_, bproj_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
-  ros::Publisher msg_pub_;
+  ros::Publisher msg_pub_, conf_pub_;
 
   boost::shared_ptr<image_transport::ImageTransport> it_;
 
@@ -72,6 +73,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
   Config config_;
   boost::shared_ptr<ReconfigureServer> reconfigure_server_;
 
+  boost::mutex mutex_;
   int queue_size_;
   bool debug_view_;
   ros::Time prev_stamp_;
@@ -86,6 +88,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
   int vmin_, vmax_, smin_;
   bool backprojMode;
   bool selectObject;
+  int showSelected;
   int trackObject;
   bool showHist;
   cv::Point origin;
@@ -109,10 +112,18 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
   void reconfigureCallback(Config& new_config, uint32_t level)
   {
+    boost::mutex::scoped_lock lock(mutex_);
     config_ = new_config;
     vmin_ = config_.vmin;
     vmax_ = config_.vmax;
     smin_ = config_.smin;
+
+    selection.x = config_.x;
+    selection.y = config_.y;
+    selection.width = config_.width;
+    selection.height = config_.height;
+    selectObject = false;
+    trackObject = -1;
   }
 
   const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
@@ -139,6 +150,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
   void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
   {
+    boost::mutex::scoped_lock lock(mutex_);
     // Work on the image.
     try
     {
@@ -187,6 +199,12 @@ class CamShiftNodelet : public opencv_apps::Nodelet
           selection.height = std::abs(y - origin.y);
 
           selection &= cv::Rect(0, 0, frame.cols, frame.rows);
+
+          config_.x = selection.x;
+          config_.y = selection.y;
+          config_.width = selection.width;
+          config_.height = selection.height;
+          reconfigure_server_->updateConfig(config_);
         }
 
         switch (event)
@@ -234,6 +252,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
             trackWindow = selection;
             trackObject = 1;
+            showSelected = 10;
 
             histimg = cv::Scalar::all(0);
             int bin_w = histimg.cols / hsize;
@@ -284,11 +303,12 @@ class CamShiftNodelet : public opencv_apps::Nodelet
       else if (trackObject < 0)
         paused = false;
 
-      if (selectObject && selection.width > 0 && selection.height > 0)
+      if ((showSelected > 0 || selectObject) && selection.width > 0 && selection.height > 0)
       {
         cv::Mat roi(frame, selection);
         bitwise_not(roi, roi);
       }
+      if ( showSelected > 0 ) showSelected--;
 
       if (debug_view_)
       {
@@ -329,6 +349,28 @@ class CamShiftNodelet : public opencv_apps::Nodelet
       bproj_pub_.publish(out_img2);
       if (trackObject)
         msg_pub_.publish(rect_msg);
+      // publish cnofidence
+      {
+        cv::RotatedRect track_box;
+        track_box.angle = rect_msg.rect.angle;
+        track_box.center.x = rect_msg.rect.center.x;
+        track_box.center.y = rect_msg.rect.center.y;
+        track_box.size.width = rect_msg.rect.size.width;
+        track_box.size.height = rect_msg.rect.size.height;
+        cv::Mat mask = backproj.clone();
+        mask.setTo(cv::Scalar(0));
+#ifndef CV_VERSION_EPOCH
+        cv::ellipse(mask, track_box, 255, -1, cv::LINE_AA);
+#else
+        cv::ellipse(mask, track_box, 255, -1, CV_AA);
+#endif
+        cv::bitwise_and(backproj, mask, backproj);
+        double confidence = cv::countNonZero(mask);
+        if ( confidence > 0 ) { confidence = cv::countNonZero(backproj) / confidence; }
+        std_msgs::Float64 msg; msg.data = confidence;
+        conf_pub_.publish(msg);
+        NODELET_DEBUG("Confidence of tracking %f", confidence);
+      }
     }
     catch (cv::Exception& e)
     {
@@ -376,6 +418,7 @@ public:
     smin_ = 30;
     backprojMode = false;
     selectObject = false;
+    showSelected = 0;
     trackObject = 0;
     showHist = true;
     paused = false;
@@ -393,6 +436,7 @@ public:
 
     img_pub_ = advertiseImage(*pnh_, "image", 1);
     bproj_pub_ = advertiseImage(*pnh_, "back_project", 1);
+    conf_pub_ = advertise<std_msgs::Float64>(*pnh_, "confidence", 1);
     msg_pub_ = advertise<opencv_apps::RotatedRectStamped>(*pnh_, "track_box", 1);
 
     NODELET_INFO("Hot keys: ");
