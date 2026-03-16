@@ -1,6 +1,6 @@
 # opencv Rect data type, x-y is center point
-float64 x
-float64 y
-float64 width
-float64 height
+int32 x
+int32 y
+int32 width
+int32 height
 
