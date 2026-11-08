@@ -39,21 +39,14 @@
  * @author OpenCV team
  */
 
-#include <ros/ros.h>
 #include "opencv_apps/nodelet.h"
-#include <image_transport/image_transport.h>
-#include <sensor_msgs/image_encodings.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <dynamic_reconfigure/server.h>
-#include "opencv_apps/GeneralContoursConfig.h"
-#include "opencv_apps/RotatedRect.h"
-#include "opencv_apps/RotatedRectArray.h"
-#include "opencv_apps/RotatedRectArrayStamped.h"
+#include <opencv_apps/msg/rotated_rect.hpp>
+#include <opencv_apps/msg/rotated_rect_array.hpp>
+#include <opencv_apps/msg/rotated_rect_array_stamped.hpp>
 
 namespace opencv_apps
 {
@@ -62,28 +55,33 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
   image_transport::Publisher img_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
-  ros::Publisher rects_pub_, ellipses_pub_;
+  rclcpp::Publisher<opencv_apps::msg::RotatedRectArrayStamped>::SharedPtr rects_pub_, ellipses_pub_;
 
-  boost::shared_ptr<image_transport::ImageTransport> it_;
-
-  typedef opencv_apps::GeneralContoursConfig Config;
-  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
-  Config config_;
-  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
   int queue_size_;
   bool debug_view_;
-  ros::Time prev_stamp_;
+  rclcpp::Time prev_stamp_;
 
   int threshold_;
+
+  bool use_camera_info_;
 
   std::string window_name_;
   static bool need_config_update_;
 
-  void reconfigureCallback(Config& new_config, uint32_t level)
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    config_ = new_config;
-    threshold_ = config_.threshold;
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "use_camera_info")
+        use_camera_info_ = parameter.as_bool();
+      else if (parameter.get_name() == "threshold")
+        threshold_ = parameter.as_int();
+    }
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
   }
 
   const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
@@ -93,12 +91,13 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
     return frame;
   }
 
-  void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
+  void imageCallbackWithInfo(const sensor_msgs::msg::Image::ConstSharedPtr& msg,
+                             const sensor_msgs::msg::CameraInfo::ConstSharedPtr& cam_info)
   {
     doWork(msg, cam_info->header.frame_id);
   }
 
-  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& msg)
   {
     doWork(msg, msg->header.frame_id);
   }
@@ -108,7 +107,7 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
     need_config_update_ = true;
   }
 
-  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
+  void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -117,7 +116,7 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
       cv::Mat frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
 
       // Messages
-      opencv_apps::RotatedRectArrayStamped rects_msg, ellipses_msg;
+      opencv_apps::msg::RotatedRectArrayStamped rects_msg, ellipses_msg;
       rects_msg.header = msg->header;
       ellipses_msg.header = msg->header;
 
@@ -181,9 +180,9 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
         for (int j = 0; j < 4; j++)
           cv::line(drawing, rect_points[j], rect_points[(j + 1) % 4], color, 1, 8);
 
-        opencv_apps::RotatedRect rect_msg;
-        opencv_apps::Point2D rect_center;
-        opencv_apps::Size rect_size;
+        opencv_apps::msg::RotatedRect rect_msg;
+        opencv_apps::msg::Point2D rect_center;
+        opencv_apps::msg::Size rect_size;
         rect_center.x = min_rect[i].center.x;
         rect_center.y = min_rect[i].center.y;
         rect_size.width = min_rect[i].size.width;
@@ -191,9 +190,9 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
         rect_msg.center = rect_center;
         rect_msg.size = rect_size;
         rect_msg.angle = min_rect[i].angle;
-        opencv_apps::RotatedRect ellipse_msg;
-        opencv_apps::Point2D ellipse_center;
-        opencv_apps::Size ellipse_size;
+        opencv_apps::msg::RotatedRect ellipse_msg;
+        opencv_apps::msg::Point2D ellipse_center;
+        opencv_apps::msg::Size ellipse_size;
         ellipse_center.x = min_ellipse[i].center.x;
         ellipse_center.y = min_ellipse[i].center.y;
         ellipse_size.width = min_ellipse[i].size.width;
@@ -211,8 +210,7 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
       {
         if (need_config_update_)
         {
-          config_.threshold = threshold_;
-          reconfigure_server_->updateConfig(config_);
+          set_parameter(rclcpp::Parameter("threshold", threshold_));
           need_config_update_ = false;
         }
         cv::createTrackbar("Threshold:", window_name_, &threshold_, max_thresh, trackbarCallback);
@@ -222,61 +220,62 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img =
+      sensor_msgs::msg::Image::SharedPtr out_img =
           cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, drawing).toImageMsg();
-      img_pub_.publish(out_img);
-      rects_pub_.publish(rects_msg);
-      ellipses_pub_.publish(ellipses_msg);
+      img_pub_.publish(*out_img);
+      rects_pub_->publish(rects_msg);
+      ellipses_pub_->publish(ellipses_msg);
     }
     catch (cv::Exception& e)
     {
-      NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+      RCLCPP_ERROR(get_logger(), "Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(),
+                   e.line);
     }
 
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()  // NOLINT(modernize-use-override)
+  void subscribe() override
   {
-    NODELET_DEBUG("Subscribing to image topic.");
-    if (config_.use_camera_info)
+    RCLCPP_DEBUG(get_logger(), "Subscribing to image topic.");
+    if (use_camera_info_)
       cam_sub_ = it_->subscribeCamera("image", queue_size_, &GeneralContoursNodelet::imageCallbackWithInfo, this);
     else
       img_sub_ = it_->subscribe("image", queue_size_, &GeneralContoursNodelet::imageCallback, this);
   }
 
-  void unsubscribe()  // NOLINT(modernize-use-override)
+  void unsubscribe() override
   {
-    NODELET_DEBUG("Unsubscribing from image topic.");
+    RCLCPP_DEBUG(get_logger(), "Unsubscribing from image topic.");
     img_sub_.shutdown();
     cam_sub_.shutdown();
   }
 
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit GeneralContoursNodelet(const rclcpp::NodeOptions& options) : Nodelet("general_contours", options)
   {
-    Nodelet::onInit();
-    it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
-
-    pnh_->param("queue_size", queue_size_, 3);
-    pnh_->param("debug_view", debug_view_, false);
+    queue_size_ = declare_parameter("queue_size", 3);
+    debug_view_ = declare_parameter("debug_view", false);
     if (debug_view_)
     {
       always_subscribe_ = true;
     }
-    prev_stamp_ = ros::Time(0, 0);
+    prev_stamp_ = rclcpp::Time(0, 0, RCL_ROS_TIME);
 
     window_name_ = "Contours";
     threshold_ = 100;
 
-    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
-    dynamic_reconfigure::Server<Config>::CallbackType f = boost::bind(
-        &GeneralContoursNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
-    reconfigure_server_->setCallback(f);
+    use_camera_info_ = declare_parameter(
+        "use_camera_info", false,
+        paramDescriptor("Indicates that the camera_info topic should be subscribed to to get the default "
+                        "input_frame_id. Otherwise the frame from the image message will be used."));
+    threshold_ = declare_parameter("threshold", 100, paramDescriptor("Detect edges using Threshold", 1, 255));
+    on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
+        std::bind(&GeneralContoursNodelet::parametersCallback, this, std::placeholders::_1));
 
-    img_pub_ = advertiseImage(*pnh_, "image", 1);
-    rects_pub_ = advertise<opencv_apps::RotatedRectArrayStamped>(*pnh_, "rectangles", 1);
-    ellipses_pub_ = advertise<opencv_apps::RotatedRectArrayStamped>(*pnh_, "ellipses", 1);
+    img_pub_ = advertiseImage("~/image", 1);
+    rects_pub_ = advertise<opencv_apps::msg::RotatedRectArrayStamped>("~/rectangles", 1);
+    ellipses_pub_ = advertise<opencv_apps::msg::RotatedRectArrayStamped>("~/ellipses", 1);
 
     onInitPostProcess();
   }
@@ -284,24 +283,4 @@ public:
 bool GeneralContoursNodelet::need_config_update_ = false;
 }  // namespace opencv_apps
 
-namespace general_contours
-{
-class GeneralContoursNodelet : public opencv_apps::GeneralContoursNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet general_contours/general_contours is deprecated, "
-             "and renamed to opencv_apps/general_contours.");
-    opencv_apps::GeneralContoursNodelet::onInit();
-  }
-};
-}  // namespace general_contours
-
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(opencv_apps::GeneralContoursNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(general_contours::GeneralContoursNodelet, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::GeneralContoursNodelet)

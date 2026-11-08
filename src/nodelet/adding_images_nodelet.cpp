@@ -39,20 +39,15 @@
  */
 
 #include <opencv2/opencv.hpp>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
-#include <sensor_msgs/CameraInfo.h>
-#include <dynamic_reconfigure/server.h>
 
-#include <image_transport/image_transport.h>
-#include <image_transport/subscriber_filter.h>
+#include <image_transport/subscriber_filter.hpp>
+#include <rclcpp/version.h>
 
-#include <message_filters/subscriber.h>
-#include <message_filters/synchronizer.h>
-#include <message_filters/sync_policies/exact_time.h>
-#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/subscriber.hpp>
+#include <message_filters/synchronizer.hpp>
+#include <message_filters/sync_policies/exact_time.hpp>
+#include <message_filters/sync_policies/approximate_time.hpp>
 
-#include "opencv_apps/AddingImagesConfig.h"
 #include "opencv_apps/nodelet.h"
 
 namespace opencv_apps
@@ -60,128 +55,154 @@ namespace opencv_apps
 class AddingImagesNodelet : public opencv_apps::Nodelet
 {
 private:
-  boost::shared_ptr<image_transport::ImageTransport> it_;
-
-  typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo>
+  typedef message_filters::sync_policies::ExactTime<sensor_msgs::msg::Image, sensor_msgs::msg::Image,
+                                                    sensor_msgs::msg::CameraInfo>
       SyncPolicyWithCameraInfo;
-  typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::CameraInfo>
+  typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::Image, sensor_msgs::msg::Image,
+                                                          sensor_msgs::msg::CameraInfo>
       ApproxSyncPolicyWithCameraInfo;
-  typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image, sensor_msgs::Image> SyncPolicy;
-  typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> ApproxSyncPolicy;
+  typedef message_filters::sync_policies::ExactTime<sensor_msgs::msg::Image, sensor_msgs::msg::Image> SyncPolicy;
+  typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::Image, sensor_msgs::msg::Image>
+      ApproxSyncPolicy;
 
   ////////////////////////////////////////////////////////
-  // Dynamic Reconfigure
+  // Parameters
   ////////////////////////////////////////////////////////
-  typedef opencv_apps::AddingImagesConfig Config;
-  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
-  Config config_;
-  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
   int queue_size_;
   bool debug_view_;
-  ros::Time prev_stamp_;
+  rclcpp::Time prev_stamp_;
 
   std::string window_name_;
 
   image_transport::SubscriberFilter sub_image1_, sub_image2_;
   image_transport::Publisher img_pub_;
-  message_filters::Subscriber<sensor_msgs::CameraInfo> sub_camera_info_;
-  boost::shared_ptr<message_filters::Synchronizer<SyncPolicyWithCameraInfo> > sync_with_info_;
-  boost::shared_ptr<message_filters::Synchronizer<ApproxSyncPolicyWithCameraInfo> > async_with_info_;
-  boost::shared_ptr<message_filters::Synchronizer<SyncPolicy> > sync_;
-  boost::shared_ptr<message_filters::Synchronizer<ApproxSyncPolicy> > async_;
-  boost::mutex mutex_;
+  message_filters::Subscriber<sensor_msgs::msg::CameraInfo> sub_camera_info_;
+  std::shared_ptr<message_filters::Synchronizer<SyncPolicyWithCameraInfo> > sync_with_info_;
+  std::shared_ptr<message_filters::Synchronizer<ApproxSyncPolicyWithCameraInfo> > async_with_info_;
+  std::shared_ptr<message_filters::Synchronizer<SyncPolicy> > sync_;
+  std::shared_ptr<message_filters::Synchronizer<ApproxSyncPolicy> > async_;
+  std::mutex mutex_;
 
   bool approximate_sync_;
+  bool use_camera_info_;
+  bool auto_beta_;
+  double config_beta_;
   double alpha_;
   double beta_;
   double gamma_;
 
-  void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg1, const sensor_msgs::ImageConstPtr& msg2,
-                             const sensor_msgs::CameraInfoConstPtr& cam_info)
+  void imageCallbackWithInfo(const sensor_msgs::msg::Image::ConstSharedPtr& msg1,
+                             const sensor_msgs::msg::Image::ConstSharedPtr& msg2,
+                             const sensor_msgs::msg::CameraInfo::ConstSharedPtr& cam_info)
   {
     doWork(msg1, msg2, cam_info->header.frame_id);
   }
 
-  void imageCallback(const sensor_msgs::ImageConstPtr& msg1, const sensor_msgs::ImageConstPtr& msg2)
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& msg1,
+                     const sensor_msgs::msg::Image::ConstSharedPtr& msg2)
   {
     doWork(msg1, msg2, msg1->header.frame_id);
   }
 
-  void subscribe()  // NOLINT(modernize-use-override)
+  void subscribe() override
   {
-    NODELET_DEBUG("Subscribing to image topic.");
-    sub_image1_.subscribe(*it_, "image1", 3);
-    sub_image2_.subscribe(*it_, "image2", 3);
-    sub_camera_info_.subscribe(*nh_, "camera_info", 3);
-    if (config_.use_camera_info)
+    RCLCPP_DEBUG(get_logger(), "Subscribing to image topic.");
+    // image_transport takes rclcpp::QoS since lyrical, message_filters since kilted
+#if __has_include(<image_transport/node_interfaces.hpp>)
+    sub_image1_.subscribe(*this, "image1", "raw", rclcpp::QoS(3));
+    sub_image2_.subscribe(*this, "image2", "raw", rclcpp::QoS(3));
+#else
+    sub_image1_.subscribe(this, "image1", "raw", rclcpp::QoS(3).get_rmw_qos_profile());
+    sub_image2_.subscribe(this, "image2", "raw", rclcpp::QoS(3).get_rmw_qos_profile());
+#endif
+#if RCLCPP_VERSION_GTE(29, 0, 0)
+    sub_camera_info_.subscribe(this, "camera_info", rclcpp::QoS(3));
+#else
+    sub_camera_info_.subscribe(this, "camera_info", rclcpp::QoS(3).get_rmw_qos_profile());
+#endif
+    if (use_camera_info_)
     {
       if (approximate_sync_)
       {
-        async_with_info_ =
-            boost::make_shared<message_filters::Synchronizer<ApproxSyncPolicyWithCameraInfo> >(queue_size_);
+        async_with_info_ = std::make_shared<message_filters::Synchronizer<ApproxSyncPolicyWithCameraInfo> >(
+            ApproxSyncPolicyWithCameraInfo(queue_size_));
         async_with_info_->connectInput(sub_image1_, sub_image2_, sub_camera_info_);
-        async_with_info_->registerCallback(boost::bind(&AddingImagesNodelet::imageCallbackWithInfo, this,
-                                                       boost::placeholders::_1, boost::placeholders::_2,
-                                                       boost::placeholders::_3));
+        async_with_info_->registerCallback(std::bind(&AddingImagesNodelet::imageCallbackWithInfo, this,
+                                                     std::placeholders::_1, std::placeholders::_2,
+                                                     std::placeholders::_3));
       }
       else
       {
-        sync_with_info_ = boost::make_shared<message_filters::Synchronizer<SyncPolicyWithCameraInfo> >(queue_size_);
+        sync_with_info_ = std::make_shared<message_filters::Synchronizer<SyncPolicyWithCameraInfo> >(
+            SyncPolicyWithCameraInfo(queue_size_));
         sync_with_info_->connectInput(sub_image1_, sub_image2_, sub_camera_info_);
-        sync_with_info_->registerCallback(boost::bind(&AddingImagesNodelet::imageCallbackWithInfo, this,
-                                                      boost::placeholders::_1, boost::placeholders::_2,
-                                                      boost::placeholders::_3));
+        sync_with_info_->registerCallback(std::bind(&AddingImagesNodelet::imageCallbackWithInfo, this,
+                                                    std::placeholders::_1, std::placeholders::_2,
+                                                    std::placeholders::_3));
       }
     }
     else
     {
       if (approximate_sync_)
       {
-        async_ = boost::make_shared<message_filters::Synchronizer<ApproxSyncPolicy> >(queue_size_);
+        async_ = std::make_shared<message_filters::Synchronizer<ApproxSyncPolicy> >(ApproxSyncPolicy(queue_size_));
         async_->connectInput(sub_image1_, sub_image2_);
         async_->registerCallback(
-            boost::bind(&AddingImagesNodelet::imageCallback, this, boost::placeholders::_1, boost::placeholders::_2));
+            std::bind(&AddingImagesNodelet::imageCallback, this, std::placeholders::_1, std::placeholders::_2));
       }
       else
       {
-        sync_ = boost::make_shared<message_filters::Synchronizer<SyncPolicy> >(queue_size_);
+        sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy> >(SyncPolicy(queue_size_));
         sync_->connectInput(sub_image1_, sub_image2_);
         sync_->registerCallback(
-            boost::bind(&AddingImagesNodelet::imageCallback, this, boost::placeholders::_1, boost::placeholders::_2));
+            std::bind(&AddingImagesNodelet::imageCallback, this, std::placeholders::_1, std::placeholders::_2));
       }
     }
   }
 
-  void unsubscribe()  // NOLINT(modernize-use-override)
+  void unsubscribe() override
   {
-    NODELET_DEBUG("Unsubscribing from image topic.");
+    RCLCPP_DEBUG(get_logger(), "Unsubscribing from image topic.");
     sub_image1_.unsubscribe();
     sub_image2_.unsubscribe();
     sub_camera_info_.unsubscribe();
   }
 
-  void reconfigureCallback(Config& config, uint32_t level)
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-    config_ = config;
-    alpha_ = config.alpha;
-    if (config.auto_beta)
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "use_camera_info")
+        use_camera_info_ = parameter.as_bool();
+      else if (parameter.get_name() == "alpha")
+        alpha_ = parameter.as_double();
+      else if (parameter.get_name() == "auto_beta")
+        auto_beta_ = parameter.as_bool();
+      else if (parameter.get_name() == "beta")
+        config_beta_ = parameter.as_double();
+      else if (parameter.get_name() == "gamma")
+        gamma_ = parameter.as_double();
+    }
+    if (auto_beta_)
     {
       beta_ = 1.0 - alpha_;
-      config.beta = beta_;
     }
     else
     {
-      beta_ = config.beta;
+      beta_ = config_beta_;
     }
-    gamma_ = config.gamma;
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
   }
 
-  void doWork(const sensor_msgs::Image::ConstPtr& image_msg1, const sensor_msgs::Image::ConstPtr& image_msg2,
-              const std::string& input_frame_from_msg)
+  void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& image_msg1,
+              const sensor_msgs::msg::Image::ConstSharedPtr& image_msg2, const std::string& input_frame_from_msg)
   {
-    boost::mutex::scoped_lock lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     // Work on the image.
     try
     {
@@ -189,8 +210,8 @@ private:
       cv::Mat image2 = cv_bridge::toCvCopy(image_msg2, image_msg1->encoding)->image;
       if (cv_bridge::getCvType(image_msg1->encoding) != cv_bridge::getCvType(image_msg2->encoding))
       {
-        NODELET_ERROR("Encoding of input images must be same type: %s, %s", image_msg1->encoding.c_str(),
-                      image_msg2->encoding.c_str());
+        RCLCPP_ERROR(get_logger(), "Encoding of input images must be same type: %s, %s", image_msg1->encoding.c_str(),
+                     image_msg2->encoding.c_str());
         return;
       }
 
@@ -211,7 +232,7 @@ private:
       }
       cv::addWeighted(image1, alpha_, image2, beta_, gamma_, result_image);
       //-- Show what you got
-      sensor_msgs::ImagePtr image_msg3 =
+      sensor_msgs::msg::Image::SharedPtr image_msg3 =
           cv_bridge::CvImage(image_msg1->header, image_msg1->encoding, result_image).toImageMsg();
       if (debug_view_)
       {
@@ -235,64 +256,51 @@ private:
 #endif
         int c = cv::waitKey(1);
       }
-      img_pub_.publish(image_msg3);
+      img_pub_.publish(*image_msg3);
     }
     catch (cv::Exception& e)
     {
-      NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+      RCLCPP_ERROR(get_logger(), "Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(),
+                   e.line);
     }
 
     prev_stamp_ = image_msg1->header.stamp;
   }
 
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit AddingImagesNodelet(const rclcpp::NodeOptions& options) : Nodelet("adding_images", options)
   {
-    Nodelet::onInit();
-    it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
-
-    pnh_->param("debug_view", debug_view_, false);
+    debug_view_ = declare_parameter("debug_view", false);
     if (debug_view_)
     {
       always_subscribe_ = true;
     }
-    prev_stamp_ = ros::Time(0, 0);
+    prev_stamp_ = rclcpp::Time(0, 0, RCL_ROS_TIME);
 
     window_name_ = "AddingImages Demo";
     ////////////////////////////////////////////////////////
-    // Dynamic Reconfigure
+    // Parameters
     ////////////////////////////////////////////////////////
-    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
-    dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&AddingImagesNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
-    reconfigure_server_->setCallback(f);
+    use_camera_info_ = declare_parameter(
+        "use_camera_info", false,
+        paramDescriptor("Indicates that the camera_info topic should be subscribed to to get the default "
+                        "input_frame_id. Otherwise the frame from the image message will be used."));
+    alpha_ = declare_parameter("alpha", 0.5, paramDescriptor("weight of the first array elements.", 0.0, 1.0));
+    auto_beta_ = declare_parameter(
+        "auto_beta", true,
+        paramDescriptor("True: Automatically set beta weight as 1 - alpha, False: Use user defined beta weight"));
+    config_beta_ = declare_parameter("beta", 0.5, paramDescriptor("weight of the second array elements.", 0.0, 1.0));
+    beta_ = auto_beta_ ? 1.0 - alpha_ : config_beta_;
+    gamma_ = declare_parameter("gamma", 0.0, paramDescriptor("scalar added to each sum.", 0.0, 255.0));
+    on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
+        std::bind(&AddingImagesNodelet::parametersCallback, this, std::placeholders::_1));
 
-    pnh_->param("approximate_sync", approximate_sync_, true);
-    pnh_->param("queue_size", queue_size_, 100);
-    img_pub_ = advertiseImage(*pnh_, "image", 1);
+    approximate_sync_ = declare_parameter("approximate_sync", true);
+    queue_size_ = declare_parameter("queue_size", 100);
+    img_pub_ = advertiseImage("~/image", 1);
     onInitPostProcess();
   }
 };
 }  // namespace opencv_apps
 
-namespace adding_images
-{
-class AddingImagesNodelet : public opencv_apps::AddingImagesNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet adding_images/adding_images is deprecated, "
-             "and renamed to opencv_apps/adding_images.");
-    opencv_apps::AddingImagesNodelet::onInit();
-  }
-};
-}  // namespace adding_images
-
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(opencv_apps::AddingImagesNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(adding_images::AddingImagesNodelet, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::AddingImagesNodelet)

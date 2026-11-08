@@ -38,18 +38,10 @@
  * This is a demo of threshold image processing,
  */
 
-#include <image_transport/image_transport.h>
-#include <sensor_msgs/image_encodings.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
-
 #include <opencv2/highgui/highgui.hpp>
 #include "opencv2/imgproc/imgproc.hpp"
 
 #include "opencv_apps/nodelet.h"
-#include "opencv_apps/ThresholdConfig.h"
-
-#include <dynamic_reconfigure/server.h>
 
 namespace opencv_apps
 {
@@ -58,10 +50,7 @@ class ThresholdNodelet : public opencv_apps::Nodelet
   ////////////////////////////////////////////////////////
   // Dynamic Reconfigure
   ////////////////////////////////////////////////////////
-  typedef opencv_apps::ThresholdConfig Config;
-  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
-  Config config_;
-  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
   int queue_size_;
   bool debug_view_;
@@ -72,51 +61,62 @@ class ThresholdNodelet : public opencv_apps::Nodelet
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
 
-  boost::shared_ptr<image_transport::ImageTransport> it_;
-
-  boost::mutex mutex_;
+  std::mutex mutex_;
+  bool use_camera_info_;
   int threshold_type_;
   int max_binary_value_;
   int threshold_value_;
   bool apply_otsu_;
 
-  void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
+  void imageCallbackWithInfo(const sensor_msgs::msg::Image::ConstSharedPtr& msg,
+                             const sensor_msgs::msg::CameraInfo::ConstSharedPtr& cam_info)
   {
     doWork(msg, cam_info->header.frame_id);
   }
 
-  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& msg)
   {
     doWork(msg, msg->header.frame_id);
   }
 
-  void subscribe()  // NOLINT(modernize-use-override)
+  void subscribe() override
   {
-    NODELET_DEBUG("Subscribing to image topic.");
-    if (config_.use_camera_info)
+    RCLCPP_DEBUG(get_logger(), "Subscribing to image topic.");
+    if (use_camera_info_)
       cam_sub_ = it_->subscribeCamera("image", queue_size_, &ThresholdNodelet::imageCallbackWithInfo, this);
     else
       img_sub_ = it_->subscribe("image", queue_size_, &ThresholdNodelet::imageCallback, this);
   }
 
-  void unsubscribe()  // NOLINT(modernize-use-override)
+  void unsubscribe() override
   {
-    NODELET_DEBUG("Unsubscribing from image topic.");
+    RCLCPP_DEBUG(get_logger(), "Unsubscribing from image topic.");
     img_sub_.shutdown();
     cam_sub_.shutdown();
   }
 
-  void reconfigureCallback(Config& config, uint32_t level)
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-    config_ = config;
-    threshold_value_ = config.threshold;
-    threshold_type_ = config.threshold_type;
-    max_binary_value_ = config.max_binary;
-    apply_otsu_ = config.apply_otsu;
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "use_camera_info")
+        use_camera_info_ = parameter.as_bool();
+      else if (parameter.get_name() == "threshold")
+        threshold_value_ = parameter.as_int();
+      else if (parameter.get_name() == "threshold_type")
+        threshold_type_ = parameter.as_int();
+      else if (parameter.get_name() == "max_binary")
+        max_binary_value_ = parameter.as_int();
+      else if (parameter.get_name() == "apply_otsu")
+        apply_otsu_ = parameter.as_bool();
+    }
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
   }
 
-  void doWork(const sensor_msgs::Image::ConstPtr& image_msg, const std::string& input_frame_from_msg)
+  void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& image_msg, const std::string& input_frame_from_msg)
   {
     try
     {
@@ -142,18 +142,16 @@ class ThresholdNodelet : public opencv_apps::Nodelet
     }
     catch (cv::Exception& e)
     {
-      NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+      RCLCPP_ERROR(get_logger(), "Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(),
+                   e.line);
     }
   }
 
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit ThresholdNodelet(const rclcpp::NodeOptions& options) : Nodelet("threshold", options)
   {
-    Nodelet::onInit();
-    it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
-
-    pnh_->param("queue_size", queue_size_, 3);
-    pnh_->param("debug_view", debug_view_, false);
+    queue_size_ = declare_parameter("queue_size", 3);
+    debug_view_ = declare_parameter("debug_view", false);
     if (debug_view_)
     {
       always_subscribe_ = true;
@@ -161,35 +159,25 @@ public:
     ////////////////////////////////////////////////////////
     // Dynamic Reconfigure
     ////////////////////////////////////////////////////////
-    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
-    dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&ThresholdNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
-    reconfigure_server_->setCallback(f);
+    use_camera_info_ = declare_parameter(
+        "use_camera_info", false,
+        paramDescriptor("Indicates that the camera_info topic should be subscribed to to get the default "
+                        "input_frame_id. Otherwise the frame from the image message will be used."));
+    apply_otsu_ = declare_parameter("apply_otsu", false, paramDescriptor("Apply otsu threshold"));
+    threshold_type_ = declare_parameter(
+        "threshold_type", 0,
+        paramDescriptor("Threshold Type, 0: Binary, 1: Binary_Inverted, 2: Threshold_Truncated, 3: Threshold_To_Zero, "
+                        "4: Threshold_To_Zero_Inverted",
+                        0, 4));
+    threshold_value_ = declare_parameter("threshold", 150, paramDescriptor("Threshold value", 0, 255));
+    max_binary_value_ = declare_parameter("max_binary", 255, paramDescriptor("Max Binary value", 0, 255));
+    on_set_parameters_callback_handle_ =
+        add_on_set_parameters_callback(std::bind(&ThresholdNodelet::parametersCallback, this, std::placeholders::_1));
 
-    img_pub_ = advertiseImage(*pnh_, "image", 1);
+    img_pub_ = advertiseImage("~/image", 1);
     onInitPostProcess();
   }
 };
 }  // namespace opencv_apps
 
-namespace threshold
-{
-class ThresholdNodelet : public opencv_apps::ThresholdNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet threshold/threshold is deprecated, "
-             "and renamed to opencv_apps/threshold.");
-    opencv_apps::ThresholdNodelet::onInit();
-  }
-};
-}  // namespace threshold
-
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(opencv_apps::ThresholdNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(threshold::ThresholdNodelet, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::ThresholdNodelet)

@@ -33,39 +33,31 @@
 *********************************************************************/
 
 #include <algorithm>
-#include <boost/filesystem.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/thread.hpp>
-#include <boost/version.hpp>
+#include <filesystem>
 #include <iomanip>
 #include <map>
+#include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <opencv2/opencv.hpp>
 #include <pwd.h>
+#include <unistd.h>
 #include <vector>
 
-#include <cv_bridge/cv_bridge.h>
-#include <dynamic_reconfigure/server.h>
-#include <image_transport/image_transport.h>
-#include <image_transport/subscriber_filter.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/synchronizer.h>
-#include <message_filters/sync_policies/approximate_time.h>
-#include <message_filters/sync_policies/exact_time.h>
-#include <sensor_msgs/image_encodings.h>
+#include <image_transport/subscriber_filter.hpp>
+#include <rclcpp/version.h>
+#include <message_filters/subscriber.hpp>
+#include <message_filters/synchronizer.hpp>
+#include <message_filters/sync_policies/approximate_time.hpp>
+#include <message_filters/sync_policies/exact_time.hpp>
 
 #include <opencv_apps/nodelet.h>
-#include <opencv_apps/FaceArrayStamped.h>
-#include <opencv_apps/FaceRecognitionTrain.h>
-#include <opencv_apps/FaceRecognitionConfig.h>
+#include <opencv_apps/msg/face_array_stamped.hpp>
+#include <opencv_apps/srv/face_recognition_train.hpp>
 
 namespace enc = sensor_msgs::image_encodings;
-#if BOOST_VERSION < 105000
-namespace fs = boost::filesystem3;  // for hydro
-#else
-namespace fs = boost::filesystem;
-#endif
+namespace fs = std::filesystem;
 
 #if CV_MAJOR_VERSION >= 3
 #include <opencv2/face.hpp>
@@ -79,41 +71,20 @@ namespace face = cv;
 #include <opencv2/imgproc/imgproc_c.h>             // include CV_AA
 #endif
 
+namespace opencv_apps
+{
 // utility for resolving path
-namespace boost
+fs::path user_expanded_path(const fs::path& p)
 {
-#if BOOST_VERSION < 105000
-namespace filesystem3
-{  // for hydro
-#else
-namespace filesystem
-{
-#endif
-#if BOOST_VERSION < 108300
-template <>
-path& path::append<typename path::iterator>(typename path::iterator lhs, typename path::iterator rhs,
-                                            const codecvt_type& cvt)
-{
-  for (; lhs != rhs; ++lhs)
-    *this /= *lhs;
-  return *this;
-}
-#endif
-path user_expanded_path(const path& p)
-{
-#if BOOST_VERSION < 108300
-  path::const_iterator it(p.begin());
-#else
-  if (p.size() < 2)
+  if (p.empty())
     return p;
 
   auto it = p.begin();
   // Replace the tilda with the home directory
-#endif
   std::string user_dir = (*it).string();
   if (user_dir.length() == 0 || user_dir[0] != '~')
     return p;
-  path ret;
+  fs::path ret;
   char* homedir;
   if (user_dir.length() == 1)
   {
@@ -133,23 +104,15 @@ path user_expanded_path(const path& p)
   }
 
   // Append the rest of path
-  ret = path(std::string(homedir));
-#if BOOST_VERSION < 108300
-  return ret.append(++it, p.end(), path::codecvt());
-#else
+  ret = fs::path(std::string(homedir));
   ++it;
   for (; it != p.end(); ++it)
   {
     ret /= *it;
   }
   return ret;
-#endif
 }
-}  // namespace filesystem
-}  // namespace boost
 
-namespace opencv_apps
-{
 class LabelMapper
 {
   std::map<std::string, int> m_;
@@ -197,12 +160,12 @@ public:
 
   void debugPrint()
   {
-    ROS_WARN_STREAM("label mapper: debug print:");
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("opencv_apps"), "label mapper: debug print:");
     for (std::map<std::string, int>::const_iterator it = m_.begin(); it != m_.end(); ++it)
     {
-      ROS_WARN_STREAM("\t" << it->first << ": " << it->second);
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("opencv_apps"), "\t" << it->first << ": " << it->second);
     }
-    ROS_WARN_STREAM("label mapper: debug print end");
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("opencv_apps"), "label mapper: debug print end");
   }
 };
 
@@ -213,7 +176,7 @@ class Storage
 public:
   Storage(const fs::path& base_dir)
   {
-    base_dir_ = fs::user_expanded_path(base_dir);
+    base_dir_ = user_expanded_path(base_dir);
     if (!fs::exists(base_dir_))
     {
       init();
@@ -261,7 +224,8 @@ public:
           }
           catch (cv::Exception& e)
           {
-            ROS_ERROR_STREAM("Error: load image from " << file_path << ": " << e.what());
+            RCLCPP_ERROR_STREAM(rclcpp::get_logger("opencv_apps"),
+                                "Error: load image from " << file_path << ": " << e.what());
           }
         }
       }
@@ -301,36 +265,53 @@ public:
     // data_dir/person_label/person_label_123456.jpg
     ss << label << "_" << std::setw(6) << std::setfill('0') << file_count << ".jpg";
     fs::path file_path = img_dir / ss.str();
-    ROS_INFO_STREAM("saving image to :" << file_path);
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("opencv_apps"), "saving image to :" << file_path);
     try
     {
       cv::imwrite(file_path.string(), image);
     }
     catch (cv::Exception& e)
     {
-      ROS_ERROR_STREAM("Error: save image to " << file_path << ": " << e.what());
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("opencv_apps"), "Error: save image to " << file_path << ": " << e.what());
     }
   }
+};
+
+// parameters formerly defined in cfg/FaceRecognition.cfg
+struct FaceRecognitionConfig
+{
+  std::string model_method;
+  bool use_saved_data;
+  bool save_train_data;
+  std::string data_dir;
+  int face_model_width;
+  int face_model_height;
+  double face_padding;
+  int model_num_components;
+  double model_threshold;
+  int lbph_radius;
+  int lbph_neighbors;
+  int lbph_grid_x;
+  int lbph_grid_y;
 };
 
 class FaceRecognitionNodelet : public opencv_apps::Nodelet
 {
   typedef opencv_apps::FaceRecognitionConfig Config;
-  typedef dynamic_reconfigure::Server<Config> Server;
-  typedef message_filters::sync_policies::ExactTime<sensor_msgs::Image, opencv_apps::FaceArrayStamped> SyncPolicy;
-  typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, opencv_apps::FaceArrayStamped>
+  typedef message_filters::sync_policies::ExactTime<sensor_msgs::msg::Image, opencv_apps::msg::FaceArrayStamped>
+      SyncPolicy;
+  typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::Image, opencv_apps::msg::FaceArrayStamped>
       ApproximateSyncPolicy;
 
-  Config config_;
-  boost::shared_ptr<Server> cfg_srv_;
-  boost::shared_ptr<image_transport::ImageTransport> it_;
-  boost::shared_ptr<message_filters::Synchronizer<SyncPolicy> > sync_;
-  boost::shared_ptr<message_filters::Synchronizer<ApproximateSyncPolicy> > async_;
+  Config config_ = Config();
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
+  std::shared_ptr<message_filters::Synchronizer<SyncPolicy> > sync_;
+  std::shared_ptr<message_filters::Synchronizer<ApproximateSyncPolicy> > async_;
   image_transport::SubscriberFilter img_sub_;
-  message_filters::Subscriber<opencv_apps::FaceArrayStamped> face_sub_;
-  ros::Publisher debug_img_pub_;
-  ros::Publisher face_pub_;
-  ros::ServiceServer train_srv_;
+  message_filters::Subscriber<opencv_apps::msg::FaceArrayStamped> face_sub_;
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr debug_img_pub_;
+  rclcpp::Publisher<opencv_apps::msg::FaceArrayStamped>::SharedPtr face_pub_;
+  rclcpp::Service<opencv_apps::srv::FaceRecognitionTrain>::SharedPtr train_srv_;
 
   bool save_train_data_;
   bool use_async_;
@@ -338,14 +319,14 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
   double face_padding_;
   int queue_size_;
   std::string data_dir_;
-  boost::mutex mutex_;
+  std::mutex mutex_;
 
-  boost::shared_ptr<LabelMapper> label_mapper_;
-  boost::shared_ptr<Storage> storage_;
+  std::shared_ptr<LabelMapper> label_mapper_;
+  std::shared_ptr<Storage> storage_;
   cv::Size face_model_size_;
   cv::Ptr<face::FaceRecognizer> model_;
 
-  void drawFace(cv::Mat& img, const opencv_apps::Face& face)
+  void drawFace(cv::Mat& img, const opencv_apps::msg::Face& face)
   {
     cv::Rect r(int(face.face.x - face.face.width / 2.0 - face.face.width * face_padding_ / 2.0),
                int(face.face.y - face.face.height / 2.0 - face.face.height * face_padding_ / 2.0),
@@ -367,7 +348,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
     cv::putText(img, ss.str(), text_bl, cv::FONT_HERSHEY_PLAIN, font_scale, color, boldness, CV_AA);
   }
 
-  void extractImage(const cv::Mat& img, const opencv_apps::Rect& rect, cv::Mat& ret, double padding = 0.0)
+  void extractImage(const cv::Mat& img, const opencv_apps::msg::Rect& rect, cv::Mat& ret, double padding = 0.0)
   {
     int x = std::max(0, int(rect.x - rect.width / 2.0 - rect.width * padding / 2.0));
     int y = std::max(0, int(rect.y - rect.height / 2.0 - rect.height * padding / 2.0));
@@ -376,14 +357,14 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
     ret = img(r);
   }
 
-  void extractImage(const cv::Mat& img, const opencv_apps::Face& face, cv::Mat& ret, double padding = 0.0)
+  void extractImage(const cv::Mat& img, const opencv_apps::msg::Face& face, cv::Mat& ret, double padding = 0.0)
   {
     extractImage(img, face.face, ret, padding);
   }
 
   void retrain()
   {
-    NODELET_DEBUG("retrain");
+    RCLCPP_DEBUG(get_logger(), "retrain");
     std::vector<cv::Mat> images;
     std::vector<std::string> labels;
     train(images, labels);
@@ -410,7 +391,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
 
     label_mapper_->add(labels);
     std::vector<int> ids = label_mapper_->get(labels);
-    NODELET_INFO_STREAM("training with " << images.size() << " images");
+    RCLCPP_INFO_STREAM(get_logger(), "training with " << images.size() << " images");
     // label_mapper_->debugPrint();
     model_->train(resized_images, ids);
 
@@ -430,25 +411,26 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
     model_->predict(resized_img, label, confidence);
   }
 
-  void faceImageCallback(const sensor_msgs::Image::ConstPtr& image, const opencv_apps::FaceArrayStamped::ConstPtr& faces)
+  void faceImageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& image,
+                         const opencv_apps::msg::FaceArrayStamped::ConstSharedPtr& faces)
   {
-    NODELET_DEBUG("faceImageCallback");
-    boost::mutex::scoped_lock lock(mutex_);
+    RCLCPP_DEBUG(get_logger(), "faceImageCallback");
+    std::lock_guard<std::mutex> lock(mutex_);
 
     // check if the face data is being trained
     if (label_mapper_->getMap().empty())
     {
-      NODELET_WARN_THROTTLE(1.0, "Face data is not trained. Please train first.");
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 1000, "Face data is not trained. Please train first.");
       return;
     }
 
     // check if need to draw and publish debug image
-    bool publish_debug_image = debug_img_pub_.getNumSubscribers() > 0;
+    bool publish_debug_image = debug_img_pub_->get_subscription_count() > 0;
 
     try
     {
       cv::Mat cv_img = cv_bridge::toCvShare(image, enc::BGR8)->image;
-      opencv_apps::FaceArrayStamped ret_msg = *faces;
+      opencv_apps::msg::FaceArrayStamped ret_msg = *faces;
       for (size_t i = 0; i < faces->faces.size(); ++i)
       {
         cv::Mat face_img, resized_image;
@@ -466,62 +448,63 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
         if (publish_debug_image)
           drawFace(cv_img, ret_msg.faces[i]);
       }
-      face_pub_.publish(ret_msg);
+      face_pub_->publish(ret_msg);
       if (publish_debug_image)
       {
-        sensor_msgs::Image::Ptr debug_img = cv_bridge::CvImage(image->header, enc::BGR8, cv_img).toImageMsg();
-        debug_img_pub_.publish(debug_img);
-        NODELET_DEBUG("Published debug image");
+        sensor_msgs::msg::Image::SharedPtr debug_img =
+            cv_bridge::CvImage(image->header, enc::BGR8, cv_img).toImageMsg();
+        debug_img_pub_->publish(*debug_img);
+        RCLCPP_DEBUG(get_logger(), "Published debug image");
       }
     }
     catch (cv::Exception& e)
     {
-      NODELET_ERROR_STREAM("error at image processing: " << e.err << " " << e.func << " " << e.file << " " << e.line);
+      RCLCPP_ERROR_STREAM(get_logger(),
+                          "error at image processing: " << e.err << " " << e.func << " " << e.file << " " << e.line);
     }
   }
 
-  bool trainCallback(opencv_apps::FaceRecognitionTrain::Request& req, opencv_apps::FaceRecognitionTrain::Response& res)
+  void trainCallback(const std::shared_ptr<opencv_apps::srv::FaceRecognitionTrain::Request> req,
+                     std::shared_ptr<opencv_apps::srv::FaceRecognitionTrain::Response> res)
   {
-    boost::mutex::scoped_lock lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     try
     {
-      std::vector<cv::Mat> images(req.images.size());
-      bool use_roi = !req.rects.empty();
+      std::vector<cv::Mat> images(req->images.size());
+      bool use_roi = !req->rects.empty();
 
-      if (use_roi && req.images.size() != req.rects.size())
+      if (use_roi && req->images.size() != req->rects.size())
       {
         throw std::length_error("req.images.size() != req.rects.size()");
       }
 
-      for (size_t i = 0; i < req.images.size(); ++i)
+      for (size_t i = 0; i < req->images.size(); ++i)
       {
-        sensor_msgs::Image img = req.images[i];
+        sensor_msgs::msg::Image img = req->images[i];
         images[i] = cv_bridge::toCvCopy(img, enc::BGR8)->image;
         if (use_roi)
         {
           cv::Mat face_img;
-          extractImage(images[i], req.rects[i], face_img);
+          extractImage(images[i], req->rects[i], face_img);
           images[i] = face_img;
         }
       }
-      std::vector<std::string> labels(req.labels.begin(), req.labels.end());
+      std::vector<std::string> labels(req->labels.begin(), req->labels.end());
       train(images, labels);
-      res.ok = true;
-      return true;
+      res->ok = true;
     }
     catch (cv::Exception& e)
     {
       std::stringstream ss;
       ss << "error at training: " << e.err << " " << e.func << " " << e.file << " " << e.line;
-      res.ok = false;
-      res.error = ss.str();
+      res->ok = false;
+      res->error = ss.str();
     }
-    return false;
   }
 
-  void configCallback(Config& config, uint32_t level)
+  void configCallback(Config& config)
   {
-    boost::mutex::scoped_lock lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
 
     bool need_recreate_model = false;
     bool need_retrain = false;
@@ -601,7 +584,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
       }
       catch (cv::Exception& e)
       {
-        NODELET_ERROR_STREAM("Error: create face recognizer: " << e.what());
+        RCLCPP_ERROR_STREAM(get_logger(), "Error: create face recognizer: " << e.what());
       }
     }
 
@@ -613,7 +596,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
       }
       catch (cv::Exception& e)
       {
-        NODELET_ERROR_STREAM("Error: train: " << e.what());
+        RCLCPP_ERROR_STREAM(get_logger(), "Error: train: " << e.what());
       }
     }
 
@@ -636,93 +619,145 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
       }
       catch (cv::Exception& e)
       {
-        NODELET_ERROR_STREAM("Error: set threshold: " << e.what());
+        RCLCPP_ERROR_STREAM(get_logger(), "Error: set threshold: " << e.what());
       }
     }
     config_ = config;
   }
 
-  void subscribe()  // NOLINT(modernize-use-override)
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    NODELET_DEBUG("subscribe");
-    img_sub_.subscribe(*it_, "image", 1);
-    face_sub_.subscribe(*nh_, "faces", 1);
+    Config config = config_;
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "model_method")
+        config.model_method = parameter.as_string();
+      else if (parameter.get_name() == "use_saved_data")
+        config.use_saved_data = parameter.as_bool();
+      else if (parameter.get_name() == "save_train_data")
+        config.save_train_data = parameter.as_bool();
+      else if (parameter.get_name() == "data_dir")
+        config.data_dir = parameter.as_string();
+      else if (parameter.get_name() == "face_model_width")
+        config.face_model_width = parameter.as_int();
+      else if (parameter.get_name() == "face_model_height")
+        config.face_model_height = parameter.as_int();
+      else if (parameter.get_name() == "face_padding")
+        config.face_padding = parameter.as_double();
+      else if (parameter.get_name() == "model_num_components")
+        config.model_num_components = parameter.as_int();
+      else if (parameter.get_name() == "model_threshold")
+        config.model_threshold = parameter.as_double();
+      else if (parameter.get_name() == "lbph_radius")
+        config.lbph_radius = parameter.as_int();
+      else if (parameter.get_name() == "lbph_neighbors")
+        config.lbph_neighbors = parameter.as_int();
+      else if (parameter.get_name() == "lbph_grid_x")
+        config.lbph_grid_x = parameter.as_int();
+      else if (parameter.get_name() == "lbph_grid_y")
+        config.lbph_grid_y = parameter.as_int();
+    }
+    configCallback(config);
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
+  }
+
+  void subscribe() override
+  {
+    RCLCPP_DEBUG(get_logger(), "subscribe");
+    // image_transport takes rclcpp::QoS since lyrical, message_filters since kilted
+#if __has_include(<image_transport/node_interfaces.hpp>)
+    img_sub_.subscribe(*this, "image", "raw", rclcpp::QoS(1));
+#else
+    img_sub_.subscribe(this, "image", "raw", rclcpp::QoS(1).get_rmw_qos_profile());
+#endif
+#if RCLCPP_VERSION_GTE(29, 0, 0)
+    face_sub_.subscribe(this, "faces", rclcpp::QoS(1));
+#else
+    face_sub_.subscribe(this, "faces", rclcpp::QoS(1).get_rmw_qos_profile());
+#endif
     if (use_async_)
     {
-      async_ = boost::make_shared<message_filters::Synchronizer<ApproximateSyncPolicy> >(queue_size_);
+      async_ =
+          std::make_shared<message_filters::Synchronizer<ApproximateSyncPolicy> >(ApproximateSyncPolicy(queue_size_));
       async_->connectInput(img_sub_, face_sub_);
-      async_->registerCallback(boost::bind(&FaceRecognitionNodelet::faceImageCallback, this, boost::placeholders::_1,
-                                           boost::placeholders::_2));
+      async_->registerCallback(
+          std::bind(&FaceRecognitionNodelet::faceImageCallback, this, std::placeholders::_1, std::placeholders::_2));
     }
     else
     {
-      sync_ = boost::make_shared<message_filters::Synchronizer<SyncPolicy> >(queue_size_);
+      sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy> >(SyncPolicy(queue_size_));
       sync_->connectInput(img_sub_, face_sub_);
-      sync_->registerCallback(boost::bind(&FaceRecognitionNodelet::faceImageCallback, this, boost::placeholders::_1,
-                                          boost::placeholders::_2));
+      sync_->registerCallback(
+          std::bind(&FaceRecognitionNodelet::faceImageCallback, this, std::placeholders::_1, std::placeholders::_2));
     }
   }
 
-  void unsubscribe()  // NOLINT(modernize-use-override)
+  void unsubscribe() override
   {
-    NODELET_DEBUG("unsubscribe");
+    RCLCPP_DEBUG(get_logger(), "unsubscribe");
     img_sub_.unsubscribe();
     face_sub_.unsubscribe();
   }
 
 public:
-  ~FaceRecognitionNodelet()  // NOLINT(modernize-use-override)
+  ~FaceRecognitionNodelet() override
   {
     sync_.reset();
     async_.reset();
   }
 
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit FaceRecognitionNodelet(const rclcpp::NodeOptions& options) : Nodelet("face_recognition", options)
   {
-    Nodelet::onInit();
-
     // variables
     face_model_size_ = cv::Size(190, 90);
 
-    // dynamic reconfigures
-    cfg_srv_ = boost::make_shared<Server>(*pnh_);
-    Server::CallbackType f =
-        boost::bind(&FaceRecognitionNodelet::configCallback, this, boost::placeholders::_1, boost::placeholders::_2);
-    cfg_srv_->setCallback(f);
+    // parameters (formerly dynamic reconfigure)
+    Config config;
+    config.model_method = declare_parameter(
+        "model_method", std::string("eigen"),
+        paramDescriptor("Method to recognize faces, \"eigen\": eigen, \"fisher\": fisher, \"LBPH\": LBPH"));
+    config.use_saved_data = declare_parameter("use_saved_data", true, paramDescriptor("Use saved data"));
+    config.save_train_data = declare_parameter("save_train_data", true, paramDescriptor("Save train data"));
+    config.data_dir = declare_parameter("data_dir", std::string("~/.ros/opencv_apps/face_data"),
+                                        paramDescriptor("Save directory for train data"));
+    config.face_model_width =
+        declare_parameter("face_model_width", 190, paramDescriptor("Width of training face image", 30, 500));
+    config.face_model_height =
+        declare_parameter("face_model_height", 90, paramDescriptor("Height of training face image", 30, 500));
+    config.face_padding =
+        declare_parameter("face_padding", 0.1, paramDescriptor("Padding ratio of each face", 0.0, 2.0));
+    config.model_num_components = declare_parameter(
+        "model_num_components", 0, paramDescriptor("Number of components for face recognizer model", 0, 100));
+    config.model_threshold = declare_parameter("model_threshold", 8000.0,
+                                               paramDescriptor("Threshold for face recognizer model", 0.0, 10000.0));
+    config.lbph_radius =
+        declare_parameter("lbph_radius", 1, paramDescriptor("Radius parameter used only for LBPH model", 1, 10));
+    config.lbph_neighbors =
+        declare_parameter("lbph_neighbors", 8, paramDescriptor("Neighbors parameter used only for LBPH model", 1, 30));
+    config.lbph_grid_x =
+        declare_parameter("lbph_grid_x", 8, paramDescriptor("grid_x parameter used only for LBPH model", 1, 30));
+    config.lbph_grid_y =
+        declare_parameter("lbph_grid_y", 8, paramDescriptor("grid_y parameter used only for LBPH model", 1, 30));
+    configCallback(config);
+    on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
+        std::bind(&FaceRecognitionNodelet::parametersCallback, this, std::placeholders::_1));
 
     // parameters
-    pnh_->param("approximate_sync", use_async_, false);
-    pnh_->param("queue_size", queue_size_, 100);
+    use_async_ = declare_parameter("approximate_sync", false);
+    queue_size_ = declare_parameter("queue_size", 100);
 
     // advertise
-    debug_img_pub_ = advertise<sensor_msgs::Image>(*pnh_, "debug_image", 1);
-    face_pub_ = advertise<opencv_apps::FaceArrayStamped>(*pnh_, "output", 1);
-    train_srv_ = pnh_->advertiseService("train", &FaceRecognitionNodelet::trainCallback, this);
-    it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
+    debug_img_pub_ = advertise<sensor_msgs::msg::Image>("~/debug_image", 1);
+    face_pub_ = advertise<opencv_apps::msg::FaceArrayStamped>("~/output", 1);
+    train_srv_ = create_service<opencv_apps::srv::FaceRecognitionTrain>(
+        "~/train",
+        std::bind(&FaceRecognitionNodelet::trainCallback, this, std::placeholders::_1, std::placeholders::_2));
 
     onInitPostProcess();
   }
 };
 }  // namespace opencv_apps
 
-namespace face_recognition
-{
-class FaceRecognitionNodelet : public opencv_apps::FaceRecognitionNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet face_recognition/face_recognition is deprecated, "
-             "and renamed to opencv_apps/face_recognition.");
-    opencv_apps::FaceRecognitionNodelet::onInit();
-  }
-};
-}  // namespace face_recognition
-
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(opencv_apps::FaceRecognitionNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(face_recognition::FaceRecognitionNodelet, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::FaceRecognitionNodelet)

@@ -40,21 +40,15 @@
  * eyes) in a video stream
  */
 
-#include <ros/ros.h>
 #include "opencv_apps/nodelet.h"
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/objdetect/objdetect.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <dynamic_reconfigure/server.h>
-#include "opencv_apps/FaceDetectionConfig.h"
-#include "opencv_apps/Face.h"
-#include "opencv_apps/FaceArray.h"
-#include "opencv_apps/FaceArrayStamped.h"
+#include <opencv_apps/msg/face.hpp>
+#include <opencv_apps/msg/face_array.hpp>
+#include <opencv_apps/msg/face_array_stamped.hpp>
 
 namespace opencv_apps
 {
@@ -64,25 +58,29 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
   image_transport::Publisher face_img_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
-  ros::Publisher msg_pub_;
+  rclcpp::Publisher<opencv_apps::msg::FaceArrayStamped>::SharedPtr msg_pub_;
 
-  boost::shared_ptr<image_transport::ImageTransport> it_;
-
-  typedef opencv_apps::FaceDetectionConfig Config;
-  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
-  Config config_;
-  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
   int queue_size_;
   bool debug_view_;
-  ros::Time prev_stamp_;
+  rclcpp::Time prev_stamp_;
+
+  bool use_camera_info_;
 
   cv::CascadeClassifier face_cascade_;
   cv::CascadeClassifier eyes_cascade_;
 
-  void reconfigureCallback(Config& new_config, uint32_t level)
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    config_ = new_config;
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "use_camera_info")
+        use_camera_info_ = parameter.as_bool();
+    }
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
   }
 
   const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
@@ -92,17 +90,18 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
     return frame;
   }
 
-  void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
+  void imageCallbackWithInfo(const sensor_msgs::msg::Image::ConstSharedPtr& msg,
+                             const sensor_msgs::msg::CameraInfo::ConstSharedPtr& cam_info)
   {
     doWork(msg, cam_info->header.frame_id);
   }
 
-  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& msg)
   {
     doWork(msg, msg->header.frame_id);
   }
 
-  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
+  void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -111,7 +110,7 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
       cv::Mat frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
 
       // Messages
-      opencv_apps::FaceArrayStamped faces_msg;
+      opencv_apps::msg::FaceArrayStamped faces_msg;
       faces_msg.header = msg->header;
 
       // Do the work
@@ -153,7 +152,7 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
         cv::Point center(face.x + face.width / 2, face.y + face.height / 2);
         cv::ellipse(frame, center, cv::Size(face.width / 2, face.height / 2), 0, 0, 360, cv::Scalar(255, 0, 255), 2, 8,
                     0);
-        opencv_apps::Face face_msg;
+        opencv_apps::msg::Face face_msg;
         face_msg.face.x = center.x;
         face_msg.face.y = center.y;
         face_msg.face.width = face.width;
@@ -175,7 +174,7 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
           int radius = cvRound((eye.width + eye.height) * 0.25);
           cv::circle(frame, eye_center, radius, cv::Scalar(255, 0, 0), 3, 8, 0);
 
-          opencv_apps::Rect eye_msg;
+          opencv_apps::msg::Rect eye_msg;
           eye_msg.x = eye_center.x;
           eye_msg.y = eye_center.y;
           eye_msg.width = eye.width;
@@ -193,77 +192,77 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img =
+      sensor_msgs::msg::Image::SharedPtr out_img =
           cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, frame).toImageMsg();
-      img_pub_.publish(out_img);
-      msg_pub_.publish(faces_msg);
+      img_pub_.publish(*out_img);
+      msg_pub_->publish(faces_msg);
       if (!faces.empty())
       {
-        sensor_msgs::Image::Ptr out_face_img =
+        sensor_msgs::msg::Image::SharedPtr out_face_img =
             cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, face_image).toImageMsg();
-        face_img_pub_.publish(out_face_img);
+        face_img_pub_.publish(*out_face_img);
       }
     }
     catch (cv::Exception& e)
     {
-      NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+      RCLCPP_ERROR(get_logger(), "Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(),
+                   e.line);
     }
 
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()  // NOLINT(modernize-use-override)
+  void subscribe() override
   {
-    NODELET_DEBUG("Subscribing to image topic.");
-    if (config_.use_camera_info)
+    RCLCPP_DEBUG(get_logger(), "Subscribing to image topic.");
+    if (use_camera_info_)
       cam_sub_ = it_->subscribeCamera("image", queue_size_, &FaceDetectionNodelet::imageCallbackWithInfo, this);
     else
       img_sub_ = it_->subscribe("image", queue_size_, &FaceDetectionNodelet::imageCallback, this);
   }
 
-  void unsubscribe()  // NOLINT(modernize-use-override)
+  void unsubscribe() override
   {
-    NODELET_DEBUG("Unsubscribing from image topic.");
+    RCLCPP_DEBUG(get_logger(), "Unsubscribing from image topic.");
     img_sub_.shutdown();
     cam_sub_.shutdown();
   }
 
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit FaceDetectionNodelet(const rclcpp::NodeOptions& options) : Nodelet("face_detection", options)
   {
-    Nodelet::onInit();
-    it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
-
-    pnh_->param("queue_size", queue_size_, 3);
-    pnh_->param("debug_view", debug_view_, false);
+    queue_size_ = declare_parameter("queue_size", 3);
+    debug_view_ = declare_parameter("debug_view", false);
     if (debug_view_)
     {
       always_subscribe_ = true;
     }
-    prev_stamp_ = ros::Time(0, 0);
+    prev_stamp_ = rclcpp::Time(0, 0, RCL_ROS_TIME);
 
-    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
-    dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&FaceDetectionNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
-    reconfigure_server_->setCallback(f);
+    use_camera_info_ = declare_parameter(
+        "use_camera_info", false,
+        paramDescriptor("Indicates that the camera_info topic should be subscribed to to get the default "
+                        "input_frame_id. Otherwise the frame from the image message will be used."));
+    on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
+        std::bind(&FaceDetectionNodelet::parametersCallback, this, std::placeholders::_1));
 
-    img_pub_ = advertiseImage(*pnh_, "image", 1);
-    face_img_pub_ = advertiseImage(*pnh_, "face_image", 1);
-    msg_pub_ = advertise<opencv_apps::FaceArrayStamped>(*pnh_, "faces", 1);
+    img_pub_ = advertiseImage("~/image", 1);
+    face_img_pub_ = advertiseImage("~/face_image", 1);
+    msg_pub_ = advertise<opencv_apps::msg::FaceArrayStamped>("~/faces", 1);
 
     std::string face_cascade_name, eyes_cascade_name;
-    pnh_->param("face_cascade_name", face_cascade_name,
-                std::string("/usr/share/opencv/haarcascades/haarcascade_frontalface_alt.xml"));
-    pnh_->param("eyes_cascade_name", eyes_cascade_name,
-                std::string("/usr/share/opencv/haarcascades/haarcascade_eye_tree_eyeglasses.xml"));
+    face_cascade_name = declare_parameter(
+        "face_cascade_name", std::string("/usr/share/opencv4/haarcascades/haarcascade_frontalface_alt.xml"));
+    eyes_cascade_name = declare_parameter(
+        "eyes_cascade_name", std::string("/usr/share/opencv4/haarcascades/haarcascade_eye_tree_eyeglasses.xml"));
 
     if (!face_cascade_.load(face_cascade_name))
     {
-      NODELET_ERROR("--Error loading %s", face_cascade_name.c_str());
+      RCLCPP_ERROR(get_logger(), "--Error loading %s", face_cascade_name.c_str());
     };
     if (!eyes_cascade_.load(eyes_cascade_name))
     {
-      NODELET_ERROR("--Error loading %s", eyes_cascade_name.c_str());
+      RCLCPP_ERROR(get_logger(), "--Error loading %s", eyes_cascade_name.c_str());
     };
 
     onInitPostProcess();
@@ -271,24 +270,4 @@ public:
 };
 }  // namespace opencv_apps
 
-namespace face_detection
-{
-class FaceDetectionNodelet : public opencv_apps::FaceDetectionNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet face_detection/face_detection is deprecated, "
-             "and renamed to opencv_apps/face_detection.");
-    opencv_apps::FaceDetectionNodelet::onInit();
-  }
-};
-}  // namespace face_detection
-
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(opencv_apps::FaceDetectionNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(face_detection::FaceDetectionNodelet, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::FaceDetectionNodelet)

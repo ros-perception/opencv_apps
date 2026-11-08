@@ -40,20 +40,14 @@
  * @author OpenCV team
  */
 
-#include <ros/ros.h>
 #include "opencv_apps/nodelet.h"
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <dynamic_reconfigure/server.h>
-#include "opencv_apps/HoughCirclesConfig.h"
-#include "opencv_apps/Circle.h"
-#include "opencv_apps/CircleArray.h"
-#include "opencv_apps/CircleArrayStamped.h"
+#include <opencv_apps/msg/circle.hpp>
+#include <opencv_apps/msg/circle_array.hpp>
+#include <opencv_apps/msg/circle_array_stamped.hpp>
 
 namespace opencv_apps
 {
@@ -62,21 +56,18 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
   image_transport::Publisher img_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
-  ros::Publisher msg_pub_;
+  rclcpp::Publisher<opencv_apps::msg::CircleArrayStamped>::SharedPtr msg_pub_;
 
-  boost::shared_ptr<image_transport::ImageTransport> it_;
-
-  typedef opencv_apps::HoughCirclesConfig Config;
-  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
-  Config config_;
-  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
   int queue_size_;
   bool debug_view_;
-  ros::Time prev_stamp_;
+  rclcpp::Time prev_stamp_;
 
   std::string window_name_;
   static bool need_config_update_;
+
+  bool use_camera_info_;
 
   // initial and max values of the parameters of interests.
   int canny_threshold_initial_value_;
@@ -103,20 +94,41 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
   image_transport::Publisher debug_image_pub_;
   int debug_image_type_;
 
-  void reconfigureCallback(Config& new_config, uint32_t level)
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    config_ = new_config;
-    canny_threshold_ = config_.canny_threshold;
-    accumulator_threshold_ = config_.accumulator_threshold;
-    gaussian_blur_size_ = config_.gaussian_blur_size;
-    gaussian_sigma_x_ = config_.gaussian_sigma_x;
-    gaussian_sigma_y_ = config_.gaussian_sigma_y;
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "use_camera_info")
+        use_camera_info_ = parameter.as_bool();
+      else if (parameter.get_name() == "canny_threshold")
+        canny_threshold_ = parameter.as_double();
+      else if (parameter.get_name() == "accumulator_threshold")
+        accumulator_threshold_ = parameter.as_double();
+      else if (parameter.get_name() == "gaussian_blur_size")
+        gaussian_blur_size_ = parameter.as_int();
+      else if (parameter.get_name() == "gaussian_sigma_x")
+        gaussian_sigma_x_ = parameter.as_double();
+      else if (parameter.get_name() == "gaussian_sigma_y")
+        gaussian_sigma_y_ = parameter.as_double();
+      else if (parameter.get_name() == "dp")
+        dp_ = parameter.as_double();
+      else if (parameter.get_name() == "min_circle_radius")
+        min_circle_radius_ = parameter.as_int();
+      else if (parameter.get_name() == "max_circle_radius")
+        max_circle_radius_ = parameter.as_int();
+      else if (parameter.get_name() == "debug_image_type")
+        debug_image_type_ = parameter.as_int();
+      else if (parameter.get_name() == "min_distance_between_circles")
+        min_distance_between_circles_ = parameter.as_double();
+    }
+    updateTrackbarValues();
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
+  }
 
-    dp_ = config_.dp;
-    min_circle_radius_ = config_.min_circle_radius;
-    max_circle_radius_ = config_.max_circle_radius;
-    debug_image_type_ = config_.debug_image_type;
-    min_distance_between_circles_ = config_.min_distance_between_circles;
+  void updateTrackbarValues()
+  {
     canny_threshold_int = int(canny_threshold_);
     accumulator_threshold_int = int(accumulator_threshold_);
     gaussian_sigma_x_int = int(gaussian_sigma_x_);
@@ -132,12 +144,13 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
     return frame;
   }
 
-  void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
+  void imageCallbackWithInfo(const sensor_msgs::msg::Image::ConstSharedPtr& msg,
+                             const sensor_msgs::msg::CameraInfo::ConstSharedPtr& cam_info)
   {
     doWork(msg, cam_info->header.frame_id);
   }
 
-  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& msg)
   {
     doWork(msg, msg->header.frame_id);
   }
@@ -147,7 +160,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
     need_config_update_ = true;
   }
 
-  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
+  void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -156,7 +169,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
       cv::Mat frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
 
       // Messages
-      opencv_apps::CircleArrayStamped circles_msg;
+      opencv_apps::msg::CircleArrayStamped circles_msg;
       circles_msg.header = msg->header;
 
       // Do the work
@@ -192,17 +205,20 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
 
         if (need_config_update_)
         {
-          config_.canny_threshold = canny_threshold_ = (double)canny_threshold_int;
-          config_.accumulator_threshold = accumulator_threshold_ = (double)accumulator_threshold_int;
-          config_.gaussian_blur_size = gaussian_blur_size_;
-          config_.gaussian_sigma_x = gaussian_sigma_x_ = (double)gaussian_sigma_x_int;
-          config_.gaussian_sigma_y = gaussian_sigma_y_ = (double)gaussian_sigma_y_int;
-          config_.min_distance_between_circles = min_distance_between_circles_ =
-              (double)min_distance_between_circles_int;
-          config_.dp = dp_ = (double)dp_int;
-          config_.min_circle_radius = min_circle_radius_;
-          config_.max_circle_radius = max_circle_radius_;
-          reconfigure_server_->updateConfig(config_);
+          canny_threshold_ = (double)canny_threshold_int;
+          accumulator_threshold_ = (double)accumulator_threshold_int;
+          gaussian_sigma_x_ = (double)gaussian_sigma_x_int;
+          gaussian_sigma_y_ = (double)gaussian_sigma_y_int;
+          min_distance_between_circles_ = (double)min_distance_between_circles_int;
+          dp_ = (double)dp_int;
+          set_parameters({ rclcpp::Parameter("canny_threshold", canny_threshold_),
+                           rclcpp::Parameter("accumulator_threshold", accumulator_threshold_),
+                           rclcpp::Parameter("gaussian_blur_size", gaussian_blur_size_),
+                           rclcpp::Parameter("gaussian_sigma_x", gaussian_sigma_x_),
+                           rclcpp::Parameter("gaussian_sigma_y", gaussian_sigma_y_),
+                           rclcpp::Parameter("min_distance_between_circles", min_distance_between_circles_),
+                           rclcpp::Parameter("dp", dp_), rclcpp::Parameter("min_circle_radius", min_circle_radius_),
+                           rclcpp::Parameter("max_circle_radius", max_circle_radius_) });
           need_config_update_ = false;
         }
       }
@@ -229,8 +245,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
       if (min_distance_between_circles_ == 0)
       {  // set inital value
         min_distance_between_circles_ = src_gray.rows / 8;
-        config_.min_distance_between_circles = min_distance_between_circles_;
-        reconfigure_server_->updateConfig(config_);
+        set_parameter(rclcpp::Parameter("min_distance_between_circles", min_distance_between_circles_));
       }
       // runs the detection, and update the display
       // will hold the results of the detection
@@ -259,7 +274,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
         // circle outline
         circle(out_image, center, radius, cv::Scalar(0, 0, 255), 3, 8, 0);
 
-        opencv_apps::Circle circle_msg;
+        opencv_apps::msg::Circle circle_msg;
         circle_msg.center.x = center.x;
         circle_msg.center.y = center.y;
         circle_msg.radius = radius;
@@ -289,61 +304,58 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
           if (c == 's')
           {
             debug_image_type_ = (++debug_image_type_) % 3;
-            config_.debug_image_type = debug_image_type_;
-            reconfigure_server_->updateConfig(config_);
+            set_parameter(rclcpp::Parameter("debug_image_type", debug_image_type_));
           }
         }
         if (debug_image_pub_.getNumSubscribers() > 0)
         {
-          sensor_msgs::Image::Ptr out_debug_img =
+          sensor_msgs::msg::Image::SharedPtr out_debug_img =
               cv_bridge::CvImage(msg->header, msg->encoding, debug_image).toImageMsg();
-          debug_image_pub_.publish(out_debug_img);
+          debug_image_pub_.publish(*out_debug_img);
         }
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", out_image).toImageMsg();
-      img_pub_.publish(out_img);
-      msg_pub_.publish(circles_msg);
+      sensor_msgs::msg::Image::SharedPtr out_img = cv_bridge::CvImage(msg->header, "bgr8", out_image).toImageMsg();
+      img_pub_.publish(*out_img);
+      msg_pub_->publish(circles_msg);
     }
     catch (cv::Exception& e)
     {
-      NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+      RCLCPP_ERROR(get_logger(), "Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(),
+                   e.line);
     }
 
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()  // NOLINT(modernize-use-override)
+  void subscribe() override
   {
-    NODELET_DEBUG("Subscribing to image topic.");
-    if (config_.use_camera_info)
+    RCLCPP_DEBUG(get_logger(), "Subscribing to image topic.");
+    if (use_camera_info_)
       cam_sub_ = it_->subscribeCamera("image", queue_size_, &HoughCirclesNodelet::imageCallbackWithInfo, this);
     else
       img_sub_ = it_->subscribe("image", queue_size_, &HoughCirclesNodelet::imageCallback, this);
   }
 
-  void unsubscribe()  // NOLINT(modernize-use-override)
+  void unsubscribe() override
   {
-    NODELET_DEBUG("Unsubscribing from image topic.");
+    RCLCPP_DEBUG(get_logger(), "Unsubscribing from image topic.");
     img_sub_.shutdown();
     cam_sub_.shutdown();
   }
 
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit HoughCirclesNodelet(const rclcpp::NodeOptions& options) : Nodelet("hough_circles", options)
   {
-    Nodelet::onInit();
-    it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
-
     debug_image_type_ = 0;
-    pnh_->param("queue_size", queue_size_, 3);
-    pnh_->param("debug_view", debug_view_, false);
+    queue_size_ = declare_parameter("queue_size", 3);
+    debug_view_ = declare_parameter("debug_view", false);
     if (debug_view_)
     {
       always_subscribe_ = debug_view_;
     }
-    prev_stamp_ = ros::Time(0, 0);
+    prev_stamp_ = rclcpp::Time(0, 0, RCL_ROS_TIME);
 
     window_name_ = "Hough Circle Detection Demo";
     canny_threshold_initial_value_ = 200;
@@ -356,16 +368,39 @@ public:
     canny_threshold_ = canny_threshold_initial_value_;
     accumulator_threshold_ = accumulator_threshold_initial_value_;
 
-    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
-    dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&HoughCirclesNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
-    reconfigure_server_->setCallback(f);
+    use_camera_info_ = declare_parameter(
+        "use_camera_info", false,
+        paramDescriptor("Indicates that the camera_info topic should be subscribed to to get the default "
+                        "input_frame_id. Otherwise the frame from the image message will be used."));
+    canny_threshold_ = declare_parameter("canny_threshold", (double)canny_threshold_initial_value_,
+                                         paramDescriptor("Canny threshold", 1.0, 255.0));
+    accumulator_threshold_ = declare_parameter("accumulator_threshold", (double)accumulator_threshold_initial_value_,
+                                               paramDescriptor("Accumulator threshold", 1.0, 200.0));
+    gaussian_blur_size_ = declare_parameter("gaussian_blur_size", 9,
+                                            paramDescriptor("the size of gaussian blur (should be odd number)", 1, 30));
+    gaussian_sigma_x_ =
+        declare_parameter("gaussian_sigma_x", 2.0, paramDescriptor("sigma x of gaussian kernel", 1.0, 10.0));
+    gaussian_sigma_y_ =
+        declare_parameter("gaussian_sigma_y", 2.0, paramDescriptor("sigma y of gaussian kernel", 1.0, 10.0));
+    min_distance_between_circles_ =
+        declare_parameter("min_distance_between_circles", min_distance_between_circles_,
+                          paramDescriptor("mnimum distance between the centers of the detected circles", 0.0, 1024.0));
+    dp_ = declare_parameter("dp", 2.0, paramDescriptor("dp", 0.0, 100.0));
+    min_circle_radius_ =
+        declare_parameter("min_circle_radius", 0, paramDescriptor("the minimum size of the circle", 0, 500));
+    max_circle_radius_ =
+        declare_parameter("max_circle_radius", 0, paramDescriptor("the maximum size of the circle", 0, 2000));
+    debug_image_type_ =
+        declare_parameter("debug_image_type", 0,
+                          paramDescriptor("Select image type for debug output, 0: Input, 1: Blur, 2: Canny", 0, 2));
+    updateTrackbarValues();
+    on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
+        std::bind(&HoughCirclesNodelet::parametersCallback, this, std::placeholders::_1));
 
-    img_pub_ = advertiseImage(*pnh_, "image", 1);
-    msg_pub_ = advertise<opencv_apps::CircleArrayStamped>(*pnh_, "circles", 1);
+    img_pub_ = advertiseImage("~/image", 1);
+    msg_pub_ = advertise<opencv_apps::msg::CircleArrayStamped>("~/circles", 1);
 
-    debug_image_type_ = 0;
-    debug_image_pub_ = advertiseImage(*pnh_, "debug_image", 1);
+    debug_image_pub_ = advertiseImage("~/debug_image", 1);
 
     onInitPostProcess();
   }
@@ -373,24 +408,4 @@ public:
 bool HoughCirclesNodelet::need_config_update_ = false;
 }  // namespace opencv_apps
 
-namespace hough_circles
-{
-class HoughCirclesNodelet : public opencv_apps::HoughCirclesNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet hough_circles/hough_circles is deprecated, "
-             "and renamed to opencv_apps/hough_circles.");
-    opencv_apps::HoughCirclesNodelet::onInit();
-  }
-};
-}  // namespace hough_circles
-
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(opencv_apps::HoughCirclesNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(hough_circles::HoughCirclesNodelet, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::HoughCirclesNodelet)

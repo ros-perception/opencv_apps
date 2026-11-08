@@ -32,28 +32,10 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
-#include <ros/ros.h>
 #include "opencv_apps/nodelet.h"
-#include <image_transport/image_transport.h>
-#include <sensor_msgs/image_encodings.h>
-#include <cv_bridge/cv_bridge.h>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-
-#include <dynamic_reconfigure/server.h>
-#include "opencv_apps/RGBColorFilterConfig.h"
-#include "opencv_apps/HLSColorFilterConfig.h"
-#include "opencv_apps/HSVColorFilterConfig.h"
-#include "opencv_apps/LabColorFilterConfig.h"
-
-namespace color_filter
-{
-class RGBColorFilterNodelet;
-class HLSColorFilterNodelet;
-class HSVColorFilterNodelet;
-class LabColorFilterNodelet;
-}  // namespace color_filter
 
 namespace opencv_apps
 {
@@ -62,7 +44,6 @@ class HLSColorFilter;
 class HSVColorFilter;
 class LabColorFilter;
 
-template <typename Config>
 class ColorFilterNodelet : public opencv_apps::Nodelet
 {
   friend class RGBColorFilter;
@@ -73,11 +54,9 @@ protected:
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
 
-  boost::shared_ptr<image_transport::ImageTransport> it_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
-  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
-  Config config_;
-  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+  bool use_camera_info_;
 
   int queue_size_;
   bool debug_view_;
@@ -87,9 +66,7 @@ protected:
   cv::Scalar lower_color_range_;
   cv::Scalar upper_color_range_;
 
-  boost::mutex mutex_;
-
-  virtual void reconfigureCallback(Config& new_config, uint32_t level) = 0;
+  std::mutex mutex_;
 
   virtual void filter(const cv::Mat& input_image, cv::Mat& output_image) = 0;
 
@@ -100,17 +77,18 @@ protected:
     return frame;
   }
 
-  void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
+  void imageCallbackWithInfo(const sensor_msgs::msg::Image::ConstSharedPtr& msg,
+                             const sensor_msgs::msg::CameraInfo::ConstSharedPtr& cam_info)
   {
     doWork(msg, cam_info->header.frame_id);
   }
 
-  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& msg)
   {
     doWork(msg, msg->header.frame_id);
   }
 
-  void doWork(const sensor_msgs::ImageConstPtr& image_msg, const std::string& input_frame_from_msg)
+  void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& image_msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -142,39 +120,38 @@ protected:
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img =
+      sensor_msgs::msg::Image::SharedPtr out_img =
           cv_bridge::CvImage(image_msg->header, sensor_msgs::image_encodings::MONO8, out_frame).toImageMsg();
-      img_pub_.publish(out_img);
+      img_pub_.publish(*out_img);
     }
     catch (cv::Exception& e)
     {
-      NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+      RCLCPP_ERROR(get_logger(), "Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(),
+                   e.line);
     }
   }
-  void subscribe()  // NOLINT(modernize-use-override)
+  void subscribe() override
   {
-    NODELET_DEBUG("Subscribing to image topic.");
-    if (config_.use_camera_info)
+    RCLCPP_DEBUG(get_logger(), "Subscribing to image topic.");
+    if (use_camera_info_)
       cam_sub_ = it_->subscribeCamera("image", queue_size_, &ColorFilterNodelet::imageCallbackWithInfo, this);
     else
       img_sub_ = it_->subscribe("image", queue_size_, &ColorFilterNodelet::imageCallback, this);
   }
 
-  void unsubscribe()  // NOLINT(modernize-use-override)
+  void unsubscribe() override
   {
-    NODELET_DEBUG("Unsubscribing from image topic.");
+    RCLCPP_DEBUG(get_logger(), "Unsubscribing from image topic.");
     img_sub_.shutdown();
     cam_sub_.shutdown();
   }
 
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  // derived classes declare their own parameters and then call onInitPostProcess() at the end of their constructors
+  ColorFilterNodelet(const std::string& node_name, const rclcpp::NodeOptions& options) : Nodelet(node_name, options)
   {
-    Nodelet::onInit();
-    it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
-
-    pnh_->param("queue_size", queue_size_, 3);
-    pnh_->param("debug_view", debug_view_, false);
+    queue_size_ = declare_parameter("queue_size", 3);
+    debug_view_ = declare_parameter("debug_view", false);
 
     if (debug_view_)
     {
@@ -183,18 +160,16 @@ public:
 
     window_name_ = "ColorFilter Demo";
 
-    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
-    typename dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&ColorFilterNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
-    reconfigure_server_->setCallback(f);
+    use_camera_info_ = declare_parameter(
+        "use_camera_info", false,
+        paramDescriptor("Indicates that the camera_info topic should be subscribed to to get the default "
+                        "input_frame_id. Otherwise the frame from the image message will be used."));
 
-    img_pub_ = advertiseImage(*pnh_, "image", 1);
-
-    onInitPostProcess();
+    img_pub_ = advertiseImage("~/image", 1);
   }
 };
 
-class RGBColorFilterNodelet : public ColorFilterNodelet<opencv_apps::RGBColorFilterConfig>
+class RGBColorFilterNodelet : public ColorFilterNodelet
 {
 protected:
   int r_min_;
@@ -204,17 +179,30 @@ protected:
   int g_min_;
   int g_max_;
 
-  void reconfigureCallback(opencv_apps::RGBColorFilterConfig& config, uint32_t level)  // NOLINT(modernize-use-override)
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-    config_ = config;
-    r_max_ = config.r_limit_max;
-    r_min_ = config.r_limit_min;
-    g_max_ = config.g_limit_max;
-    g_min_ = config.g_limit_min;
-    b_max_ = config.b_limit_max;
-    b_min_ = config.b_limit_min;
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "use_camera_info")
+        use_camera_info_ = parameter.as_bool();
+      else if (parameter.get_name() == "r_limit_max")
+        r_max_ = parameter.as_int();
+      else if (parameter.get_name() == "r_limit_min")
+        r_min_ = parameter.as_int();
+      else if (parameter.get_name() == "g_limit_max")
+        g_max_ = parameter.as_int();
+      else if (parameter.get_name() == "g_limit_min")
+        g_min_ = parameter.as_int();
+      else if (parameter.get_name() == "b_limit_max")
+        b_max_ = parameter.as_int();
+      else if (parameter.get_name() == "b_limit_min")
+        b_min_ = parameter.as_int();
+    }
     updateCondition();
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
   }
 
   virtual void updateCondition()
@@ -234,24 +222,24 @@ protected:
     cv::inRange(input_image, lower_color_range_, upper_color_range_, output_image);
   }
 
-protected:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+public:
+  explicit RGBColorFilterNodelet(const rclcpp::NodeOptions& options) : ColorFilterNodelet("rgb_color_filter", options)
   {
-    r_max_ = 255;
-    r_min_ = 0;
-    g_max_ = 255;
-    g_min_ = 0;
-    b_max_ = 255;
-    b_min_ = 0;
+    r_max_ = declare_parameter("r_limit_max", 255, paramDescriptor("The maximum allowed field value Red", 0, 255));
+    r_min_ = declare_parameter("r_limit_min", 0, paramDescriptor("The minimum allowed field value Red", 0, 255));
+    g_max_ = declare_parameter("g_limit_max", 255, paramDescriptor("The maximum allowed field value Green", 0, 255));
+    g_min_ = declare_parameter("g_limit_min", 0, paramDescriptor("The minimum allowed field value Green", 0, 255));
+    b_max_ = declare_parameter("b_limit_max", 255, paramDescriptor("The maximum allowed field value Blue", 0, 255));
+    b_min_ = declare_parameter("b_limit_min", 0, paramDescriptor("The minimum allowed field value Blue", 0, 255));
+    updateCondition();
+    on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
+        std::bind(&RGBColorFilterNodelet::parametersCallback, this, std::placeholders::_1));
 
-    ColorFilterNodelet::onInit();
+    onInitPostProcess();
   }
-  friend class color_filter::RGBColorFilterNodelet;
-  friend class color_filter::HLSColorFilterNodelet;
-  friend class color_filter::HSVColorFilterNodelet;
 };
 
-class HLSColorFilterNodelet : public ColorFilterNodelet<opencv_apps::HLSColorFilterConfig>
+class HLSColorFilterNodelet : public ColorFilterNodelet
 {
 protected:
   int h_min_;
@@ -261,17 +249,30 @@ protected:
   int l_min_;
   int l_max_;
 
-  void reconfigureCallback(opencv_apps::HLSColorFilterConfig& config, uint32_t level)  // NOLINT(modernize-use-override)
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-    config_ = config;
-    h_max_ = config.h_limit_max;
-    h_min_ = config.h_limit_min;
-    s_max_ = config.s_limit_max;
-    s_min_ = config.s_limit_min;
-    l_max_ = config.l_limit_max;
-    l_min_ = config.l_limit_min;
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "use_camera_info")
+        use_camera_info_ = parameter.as_bool();
+      else if (parameter.get_name() == "h_limit_max")
+        h_max_ = parameter.as_int();
+      else if (parameter.get_name() == "h_limit_min")
+        h_min_ = parameter.as_int();
+      else if (parameter.get_name() == "s_limit_max")
+        s_max_ = parameter.as_int();
+      else if (parameter.get_name() == "s_limit_min")
+        s_min_ = parameter.as_int();
+      else if (parameter.get_name() == "l_limit_max")
+        l_max_ = parameter.as_int();
+      else if (parameter.get_name() == "l_limit_min")
+        l_min_ = parameter.as_int();
+    }
     updateCondition();
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
   }
 
   virtual void updateCondition()
@@ -306,20 +307,25 @@ protected:
   }
 
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit HLSColorFilterNodelet(const rclcpp::NodeOptions& options) : ColorFilterNodelet("hls_color_filter", options)
   {
-    h_max_ = 360;
-    h_min_ = 0;
-    s_max_ = 256;
-    s_min_ = 0;
-    l_max_ = 256;
-    l_min_ = 0;
+    h_max_ = declare_parameter("h_limit_max", 360, paramDescriptor("The maximum allowed field value Hue", 0, 360));
+    h_min_ = declare_parameter("h_limit_min", 0, paramDescriptor("The minimum allowed field value Hue", 0, 360));
+    s_max_ =
+        declare_parameter("s_limit_max", 256, paramDescriptor("The maximum allowed field value Saturation", 0, 256));
+    s_min_ = declare_parameter("s_limit_min", 0, paramDescriptor("The minimum allowed field value Saturation", 0, 256));
+    l_max_ =
+        declare_parameter("l_limit_max", 256, paramDescriptor("The maximum allowed field value Lightness", 0, 256));
+    l_min_ = declare_parameter("l_limit_min", 0, paramDescriptor("The minimum allowed field value Lightness", 0, 256));
+    updateCondition();
+    on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
+        std::bind(&HLSColorFilterNodelet::parametersCallback, this, std::placeholders::_1));
 
-    ColorFilterNodelet::onInit();
+    onInitPostProcess();
   }
 };
 
-class HSVColorFilterNodelet : public ColorFilterNodelet<opencv_apps::HSVColorFilterConfig>
+class HSVColorFilterNodelet : public ColorFilterNodelet
 {
 protected:
   int h_min_;
@@ -329,17 +335,30 @@ protected:
   int v_min_;
   int v_max_;
 
-  void reconfigureCallback(opencv_apps::HSVColorFilterConfig& config, uint32_t level)  // NOLINT(modernize-use-override)
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-    config_ = config;
-    h_max_ = config.h_limit_max;
-    h_min_ = config.h_limit_min;
-    s_max_ = config.s_limit_max;
-    s_min_ = config.s_limit_min;
-    v_max_ = config.v_limit_max;
-    v_min_ = config.v_limit_min;
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "use_camera_info")
+        use_camera_info_ = parameter.as_bool();
+      else if (parameter.get_name() == "h_limit_max")
+        h_max_ = parameter.as_int();
+      else if (parameter.get_name() == "h_limit_min")
+        h_min_ = parameter.as_int();
+      else if (parameter.get_name() == "s_limit_max")
+        s_max_ = parameter.as_int();
+      else if (parameter.get_name() == "s_limit_min")
+        s_min_ = parameter.as_int();
+      else if (parameter.get_name() == "v_limit_max")
+        v_max_ = parameter.as_int();
+      else if (parameter.get_name() == "v_limit_min")
+        v_min_ = parameter.as_int();
+    }
     updateCondition();
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
   }
 
   virtual void updateCondition()
@@ -374,20 +393,24 @@ protected:
   }
 
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit HSVColorFilterNodelet(const rclcpp::NodeOptions& options) : ColorFilterNodelet("hsv_color_filter", options)
   {
-    h_max_ = 360;
-    h_min_ = 0;
-    s_max_ = 256;
-    s_min_ = 0;
-    v_max_ = 256;
-    v_min_ = 0;
+    h_max_ = declare_parameter("h_limit_max", 360, paramDescriptor("The maximum allowed field value Hue", 0, 360));
+    h_min_ = declare_parameter("h_limit_min", 0, paramDescriptor("The minimum allowed field value Hue", 0, 360));
+    s_max_ =
+        declare_parameter("s_limit_max", 256, paramDescriptor("The maximum allowed field value Saturation", 0, 256));
+    s_min_ = declare_parameter("s_limit_min", 0, paramDescriptor("The minimum allowed field value Saturation", 0, 256));
+    v_max_ = declare_parameter("v_limit_max", 256, paramDescriptor("The maximum allowed field value Value", 0, 256));
+    v_min_ = declare_parameter("v_limit_min", 0, paramDescriptor("The minimum allowed field value Value", 0, 256));
+    updateCondition();
+    on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
+        std::bind(&HSVColorFilterNodelet::parametersCallback, this, std::placeholders::_1));
 
-    ColorFilterNodelet::onInit();
+    onInitPostProcess();
   }
 };
 
-class LabColorFilterNodelet : public ColorFilterNodelet<opencv_apps::LabColorFilterConfig>
+class LabColorFilterNodelet : public ColorFilterNodelet
 {
 protected:
   int l_min_;
@@ -397,17 +420,30 @@ protected:
   int b_min_;
   int b_max_;
 
-  void reconfigureCallback(opencv_apps::LabColorFilterConfig& config, uint32_t level)  // NOLINT(modernize-use-override)
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    boost::mutex::scoped_lock lock(mutex_);
-    config_ = config;
-    l_max_ = config.l_limit_max;
-    l_min_ = config.l_limit_min;
-    a_max_ = config.a_limit_max;
-    a_min_ = config.a_limit_min;
-    b_max_ = config.b_limit_max;
-    b_min_ = config.b_limit_min;
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "use_camera_info")
+        use_camera_info_ = parameter.as_bool();
+      else if (parameter.get_name() == "l_limit_max")
+        l_max_ = parameter.as_int();
+      else if (parameter.get_name() == "l_limit_min")
+        l_min_ = parameter.as_int();
+      else if (parameter.get_name() == "a_limit_max")
+        a_max_ = parameter.as_int();
+      else if (parameter.get_name() == "a_limit_min")
+        a_min_ = parameter.as_int();
+      else if (parameter.get_name() == "b_limit_max")
+        b_max_ = parameter.as_int();
+      else if (parameter.get_name() == "b_limit_min")
+        b_min_ = parameter.as_int();
+    }
     updateCondition();
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
   }
 
   virtual void updateCondition()
@@ -430,64 +466,25 @@ protected:
   }
 
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit LabColorFilterNodelet(const rclcpp::NodeOptions& options) : ColorFilterNodelet("lab_color_filter", options)
   {
-    l_max_ = 255;
-    l_min_ = 0;
-    b_max_ = 255;
-    b_min_ = 0;
-    a_max_ = 255;
-    a_min_ = 0;
+    l_max_ = declare_parameter("l_limit_max", 255, paramDescriptor("The maximum allowed field value L*", 0, 255));
+    l_min_ = declare_parameter("l_limit_min", 0, paramDescriptor("The minimum allowed field value L*", 0, 255));
+    a_max_ = declare_parameter("a_limit_max", 255, paramDescriptor("The maximum allowed field value a*", 0, 255));
+    a_min_ = declare_parameter("a_limit_min", 0, paramDescriptor("The minimum allowed field value a*", 0, 255));
+    b_max_ = declare_parameter("b_limit_max", 255, paramDescriptor("The maximum allowed field value b*", 0, 255));
+    b_min_ = declare_parameter("b_limit_min", 0, paramDescriptor("The minimum allowed field value b*", 0, 255));
+    updateCondition();
+    on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
+        std::bind(&LabColorFilterNodelet::parametersCallback, this, std::placeholders::_1));
 
-    ColorFilterNodelet::onInit();
+    onInitPostProcess();
   }
 };
 
 }  // namespace opencv_apps
 
-namespace color_filter
-{
-class RGBColorFilterNodelet : public opencv_apps::RGBColorFilterNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet rgb_color_filter/rgb_color_filter is deprecated, "
-             "and renamed to opencv_apps/rgb_color_filter.");
-    opencv_apps::RGBColorFilterNodelet::onInit();
-  }
-};
-class HLSColorFilterNodelet : public opencv_apps::HLSColorFilterNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet hls_color_filter/hls_color_filter is deprecated, "
-             "and renamed to opencv_apps/hls_color_filter.");
-    opencv_apps::HLSColorFilterNodelet::onInit();
-  }
-};
-class HSVColorFilterNodelet : public opencv_apps::HSVColorFilterNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet hsv_color_filter/hsv_color_filter is deprecated, "
-             "and renamed to opencv_apps/hsv_color_filter.");
-    opencv_apps::HSVColorFilterNodelet::onInit();
-  }
-};
-}  // namespace color_filter
-
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(color_filter::RGBColorFilterNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(color_filter::HLSColorFilterNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(color_filter::HSVColorFilterNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(opencv_apps::RGBColorFilterNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(opencv_apps::HLSColorFilterNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(opencv_apps::HSVColorFilterNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(opencv_apps::LabColorFilterNodelet, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::RGBColorFilterNodelet)
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::HLSColorFilterNodelet)
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::HSVColorFilterNodelet)
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::LabColorFilterNodelet)
