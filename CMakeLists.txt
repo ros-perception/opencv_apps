@@ -1,3 +1,166 @@
+# $ENV{ROS_VERSION} is set by ros_environment, which is missing on
+# pre-ros_environment distros (e.g. indigo) and on ROS2 builds that do not
+# depend on it (e.g. the buildfarm's binary jobs). Guess it then: ament sets
+# AMENT_PREFIX_PATH (bloom's debian/rules passes it to cmake, setup.sh and
+# colcon set the environment variable), catkin never does.
+if("$ENV{ROS_VERSION}" STREQUAL "")
+  if(DEFINED AMENT_PREFIX_PATH OR DEFINED ENV{AMENT_PREFIX_PATH})
+    set(ENV{ROS_VERSION} 2)
+  else()
+    set(ENV{ROS_VERSION} 1)
+  endif()
+  message(WARNING "ROS_VERSION is not set, assuming ROS_VERSION=$ENV{ROS_VERSION}")
+endif()
+
+if($ENV{ROS_VERSION} EQUAL 2)
+cmake_minimum_required(VERSION 3.8)
+project(opencv_apps)
+
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
+add_definitions(-DROS2)
+
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(image_transport REQUIRED)
+find_package(message_filters REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+find_package(OpenCV REQUIRED)
+if(TARGET opencv_optflow)
+  set(OPENCV_HAVE_OPTFLOW TRUE)
+endif()
+
+file(GLOB _msg_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} msg/*.msg srv/*.srv)
+rosidl_generate_interfaces(${PROJECT_NAME}
+  ${_msg_files}
+  DEPENDENCIES sensor_msgs std_msgs
+)
+rosidl_get_typesupport_target(_cpp_typesupport_target ${PROJECT_NAME} rosidl_typesupport_cpp)
+
+# nodelets are rclcpp components, and each has an executable with the same name as ROS1
+set(_nodelets
+  adding_images:AddingImagesNodelet
+  discrete_fourier_transform:DiscreteFourierTransformNodelet
+  equalize_histogram:EqualizeHistogramNodelet
+  morphology:MorphologyNodelet
+  pyramids:PyramidsNodelet
+  smoothing:SmoothingNodelet
+  threshold:ThresholdNodelet
+  rgb_color_filter:RGBColorFilterNodelet
+  hls_color_filter:HLSColorFilterNodelet
+  hsv_color_filter:HSVColorFilterNodelet
+  lab_color_filter:LabColorFilterNodelet
+  edge_detection:EdgeDetectionNodelet
+  hough_lines:HoughLinesNodelet
+  hough_circles:HoughCirclesNodelet
+  find_contours:FindContoursNodelet
+  convex_hull:ConvexHullNodelet
+  general_contours:GeneralContoursNodelet
+  contour_moments:ContourMomentsNodelet
+  goodfeature_track:GoodfeatureTrackNodelet
+  corner_harris:CornerHarrisNodelet
+  camshift:CamShiftNodelet
+  face_detection:FaceDetectionNodelet
+  face_recognition:FaceRecognitionNodelet
+  fback_flow:FBackFlowNodelet
+  lk_flow:LKFlowNodelet
+  people_detect:PeopleDetectNodelet
+  phase_corr:PhaseCorrNodelet
+  segment_objects:SegmentObjectsNodelet
+  watershed_segmentation:WatershedSegmentationNodelet
+  simple_example:SimpleExampleNodelet
+  simple_compressed_example:SimpleCompressedExampleNodelet
+)
+set(_nodelet_cppfiles
+  src/nodelet/adding_images_nodelet.cpp
+  src/nodelet/discrete_fourier_transform_nodelet.cpp
+  src/nodelet/equalize_histogram_nodelet.cpp
+  src/nodelet/morphology_nodelet.cpp
+  src/nodelet/pyramids_nodelet.cpp
+  src/nodelet/smoothing_nodelet.cpp
+  src/nodelet/threshold_nodelet.cpp
+  src/nodelet/color_filter_nodelet.cpp
+  src/nodelet/edge_detection_nodelet.cpp
+  src/nodelet/hough_lines_nodelet.cpp
+  src/nodelet/hough_circles_nodelet.cpp
+  src/nodelet/find_contours_nodelet.cpp
+  src/nodelet/convex_hull_nodelet.cpp
+  src/nodelet/general_contours_nodelet.cpp
+  src/nodelet/contour_moments_nodelet.cpp
+  src/nodelet/goodfeature_track_nodelet.cpp
+  src/nodelet/corner_harris_nodelet.cpp
+  src/nodelet/camshift_nodelet.cpp
+  src/nodelet/face_detection_nodelet.cpp
+  src/nodelet/face_recognition_nodelet.cpp
+  src/nodelet/fback_flow_nodelet.cpp
+  src/nodelet/lk_flow_nodelet.cpp
+  src/nodelet/people_detect_nodelet.cpp
+  src/nodelet/phase_corr_nodelet.cpp
+  src/nodelet/segment_objects_nodelet.cpp
+  src/nodelet/watershed_segmentation_nodelet.cpp
+  src/nodelet/simple_example_nodelet.cpp
+  src/nodelet/simple_compressed_example_nodelet.cpp
+)
+# simple flow requires opencv-contrib https://github.com/ros-perception/vision_opencv/issues/108
+if(OPENCV_HAVE_OPTFLOW)
+  list(APPEND _nodelets simple_flow:SimpleFlowNodelet)
+  list(APPEND _nodelet_cppfiles src/nodelet/simple_flow_nodelet.cpp)
+endif()
+
+add_library(${PROJECT_NAME}_nodelet SHARED
+  src/nodelet/nodelet.cpp
+  ${_nodelet_cppfiles}
+)
+target_include_directories(${PROJECT_NAME}_nodelet PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
+)
+target_link_libraries(${PROJECT_NAME}_nodelet
+  ${_cpp_typesupport_target}
+  cv_bridge::cv_bridge
+  image_transport::image_transport
+  message_filters::message_filters
+  rclcpp::rclcpp
+  rclcpp_components::component
+  ${sensor_msgs_TARGETS}
+  ${std_msgs_TARGETS}
+  ${std_srvs_TARGETS}
+  ${OpenCV_LIBRARIES}
+)
+foreach(_nodelet ${_nodelets})
+  string(REPLACE ":" ";" _nodelet ${_nodelet})
+  list(GET _nodelet 0 _name)
+  list(GET _nodelet 1 _class)
+  rclcpp_components_register_node(${PROJECT_NAME}_nodelet
+    PLUGIN "opencv_apps::${_class}"
+    EXECUTABLE ${_name})
+endforeach()
+
+install(TARGETS ${PROJECT_NAME}_nodelet
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
+  FILES_MATCHING PATTERN "*.launch.xml"
+)
+install(PROGRAMS scripts/face_recognition_trainer.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+ament_export_dependencies(rosidl_default_runtime)
+ament_package()
+
+else() # if($ENV{ROS_VERSION} EQUAL 2)
 cmake_minimum_required(VERSION 2.8.3)
 project(opencv_apps)
 
@@ -396,3 +559,4 @@ if(CATKIN_ENABLE_TESTING)
   endif()
   add_subdirectory(test)
 endif()
+endif() # if($ENV{ROS_VERSION} EQUAL 2)
