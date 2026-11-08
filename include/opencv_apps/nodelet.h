@@ -35,35 +35,18 @@
 #ifndef OPENCV_APPS_NODELET_H_
 #define OPENCV_APPS_NODELET_H_
 
-#include <ros/ros.h>
-#include <nodelet/nodelet.h>
-#include <boost/thread.hpp>
-#include <image_transport/image_transport.h>
-#if BOOST_VERSION < 106000  // since 1.60.0, boost uses placeholders namesapce for _1,_2...
-#ifndef BOOST_PLAEHOLDERS
-#define BOOST_PLAEHOLDERS
-namespace boost
-{
-namespace placeholders
-{
-extern boost::arg<1> _1;
-extern boost::arg<2> _2;
-extern boost::arg<3> _3;
-extern boost::arg<4> _4;
-extern boost::arg<5> _5;
-extern boost::arg<6> _6;
-extern boost::arg<7> _7;
-extern boost::arg<8> _8;
-extern boost::arg<9> _9;
-}  // namespace placeholders
-}  // namespace boost
-#endif  // BOOST_PLAEHOLDERS
-#endif  // BOOST_VERSION < 106000
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
+#include <image_transport/image_transport.hpp>
+#include <cv_bridge/cv_bridge.hpp>
+#include <sensor_msgs/image_encodings.hpp>
+#include <sensor_msgs/msg/camera_info.hpp>
+#include <sensor_msgs/msg/image.hpp>
 
-// https://stackoverflow.com/questions/10496824/how-to-define-nullptr-for-supporting-both-c03-and-c11
-#if !defined(nullptr)
-#define nullptr NULL
-#endif
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
 
 namespace opencv_apps
 {
@@ -78,7 +61,7 @@ enum ConnectionStatus
 };
 
 /** @brief
- * Nodelet to automatically subscribe/unsubscribe
+ * Node to automatically subscribe/unsubscribe
  * topics according to subscription of advertised topics.
  *
  * It's important not to subscribe topic if no output is required.
@@ -87,63 +70,28 @@ enum ConnectionStatus
  * And create subscribers in subscribe() and shutdown them in unsubscribed().
  *
  */
-class Nodelet : public nodelet::Nodelet
+class Nodelet : public rclcpp::Node
 {
 public:
-  Nodelet() : subscribed_(false)
-  {
-  }
+  Nodelet(const std::string& node_name, const rclcpp::NodeOptions& options);
 
 protected:
   /** @brief
-   * Initialize nodehandles nh_ and pnh_. Subclass should call
-   * this method in its onInit method
-   */
-  virtual void onInit();
-
-  /** @brief
    * Post processing of initialization of nodelet.
-   * You need to call this method in order to use always_subscribe
-   * feature.
+   * Subclass should call this method at the end of its constructor
    */
-  virtual void onInitPostProcess();
+  void onInitPostProcess();
 
   /** @brief
-   * callback function which is called when new subscriber come
+   * callback function which is called when subscribers of advertised topics are changed
    */
-  virtual void connectionCallback(const ros::SingleSubscriberPublisher& pub);
-
-  /** @brief
-   * callback function which is called when new subscriber come for image
-   * publisher
-   */
-  virtual void imageConnectionCallback(const image_transport::SingleSubscriberPublisher& pub);
-
-  /** @brief
-   * callback function which is called when new subscriber come for camera
-   * image publisher
-   */
-  virtual void cameraConnectionCallback(const image_transport::SingleSubscriberPublisher& pub);
-
-  /** @brief
-   * callback function which is called when new subscriber come for
-   * camera info publisher
-   */
-  virtual void cameraInfoConnectionCallback(const ros::SingleSubscriberPublisher& pub);
-
-  /** @brief
-   * callback function which is called when new subscriber come for camera
-   * image publisher or camera info publisher.
-   * This function is called from cameraConnectionCallback
-   * or cameraInfoConnectionCallback.
-   */
-  virtual void cameraConnectionBaseCallback();
+  void connectionCallback();
 
   /** @brief
    * callback function which is called when walltimer
    * duration run out.
    */
-  virtual void warnNeverSubscribedCallback(const ros::WallTimerEvent& event);
+  void warnNeverSubscribedCallback();
 
   /** @brief
    * This method is called when publisher is subscribed by other
@@ -160,101 +108,59 @@ protected:
   virtual void unsubscribe() = 0;
 
   /** @brief
-   * Advertise a topic and watch the publisher. Publishers which are
-   * created by this method.
-   * It automatically reads latch boolean parameter from nh and
-   * publish topic with appropriate latch parameter.
+   * Advertise a topic and watch the publisher.
    *
-   * @param nh NodeHandle.
    * @param topic topic name to advertise.
    * @param queue_size queue size for publisher.
-   * @param latch set true if latch topic publication.
    * @return Publisher for the advertised topic.
    */
   template <class T>
-  ros::Publisher advertise(ros::NodeHandle& nh, std::string topic, int queue_size)
+  typename rclcpp::Publisher<T>::SharedPtr advertise(const std::string& topic, int queue_size)
   {
-    boost::mutex::scoped_lock lock(connection_mutex_);
-    ros::SubscriberStatusCallback connect_cb = boost::bind(&Nodelet::connectionCallback, this, boost::placeholders::_1);
-    ros::SubscriberStatusCallback disconnect_cb =
-        boost::bind(&Nodelet::connectionCallback, this, boost::placeholders::_1);
-    bool latch;
-    nh.param("latch", latch, false);
-    ros::Publisher ret = nh.advertise<T>(topic, queue_size, connect_cb, disconnect_cb, ros::VoidConstPtr(), latch);
-    publishers_.push_back(ret);
-
-    return ret;
+    std::lock_guard<std::mutex> lock(connection_mutex_);
+    auto pub = create_publisher<T>(topic, qos(queue_size), publisherOptions());
+    publishers_.push_back(pub);
+    return pub;
   }
 
   /** @brief
-   * Advertise an image topic and watch the publisher. Publishers which are
-   * created by this method.
-   * It automatically reads latch boolean parameter from nh and it and
-   * publish topic with appropriate latch parameter.
+   * Advertise an image topic and watch the publisher.
    *
-   * @param nh NodeHandle.
    * @param topic topic name to advertise.
    * @param queue_size queue size for publisher.
-   * @param latch set true if latch topic publication.
    * @return Publisher for the advertised topic.
    */
-  image_transport::Publisher advertiseImage(ros::NodeHandle& nh, const std::string& topic, int queue_size)
-  {
-    boost::mutex::scoped_lock lock(connection_mutex_);
-    image_transport::SubscriberStatusCallback connect_cb =
-        boost::bind(&Nodelet::imageConnectionCallback, this, boost::placeholders::_1);
-    image_transport::SubscriberStatusCallback disconnect_cb =
-        boost::bind(&Nodelet::imageConnectionCallback, this, boost::placeholders::_1);
-    bool latch;
-    nh.param("latch", latch, false);
-    image_transport::Publisher pub =
-        image_transport::ImageTransport(nh).advertise(topic, 1, connect_cb, disconnect_cb, ros::VoidPtr(), latch);
-    image_publishers_.push_back(pub);
-    return pub;
-  }
+  image_transport::Publisher advertiseImage(const std::string& topic, int queue_size);
 
   /** @brief
    * Advertise an image topic camera info topic and watch the publisher.
-   * Publishers which are
-   * created by this method.
-   * It automatically reads latch boolean parameter from nh and it and
-   * publish topic with appropriate latch parameter.
    *
-   * @param nh NodeHandle.
    * @param topic topic name to advertise.
    * @param queue_size queue size for publisher.
-   * @param latch set true if latch topic publication.
    * @return Publisher for the advertised topic.
    */
-  image_transport::CameraPublisher advertiseCamera(ros::NodeHandle& nh, const std::string& topic, int queue_size)
-  {
-    boost::mutex::scoped_lock lock(connection_mutex_);
-    image_transport::SubscriberStatusCallback connect_cb =
-        boost::bind(&Nodelet::cameraConnectionCallback, this, boost::placeholders::_1);
-    image_transport::SubscriberStatusCallback disconnect_cb =
-        boost::bind(&Nodelet::cameraConnectionCallback, this, boost::placeholders::_1);
-    ros::SubscriberStatusCallback info_connect_cb =
-        boost::bind(&Nodelet::cameraInfoConnectionCallback, this, boost::placeholders::_1);
-    ros::SubscriberStatusCallback info_disconnect_cb =
-        boost::bind(&Nodelet::cameraInfoConnectionCallback, this, boost::placeholders::_1);
-    bool latch;
-    nh.param("latch", latch, false);
-    image_transport::CameraPublisher pub = image_transport::ImageTransport(nh).advertiseCamera(
-        topic, 1, connect_cb, disconnect_cb, info_connect_cb, info_disconnect_cb, ros::VoidPtr(), latch);
-    camera_publishers_.push_back(pub);
-    return pub;
-  }
+  image_transport::CameraPublisher advertiseCamera(const std::string& topic, int queue_size);
+
+  /** @brief
+   * QoS of advertised topics, transient local if `~latch` parameter is true.
+   */
+  rclcpp::QoS qos(int queue_size) const;
+
+  /** @brief
+   * PublisherOptions to call connectionCallback() when subscribers are changed.
+   */
+  rclcpp::PublisherOptions publisherOptions();
 
   /** @brief
    * mutex to call subscribe() and unsubscribe() in
    * critical section.
    */
-  boost::mutex connection_mutex_;
+  std::mutex connection_mutex_;
 
   /** @brief
    * List of watching publishers
    */
-  std::vector<ros::Publisher> publishers_;
+  std::vector<rclcpp::PublisherBase::SharedPtr> publishers_;
 
   /** @brief
    * List of watching image publishers
@@ -267,25 +173,14 @@ protected:
   std::vector<image_transport::CameraPublisher> camera_publishers_;
 
   /** @brief
-   * Shared pointer to nodehandle.
+   * ImageTransport to subscribe image topics.
    */
-  boost::shared_ptr<ros::NodeHandle> nh_;
-
-  /** @brief
-   * Shared pointer to private nodehandle.
-   */
-  boost::shared_ptr<ros::NodeHandle> pnh_;
+  std::shared_ptr<image_transport::ImageTransport> it_;
 
   /** @brief
    * WallTimer instance for warning about no connection.
    */
-  ros::WallTimer timer_;
-
-  /** @brief
-   * A flag to check if any publisher is already subscribed
-   * or not.
-   */
-  bool subscribed_;
+  rclcpp::TimerBase::SharedPtr timer_;
 
   /** @brief
    * A flag to check if the node has been ever subscribed
@@ -305,12 +200,23 @@ protected:
   ConnectionStatus connection_status_;
 
   /** @brief
-   * true if `~verbose_connection` or `verbose_connection` parameter is true.
+   * true if `~verbose_connection` parameter is true.
    */
   bool verbose_connection_;
 
-private:
+  /** @brief
+   * true if `~latch` parameter is true.
+   */
+  bool latch_;
 };
+
+/** @brief
+ * ParameterDescriptor with description, and its range
+ */
+rcl_interfaces::msg::ParameterDescriptor paramDescriptor(const std::string& description);
+rcl_interfaces::msg::ParameterDescriptor paramDescriptor(const std::string& description, int from_value, int to_value);
+rcl_interfaces::msg::ParameterDescriptor paramDescriptor(const std::string& description, double from_value,
+                                                         double to_value);
 }  // namespace opencv_apps
 
-#endif
+#endif  // OPENCV_APPS_NODELET_H_
