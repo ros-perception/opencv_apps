@@ -157,6 +157,11 @@ install(PROGRAMS scripts/face_recognition_trainer.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
+if(BUILD_TESTING)
+  find_package(launch_testing_ament_cmake REQUIRED)
+  add_launch_test(test/ros2/test_nodes.py TIMEOUT 120)
+endif()
+
 ament_export_dependencies(rosidl_default_runtime)
 ament_package()
 
