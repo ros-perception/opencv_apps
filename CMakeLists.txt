@@ -159,7 +159,11 @@ install(PROGRAMS scripts/face_recognition_trainer.py
 
 if(BUILD_TESTING)
   find_package(launch_testing_ament_cmake REQUIRED)
-  add_launch_test(test/ros2/test_nodes.py TIMEOUT 120)
+  # test/ros2/test_*.py: ROS2 versions of test/test-*.test, plus test_nodes.py; they import test/ros2/opencv_apps_test.py
+  file(GLOB _launch_tests RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/ros2/test_*.py)
+  foreach(_launch_test ${_launch_tests})
+    add_launch_test(${_launch_test} TIMEOUT 180 APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/test/ros2)
+  endforeach()
 endif()
 
 ament_export_dependencies(rosidl_default_runtime)
