@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 # Software License Agreement (BSD License)
 #
 # Copyright (c) 2017, Yuki Furuta.
@@ -32,8 +32,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
+from __future__ import print_function
+
+try:
+    input = raw_input
+except:
+    pass
+
+import os
+import sys
+import threading
 import time
 
+if os.environ.get('ROS_VERSION') != '2':
+    # rclpy (and the ROS2 API of message_filters) on rospy, for ROS1
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ros1', 'python'))
 import rclpy
 from rclpy.node import Node
 import message_filters
@@ -93,9 +106,10 @@ class FaceRecognitionTrainer(Node):
             print("NG. Error: %s" % res.error)
 
 if __name__ == '__main__':
-    import threading
     rclpy.init()
     t = FaceRecognitionTrainer()
     # callbacks run in background, as run() blocks on input()
-    threading.Thread(target=rclpy.spin, args=(t,), daemon=True).start()
+    spin = threading.Thread(target=rclpy.spin, args=(t,))
+    spin.daemon = True
+    spin.start()
     t.run()

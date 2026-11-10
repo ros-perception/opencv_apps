@@ -15,5 +15,6 @@
     <param name="use_camera_info" value="$(var use_camera_info)" />
     <param name="debug_view" value="$(var debug_view)" />
     <param name="queue_size" value="$(var queue_size)" />
+    <param name="threshold" value="$(var threshold)" />
   </node>
 </launch>

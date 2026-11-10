@@ -18,7 +18,7 @@
     <param name="queue_size" value="$(var queue_size)" />
     <param name="quality_level" value="$(var quality_level)" />
     <param name="min_distance" value="$(var min_distance)" />
-    <param name="blcok_size" value="$(var block_size)" />
+    <param name="block_size" value="$(var block_size)" />
     <param name="harris_k" value="$(var harris_k)" />
   </node>
 </launch>

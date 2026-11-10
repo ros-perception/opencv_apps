@@ -33,6 +33,7 @@
 # Run all opencv_apps nodes with a synthetic camera, and check that each of them publishes its output
 # (nodes subscribe the input only while their outputs are subscribed).
 
+import os
 import time
 import unittest
 
@@ -53,6 +54,8 @@ NODES = [
     'lk_flow', 'morphology', 'people_detect', 'phase_corr', 'pyramids', 'rgb_color_filter', 'segment_objects',
     'simple_flow', 'smoothing', 'threshold', 'watershed_segmentation',
 ]
+if os.environ.get('OPENCV_APPS_HAVE_OPTFLOW', '1') == '0':  # simple_flow needs opencv_contrib's optflow
+    NODES.remove('simple_flow')
 OUTPUTS = ['/%s/image' % name for name in NODES] + ['/image_converter/output_video/raw',
                                                      '/image_converter/output_video/compressed']
 

@@ -155,7 +155,12 @@ install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
   FILES_MATCHING PATTERN "*.launch.xml"
 )
-install(PROGRAMS scripts/face_recognition_trainer.py
+# with a python3 shebang (the script keeps "python" for ROS1 melodic and older)
+file(READ scripts/face_recognition_trainer.py _trainer)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS scripts/face_recognition_trainer.py)
+string(REGEX REPLACE "^#! */usr/bin/env python\n" "#!/usr/bin/env python3\n" _trainer "${_trainer}")
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/face_recognition_trainer.py "${_trainer}")
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/face_recognition_trainer.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -163,8 +168,19 @@ if(BUILD_TESTING)
   find_package(launch_testing_ament_cmake REQUIRED)
   # test/ros2/test_*.py: ROS2 versions of test/test-*.test, plus test_nodes.py; they import test/ros2/opencv_apps_test.py
   file(GLOB _launch_tests RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/ros2/test_*.py)
+  if(OPENCV_HAVE_OPTFLOW)
+    set(_have_optflow 1)
+  else()
+    set(_have_optflow 0)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_simple_flow.py)
+  endif()
   foreach(_launch_test ${_launch_tests})
-    add_launch_test(${_launch_test} TIMEOUT 180 APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/test/ros2)
+    get_filename_component(_name ${_launch_test} NAME_WE)
+    add_launch_test(${_launch_test} TARGET ${_name} TIMEOUT 180
+      ENV OPENCV_APPS_HAVE_OPTFLOW=${_have_optflow}
+      APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/test/ros2)
+    # they use the same ROS domain and topic names (e.g. /image)
+    set_tests_properties(${_name} PROPERTIES RUN_SERIAL TRUE)
   endforeach()
 endif()
 
@@ -558,6 +574,10 @@ install(FILES nodelet_plugins.xml
 install(DIRECTORY launch test scripts
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         USE_SOURCE_PERMISSIONS)
+# rclpy on rospy for scripts/face_recognition_trainer.py, see ros1/python/rclpy/__init__.py
+install(DIRECTORY ros1/python
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/ros1
+        PATTERN "__pycache__" EXCLUDE)
 
 ## test
 if(CATKIN_ENABLE_TESTING)

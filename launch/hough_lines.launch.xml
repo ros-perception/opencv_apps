@@ -12,7 +12,7 @@
   <arg name="rho" default="1.0" description="The resolution of the parameter r in pixels." />
   <arg name="theta" default="1.0" description="The resolution of the parameter theta in radians." />
   <arg name="minLineLength" default="30.0" description="The minimum number of points that can form a line." />
-  <arg name="maxLineGrap" default="10" description="The maximum gap between two points to be considered in the same line." />
+  <arg name="maxLineGrap" default="10.0" description="The maximum gap between two points to be considered in the same line." />
 
   <!-- hough_lines.cpp -->
   <node name="$(var node_name)" pkg="opencv_apps" exec="hough_lines" >
@@ -25,6 +25,7 @@
     <param name="rho" value="$(var rho)" />
     <param name="theta" value="$(var theta)" />
     <param name="minLineLength" value="$(var minLineLength)" />
-    <param name="maxLineGrap" value="$(var maxLineGrap)" />
+    <!-- the argument keeps the name of the ROS1 launch file -->
+    <param name="maxLineGap" value="$(var maxLineGrap)" />
   </node>
 </launch>
