@@ -57,7 +57,8 @@ jobs:
       - name: catkin_lint test
         if: matrix.TEST == 'catkin_lint' && matrix.DOCKER_IMAGE == ''
         run: |
-          ROS_DISTRO=melodic catkin_lint --resolve-env --strict $PWD
+          # ROS_VERSION for the $ROS_VERSION conditions in package.xml
+          ROS_DISTRO=melodic ROS_VERSION=1 catkin_lint --resolve-env --strict $PWD
       # clang-format
       - name: clang-format setup
         if: matrix.TEST == 'clang-format'

@@ -4,6 +4,7 @@
 # AMENT_PREFIX_PATH (bloom's debian/rules passes it to cmake, setup.sh and
 # colcon set the environment variable), catkin never does.
 if("$ENV{ROS_VERSION}" STREQUAL "")
+  #catkin_lint: skip
   if(DEFINED AMENT_PREFIX_PATH OR DEFINED ENV{AMENT_PREFIX_PATH})
     set(ENV{ROS_VERSION} 2)
   else()
@@ -13,6 +14,7 @@ if("$ENV{ROS_VERSION}" STREQUAL "")
 endif()
 
 if($ENV{ROS_VERSION} EQUAL 2)
+#catkin_lint: skip (catkin_lint does not evaluate $ENV{ROS_VERSION}, and checks only the ROS1 part below)
 cmake_minimum_required(VERSION 3.8)
 project(opencv_apps)
 
@@ -170,6 +172,7 @@ ament_export_dependencies(rosidl_default_runtime)
 ament_package()
 
 else() # if($ENV{ROS_VERSION} EQUAL 2)
+#catkin_lint: ignore_once order_violation (only the ROS_VERSION guess above comes before it)
 cmake_minimum_required(VERSION 2.8.3)
 project(opencv_apps)
 
