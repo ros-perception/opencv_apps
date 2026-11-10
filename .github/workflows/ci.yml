@@ -15,14 +15,6 @@ jobs:
           - TEST : clang-tidy
             ROS_DISTRO : melodic
             DOCKER_IMAGE : ubuntu:bionic
-          - ROS_DISTRO : hydro
-            DOCKER_IMAGE : ubuntu:precise
-          - OPENCV_VERSION : 2
-            ROS_DISTRO : indigo
-            DOCKER_IMAGE : ubuntu:trusty
-          - OPENCV_VERSION : 3
-            ROS_DISTRO : indigo
-            DOCKER_IMAGE : ubuntu:trusty
           - ROS_DISTRO : kinetic
             DOCKER_IMAGE : ubuntu:xenial
           - ROS_DISTRO : melodic
