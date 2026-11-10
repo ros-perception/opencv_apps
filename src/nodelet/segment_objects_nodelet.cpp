@@ -240,9 +240,9 @@ class SegmentObjectsNodelet : public opencv_apps::Nodelet
   {
     RCLCPP_DEBUG(get_logger(), "Subscribing to image topic.");
     if (use_camera_info_)
-      cam_sub_ = it_->subscribeCamera("image", queue_size_, &SegmentObjectsNodelet::imageCallbackWithInfo, this);
+      cam_sub_ = subscribeCamera("image", queue_size_, &SegmentObjectsNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", queue_size_, &SegmentObjectsNodelet::imageCallback, this);
+      img_sub_ = subscribeImage("image", queue_size_, &SegmentObjectsNodelet::imageCallback, this);
   }
 
   void unsubscribe() override

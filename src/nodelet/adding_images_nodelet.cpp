@@ -111,16 +111,16 @@ private:
     RCLCPP_DEBUG(get_logger(), "Subscribing to image topic.");
     // image_transport takes rclcpp::QoS since lyrical, message_filters since kilted
 #if __has_include(<image_transport/node_interfaces.hpp>)
-    sub_image1_.subscribe(*this, "image1", "raw", rclcpp::QoS(3));
-    sub_image2_.subscribe(*this, "image2", "raw", rclcpp::QoS(3));
+    sub_image1_.subscribe(*this, "image1", "raw", subscriberQos(3));
+    sub_image2_.subscribe(*this, "image2", "raw", subscriberQos(3));
 #else
-    sub_image1_.subscribe(this, "image1", "raw", rclcpp::QoS(3).get_rmw_qos_profile());
-    sub_image2_.subscribe(this, "image2", "raw", rclcpp::QoS(3).get_rmw_qos_profile());
+    sub_image1_.subscribe(this, "image1", "raw", subscriberQos(3).get_rmw_qos_profile());
+    sub_image2_.subscribe(this, "image2", "raw", subscriberQos(3).get_rmw_qos_profile());
 #endif
 #if RCLCPP_VERSION_GTE(29, 0, 0)
-    sub_camera_info_.subscribe(this, "camera_info", rclcpp::QoS(3));
+    sub_camera_info_.subscribe(this, "camera_info", subscriberQos(3));
 #else
-    sub_camera_info_.subscribe(this, "camera_info", rclcpp::QoS(3).get_rmw_qos_profile());
+    sub_camera_info_.subscribe(this, "camera_info", subscriberQos(3).get_rmw_qos_profile());
 #endif
     if (use_camera_info_)
     {

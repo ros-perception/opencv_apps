@@ -668,14 +668,14 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
     RCLCPP_DEBUG(get_logger(), "subscribe");
     // image_transport takes rclcpp::QoS since lyrical, message_filters since kilted
 #if __has_include(<image_transport/node_interfaces.hpp>)
-    img_sub_.subscribe(*this, "image", "raw", rclcpp::QoS(1));
+    img_sub_.subscribe(*this, "image", "raw", subscriberQos(1));
 #else
-    img_sub_.subscribe(this, "image", "raw", rclcpp::QoS(1).get_rmw_qos_profile());
+    img_sub_.subscribe(this, "image", "raw", subscriberQos(1).get_rmw_qos_profile());
 #endif
 #if RCLCPP_VERSION_GTE(29, 0, 0)
-    face_sub_.subscribe(this, "faces", rclcpp::QoS(1));
+    face_sub_.subscribe(this, "faces", subscriberQos(1));
 #else
-    face_sub_.subscribe(this, "faces", rclcpp::QoS(1).get_rmw_qos_profile());
+    face_sub_.subscribe(this, "faces", subscriberQos(1).get_rmw_qos_profile());
 #endif
     if (use_async_)
     {

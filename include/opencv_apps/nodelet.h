@@ -43,6 +43,7 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -142,9 +143,61 @@ protected:
   image_transport::CameraPublisher advertiseCamera(const std::string& topic, int queue_size);
 
   /** @brief
+   * Subscribe an image topic with subscriberQos(), and the transport of `~image_transport` parameter.
+   *
+   * @param topic topic name to subscribe.
+   * @param queue_size queue size for subscriber.
+   * @param fp member function to call with the image.
+   * @param obj object to call fp.
+   * @return Subscriber for the topic.
+   */
+  template <class F, class T>
+  image_transport::Subscriber subscribeImage(const std::string& topic, int queue_size, F fp, T* obj)
+  {
+    auto callback = std::bind(fp, obj, std::placeholders::_1);
+#if __has_include(<image_transport/node_interfaces.hpp>)
+    return image_transport::create_subscription(
+        *this, topic, callback, image_transport::TransportHints(*this).getTransport(), subscriberQos(queue_size));
+#else
+    return image_transport::create_subscription(this, topic, callback,
+                                                image_transport::TransportHints(this).getTransport(),
+                                                subscriberQos(queue_size).get_rmw_qos_profile());
+#endif
+  }
+
+  /** @brief
+   * Subscribe an image topic and its camera info topic with subscriberQos(), and the transport of
+   * `~image_transport` parameter.
+   *
+   * @param topic topic name to subscribe.
+   * @param queue_size queue size for subscriber.
+   * @param fp member function to call with the image and the camera info.
+   * @param obj object to call fp.
+   * @return CameraSubscriber for the topics.
+   */
+  template <class F, class T>
+  image_transport::CameraSubscriber subscribeCamera(const std::string& topic, int queue_size, F fp, T* obj)
+  {
+    auto callback = std::bind(fp, obj, std::placeholders::_1, std::placeholders::_2);
+#if __has_include(<image_transport/node_interfaces.hpp>)
+    return image_transport::create_camera_subscription(
+        *this, topic, callback, image_transport::TransportHints(*this).getTransport(), subscriberQos(queue_size));
+#else
+    return image_transport::create_camera_subscription(this, topic, callback,
+                                                       image_transport::TransportHints(this).getTransport(),
+                                                       subscriberQos(queue_size).get_rmw_qos_profile());
+#endif
+  }
+
+  /** @brief
    * QoS of advertised topics, transient local if `~latch` parameter is true.
    */
   rclcpp::QoS qos(int queue_size) const;
+
+  /** @brief
+   * QoS of subscribed topics, sensor data (best effort) to subscribe both reliable and best effort publishers.
+   */
+  rclcpp::QoS subscriberQos(int queue_size) const;
 
   /** @brief
    * PublisherOptions to call connectionCallback() when subscribers are changed.
@@ -171,11 +224,6 @@ protected:
    * List of watching camera publishers
    */
   std::vector<image_transport::CameraPublisher> camera_publishers_;
-
-  /** @brief
-   * ImageTransport to subscribe image topics.
-   */
-  std::shared_ptr<image_transport::ImageTransport> it_;
 
   /** @brief
    * WallTimer instance for warning about no connection.

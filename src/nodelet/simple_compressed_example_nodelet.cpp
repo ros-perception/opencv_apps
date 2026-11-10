@@ -73,7 +73,8 @@ public:
 
     // Subscrive to input video feed and publish output video feed
     image_sub_ = node_->create_subscription<sensor_msgs::msg::CompressedImage>(
-        "image/compressed", queue_size_, std::bind(&ImageConverter::imageCb, this, std::placeholders::_1));
+        "image/compressed", rclcpp::SensorDataQoS().keep_last(queue_size_),
+        std::bind(&ImageConverter::imageCb, this, std::placeholders::_1));
     image_pub_ =
         node_->create_publisher<sensor_msgs::msg::CompressedImage>("/image_converter/output_video/compressed", 1);
 

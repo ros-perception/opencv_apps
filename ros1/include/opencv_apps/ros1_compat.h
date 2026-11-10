@@ -192,6 +192,11 @@ public:
     transient_local_ = true;
     return *this;
   }
+  QoS& keep_last(size_t depth)
+  {
+    depth_ = depth;
+    return *this;
+  }
   size_t depth() const
   {
     return depth_;
@@ -211,6 +216,15 @@ public:
 private:
   size_t depth_;
   bool transient_local_;
+};
+
+// ROS1 has no best effort, only the depth of rclcpp::SensorDataQoS
+class SensorDataQoS : public QoS
+{
+public:
+  SensorDataQoS() : QoS(5)
+  {
+  }
 };
 
 class Time : public ros::Time
@@ -872,10 +886,12 @@ namespace image_transport
 {
 using namespace ::image_transport;  // NOLINT(build/namespaces)
 
-class ImageTransport : public ::image_transport::ImageTransport
+// reads `~image_transport` parameter of the node, as TransportHints(node) of ROS2
+class TransportHints : public ::image_transport::TransportHints
 {
 public:
-  explicit ImageTransport(const rclcpp::Node::Ptr& node) : ::image_transport::ImageTransport(node->ros1NodeHandle(""))
+  explicit TransportHints(rclcpp::Node* node)
+    : ::image_transport::TransportHints("raw", ros::TransportHints(), node->ros1NodeHandle("~/"))
   {
   }
 };
@@ -918,6 +934,15 @@ Subscriber create_subscription(rclcpp::Node* node, const std::string& base_topic
       .subscribe(rclcpp::Node::ros1TopicName(base_topic), qos.depth,
                  boost::function<void(const sensor_msgs::ImageConstPtr&)>(callback), ros::VoidPtr(),
                  ::image_transport::TransportHints(transport));
+}
+
+template <class C>
+CameraSubscriber create_camera_subscription(rclcpp::Node* node, const std::string& base_topic, C callback,
+                                            const std::string& transport, const rmw_qos_profile_t& qos)
+{
+  return ::image_transport::ImageTransport(node->ros1NodeHandle(base_topic))
+      .subscribeCamera(rclcpp::Node::ros1TopicName(base_topic), qos.depth, CameraSubscriber::Callback(callback),
+                       ros::VoidPtr(), ::image_transport::TransportHints(transport));
 }
 }  // namespace image_transport
 

@@ -43,12 +43,6 @@ Nodelet::Nodelet(const std::string& node_name, const rclcpp::NodeOptions& option
   always_subscribe_ = declare_parameter("always_subscribe", false);
   verbose_connection_ = declare_parameter("verbose_connection", false);
   latch_ = declare_parameter("latch", false);
-#if __has_include(<image_transport/node_interfaces.hpp>)
-  it_ = std::make_shared<image_transport::ImageTransport>(*this);
-#else
-  // shared_from_this() is not available in constructor, and ImageTransport should not own this node
-  it_ = std::make_shared<image_transport::ImageTransport>(rclcpp::Node::SharedPtr(this, [](rclcpp::Node*) {}));
-#endif
   // timer to warn when no connection in a few seconds
   timer_ = create_wall_timer(std::chrono::seconds(5), [this]() {
     timer_->cancel();
@@ -89,6 +83,11 @@ rclcpp::QoS Nodelet::qos(int queue_size) const
     qos.transient_local();
   }
   return qos;
+}
+
+rclcpp::QoS Nodelet::subscriberQos(int queue_size) const
+{
+  return rclcpp::SensorDataQoS().keep_last(queue_size);
 }
 
 rclcpp::PublisherOptions Nodelet::publisherOptions()

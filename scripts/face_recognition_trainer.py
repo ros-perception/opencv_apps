@@ -49,6 +49,7 @@ if os.environ.get('ROS_VERSION') != '2':
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ros1', 'python'))
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import qos_profile_sensor_data
 import message_filters
 from sensor_msgs.msg import Image
 from opencv_apps.msg import FaceArrayStamped
@@ -60,8 +61,8 @@ class FaceRecognitionTrainer(Node):
         super(FaceRecognitionTrainer, self).__init__("face_recognition_trainer")
         self.queue_size = self.declare_parameter("queue_size", 100).value
 
-        self.img_sub = message_filters.Subscriber(self, Image, "image")
-        self.face_sub = message_filters.Subscriber(self, FaceArrayStamped, "faces")
+        self.img_sub = message_filters.Subscriber(self, Image, "image", qos_profile=qos_profile_sensor_data)
+        self.face_sub = message_filters.Subscriber(self, FaceArrayStamped, "faces", qos_profile=qos_profile_sensor_data)
 
         self.req = FaceRecognitionTrain.Request()
         self.label = ""

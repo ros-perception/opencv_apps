@@ -73,12 +73,13 @@ public:
 #if __has_include(<image_transport/node_interfaces.hpp>)
     image_sub_ = image_transport::create_subscription(*node_, "image",
                                                       std::bind(&ImageConverter::imageCb, this, std::placeholders::_1),
-                                                      "raw", rclcpp::QoS(queue_size_));
+                                                      "raw", rclcpp::SensorDataQoS().keep_last(queue_size_));
     image_pub_ = image_transport::create_publisher(*node_, "/image_converter/output_video/raw", rclcpp::QoS(1));
 #else
-    image_sub_ = image_transport::create_subscription(node_, "image",
-                                                      std::bind(&ImageConverter::imageCb, this, std::placeholders::_1),
-                                                      "raw", rclcpp::QoS(queue_size_).get_rmw_qos_profile());
+    image_sub_ =
+        image_transport::create_subscription(node_, "image",
+                                             std::bind(&ImageConverter::imageCb, this, std::placeholders::_1), "raw",
+                                             rclcpp::SensorDataQoS().keep_last(queue_size_).get_rmw_qos_profile());
     image_pub_ = image_transport::create_publisher(node_, "/image_converter/output_video/raw",
                                                    rclcpp::QoS(1).get_rmw_qos_profile());
 #endif
