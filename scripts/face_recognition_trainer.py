@@ -89,15 +89,19 @@ class FaceRecognitionTrainer(Node):
         input("Please stand at the center of the camera and press Enter: ")
         while True:
             self.ok = True
-            while self.ok:
+            while self.ok and rclpy.ok():
                 print("taking picture...")
                 time.sleep(1)
+            if not rclpy.ok():
+                return
             if input("One more picture? [y/n]: ") not in ["", "y", "Y"]:
                 break
         print("sending to trainer...")
 
         future = train.call_async(self.req)
         while not future.done():
+            if not rclpy.ok():
+                return
             time.sleep(0.1)
         res = future.result()
         if res.ok:
