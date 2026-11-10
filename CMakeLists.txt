@@ -189,7 +189,7 @@ ament_package()
 
 else() # if($ENV{ROS_VERSION} EQUAL 2)
 #catkin_lint: ignore_once order_violation (only the ROS_VERSION guess above comes before it)
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(opencv_apps)
 
 ## https://stackoverflow.com/questions/10984442/how-to-detect-c11-support-of-a-compiler-with-cmake
