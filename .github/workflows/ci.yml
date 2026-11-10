@@ -172,3 +172,38 @@ jobs:
           cd ~/ws/
           catkin build --no-status -sv ${{ matrix.CATKIN_OPTIONS }} --cmake-args -DCATKIN_ENABLE_TESTING=OFF -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON ${{ matrix.CMAKE_OPTIONS }}
         shell: bash
+
+  ros2:
+    runs-on: ubuntu-latest
+    name: ros2 (${{ matrix.ROS_DISTRO }})
+    strategy:
+      fail-fast: false
+      matrix:
+        ROS_DISTRO: [jazzy, kilted, lyrical]  # topic_tools (test_depend) is not released into rolling
+    container: ros:${{ matrix.ROS_DISTRO }}-ros-base
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Chcekout Source
+        uses: actions/checkout@v4
+        with:
+          path: src/opencv_apps
+      - name: Install Dependencies
+        run: |
+          set -x
+          apt-get update -qq
+          rosdep update
+          rosdep install -qq -y --from-paths src --ignore-src
+      - name: Compile Packages
+        run: |
+          source /opt/ros/$ROS_DISTRO/setup.bash
+          set -x
+          colcon build --event-handlers console_cohesion+
+      - name: Test Packages
+        run: |
+          source /opt/ros/$ROS_DISTRO/setup.bash
+          set -x
+          # run tests one by one, since they publish/subscribe the same topics
+          colcon test --event-handlers console_cohesion+ --ctest-args --output-on-failure
+          colcon test-result --verbose
