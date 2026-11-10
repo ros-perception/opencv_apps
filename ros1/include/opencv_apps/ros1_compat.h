@@ -622,15 +622,16 @@ public:
   }
 
 private:
+  template <class T>
+  using Ros1Callback = boost::function<void(const typename T::ConstPtr&)>;
   // callback of create_subscription() takes ConstSharedPtr, or the message
   template <class T, class C>
-  static auto ros1SubscriptionCallback(C callback, int) -> decltype(callback(typename T::ConstPtr()),
-                                                                    boost::function<void(const typename T::ConstPtr&)>())
+  static auto ros1SubscriptionCallback(C callback, int) -> decltype(callback(typename T::ConstPtr()), Ros1Callback<T>())
   {
     return callback;
   }
   template <class T, class C>
-  static boost::function<void(const typename T::ConstPtr&)> ros1SubscriptionCallback(C callback, long)
+  static Ros1Callback<T> ros1SubscriptionCallback(C callback, long)
   {
     return [callback](const typename T::ConstPtr& msg) { callback(*msg); };
   }
