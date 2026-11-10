@@ -1,0 +1,16 @@
+// ROS1 compat of <filesystem>, see opencv_apps/ros1_compat.h
+// std::filesystem is C++17, older distros (e.g. noetic's gcc 9 defaults to C++14) use boost::filesystem.
+#ifndef OPENCV_APPS_ROS1_FILESYSTEM_
+#define OPENCV_APPS_ROS1_FILESYSTEM_
+
+#if __cplusplus >= 201703L
+#include_next <filesystem>
+#else
+#include <boost/filesystem.hpp>
+namespace std
+{
+namespace filesystem = ::boost::filesystem;
+}  // namespace std
+#endif
+
+#endif  // OPENCV_APPS_ROS1_FILESYSTEM_

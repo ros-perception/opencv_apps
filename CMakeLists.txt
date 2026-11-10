@@ -297,6 +297,8 @@ catkin_package(CATKIN_DEPENDS dynamic_reconfigure message_runtime nodelet roscpp
                LIBRARIES ${PROJECT_NAME}
 )
 
+# rclcpp/rclcpp.hpp, <pkg>/msg/foo.hpp, ... for the nodes written for ROS2, see ros1/include/opencv_apps/ros1_compat.h
+include_directories(ros1/include)
 include_directories(include ${catkin_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
 ## Macro to add nodelets
