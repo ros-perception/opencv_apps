@@ -1,0 +1,30 @@
+<launch>
+  <arg name="gui" default="true" />
+
+  <!-- the video in a loop, on camera/image_raw and camera/camera_info -->
+  <node name="camera" pkg="image_publisher" type="image_publisher" args="$(find opencv_apps)/test/face_detector_withface_test_diamondback.mp4" >
+    <param name="publish_rate" value="10" />
+  </node>
+
+  <!-- dnn_face_recognition_nodelet.cpp, downloads the models at the first time -->
+  <include file="$(find opencv_apps)/launch/dnn_face_recognition.launch" >
+    <arg name="debug_view" value="$(arg gui)" />
+    <arg name="image" value="camera/image_raw" />
+    <arg name="data_dir" value="/tmp/opencv_apps_test_dnn_face_data" />
+  </include>
+
+  <param name="dnn_face_recognition_output_test/topic" value="dnn_face_recognition/output" />
+  <test test-name="dnn_face_recognition_output_test" pkg="rostest" type="hztest" name="dnn_face_recognition_output_test" time-limit="300" >
+    <param name="hz" value="10" />
+    <param name="hzerror" value="8" />
+    <param name="test_duration" value="2.0" />
+    <param name="wait_time" value="240.0" />
+  </test>
+  <param name="dnn_face_recognition_image_test/topic" value="dnn_face_recognition/image" />
+  <test test-name="dnn_face_recognition_image_test" pkg="rostest" type="hztest" name="dnn_face_recognition_image_test" time-limit="300" >
+    <param name="hz" value="10" />
+    <param name="hzerror" value="8" />
+    <param name="test_duration" value="2.0" />
+    <param name="wait_time" value="240.0" />
+  </test>
+</launch>
