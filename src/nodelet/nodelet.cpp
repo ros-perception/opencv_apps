@@ -34,192 +34,171 @@
  *********************************************************************/
 
 #include "opencv_apps/nodelet.h"
-#if BOOST_VERSION < 106000  // since 1.60.0, boost uses placeholders namesapce for _1,_2...
-#ifndef BOOST_PLAEHOLDERS
-#define BOOST_PLAEHOLDERS
-namespace boost
-{
-namespace placeholders
-{
-boost::arg<1> _1;
-boost::arg<2> _2;
-boost::arg<3> _3;
-boost::arg<4> _4;
-boost::arg<5> _5;
-boost::arg<6> _6;
-boost::arg<7> _7;
-boost::arg<8> _8;
-boost::arg<9> _9;
-}  // namespace placeholders
-}  // namespace boost
-#endif  // BOOST_PLAEHOLDERS
-#endif  // BOOST_VERSION < 106000
 
 namespace opencv_apps
 {
-void Nodelet::onInit()
+Nodelet::Nodelet(const std::string& node_name, const rclcpp::NodeOptions& options)
+  : rclcpp::Node(node_name, options), ever_subscribed_(false), connection_status_(NOT_INITIALIZED)
 {
-  connection_status_ = NOT_SUBSCRIBED;
-  nh_.reset(new ros::NodeHandle(getMTNodeHandle()));
-  pnh_.reset(new ros::NodeHandle(getMTPrivateNodeHandle()));
-  pnh_->param("always_subscribe", always_subscribe_, false);
-  pnh_->param("verbose_connection", verbose_connection_, false);
-  if (!verbose_connection_)
-  {
-    nh_->param("verbose_connection", verbose_connection_, false);
-  }
+  always_subscribe_ = declare_parameter("always_subscribe", false);
+  verbose_connection_ = declare_parameter("verbose_connection", false);
+  latch_ = declare_parameter("latch", false);
   // timer to warn when no connection in a few seconds
-  ever_subscribed_ = false;
-  timer_ = nh_->createWallTimer(ros::WallDuration(5), &Nodelet::warnNeverSubscribedCallback, this,
-                                /*oneshot=*/true);
+  timer_ = create_wall_timer(std::chrono::seconds(5), [this]() {
+    timer_->cancel();
+    warnNeverSubscribedCallback();
+  });
 }
 
 void Nodelet::onInitPostProcess()
 {
+  {
+    std::lock_guard<std::mutex> lock(connection_mutex_);
+    connection_status_ = NOT_SUBSCRIBED;
+  }
   if (always_subscribe_)
   {
     subscribe();
   }
-}
-
-void Nodelet::warnNeverSubscribedCallback(const ros::WallTimerEvent& event)
-{
-  if (!ever_subscribed_)
+  else
   {
-    NODELET_WARN("'%s' subscribes topics only with child subscribers.", nodelet::Nodelet::getName().c_str());
+    // subscribers may be already matched
+    connectionCallback();
   }
 }
 
-void Nodelet::connectionCallback(const ros::SingleSubscriberPublisher& pub)
+void Nodelet::warnNeverSubscribedCallback()
 {
-  if (verbose_connection_)
+  if (!ever_subscribed_ && !always_subscribe_)
   {
-    NODELET_INFO("New connection or disconnection is detected");
-  }
-  if (!always_subscribe_)
-  {
-    boost::mutex::scoped_lock lock(connection_mutex_);
-    for (const ros::Publisher& pub : publishers_)
-    {
-      if (pub.getNumSubscribers() > 0)
-      {
-        if (!ever_subscribed_)
-        {
-          ever_subscribed_ = true;
-        }
-        if (connection_status_ != SUBSCRIBED)
-        {
-          if (verbose_connection_)
-          {
-            NODELET_INFO("Subscribe input topics");
-          }
-          subscribe();
-          connection_status_ = SUBSCRIBED;
-        }
-        return;
-      }
-    }
-    if (connection_status_ == SUBSCRIBED)
-    {
-      if (verbose_connection_)
-      {
-        NODELET_INFO("Unsubscribe input topics");
-      }
-      unsubscribe();
-      connection_status_ = NOT_SUBSCRIBED;
-    }
+    RCLCPP_WARN(get_logger(), "'%s' subscribes topics only with child subscribers.", get_name());
   }
 }
 
-void Nodelet::imageConnectionCallback(const image_transport::SingleSubscriberPublisher& pub)
+rclcpp::QoS Nodelet::qos(int queue_size) const
 {
-  if (verbose_connection_)
+  rclcpp::QoS qos(queue_size);
+  if (latch_)
   {
-    NODELET_INFO("New image connection or disconnection is detected");
+    qos.transient_local();
   }
-  if (!always_subscribe_)
-  {
-    boost::mutex::scoped_lock lock(connection_mutex_);
-    for (const image_transport::Publisher& pub : image_publishers_)
-    {
-      if (pub.getNumSubscribers() > 0)
-      {
-        if (!ever_subscribed_)
-        {
-          ever_subscribed_ = true;
-        }
-        if (connection_status_ != SUBSCRIBED)
-        {
-          if (verbose_connection_)
-          {
-            NODELET_INFO("Subscribe input topics");
-          }
-          subscribe();
-          connection_status_ = SUBSCRIBED;
-        }
-        return;
-      }
-    }
-    if (connection_status_ == SUBSCRIBED)
-    {
-      if (verbose_connection_)
-      {
-        NODELET_INFO("Unsubscribe input topics");
-      }
-      unsubscribe();
-      connection_status_ = NOT_SUBSCRIBED;
-    }
-  }
+  return qos;
 }
 
-void Nodelet::cameraConnectionCallback(const image_transport::SingleSubscriberPublisher& pub)
+rclcpp::QoS Nodelet::subscriberQos(int queue_size) const
 {
-  cameraConnectionBaseCallback();
+  return rclcpp::SensorDataQoS().keep_last(queue_size);
 }
 
-void Nodelet::cameraInfoConnectionCallback(const ros::SingleSubscriberPublisher& pub)
+rclcpp::PublisherOptions Nodelet::publisherOptions()
 {
-  cameraConnectionBaseCallback();
+  rclcpp::PublisherOptions options;
+  options.event_callbacks.matched_callback = [this](rclcpp::MatchedInfo&) { connectionCallback(); };
+  return options;
 }
 
-void Nodelet::cameraConnectionBaseCallback()
+image_transport::Publisher Nodelet::advertiseImage(const std::string& topic, int queue_size)
+{
+  std::lock_guard<std::mutex> lock(connection_mutex_);
+#if __has_include(<image_transport/node_interfaces.hpp>)
+  auto pub = image_transport::create_publisher(*this, topic, qos(queue_size), publisherOptions());
+#else
+  auto pub = image_transport::create_publisher(this, topic, qos(queue_size).get_rmw_qos_profile(), publisherOptions());
+#endif
+  image_publishers_.push_back(pub);
+  return pub;
+}
+
+image_transport::CameraPublisher Nodelet::advertiseCamera(const std::string& topic, int queue_size)
+{
+  std::lock_guard<std::mutex> lock(connection_mutex_);
+#if __has_include(<image_transport/node_interfaces.hpp>)
+  auto pub = image_transport::create_camera_publisher(*this, topic, qos(queue_size), publisherOptions());
+#else
+  auto pub =
+      image_transport::create_camera_publisher(this, topic, qos(queue_size).get_rmw_qos_profile(), publisherOptions());
+#endif
+  camera_publishers_.push_back(pub);
+  return pub;
+}
+
+void Nodelet::connectionCallback()
 {
   if (verbose_connection_)
   {
-    NODELET_INFO("New image connection or disconnection is detected");
+    RCLCPP_INFO(get_logger(), "New connection or disconnection is detected");
   }
-  if (!always_subscribe_)
+  if (always_subscribe_)
   {
-    boost::mutex::scoped_lock lock(connection_mutex_);
-    for (const image_transport::CameraPublisher& pub : camera_publishers_)
-    {
-      if (pub.getNumSubscribers() > 0)
-      {
-        if (!ever_subscribed_)
-        {
-          ever_subscribed_ = true;
-        }
-        if (connection_status_ != SUBSCRIBED)
-        {
-          if (verbose_connection_)
-          {
-            NODELET_INFO("Subscribe input topics");
-          }
-          subscribe();
-          connection_status_ = SUBSCRIBED;
-        }
-        return;
-      }
-    }
-    if (connection_status_ == SUBSCRIBED)
+    return;
+  }
+  std::lock_guard<std::mutex> lock(connection_mutex_);
+  if (connection_status_ == NOT_INITIALIZED)
+  {
+    return;
+  }
+  size_t num_subscribers = 0;
+  for (const auto& pub : publishers_)
+  {
+    num_subscribers += pub->get_subscription_count();
+  }
+  for (const auto& pub : image_publishers_)
+  {
+    num_subscribers += pub.getNumSubscribers();
+  }
+  for (const auto& pub : camera_publishers_)
+  {
+    num_subscribers += pub.getNumSubscribers();
+  }
+  if (num_subscribers > 0)
+  {
+    ever_subscribed_ = true;
+    if (connection_status_ != SUBSCRIBED)
     {
       if (verbose_connection_)
       {
-        NODELET_INFO("Unsubscribe input topics");
+        RCLCPP_INFO(get_logger(), "Subscribe input topics");
       }
-      unsubscribe();
-      connection_status_ = NOT_SUBSCRIBED;
+      subscribe();
+      connection_status_ = SUBSCRIBED;
     }
   }
+  else if (connection_status_ == SUBSCRIBED)
+  {
+    if (verbose_connection_)
+    {
+      RCLCPP_INFO(get_logger(), "Unsubscribe input topics");
+    }
+    unsubscribe();
+    connection_status_ = NOT_SUBSCRIBED;
+  }
+}
+
+rcl_interfaces::msg::ParameterDescriptor paramDescriptor(const std::string& description)
+{
+  rcl_interfaces::msg::ParameterDescriptor descriptor;
+  descriptor.description = description;
+  return descriptor;
+}
+
+rcl_interfaces::msg::ParameterDescriptor paramDescriptor(const std::string& description, int from_value, int to_value)
+{
+  auto descriptor = paramDescriptor(description);
+  rcl_interfaces::msg::IntegerRange range;
+  range.from_value = from_value;
+  range.to_value = to_value;
+  descriptor.integer_range.push_back(range);
+  return descriptor;
+}
+
+rcl_interfaces::msg::ParameterDescriptor paramDescriptor(const std::string& description, double from_value,
+                                                         double to_value)
+{
+  auto descriptor = paramDescriptor(description);
+  rcl_interfaces::msg::FloatingPointRange range;
+  range.from_value = from_value;
+  range.to_value = to_value;
+  descriptor.floating_point_range.push_back(range);
+  return descriptor;
 }
 }  // namespace opencv_apps

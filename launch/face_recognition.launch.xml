@@ -1,0 +1,37 @@
+<launch>
+  <arg name="launch_face_detection" default="true" />
+  <arg name="launch_trainer" default="true" />
+
+  <arg name="debug_view" default="true" />
+  <arg name="queue_size" default="100" description="Specigy queue_size of input image subscribers" />
+
+  <arg name="image" default="image" />
+  <arg name="data_dir" default="~/.ros/opencv_apps/face_data" />
+
+  <include file="$(find-pkg-share opencv_apps)/launch/face_detection.launch.xml"
+           if="$(var launch_face_detection)">
+    <arg name="image" value="$(var image)" />
+    <arg name="debug_view" value="$(var debug_view)" />
+    <arg name="node_name" value="face_detection" />
+  </include>
+
+  <node name="face_recognition" pkg="opencv_apps" exec="face_recognition"
+        output="screen">
+    <param name="data_dir" value="$(var data_dir)" />
+    <param name="queue_size" value="$(var queue_size)" />
+    <remap from="image" to="$(var image)" />
+    <remap from="faces" to="face_detection/faces" />
+  </node>
+
+  <node name="face_recognition_trainer" pkg="opencv_apps" exec="face_recognition_trainer.py"
+        if="$(var launch_trainer)" launch-prefix="xterm -fn 12x24 -e" respawn="true">
+    <remap from="image" to="$(var image)" />
+    <remap from="faces" to="face_detection/faces" />
+    <remap from="train" to="face_recognition/train" />
+  </node>
+
+  <node name="debug_image_viewer" pkg="image_view" exec="image_view"
+        if="$(var debug_view)">
+    <remap from="image" to="face_recognition/debug_image" />
+  </node>
+</launch>

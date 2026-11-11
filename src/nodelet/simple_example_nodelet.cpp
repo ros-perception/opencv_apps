@@ -36,16 +36,17 @@
  * This is a demo of Simple Example from wiki tutorial
  */
 
-#include <ros/ros.h>
-#include <sensor_msgs/image_encodings.h>
-#include <nodelet/nodelet.h>
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
+#include <sensor_msgs/image_encodings.hpp>
+#include <image_transport/image_transport.hpp>
+#include <cv_bridge/cv_bridge.hpp>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <dynamic_reconfigure/server.h>
+#include <memory>
+#include <string>
 
 namespace opencv_apps
 {
@@ -55,23 +56,34 @@ static const std::string OPENCV_WINDOW = "Image window";
 
 class ImageConverter
 {
-  ros::NodeHandle nh_;
-  image_transport::ImageTransport it_;
+  rclcpp::Node* node_;
   image_transport::Subscriber image_sub_;
   image_transport::Publisher image_pub_;
   int queue_size_;
   bool debug_view_;
 
 public:
-  ImageConverter() : it_(nh_)
+  explicit ImageConverter(rclcpp::Node* node) : node_(node)
   {
-    // Subscrive to input video feed and publish output video feed
-    image_sub_ = it_.subscribe("image", queue_size_, &ImageConverter::imageCb, this);
-    image_pub_ = it_.advertise("/image_converter/output_video/raw", 1);
+    queue_size_ = node_->declare_parameter("queue_size", 1);
+    debug_view_ = node_->declare_parameter("debug_view", false);
 
-    ros::NodeHandle pnh("~");
-    pnh.param("queue_size", queue_size_, 1);
-    pnh.param("debug_view", debug_view_, false);
+    // Subscrive to input video feed and publish output video feed
+    // image_transport takes rclcpp::QoS since lyrical
+#if __has_include(<image_transport/node_interfaces.hpp>)
+    image_sub_ = image_transport::create_subscription(*node_, "image",
+                                                      std::bind(&ImageConverter::imageCb, this, std::placeholders::_1),
+                                                      "raw", rclcpp::SensorDataQoS().keep_last(queue_size_));
+    image_pub_ = image_transport::create_publisher(*node_, "/image_converter/output_video/raw", rclcpp::QoS(1));
+#else
+    image_sub_ =
+        image_transport::create_subscription(node_, "image",
+                                             std::bind(&ImageConverter::imageCb, this, std::placeholders::_1), "raw",
+                                             rclcpp::SensorDataQoS().keep_last(queue_size_).get_rmw_qos_profile());
+    image_pub_ = image_transport::create_publisher(node_, "/image_converter/output_video/raw",
+                                                   rclcpp::QoS(1).get_rmw_qos_profile());
+#endif
+
     if (debug_view_)
     {
       cv::namedWindow(OPENCV_WINDOW);
@@ -86,7 +98,7 @@ public:
     }
   }
 
-  void imageCb(const sensor_msgs::ImageConstPtr& msg)
+  void imageCb(const sensor_msgs::msg::Image::ConstSharedPtr& msg)
   {
     cv_bridge::CvImagePtr cv_ptr;
     try
@@ -95,7 +107,7 @@ public:
     }
     catch (cv_bridge::Exception& e)
     {
-      ROS_ERROR("cv_bridge exception: %s", e.what());
+      RCLCPP_ERROR(node_->get_logger(), "cv_bridge exception: %s", e.what());
       return;
     }
 
@@ -111,42 +123,23 @@ public:
     }
 
     // Output modified video stream
-    image_pub_.publish(cv_ptr->toImageMsg());
+    image_pub_.publish(*cv_ptr->toImageMsg());
   }
 };
 
 }  // namespace simple_example
 
-class SimpleExampleNodelet : public nodelet::Nodelet
+class SimpleExampleNodelet : public rclcpp::Node
 {
+  std::shared_ptr<simple_example::ImageConverter> ic_;
+
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit SimpleExampleNodelet(const rclcpp::NodeOptions& options) : rclcpp::Node("simple_example", options)
   {
-    simple_example::ImageConverter ic;
-    ros::spin();
+    ic_ = std::make_shared<simple_example::ImageConverter>(this);
   }
 };
 
 }  // namespace opencv_apps
 
-namespace simple_example
-{
-class SimpleExampleNodelet : public opencv_apps::SimpleExampleNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet simple_example/simple_example is deprecated, "
-             "and renamed to opencv_apps/simple_example.");
-    opencv_apps::SimpleExampleNodelet::onInit();
-  }
-};
-}  // namespace simple_example
-
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(opencv_apps::SimpleExampleNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(simple_example::SimpleExampleNodelet, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::SimpleExampleNodelet)

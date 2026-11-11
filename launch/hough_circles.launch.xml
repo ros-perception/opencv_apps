@@ -1,0 +1,34 @@
+<launch>
+  <arg name="node_name" default="hough_circles" />
+
+  <arg name="image" default="image" description="The image topic. Should be remapped to the name of the real image topic." />
+
+  <arg name="use_camera_info" default="false" description="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
+  <arg name="debug_view" default="true" description="Specify whether the node displays a window to show edge image" />
+  <arg name="queue_size" default="3" description="Specigy queue_size of input image subscribers" />
+
+  <arg name="canny_threshold" default="200.0" description="Upper threshold for the internal Canny edge detector." />
+  <arg name="accumulator_threshold" default="50.0" description="Threshold for center detection." />
+  <arg name="gaussian_blur_size" default="9" description="The size of gaussian blur (should be odd number)" />
+  <arg name="gaussian_sigma_x" default="2.0" description="Sigma x of gaussian kernel" />
+  <arg name="gaussian_sigma_y" default="2.0" description="Sigma y of gaussian kernel" />
+  <arg name="dp" default="2.0" description="The inverse ratio of resolution." />
+  <arg name="min_circle_radius" default="0" description="The minimum size of the circle, If unknown, put zero as default" />
+  <arg name="max_circle_radius" default="0" description="The maximum size of the circle, If unknown, put zero as default." />
+
+  <!-- hough_circles.cpp -->
+  <node name="$(var node_name)" pkg="opencv_apps" exec="hough_circles">
+    <remap from="image" to="$(var image)" />
+    <param name="use_camera_info" value="$(var use_camera_info)" />
+    <param name="debug_view" value="$(var debug_view)" />
+    <param name="queue_size" value="$(var queue_size)" />
+    <param name="canny_threshold" value="$(var canny_threshold)" />
+    <param name="accumulator_threshold" value="$(var accumulator_threshold)" />
+    <param name="gaussian_blur_size" value="$(var gaussian_blur_size)" />
+    <param name="gaussian_sigma_x" value="$(var gaussian_sigma_x)" />
+    <param name="gaussian_sigma_y" value="$(var gaussian_sigma_y)" />
+    <param name="dp" value="$(var dp)" />
+    <param name="min_circle_radius" value="$(var min_circle_radius)" />
+    <param name="max_circle_radius" value="$(var max_circle_radius)" />
+  </node>
+</launch>

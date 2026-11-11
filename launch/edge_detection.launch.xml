@@ -1,0 +1,36 @@
+<launch>
+  <arg name="node_name" default="edge_detection" />
+
+  <arg name="image" default="image" description="The image topic. Should be remapped to the name of the real image topic." />
+
+  <arg name="use_camera_info" default="false" description="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
+  <arg name="debug_view" default="true" description="Specify whether the node displays a window to show edge image" />
+  <arg name="queue_size" default="3" description="Specigy queue_size of input image subscribers" />
+
+  <arg name="edge_type" default="0" description="Specify edge dtection methods. 0: Sobel Derivatives, 1: Lapalace Operator, 2, Canny Edge Detector." />
+  <arg name="canny_threshold1" default="100" description="Specify second canny threashold value." />
+  <arg name="canny_threshold2" default="200" description="Specity first canny threashold value." />
+  <arg name="apertureSize" default="3" description="Aperture size for the Sobel() operator." />
+  <arg name="apply_blur_pre" default="true" description="Flag, applying Blur() to input image" />
+  <arg name="postBlurSize" default="13" description="Aperture size for the Blur() to input image()" />
+  <arg name="postBlurSigma" default="3.2" description="Sigma for the GaussianBlur() to input image." />
+  <arg name="apply_blur_post" default="false" description="Flag, applying GaussinaBlur() to output(edge) image" />
+  <arg name="L2gradient" default="false" description="Flag, L2Gradient" />
+
+  <!-- edge_detection.cpp  -->
+  <node name="$(var node_name)" pkg="opencv_apps" exec="edge_detection" >
+    <remap from="image" to="$(var image)" />
+    <param name="use_camera_info" value="$(var use_camera_info)" />
+    <param name="debug_view" value="$(var debug_view)" />
+    <param name="queue_size" value="$(var queue_size)" />
+    <param name="edge_type" value="$(var edge_type)" />
+    <param name="canny_threshold1" value="$(var canny_threshold1)" />
+    <param name="canny_threshold2" value="$(var canny_threshold2)" />
+    <param name="apertureSize" value="$(var apertureSize)" />
+    <param name="apply_blur_pre" value="$(var apply_blur_pre)" />
+    <param name="postBlurSize" value="$(var postBlurSize)" />
+    <param name="postBlurSigma" value="$(var postBlurSigma)" />
+    <param name="apply_blur_post" value="$(var apply_blur_post)" />
+    <param name="L2gradient" value="$(var L2gradient)" />
+  </node>
+</launch>

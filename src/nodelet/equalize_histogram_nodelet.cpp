@@ -46,11 +46,7 @@
  * @author OpenCV team
  */
 
-#include <ros/ros.h>
 #include "opencv_apps/nodelet.h"
-#include <image_transport/image_transport.h>
-#include <sensor_msgs/image_encodings.h>
-#include <cv_bridge/cv_bridge.h>
 
 #if CV_MAJOR_VERSION >= 3
 #include "opencv2/core/ocl.hpp"
@@ -63,12 +59,14 @@ typedef Mat UMat;
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <dynamic_reconfigure/server.h>
-
-#include "opencv_apps/EqualizeHistogramConfig.h"
-
 namespace opencv_apps
 {
+enum EqualizeHistogramType
+{
+  EqualizeHistogram_EqualizeHist = 0,
+  EqualizeHistogram_Clahe = 1
+};
+
 class EqualizeHistogramNodelet : public opencv_apps::Nodelet
 {
   std::string window_name_;
@@ -78,13 +76,7 @@ class EqualizeHistogramNodelet : public opencv_apps::Nodelet
 
   cv::Ptr<cv::CLAHE> clahe_;
 
-  boost::shared_ptr<image_transport::ImageTransport> it_;
-
-  typedef opencv_apps::EqualizeHistogramConfig Config;
-  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
-
-  Config config_;
-  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
   int queue_size_;
   bool debug_view_;
@@ -92,27 +84,43 @@ class EqualizeHistogramNodelet : public opencv_apps::Nodelet
   bool use_opencl_;
 #endif
 
+  bool use_camera_info_;
+  int histogram_equalization_type_;
   cv::Size clahe_tile_size_;
   double clahe_clip_limit_;
 
-  void reconfigureCallback(Config& new_config, uint32_t level)
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    config_ = new_config;
-    clahe_tile_size_ = cv::Size(config_.clahe_tile_size_x, config_.clahe_tile_size_y);
-    clahe_clip_limit_ = config_.clahe_clip_limit;
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "use_camera_info")
+        use_camera_info_ = parameter.as_bool();
+      else if (parameter.get_name() == "histogram_equalization_type")
+        histogram_equalization_type_ = parameter.as_int();
+      else if (parameter.get_name() == "clahe_clip_limit")
+        clahe_clip_limit_ = parameter.as_double();
+      else if (parameter.get_name() == "clahe_tile_size_x")
+        clahe_tile_size_.width = parameter.as_int();
+      else if (parameter.get_name() == "clahe_tile_size_y")
+        clahe_tile_size_.height = parameter.as_int();
+    }
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
   }
 
-  void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
+  void imageCallbackWithInfo(const sensor_msgs::msg::Image::ConstSharedPtr& msg,
+                             const sensor_msgs::msg::CameraInfo::ConstSharedPtr& cam_info)
   {
     doWork(msg, cam_info->header.frame_id);
   }
 
-  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& msg)
   {
     doWork(msg, msg->header.frame_id);
   }
 
-  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
+  void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& msg, const std::string& input_frame_from_msg)
   {
     try
     {
@@ -146,16 +154,16 @@ class EqualizeHistogramNodelet : public opencv_apps::Nodelet
         frame.copyTo(gray);
       }
 
-      switch (config_.histogram_equalization_type)
+      switch (histogram_equalization_type_)
       {
-        case opencv_apps::EqualizeHistogram_Clahe:
+        case EqualizeHistogram_Clahe:
           if (clahe_ == nullptr)
             clahe_ = cv::createCLAHE();
           clahe_->setTilesGridSize(clahe_tile_size_);
           clahe_->setClipLimit(clahe_clip_limit_);
           clahe_->apply(gray, dst);
           break;
-        case opencv_apps::EqualizeHistogram_EqualizeHist:
+        case EqualizeHistogram_EqualizeHist:
           equalizeHist(gray, dst);
           break;
       }
@@ -169,55 +177,66 @@ class EqualizeHistogramNodelet : public opencv_apps::Nodelet
 
       // Publish the image.
 #if CV_MAJOR_VERSION >= 3
-      sensor_msgs::Image::Ptr out_img =
+      sensor_msgs::msg::Image::SharedPtr out_img =
           cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::MONO8, dst.getMat(cv::ACCESS_READ)).toImageMsg();
 #else
-      sensor_msgs::Image::Ptr out_img =
+      sensor_msgs::msg::Image::SharedPtr out_img =
           cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::MONO8, dst).toImageMsg();
 #endif
       out_img->header.frame_id = input_frame_from_msg;
-      img_pub_.publish(out_img);
+      img_pub_.publish(*out_img);
     }
     catch (cv::Exception& e)
     {
-      NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+      RCLCPP_ERROR(get_logger(), "Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(),
+                   e.line);
     }
   }
 
-  void subscribe()  // NOLINT(modernize-use-override)
+  void subscribe() override
   {
-    NODELET_DEBUG("Subscribing to image topic.");
-    if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", queue_size_, &EqualizeHistogramNodelet::imageCallbackWithInfo, this);
+    RCLCPP_DEBUG(get_logger(), "Subscribing to image topic.");
+    if (use_camera_info_)
+      cam_sub_ = subscribeCamera("image", queue_size_, &EqualizeHistogramNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", queue_size_, &EqualizeHistogramNodelet::imageCallback, this);
+      img_sub_ = subscribeImage("image", queue_size_, &EqualizeHistogramNodelet::imageCallback, this);
   }
 
-  void unsubscribe()  // NOLINT(modernize-use-override)
+  void unsubscribe() override
   {
-    NODELET_DEBUG("Unsubscribing from image topic.");
+    RCLCPP_DEBUG(get_logger(), "Unsubscribing from image topic.");
     img_sub_.shutdown();
     cam_sub_.shutdown();
   }
 
-  void onInit()  // NOLINT(modernize-use-override)
+public:
+  explicit EqualizeHistogramNodelet(const rclcpp::NodeOptions& options) : Nodelet("equalize_histogram", options)
   {
-    Nodelet::onInit();
-    it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
-    pnh_->param("queue_size", queue_size_, 3);
-    pnh_->param("debug_view", debug_view_, false);
+    queue_size_ = declare_parameter("queue_size", 3);
+    debug_view_ = declare_parameter("debug_view", false);
 #if CV_MAJOR_VERSION >= 3
-    pnh_->param("use_opencl", use_opencl_, true);
+    use_opencl_ = declare_parameter("use_opencl", true);
 #endif
 
-    window_name_ = "Equalize Histogram Window (" + ros::this_node::getName() + ")";
+    window_name_ = "Equalize Histogram Window (" + std::string(get_fully_qualified_name()) + ")";
 
-    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
-    dynamic_reconfigure::Server<Config>::CallbackType f = boost::bind(
-        &EqualizeHistogramNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
-    reconfigure_server_->setCallback(f);
+    use_camera_info_ = declare_parameter(
+        "use_camera_info", false,
+        paramDescriptor("Indicates that the camera_info topic should be subscribed to to get the default "
+                        "input_frame_id. Otherwise the frame from the image message will be used."));
+    histogram_equalization_type_ =
+        declare_parameter("histogram_equalization_type", 0,
+                          paramDescriptor("Histogram Equalization Methods, 0: EqualizeHist, 1: Clahe", 0, 1));
+    clahe_clip_limit_ =
+        declare_parameter("clahe_clip_limit", 20.0, paramDescriptor("Clip Limit for Clahe filter", 0.0, 255.0));
+    clahe_tile_size_.width =
+        declare_parameter("clahe_tile_size_x", 32, paramDescriptor("X Tile Size for Clahe filter", 0, 300));
+    clahe_tile_size_.height =
+        declare_parameter("clahe_tile_size_y", 32, paramDescriptor("Y Tile Size for Clahe filter", 0, 300));
+    on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
+        std::bind(&EqualizeHistogramNodelet::parametersCallback, this, std::placeholders::_1));
 
-    img_pub_ = advertiseImage(*pnh_, "image", 1);
+    img_pub_ = advertiseImage("~/image", 1);
 
 #if CV_MAJOR_VERSION >= 3
     cv::ocl::setUseOpenCL(use_opencl_);
@@ -228,9 +247,4 @@ class EqualizeHistogramNodelet : public opencv_apps::Nodelet
 };
 }  // namespace opencv_apps
 
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(opencv_apps::EqualizeHistogramNodelet, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::EqualizeHistogramNodelet)

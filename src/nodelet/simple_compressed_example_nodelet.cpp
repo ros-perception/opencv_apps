@@ -37,18 +37,19 @@
  * This is a demo of Simple Example from wiki tutorial
  */
 
-#include <ros/ros.h>
-#include <sensor_msgs/CompressedImage.h>
-#include <sensor_msgs/image_encodings.h>
-#include <nodelet/nodelet.h>
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
+#include <sensor_msgs/msg/compressed_image.hpp>
+#include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/image_encodings.hpp>
+#include <cv_bridge/cv_bridge.hpp>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <dynamic_reconfigure/server.h>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace opencv_apps
 {
@@ -58,22 +59,25 @@ static const std::string OPENCV_WINDOW = "Image window";
 
 class ImageConverter
 {
-  ros::NodeHandle nh_;
-  ros::Subscriber image_sub_;
-  ros::Publisher image_pub_;
+  rclcpp::Node* node_;
+  rclcpp::Subscription<sensor_msgs::msg::CompressedImage>::SharedPtr image_sub_;
+  rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr image_pub_;
   int queue_size_;
   bool debug_view_;
 
 public:
-  ImageConverter()
+  explicit ImageConverter(rclcpp::Node* node) : node_(node)
   {
-    // Subscrive to input video feed and publish output video feed
-    image_sub_ = nh_.subscribe("image/compressed", queue_size_, &ImageConverter::imageCb, this);
-    image_pub_ = nh_.advertise<sensor_msgs::CompressedImage>("/image_converter/output_video/compressed", 1);
+    queue_size_ = node_->declare_parameter("queue_size", 3);
+    debug_view_ = node_->declare_parameter("debug_view", false);
 
-    ros::NodeHandle pnh("~");
-    pnh.param("queue_size", queue_size_, 3);
-    pnh.param("debug_view", debug_view_, false);
+    // Subscrive to input video feed and publish output video feed
+    image_sub_ = node_->create_subscription<sensor_msgs::msg::CompressedImage>(
+        "image/compressed", rclcpp::SensorDataQoS().keep_last(queue_size_),
+        std::bind(&ImageConverter::imageCb, this, std::placeholders::_1));
+    image_pub_ =
+        node_->create_publisher<sensor_msgs::msg::CompressedImage>("/image_converter/output_video/compressed", 1);
+
     if (debug_view_)
     {
       cv::namedWindow(OPENCV_WINDOW);
@@ -88,7 +92,7 @@ public:
     }
   }
 
-  void imageCb(const sensor_msgs::CompressedImageConstPtr& msg)
+  void imageCb(const sensor_msgs::msg::CompressedImage::ConstSharedPtr& msg)
   {
     cv_bridge::CvImagePtr cv_ptr;
     try
@@ -111,7 +115,7 @@ https://github.com/ros-perception/vision_opencv/pull/70
 
       // cv_ptr = cv_bridge::toCvCopyImpl(bgrMat, msg->header, sensor_msgs::image_encodings::BGR8,
       // sensor_msgs::image_encodings::BGR8);
-      sensor_msgs::Image ros_image;
+      sensor_msgs::msg::Image ros_image;
       ros_image.header = msg->header;
       ros_image.height = image.rows;
       ros_image.width = image.cols;
@@ -142,7 +146,7 @@ https://github.com/ros-perception/vision_opencv/pull/70
     }
     catch (cv_bridge::Exception& e)
     {
-      ROS_ERROR("cv_bridge exception: %s", e.what());
+      RCLCPP_ERROR(node_->get_logger(), "cv_bridge exception: %s", e.what());
       return;
     }
 
@@ -159,21 +163,21 @@ https://github.com/ros-perception/vision_opencv/pull/70
 
 // Output modified video stream
 #ifndef CV_BRIDGE_COMPRESSED_IMAGE_IS_NOT_SUPPORTED
-    image_pub_.publish(cv_ptr->toCompressedImageMsg());
+    image_pub_->publish(*cv_ptr->toCompressedImageMsg());
 #else
-    image_pub_.publish(toCompressedImageMsg(cv_ptr));
+    image_pub_->publish(toCompressedImageMsg(cv_ptr));
 #endif
   }
 #ifdef CV_BRIDGE_COMPRESSED_IMAGE_IS_NOT_SUPPORTED
-  sensor_msgs::CompressedImage toCompressedImageMsg(cv_bridge::CvImagePtr cv_ptr) const
+  sensor_msgs::msg::CompressedImage toCompressedImageMsg(cv_bridge::CvImagePtr cv_ptr) const
   {
-    sensor_msgs::CompressedImage ros_image;
+    sensor_msgs::msg::CompressedImage ros_image;
     const std::string dst_format = std::string();
     ros_image.header = cv_ptr->header;
     cv::Mat image;
     if (cv_ptr->encoding != sensor_msgs::image_encodings::BGR8)
     {
-      cv_bridge::CvImagePtr tempThis = boost::make_shared<cv_bridge::CvImage>(*cv_ptr);
+      cv_bridge::CvImagePtr tempThis = std::make_shared<cv_bridge::CvImage>(*cv_ptr);
       cv_bridge::CvImagePtr temp = cv_bridge::cvtColor(tempThis, sensor_msgs::image_encodings::BGR8);
       cv_ptr->image = temp->image;
     }
@@ -223,36 +227,18 @@ https://github.com/ros-perception/vision_opencv/pull/70
 
 }  // namespace simple_compressed_example
 
-class SimpleCompressedExampleNodelet : public nodelet::Nodelet
+class SimpleCompressedExampleNodelet : public rclcpp::Node
 {
+  std::shared_ptr<simple_compressed_example::ImageConverter> ic_;
+
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit SimpleCompressedExampleNodelet(const rclcpp::NodeOptions& options)
+    : rclcpp::Node("simple_compressed_example", options)
   {
-    simple_compressed_example::ImageConverter ic;
-    ros::spin();
+    ic_ = std::make_shared<simple_compressed_example::ImageConverter>(this);
   }
 };
 
 }  // namespace opencv_apps
 
-namespace simple_compressed_example
-{
-class SimpleCompressedExampleNodelet : public opencv_apps::SimpleCompressedExampleNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet simple_compressed_example/simple_compressed_example is deprecated, "
-             "and renamed to opencv_apps/simple_compressed_example.");
-    opencv_apps::SimpleCompressedExampleNodelet::onInit();
-  }
-};
-}  // namespace simple_compressed_example
-
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(opencv_apps::SimpleCompressedExampleNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(simple_compressed_example::SimpleCompressedExampleNodelet, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::SimpleCompressedExampleNodelet)

@@ -41,11 +41,7 @@
  * author OpenCV team
  */
 
-#include <ros/ros.h>
 #include "opencv_apps/nodelet.h"
-#include <image_transport/image_transport.h>
-#include <sensor_msgs/image_encodings.h>
-#include <cv_bridge/cv_bridge.h>
 
 #include <iostream>
 #include <vector>
@@ -54,9 +50,6 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/features2d/features2d.hpp"
 
-#include <dynamic_reconfigure/server.h>
-#include "opencv_apps/MorphologyConfig.h"
-
 namespace opencv_apps
 {
 class MorphologyNodelet : public opencv_apps::Nodelet
@@ -64,24 +57,36 @@ class MorphologyNodelet : public opencv_apps::Nodelet
   image_transport::Publisher img_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
-  ros::Publisher msg_pub_;
 
-  boost::shared_ptr<image_transport::ImageTransport> it_;
-
-  typedef opencv_apps::MorphologyConfig Config;
-  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
-  Config config_;
-  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
   int queue_size_;
   bool debug_view_;
-  ros::Time prev_stamp_;
+  rclcpp::Time prev_stamp_;
 
   std::string window_name_;
 
-  void reconfigureCallback(Config& new_config, uint32_t level)
+  bool use_camera_info_;
+  int morph_operator_;
+  int morph_element_;
+  int morph_size_;
+
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    config_ = new_config;
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "use_camera_info")
+        use_camera_info_ = parameter.as_bool();
+      else if (parameter.get_name() == "morph_operator")
+        morph_operator_ = parameter.as_int();
+      else if (parameter.get_name() == "morph_element")
+        morph_element_ = parameter.as_int();
+      else if (parameter.get_name() == "morph_size")
+        morph_size_ = parameter.as_int();
+    }
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
   }
 
   const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
@@ -91,17 +96,18 @@ class MorphologyNodelet : public opencv_apps::Nodelet
     return frame;
   }
 
-  void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
+  void imageCallbackWithInfo(const sensor_msgs::msg::Image::ConstSharedPtr& msg,
+                             const sensor_msgs::msg::CameraInfo::ConstSharedPtr& cam_info)
   {
     doWork(msg, cam_info->header.frame_id);
   }
 
-  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& msg)
   {
     doWork(msg, msg->header.frame_id);
   }
 
-  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
+  void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -116,12 +122,13 @@ class MorphologyNodelet : public opencv_apps::Nodelet
 
       cv::Mat out_image = in_image.clone();
 
-      int morph_operator = config_.morph_operator;
-      int morph_element = config_.morph_element;
-      int morph_size = config_.morph_size;
+      int morph_operator = morph_operator_;
+      int morph_element = morph_element_;
+      int morph_size = morph_size_;
 
-      ROS_DEBUG_STREAM("Applying morphology transforms with operator " << morph_operator << ", element "
-                                                                       << morph_element << ", and size " << morph_size);
+      RCLCPP_DEBUG_STREAM(get_logger(), "Applying morphology transforms with operator "
+                                            << morph_operator << ", element " << morph_element << ", and size "
+                                            << morph_size);
 
       cv::Mat element = cv::getStructuringElement(morph_element, cv::Size(2 * morph_size + 1, 2 * morph_size + 1),
                                                   cv::Point(morph_size, morph_size));
@@ -137,78 +144,65 @@ class MorphologyNodelet : public opencv_apps::Nodelet
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", out_image).toImageMsg();
-      img_pub_.publish(out_img);
+      sensor_msgs::msg::Image::SharedPtr out_img = cv_bridge::CvImage(msg->header, "bgr8", out_image).toImageMsg();
+      img_pub_.publish(*out_img);
     }
     catch (cv::Exception& e)
     {
-      NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+      RCLCPP_ERROR(get_logger(), "Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(),
+                   e.line);
     }
 
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()  // NOLINT(modernize-use-override)
+  void subscribe() override
   {
-    NODELET_DEBUG("Subscribing to image topic.");
-    if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", queue_size_, &MorphologyNodelet::imageCallbackWithInfo, this);
+    RCLCPP_DEBUG(get_logger(), "Subscribing to image topic.");
+    if (use_camera_info_)
+      cam_sub_ = subscribeCamera("image", queue_size_, &MorphologyNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", queue_size_, &MorphologyNodelet::imageCallback, this);
+      img_sub_ = subscribeImage("image", queue_size_, &MorphologyNodelet::imageCallback, this);
   }
 
-  void unsubscribe()  // NOLINT(modernize-use-override)
+  void unsubscribe() override
   {
-    NODELET_DEBUG("Unsubscribing from image topic.");
+    RCLCPP_DEBUG(get_logger(), "Unsubscribing from image topic.");
     img_sub_.shutdown();
     cam_sub_.shutdown();
   }
 
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit MorphologyNodelet(const rclcpp::NodeOptions& options) : Nodelet("morphology", options)
   {
-    Nodelet::onInit();
-    it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
-
-    pnh_->param("queue_size", queue_size_, 3);
-    pnh_->param("debug_view", debug_view_, false);
+    queue_size_ = declare_parameter("queue_size", 3);
+    debug_view_ = declare_parameter("debug_view", false);
     if (debug_view_)
     {
       always_subscribe_ = true;
     }
-    prev_stamp_ = ros::Time(0, 0);
+    prev_stamp_ = rclcpp::Time(0, 0, RCL_ROS_TIME);
 
-    window_name_ = "Morphology Demo (" + ros::this_node::getName() + ")";
-    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
-    dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&MorphologyNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
-    reconfigure_server_->setCallback(f);
+    window_name_ = "Morphology Demo (" + std::string(get_fully_qualified_name()) + ")";
+    use_camera_info_ = declare_parameter(
+        "use_camera_info", false,
+        paramDescriptor("Indicates that the camera_info topic should be subscribed to to get the default "
+                        "input_frame_id. Otherwise the frame from the image message will be used."));
+    morph_operator_ = declare_parameter(
+        "morph_operator", 1,
+        paramDescriptor("Morphology Operation Methods, 0: Opening, 1: Closing, 2: Gradient, 3: Top_Hat, 4: Black_Hat",
+                        0, 3));
+    morph_element_ = declare_parameter("morph_element", 0,
+                                       paramDescriptor("Type of the kernel 0: Rect, 1: Cross, 2: Ellipse", 0, 2));
+    morph_size_ = declare_parameter("morph_size", 0, paramDescriptor("Size of the kernel. Must be odd.", 0, 21));
+    on_set_parameters_callback_handle_ =
+        add_on_set_parameters_callback(std::bind(&MorphologyNodelet::parametersCallback, this, std::placeholders::_1));
 
-    img_pub_ = advertiseImage(*pnh_, "image", 1);
+    img_pub_ = advertiseImage("~/image", 1);
 
     onInitPostProcess();
   }
 };
 }  // namespace opencv_apps
 
-namespace morphology
-{
-class MorphologyNodelet : public opencv_apps::MorphologyNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet morphology/morphology is deprecated, "
-             "and renamed to opencv_apps/morphology.");
-    opencv_apps::MorphologyNodelet::onInit();
-  }
-};
-}  // namespace morphology
-
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(opencv_apps::MorphologyNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(morphology::MorphologyNodelet, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::MorphologyNodelet)

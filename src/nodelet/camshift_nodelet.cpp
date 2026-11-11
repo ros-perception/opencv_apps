@@ -39,12 +39,7 @@
  * This reads from video camera (0 by default, or the camera number the user enters
  */
 
-#include <ros/ros.h>
 #include "opencv_apps/nodelet.h"
-#include <image_transport/image_transport.h>
-#include <sensor_msgs/image_encodings.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
 
 #include <iostream>
 #include <ctype.h>
@@ -52,9 +47,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <dynamic_reconfigure/server.h>
-#include "opencv_apps/CamShiftConfig.h"
-#include "opencv_apps/RotatedRectStamped.h"
+#include <opencv_apps/msg/rotated_rect_stamped.hpp>
 
 namespace opencv_apps
 {
@@ -63,18 +56,15 @@ class CamShiftNodelet : public opencv_apps::Nodelet
   image_transport::Publisher img_pub_, bproj_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
-  ros::Publisher msg_pub_;
+  rclcpp::Publisher<opencv_apps::msg::RotatedRectStamped>::SharedPtr msg_pub_;
 
-  boost::shared_ptr<image_transport::ImageTransport> it_;
-
-  typedef opencv_apps::CamShiftConfig Config;
-  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
-  Config config_;
-  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
   int queue_size_;
   bool debug_view_;
-  ros::Time prev_stamp_;
+  rclcpp::Time prev_stamp_;
+
+  bool use_camera_info_;
 
   std::string window_name_, histogram_name_;
   static bool need_config_update_;
@@ -107,12 +97,22 @@ class CamShiftNodelet : public opencv_apps::Nodelet
     on_mouse_y_ = y;
   }
 
-  void reconfigureCallback(Config& new_config, uint32_t level)
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    config_ = new_config;
-    vmin_ = config_.vmin;
-    vmax_ = config_.vmax;
-    smin_ = config_.smin;
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "use_camera_info")
+        use_camera_info_ = parameter.as_bool();
+      else if (parameter.get_name() == "vmin")
+        vmin_ = parameter.as_int();
+      else if (parameter.get_name() == "vmax")
+        vmax_ = parameter.as_int();
+      else if (parameter.get_name() == "smin")
+        smin_ = parameter.as_int();
+    }
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
   }
 
   const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
@@ -122,12 +122,13 @@ class CamShiftNodelet : public opencv_apps::Nodelet
     return frame;
   }
 
-  void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
+  void imageCallbackWithInfo(const sensor_msgs::msg::Image::ConstSharedPtr& msg,
+                             const sensor_msgs::msg::CameraInfo::ConstSharedPtr& cam_info)
   {
     doWork(msg, cam_info->header.frame_id);
   }
 
-  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& msg)
   {
     doWork(msg, msg->header.frame_id);
   }
@@ -137,7 +138,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
     need_config_update_ = true;
   }
 
-  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
+  void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -147,7 +148,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
       cv::Mat backproj;
 
       // Messages
-      opencv_apps::RotatedRectStamped rect_msg;
+      opencv_apps::msg::RotatedRectStamped rect_msg;
       rect_msg.header = msg->header;
 
       // Do the work
@@ -165,10 +166,9 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
         if (need_config_update_)
         {
-          config_.vmin = vmin_;
-          config_.vmax = vmax_;
-          config_.smin = smin_;
-          reconfigure_server_->updateConfig(config_);
+          set_parameter(rclcpp::Parameter("vmin", vmin_));
+          set_parameter(rclcpp::Parameter("vmax", vmax_));
+          set_parameter(rclcpp::Parameter("smin", smin_));
           need_config_update_ = false;
         }
       }
@@ -230,7 +230,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
             {
               hist_value[i] = hist.at<float>(i);
             }
-            pnh_->setParam("histogram", hist_value);
+            set_parameter(rclcpp::Parameter("histogram", hist_value));
 
             trackWindow = selection;
             trackObject = 1;
@@ -271,8 +271,8 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 #endif
 
           rect_msg.rect.angle = track_box.angle;
-          opencv_apps::Point2D point_msg;
-          opencv_apps::Size size_msg;
+          opencv_apps::msg::Point2D point_msg;
+          opencv_apps::msg::Size size_msg;
           point_msg.x = track_box.center.x;
           point_msg.y = track_box.center.y;
           size_msg.width = track_box.size.width;
@@ -322,58 +322,53 @@ class CamShiftNodelet : public opencv_apps::Nodelet
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img1 = cv_bridge::CvImage(msg->header, msg->encoding, frame).toImageMsg();
-      sensor_msgs::Image::Ptr out_img2 =
+      sensor_msgs::msg::Image::SharedPtr out_img1 = cv_bridge::CvImage(msg->header, msg->encoding, frame).toImageMsg();
+      sensor_msgs::msg::Image::SharedPtr out_img2 =
           cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::MONO8, backproj).toImageMsg();
-      img_pub_.publish(out_img1);
-      bproj_pub_.publish(out_img2);
+      img_pub_.publish(*out_img1);
+      bproj_pub_.publish(*out_img2);
       if (trackObject)
-        msg_pub_.publish(rect_msg);
+        msg_pub_->publish(rect_msg);
     }
     catch (cv::Exception& e)
     {
-      NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+      RCLCPP_ERROR(get_logger(), "Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(),
+                   e.line);
     }
 
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()  // NOLINT(modernize-use-override)
+  void subscribe() override
   {
-    NODELET_DEBUG("Subscribing to image topic.");
-    if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", queue_size_, &CamShiftNodelet::imageCallbackWithInfo, this);
+    RCLCPP_DEBUG(get_logger(), "Subscribing to image topic.");
+    if (use_camera_info_)
+      cam_sub_ = subscribeCamera("image", queue_size_, &CamShiftNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", queue_size_, &CamShiftNodelet::imageCallback, this);
+      img_sub_ = subscribeImage("image", queue_size_, &CamShiftNodelet::imageCallback, this);
   }
 
-  void unsubscribe()  // NOLINT(modernize-use-override)
+  void unsubscribe() override
   {
-    NODELET_DEBUG("Unsubscribing from image topic.");
+    RCLCPP_DEBUG(get_logger(), "Unsubscribing from image topic.");
     img_sub_.shutdown();
     cam_sub_.shutdown();
   }
 
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit CamShiftNodelet(const rclcpp::NodeOptions& options) : Nodelet("camshift", options)
   {
-    Nodelet::onInit();
-    it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
-
-    pnh_->param("queue_size", queue_size_, 3);
-    pnh_->param("debug_view", debug_view_, false);
+    queue_size_ = declare_parameter("queue_size", 3);
+    debug_view_ = declare_parameter("debug_view", false);
     if (debug_view_)
     {
       always_subscribe_ = true;
     }
-    prev_stamp_ = ros::Time(0, 0);
+    prev_stamp_ = rclcpp::Time(0, 0, RCL_ROS_TIME);
 
     window_name_ = "CamShift Demo";
     histogram_name_ = "Histogram";
 
-    vmin_ = 10;
-    vmax_ = 256;
-    smin_ = 30;
     backprojMode = false;
     selectObject = false;
     trackObject = 0;
@@ -386,25 +381,29 @@ public:
     phranges = hranges;
     histimg = cv::Mat::zeros(200, 320, CV_8UC3);
 
-    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
-    dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&CamShiftNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
-    reconfigure_server_->setCallback(f);
+    use_camera_info_ = declare_parameter(
+        "use_camera_info", false,
+        paramDescriptor("Indicates that the camera_info topic should be subscribed to to get the default "
+                        "input_frame_id. Otherwise the frame from the image message will be used."));
+    vmin_ = declare_parameter("vmin", 10, paramDescriptor("Vmin", 1, 256));
+    vmax_ = declare_parameter("vmax", 256, paramDescriptor("Vmax", 1, 256));
+    smin_ = declare_parameter("smin", 30, paramDescriptor("Smin", 1, 256));
+    on_set_parameters_callback_handle_ =
+        add_on_set_parameters_callback(std::bind(&CamShiftNodelet::parametersCallback, this, std::placeholders::_1));
 
-    img_pub_ = advertiseImage(*pnh_, "image", 1);
-    bproj_pub_ = advertiseImage(*pnh_, "back_project", 1);
-    msg_pub_ = advertise<opencv_apps::RotatedRectStamped>(*pnh_, "track_box", 1);
+    img_pub_ = advertiseImage("~/image", 1);
+    bproj_pub_ = advertiseImage("~/back_project", 1);
+    msg_pub_ = advertise<opencv_apps::msg::RotatedRectStamped>("~/track_box", 1);
 
-    NODELET_INFO("Hot keys: ");
-    NODELET_INFO("\tESC - quit the program");
-    NODELET_INFO("\tc - stop the tracking");
-    NODELET_INFO("\tb - switch to/from backprojection view");
-    NODELET_INFO("\th - show/hide object histogram");
-    NODELET_INFO("\tp - pause video");
-    NODELET_INFO("To initialize tracking, select the object with mouse");
+    RCLCPP_INFO(get_logger(), "Hot keys: ");
+    RCLCPP_INFO(get_logger(), "\tESC - quit the program");
+    RCLCPP_INFO(get_logger(), "\tc - stop the tracking");
+    RCLCPP_INFO(get_logger(), "\tb - switch to/from backprojection view");
+    RCLCPP_INFO(get_logger(), "\th - show/hide object histogram");
+    RCLCPP_INFO(get_logger(), "\tp - pause video");
+    RCLCPP_INFO(get_logger(), "To initialize tracking, select the object with mouse");
 
-    std::vector<float> hist_value;
-    pnh_->getParam("histogram", hist_value);
+    std::vector<double> hist_value = declare_parameter("histogram", std::vector<double>());
     if (hist_value.size() == hsize)
     {
       hist.create(hsize, 1, CV_32F);
@@ -439,24 +438,4 @@ int CamShiftNodelet::on_mouse_x_ = 0;
 int CamShiftNodelet::on_mouse_y_ = 0;
 }  // namespace opencv_apps
 
-namespace camshift
-{
-class CamShiftNodelet : public opencv_apps::CamShiftNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet camshift/camshift is deprecated, "
-             "and renamed to opencv_apps/camshift.");
-    opencv_apps::CamShiftNodelet::onInit();
-  }
-};
-}  // namespace camshift
-
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(opencv_apps::CamShiftNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(camshift::CamShiftNodelet, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::CamShiftNodelet)

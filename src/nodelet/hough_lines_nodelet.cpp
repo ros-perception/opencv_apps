@@ -40,44 +40,41 @@
  * @author OpenCV team
  */
 
-#include <ros/ros.h>
 #include "opencv_apps/nodelet.h"
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <dynamic_reconfigure/server.h>
-#include "opencv_apps/HoughLinesConfig.h"
-#include "opencv_apps/Line.h"
-#include "opencv_apps/LineArray.h"
-#include "opencv_apps/LineArrayStamped.h"
+#include <opencv_apps/msg/line.hpp>
+#include <opencv_apps/msg/line_array.hpp>
+#include <opencv_apps/msg/line_array_stamped.hpp>
 
 namespace opencv_apps
 {
+enum HoughLinesType
+{
+  HoughLines_Standard_Hough_Transform = 0,
+  HoughLines_Probabilistic_Hough_Transform = 1
+};
+
 class HoughLinesNodelet : public opencv_apps::Nodelet
 {
   image_transport::Publisher img_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
-  ros::Publisher msg_pub_;
+  rclcpp::Publisher<opencv_apps::msg::LineArrayStamped>::SharedPtr msg_pub_;
 
-  boost::shared_ptr<image_transport::ImageTransport> it_;
-
-  typedef opencv_apps::HoughLinesConfig Config;
-  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
-  Config config_;
-  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
   int queue_size_;
   bool debug_view_;
-  ros::Time prev_stamp_;
+  rclcpp::Time prev_stamp_;
 
   std::string window_name_;
   static bool need_config_update_;
 
+  bool use_camera_info_;
+  int hough_type_;
   int min_threshold_;
   int max_threshold_;
   int threshold_;
@@ -86,14 +83,28 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
   double minLineLength_;
   double maxLineGap_;
 
-  void reconfigureCallback(Config& new_config, uint32_t level)
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    config_ = new_config;
-    rho_ = config_.rho;
-    theta_ = config_.theta;
-    threshold_ = config_.threshold;
-    minLineLength_ = config_.minLineLength;
-    maxLineGap_ = config_.maxLineGap;
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "use_camera_info")
+        use_camera_info_ = parameter.as_bool();
+      else if (parameter.get_name() == "hough_type")
+        hough_type_ = parameter.as_int();
+      else if (parameter.get_name() == "rho")
+        rho_ = parameter.as_double();
+      else if (parameter.get_name() == "theta")
+        theta_ = parameter.as_double();
+      else if (parameter.get_name() == "threshold")
+        threshold_ = parameter.as_int();
+      else if (parameter.get_name() == "minLineLength")
+        minLineLength_ = parameter.as_double();
+      else if (parameter.get_name() == "maxLineGap")
+        maxLineGap_ = parameter.as_double();
+    }
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
   }
 
   const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
@@ -103,12 +114,13 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
     return frame;
   }
 
-  void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
+  void imageCallbackWithInfo(const sensor_msgs::msg::Image::ConstSharedPtr& msg,
+                             const sensor_msgs::msg::CameraInfo::ConstSharedPtr& cam_info)
   {
     doWork(msg, cam_info->header.frame_id);
   }
 
-  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& msg)
   {
     doWork(msg, msg->header.frame_id);
   }
@@ -118,7 +130,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
     need_config_update_ = true;
   }
 
-  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
+  void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -163,7 +175,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
       cv::cvtColor(in_image, out_image, CV_GRAY2BGR);
 
       // Messages
-      opencv_apps::LineArrayStamped lines_msg;
+      opencv_apps::msg::LineArrayStamped lines_msg;
       lines_msg.header = msg->header;
 
       // Do the work
@@ -179,15 +191,14 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
         cv::createTrackbar(thresh_label, window_name_, &threshold_, max_threshold_, trackbarCallback);
         if (need_config_update_)
         {
-          config_.threshold = threshold_;
-          reconfigure_server_->updateConfig(config_);
+          set_parameter(rclcpp::Parameter("threshold", threshold_));
           need_config_update_ = false;
         }
       }
 
-      switch (config_.hough_type)
+      switch (hough_type_)
       {
-        case opencv_apps::HoughLines_Standard_Hough_Transform:
+        case HoughLines_Standard_Hough_Transform:
         {
           std::vector<cv::Vec2f> s_lines;
 
@@ -209,7 +220,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
 #else
             cv::line(out_image, pt1, pt2, cv::Scalar(255, 0, 0), 3, CV_AA);
 #endif
-            opencv_apps::Line line_msg;
+            opencv_apps::msg::Line line_msg;
             line_msg.pt1.x = pt1.x;
             line_msg.pt1.y = pt1.y;
             line_msg.pt2.x = pt2.x;
@@ -219,7 +230,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
 
           break;
         }
-        case opencv_apps::HoughLines_Probabilistic_Hough_Transform:
+        case HoughLines_Probabilistic_Hough_Transform:
         default:
         {
           std::vector<cv::Vec4i> p_lines;
@@ -235,7 +246,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
 #else
             cv::line(out_image, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(255, 0, 0), 3, CV_AA);
 #endif
-            opencv_apps::Line line_msg;
+            opencv_apps::msg::Line line_msg;
             line_msg.pt1.x = l[0];
             line_msg.pt1.y = l[1];
             line_msg.pt2.x = l[2];
@@ -255,60 +266,76 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", out_image).toImageMsg();
-      img_pub_.publish(out_img);
-      msg_pub_.publish(lines_msg);
+      sensor_msgs::msg::Image::SharedPtr out_img = cv_bridge::CvImage(msg->header, "bgr8", out_image).toImageMsg();
+      img_pub_.publish(*out_img);
+      msg_pub_->publish(lines_msg);
     }
     catch (cv::Exception& e)
     {
-      NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+      RCLCPP_ERROR(get_logger(), "Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(),
+                   e.line);
     }
 
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()  // NOLINT(modernize-use-override)
+  void subscribe() override
   {
-    NODELET_DEBUG("Subscribing to image topic.");
-    if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", queue_size_, &HoughLinesNodelet::imageCallbackWithInfo, this);
+    RCLCPP_DEBUG(get_logger(), "Subscribing to image topic.");
+    if (use_camera_info_)
+      cam_sub_ = subscribeCamera("image", queue_size_, &HoughLinesNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", queue_size_, &HoughLinesNodelet::imageCallback, this);
+      img_sub_ = subscribeImage("image", queue_size_, &HoughLinesNodelet::imageCallback, this);
   }
 
-  void unsubscribe()  // NOLINT(modernize-use-override)
+  void unsubscribe() override
   {
-    NODELET_DEBUG("Unsubscribing from image topic.");
+    RCLCPP_DEBUG(get_logger(), "Unsubscribing from image topic.");
     img_sub_.shutdown();
     cam_sub_.shutdown();
   }
 
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit HoughLinesNodelet(const rclcpp::NodeOptions& options) : Nodelet("hough_lines", options)
   {
-    Nodelet::onInit();
-    it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
-
-    pnh_->param("queue_size", queue_size_, 3);
-    pnh_->param("debug_view", debug_view_, false);
+    queue_size_ = declare_parameter("queue_size", 3);
+    debug_view_ = declare_parameter("debug_view", false);
     if (debug_view_)
     {
       always_subscribe_ = true;
     }
-    prev_stamp_ = ros::Time(0, 0);
+    prev_stamp_ = rclcpp::Time(0, 0, RCL_ROS_TIME);
 
     window_name_ = "Hough Lines Demo";
     min_threshold_ = 50;
     max_threshold_ = 150;
     threshold_ = max_threshold_;
 
-    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
-    dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&HoughLinesNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
-    reconfigure_server_->setCallback(f);
+    use_camera_info_ = declare_parameter(
+        "use_camera_info", false,
+        paramDescriptor("Indicates that the camera_info topic should be subscribed to to get the default "
+                        "input_frame_id. Otherwise the frame from the image message will be used."));
+    hough_type_ = declare_parameter(
+        "hough_type", 0,
+        paramDescriptor("Hough Line Methods, 0: Standard_Hough_Transform, 1: Probabilistic_Hough_Transform", 0, 1));
+    threshold_ = declare_parameter("threshold", 150, paramDescriptor("Hough Line Threshold", 50, 150));
+    rho_ = declare_parameter(
+        "rho", 1.0, paramDescriptor("The resolution of the parameter r in pixels. We use 1 pixel.", 1.0, 100.0));
+    theta_ = declare_parameter(
+        "theta", 1.0,
+        paramDescriptor("The resolution of the parameter \\theta in radians. We use 1 degree (CV_PI/180)", 1.0, 90.0));
+    minLineLength_ = declare_parameter("minLineLength", 30.0,
+                                       paramDescriptor("The minimum number of points that can form a line. Lines with "
+                                                       "less than this number of points are disregarded.",
+                                                       0.0, 500.0));
+    maxLineGap_ = declare_parameter(
+        "maxLineGap", 10.0,
+        paramDescriptor("The maximum gap between two points to be considered in the same line.", 0.0, 100.0));
+    on_set_parameters_callback_handle_ =
+        add_on_set_parameters_callback(std::bind(&HoughLinesNodelet::parametersCallback, this, std::placeholders::_1));
 
-    img_pub_ = advertiseImage(*pnh_, "image", 1);
-    msg_pub_ = advertise<opencv_apps::LineArrayStamped>(*pnh_, "lines", 1);
+    img_pub_ = advertiseImage("~/image", 1);
+    msg_pub_ = advertise<opencv_apps::msg::LineArrayStamped>("~/lines", 1);
 
     onInitPostProcess();
   }
@@ -316,24 +343,4 @@ public:
 bool HoughLinesNodelet::need_config_update_ = false;
 }  // namespace opencv_apps
 
-namespace hough_lines
-{
-class HoughLinesNodelet : public opencv_apps::HoughLinesNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet hough_lines/hough_lines is deprecated, "
-             "and renamed to opencv_apps/hough_lines.");
-    opencv_apps::HoughLinesNodelet::onInit();
-  }
-};
-}  // namespace hough_lines
-
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(opencv_apps::HoughLinesNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(hough_lines::HoughLinesNodelet, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::HoughLinesNodelet)

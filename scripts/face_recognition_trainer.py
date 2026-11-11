@@ -39,20 +39,32 @@ try:
 except:
     pass
 
-import rospy
+import os
+import sys
+import threading
+import time
+
+if os.environ.get('ROS_VERSION') != '2':
+    # rclpy (and the ROS2 API of message_filters) on rospy, for ROS1
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'ros1', 'python'))
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import qos_profile_sensor_data
 import message_filters
 from sensor_msgs.msg import Image
 from opencv_apps.msg import FaceArrayStamped
-from opencv_apps.srv import FaceRecognitionTrain, FaceRecognitionTrainRequest
+from opencv_apps.srv import FaceRecognitionTrain
 
-class FaceRecognitionTrainer(object):
+
+class FaceRecognitionTrainer(Node):
     def __init__(self):
-        self.queue_size = rospy.get_param("~queue_size", 100)
-        
-        self.img_sub = message_filters.Subscriber("image", Image)
-        self.face_sub = message_filters.Subscriber("faces", FaceArrayStamped)
-        
-        self.req = FaceRecognitionTrainRequest()
+        super(FaceRecognitionTrainer, self).__init__("face_recognition_trainer")
+        self.queue_size = self.declare_parameter("queue_size", 100).value
+
+        self.img_sub = message_filters.Subscriber(self, Image, "image", qos_profile=qos_profile_sensor_data)
+        self.face_sub = message_filters.Subscriber(self, FaceArrayStamped, "faces", qos_profile=qos_profile_sensor_data)
+
+        self.req = FaceRecognitionTrain.Request()
         self.label = ""
         self.ok = False
 
@@ -69,8 +81,8 @@ class FaceRecognitionTrainer(object):
             self.req.labels.append(self.label)
             self.ok = False
     def run(self):
-        rospy.wait_for_service("train")
-        train = rospy.ServiceProxy("train", FaceRecognitionTrain)
+        train = self.create_client(FaceRecognitionTrain, "train")
+        train.wait_for_service()
         self.label = input("Please input your name and press Enter: ")
         while len(self.label) <= 0 or input("Your name is %s. Correct? [y/n]: " % self.label) not in ["", "y", "Y"]:
             self.label = input("Please input your name and press Enter: ")
@@ -78,20 +90,31 @@ class FaceRecognitionTrainer(object):
         input("Please stand at the center of the camera and press Enter: ")
         while True:
             self.ok = True
-            while self.ok:
+            while self.ok and rclpy.ok():
                 print("taking picture...")
-                rospy.sleep(1)
+                time.sleep(1)
+            if not rclpy.ok():
+                return
             if input("One more picture? [y/n]: ") not in ["", "y", "Y"]:
                 break
         print("sending to trainer...")
-        
-        res = train(self.req)
+
+        future = train.call_async(self.req)
+        while not future.done():
+            if not rclpy.ok():
+                return
+            time.sleep(0.1)
+        res = future.result()
         if res.ok:
             print("OK. Trained successfully!")
         else:
             print("NG. Error: %s" % res.error)
 
 if __name__ == '__main__':
-    rospy.init_node("face_recognition_trainer")
+    rclpy.init()
     t = FaceRecognitionTrainer()
+    # callbacks run in background, as run() blocks on input()
+    spin = threading.Thread(target=rclpy.spin, args=(t,))
+    spin.daemon = True
+    spin.start()
     t.run()

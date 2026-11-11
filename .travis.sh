@@ -177,7 +177,8 @@ if [ "$TEST" == "catkin_lint" ]; then
     rosdep init
     rosdep update --include-eol-distros
     travis_time_end
-    ROS_DISTRO=melodic catkin_lint --resolve-env --strict $CI_SOURCE_PATH
+    # ROS_VERSION for the $ROS_VERSION conditions in package.xml
+    ROS_DISTRO=melodic ROS_VERSION=1 catkin_lint --resolve-env --strict $CI_SOURCE_PATH
 
 
 elif [ "$TEST" == "clang-format" ]; then

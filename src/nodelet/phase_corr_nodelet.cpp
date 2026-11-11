@@ -34,18 +34,12 @@
 
 // https://github.com/Itseez/opencv/blob/master/samples/cpp/phase_corr.cpp
 
-#include <ros/ros.h>
 #include "opencv_apps/nodelet.h"
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <dynamic_reconfigure/server.h>
-#include "opencv_apps/PhaseCorrConfig.h"
-#include "opencv_apps/Point2DStamped.h"
+#include <opencv_apps/msg/point2_d_stamped.hpp>
 
 namespace opencv_apps
 {
@@ -54,27 +48,31 @@ class PhaseCorrNodelet : public opencv_apps::Nodelet
   image_transport::Publisher img_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
-  ros::Publisher msg_pub_;
+  rclcpp::Publisher<opencv_apps::msg::Point2DStamped>::SharedPtr msg_pub_;
 
-  boost::shared_ptr<image_transport::ImageTransport> it_;
-
-  typedef opencv_apps::PhaseCorrConfig Config;
-  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
-  Config config_;
-  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
   int queue_size_;
   bool debug_view_;
-  ros::Time prev_stamp_;
+  rclcpp::Time prev_stamp_;
+
+  bool use_camera_info_;
 
   cv::Mat curr, prev, curr64f, prev64f, hann;
 
   std::string window_name_;
   static bool need_config_update_;
 
-  void reconfigureCallback(Config& new_config, uint32_t level)
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    config_ = new_config;
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "use_camera_info")
+        use_camera_info_ = parameter.as_bool();
+    }
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
   }
 
   const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
@@ -84,12 +82,13 @@ class PhaseCorrNodelet : public opencv_apps::Nodelet
     return frame;
   }
 
-  void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
+  void imageCallbackWithInfo(const sensor_msgs::msg::Image::ConstSharedPtr& msg,
+                             const sensor_msgs::msg::CameraInfo::ConstSharedPtr& cam_info)
   {
     doWork(msg, cam_info->header.frame_id);
   }
 
-  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& msg)
   {
     doWork(msg, msg->header.frame_id);
   }
@@ -99,7 +98,7 @@ class PhaseCorrNodelet : public opencv_apps::Nodelet
     need_config_update_ = true;
   }
 
-  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
+  void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -108,7 +107,7 @@ class PhaseCorrNodelet : public opencv_apps::Nodelet
       cv::Mat frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
 
       // Messages
-      opencv_apps::Point2DStamped shift_msg;
+      opencv_apps::msg::Point2DStamped shift_msg;
       shift_msg.header = msg->header;
 
       // Do the work
@@ -126,7 +125,7 @@ class PhaseCorrNodelet : public opencv_apps::Nodelet
         cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
         if (need_config_update_)
         {
-          reconfigure_server_->updateConfig(config_);
+          set_parameter(rclcpp::Parameter("use_camera_info", use_camera_info_));
           need_config_update_ = false;
         }
       }
@@ -172,57 +171,57 @@ class PhaseCorrNodelet : public opencv_apps::Nodelet
       prev = curr.clone();
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, "bgr8", frame).toImageMsg();
-      img_pub_.publish(out_img);
-      msg_pub_.publish(shift_msg);
+      sensor_msgs::msg::Image::SharedPtr out_img = cv_bridge::CvImage(msg->header, "bgr8", frame).toImageMsg();
+      img_pub_.publish(*out_img);
+      msg_pub_->publish(shift_msg);
     }
     catch (cv::Exception& e)
     {
-      NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+      RCLCPP_ERROR(get_logger(), "Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(),
+                   e.line);
     }
 
     prev_stamp_ = msg->header.stamp;
   }
 
-  void subscribe()  // NOLINT(modernize-use-override)
+  void subscribe() override
   {
-    NODELET_DEBUG("Subscribing to image topic.");
-    if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", queue_size_, &PhaseCorrNodelet::imageCallbackWithInfo, this);
+    RCLCPP_DEBUG(get_logger(), "Subscribing to image topic.");
+    if (use_camera_info_)
+      cam_sub_ = subscribeCamera("image", queue_size_, &PhaseCorrNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", queue_size_, &PhaseCorrNodelet::imageCallback, this);
+      img_sub_ = subscribeImage("image", queue_size_, &PhaseCorrNodelet::imageCallback, this);
   }
 
-  void unsubscribe()  // NOLINT(modernize-use-override)
+  void unsubscribe() override
   {
-    NODELET_DEBUG("Unsubscribing from image topic.");
+    RCLCPP_DEBUG(get_logger(), "Unsubscribing from image topic.");
     img_sub_.shutdown();
     cam_sub_.shutdown();
   }
 
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit PhaseCorrNodelet(const rclcpp::NodeOptions& options) : Nodelet("phase_corr", options)
   {
-    Nodelet::onInit();
-    it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
-
-    pnh_->param("queue_size", queue_size_, 3);
-    pnh_->param("debug_view", debug_view_, false);
+    queue_size_ = declare_parameter("queue_size", 3);
+    debug_view_ = declare_parameter("debug_view", false);
     if (debug_view_)
     {
       always_subscribe_ = true;
     }
-    prev_stamp_ = ros::Time(0, 0);
+    prev_stamp_ = rclcpp::Time(0, 0, RCL_ROS_TIME);
 
     window_name_ = "phase shift";
 
-    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
-    dynamic_reconfigure::Server<Config>::CallbackType f =
-        boost::bind(&PhaseCorrNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
-    reconfigure_server_->setCallback(f);
+    use_camera_info_ = declare_parameter(
+        "use_camera_info", false,
+        paramDescriptor("Indicates that the camera_info topic should be subscribed to to get the default "
+                        "input_frame_id. Otherwise the frame from the image message will be used."));
+    on_set_parameters_callback_handle_ =
+        add_on_set_parameters_callback(std::bind(&PhaseCorrNodelet::parametersCallback, this, std::placeholders::_1));
 
-    img_pub_ = advertiseImage(*pnh_, "image", 1);
-    msg_pub_ = advertise<opencv_apps::Point2DStamped>(*pnh_, "shift", 1);
+    img_pub_ = advertiseImage("~/image", 1);
+    msg_pub_ = advertise<opencv_apps::msg::Point2DStamped>("~/shift", 1);
 
     onInitPostProcess();
   }
@@ -230,24 +229,4 @@ public:
 bool PhaseCorrNodelet::need_config_update_ = false;
 }  // namespace opencv_apps
 
-namespace phase_corr
-{
-class PhaseCorrNodelet : public opencv_apps::PhaseCorrNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet phase_corr/phase_corr is deprecated, "
-             "and renamed to opencv_apps/phase_corr.");
-    opencv_apps::PhaseCorrNodelet::onInit();
-  }
-};
-}  // namespace phase_corr
-
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(opencv_apps::PhaseCorrNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(phase_corr::PhaseCorrNodelet, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::PhaseCorrNodelet)

@@ -37,21 +37,15 @@
  * This program demonstrates the famous watershed segmentation algorithm in OpenCV: watershed()
  */
 
-#include <ros/ros.h>
 #include "opencv_apps/nodelet.h"
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <dynamic_reconfigure/server.h>
-#include "opencv_apps/WatershedSegmentationConfig.h"
-#include "opencv_apps/Contour.h"
-#include "opencv_apps/ContourArray.h"
-#include "opencv_apps/ContourArrayStamped.h"
-#include "opencv_apps/Point2DArray.h"
+#include <opencv_apps/msg/contour.hpp>
+#include <opencv_apps/msg/contour_array.hpp>
+#include <opencv_apps/msg/contour_array_stamped.hpp>
+#include <opencv_apps/msg/point2_d_array.hpp>
 
 namespace opencv_apps
 {
@@ -60,19 +54,16 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
   image_transport::Publisher img_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
-  ros::Publisher msg_pub_;
-  ros::Subscriber add_seed_points_sub_;
+  rclcpp::Publisher<opencv_apps::msg::ContourArrayStamped>::SharedPtr msg_pub_;
+  rclcpp::Subscription<opencv_apps::msg::Point2DArray>::SharedPtr add_seed_points_sub_;
 
-  boost::shared_ptr<image_transport::ImageTransport> it_;
-
-  typedef opencv_apps::WatershedSegmentationConfig Config;
-  typedef dynamic_reconfigure::Server<Config> ReconfigureServer;
-  Config config_;
-  boost::shared_ptr<ReconfigureServer> reconfigure_server_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
   int queue_size_;
   bool debug_view_;
-  ros::Time prev_stamp_;
+  rclcpp::Time prev_stamp_;
+
+  bool use_camera_info_;
 
   std::string window_name_, segment_name_;
   static bool need_config_update_;
@@ -94,9 +85,16 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
     on_mouse_flags_ = flags;
   }
 
-  void reconfigureCallback(opencv_apps::WatershedSegmentationConfig& new_config, uint32_t level)
+  rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
-    config_ = new_config;
+    for (const rclcpp::Parameter& parameter : parameters)
+    {
+      if (parameter.get_name() == "use_camera_info")
+        use_camera_info_ = parameter.as_bool();
+    }
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    return result;
   }
 
   const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
@@ -106,12 +104,13 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
     return frame;
   }
 
-  void imageCallbackWithInfo(const sensor_msgs::ImageConstPtr& msg, const sensor_msgs::CameraInfoConstPtr& cam_info)
+  void imageCallbackWithInfo(const sensor_msgs::msg::Image::ConstSharedPtr& msg,
+                             const sensor_msgs::msg::CameraInfo::ConstSharedPtr& cam_info)
   {
     doWork(msg, cam_info->header.frame_id);
   }
 
-  void imageCallback(const sensor_msgs::ImageConstPtr& msg)
+  void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr& msg)
   {
     doWork(msg, msg->header.frame_id);
   }
@@ -121,7 +120,7 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
     need_config_update_ = true;
   }
 
-  void doWork(const sensor_msgs::ImageConstPtr& msg, const std::string& input_frame_from_msg)
+  void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
     try
@@ -130,7 +129,7 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
       cv::Mat frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
 
       // Messages
-      opencv_apps::ContourArrayStamped contours_msg;
+      opencv_apps::msg::ContourArrayStamped contours_msg;
       contours_msg.header = msg->header;
 
       // Do the work
@@ -152,7 +151,7 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
         cv::setMouseCallback(window_name_, onMouse, nullptr);
         if (need_config_update_)
         {
-          reconfigure_server_->updateConfig(config_);
+          set_parameter(rclcpp::Parameter("use_camera_info", use_camera_info_));
           need_config_update_ = false;
         }
 
@@ -191,7 +190,7 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
 
       if (contours.empty())
       {
-        NODELET_WARN("contours are empty");
+        RCLCPP_WARN(get_logger(), "contours are empty");
         return;  // continue;
       }
       cv::Mat markers(markerMask.size(), CV_32S);
@@ -202,15 +201,15 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
 
       if (comp_count == 0)
       {
-        NODELET_WARN("compCount is 0");
+        RCLCPP_WARN(get_logger(), "compCount is 0");
         return;  // continue;
       }
       for (const std::vector<cv::Point>& contour : contours)
       {
-        opencv_apps::Contour contour_msg;
+        opencv_apps::msg::Contour contour_msg;
         for (const cv::Point& j : contour)
         {
-          opencv_apps::Point2D point_msg;
+          opencv_apps::msg::Point2D point_msg;
           point_msg.x = j.x;
           point_msg.y = j.y;
           contour_msg.points.push_back(point_msg);
@@ -231,7 +230,7 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
       double t = (double)cv::getTickCount();
       cv::watershed(frame, markers);
       t = (double)cv::getTickCount() - t;
-      NODELET_INFO("execution time = %gms", t * 1000. / cv::getTickFrequency());
+      RCLCPP_INFO(get_logger(), "execution time = %gms", t * 1000. / cv::getTickFrequency());
 
       cv::Mat wshed(markers.size(), CV_8UC3);
 
@@ -265,19 +264,20 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
       }
 
       // Publish the image.
-      sensor_msgs::Image::Ptr out_img = cv_bridge::CvImage(msg->header, msg->encoding, wshed).toImageMsg();
-      img_pub_.publish(out_img);
-      msg_pub_.publish(contours_msg);
+      sensor_msgs::msg::Image::SharedPtr out_img = cv_bridge::CvImage(msg->header, msg->encoding, wshed).toImageMsg();
+      img_pub_.publish(*out_img);
+      msg_pub_->publish(contours_msg);
     }
     catch (cv::Exception& e)
     {
-      NODELET_ERROR("Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(), e.line);
+      RCLCPP_ERROR(get_logger(), "Image processing error: %s %s %s %i", e.err.c_str(), e.func.c_str(), e.file.c_str(),
+                   e.line);
     }
 
     prev_stamp_ = msg->header.stamp;
   }
 
-  void addSeedPointCb(const opencv_apps::Point2DArray& msg)
+  void addSeedPointCb(const opencv_apps::msg::Point2DArray& msg)
   {
     if (msg.points.empty())
     {
@@ -285,7 +285,7 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
     }
     else
     {
-      for (const opencv_apps::Point2D& point : msg.points)
+      for (const opencv_apps::msg::Point2D& point : msg.points)
       {
         cv::Point pt0(point.x, point.y);
         cv::Point pt1(pt0.x + 1, pt0.y + 1);
@@ -294,57 +294,58 @@ class WatershedSegmentationNodelet : public opencv_apps::Nodelet
     }
   }
 
-  void subscribe()  // NOLINT(modernize-use-override)
+  void subscribe() override
   {
-    NODELET_DEBUG("Subscribing to image topic.");
-    if (config_.use_camera_info)
-      cam_sub_ = it_->subscribeCamera("image", queue_size_, &WatershedSegmentationNodelet::imageCallbackWithInfo, this);
+    RCLCPP_DEBUG(get_logger(), "Subscribing to image topic.");
+    if (use_camera_info_)
+      cam_sub_ = subscribeCamera("image", queue_size_, &WatershedSegmentationNodelet::imageCallbackWithInfo, this);
     else
-      img_sub_ = it_->subscribe("image", queue_size_, &WatershedSegmentationNodelet::imageCallback, this);
+      img_sub_ = subscribeImage("image", queue_size_, &WatershedSegmentationNodelet::imageCallback, this);
   }
 
-  void unsubscribe()  // NOLINT(modernize-use-override)
+  void unsubscribe() override
   {
-    NODELET_DEBUG("Unsubscribing from image topic.");
+    RCLCPP_DEBUG(get_logger(), "Unsubscribing from image topic.");
     img_sub_.shutdown();
     cam_sub_.shutdown();
   }
 
 public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
+  explicit WatershedSegmentationNodelet(const rclcpp::NodeOptions& options) : Nodelet("watershed_segmentation", options)
   {
-    Nodelet::onInit();
-    it_ = boost::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
-
-    pnh_->param("queue_size", queue_size_, 3);
-    pnh_->param("debug_view", debug_view_, false);
+    queue_size_ = declare_parameter("queue_size", 3);
+    debug_view_ = declare_parameter("debug_view", false);
     if (debug_view_)
     {
       always_subscribe_ = true;
     }
-    prev_stamp_ = ros::Time(0, 0);
+    prev_stamp_ = rclcpp::Time(0, 0, RCL_ROS_TIME);
 
     window_name_ = "roughly mark the areas to segment on the image";
     segment_name_ = "watershed transform";
     prevPt.x = -1;
     prevPt.y = -1;
 
-    reconfigure_server_ = boost::make_shared<dynamic_reconfigure::Server<Config> >(*pnh_);
-    dynamic_reconfigure::Server<Config>::CallbackType f = boost::bind(
-        &WatershedSegmentationNodelet::reconfigureCallback, this, boost::placeholders::_1, boost::placeholders::_2);
-    reconfigure_server_->setCallback(f);
+    use_camera_info_ = declare_parameter(
+        "use_camera_info", false,
+        paramDescriptor("Indicates that the camera_info topic should be subscribed to to get the default "
+                        "input_frame_id. Otherwise the frame from the image message will be used."));
+    on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
+        std::bind(&WatershedSegmentationNodelet::parametersCallback, this, std::placeholders::_1));
 
-    add_seed_points_sub_ = pnh_->subscribe("add_seed_points", 1, &WatershedSegmentationNodelet::addSeedPointCb, this);
-    img_pub_ = advertiseImage(*pnh_, "image", 1);
-    msg_pub_ = advertise<opencv_apps::ContourArrayStamped>(*pnh_, "contours", 1);
+    add_seed_points_sub_ = create_subscription<opencv_apps::msg::Point2DArray>(
+        "~/add_seed_points", 1, std::bind(&WatershedSegmentationNodelet::addSeedPointCb, this, std::placeholders::_1));
+    img_pub_ = advertiseImage("~/image", 1);
+    msg_pub_ = advertise<opencv_apps::msg::ContourArrayStamped>("~/contours", 1);
 
-    NODELET_INFO("This program demonstrates the famous watershed segmentation algorithm in OpenCV: watershed()");
-    NODELET_INFO("Hot keys: ");
-    NODELET_INFO("\tESC - quit the program");
-    NODELET_INFO("\tr - restore the original image");
-    NODELET_INFO("\tw or SPACE - run watershed segmentation algorithm");
-    NODELET_INFO("\t\t(before running it, *roughly* mark the areas to segment on the image)");
-    NODELET_INFO("\t  (before that, roughly outline several markers on the image)");
+    RCLCPP_INFO(get_logger(),
+                "This program demonstrates the famous watershed segmentation algorithm in OpenCV: watershed()");
+    RCLCPP_INFO(get_logger(), "Hot keys: ");
+    RCLCPP_INFO(get_logger(), "\tESC - quit the program");
+    RCLCPP_INFO(get_logger(), "\tr - restore the original image");
+    RCLCPP_INFO(get_logger(), "\tw or SPACE - run watershed segmentation algorithm");
+    RCLCPP_INFO(get_logger(), "\t\t(before running it, *roughly* mark the areas to segment on the image)");
+    RCLCPP_INFO(get_logger(), "\t  (before that, roughly outline several markers on the image)");
 
     onInitPostProcess();
   }
@@ -357,24 +358,4 @@ int WatershedSegmentationNodelet::on_mouse_y_ = 0;
 int WatershedSegmentationNodelet::on_mouse_flags_ = 0;
 }  // namespace opencv_apps
 
-namespace watershed_segmentation
-{
-class WatershedSegmentationNodelet : public opencv_apps::WatershedSegmentationNodelet
-{
-public:
-  virtual void onInit()  // NOLINT(modernize-use-override)
-  {
-    ROS_WARN("DeprecationWarning: Nodelet watershed_segmentation/watershed_segmentation is deprecated, "
-             "and renamed to opencv_apps/watershed_segmentation.");
-    opencv_apps::WatershedSegmentationNodelet::onInit();
-  }
-};
-}  // namespace watershed_segmentation
-
-#ifdef USE_PLUGINLIB_CLASS_LIST_MACROS_H
-#include <pluginlib/class_list_macros.h>
-#else
-#include <pluginlib/class_list_macros.hpp>
-#endif
-PLUGINLIB_EXPORT_CLASS(opencv_apps::WatershedSegmentationNodelet, nodelet::Nodelet);
-PLUGINLIB_EXPORT_CLASS(watershed_segmentation::WatershedSegmentationNodelet, nodelet::Nodelet);
+RCLCPP_COMPONENTS_REGISTER_NODE(opencv_apps::WatershedSegmentationNodelet)
