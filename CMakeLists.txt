@@ -250,14 +250,16 @@ install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
   FILES_MATCHING PATTERN "*.launch.xml"
 )
-# with a python3 shebang (the script keeps "python" for ROS1 melodic and older)
-file(READ scripts/face_recognition_trainer.py _trainer)
-set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS scripts/face_recognition_trainer.py)
-string(REGEX REPLACE "^#! */usr/bin/env python\n" "#!/usr/bin/env python3\n" _trainer "${_trainer}")
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/face_recognition_trainer.py "${_trainer}")
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/face_recognition_trainer.py
-  DESTINATION lib/${PROJECT_NAME}
-)
+# with a python3 shebang (the scripts keep "python" for ROS1 melodic and older)
+foreach(_script face_recognition_trainer.py set_image.py)
+  file(READ scripts/${_script} _script_content)
+  set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS scripts/${_script})
+  string(REGEX REPLACE "^#! */usr/bin/env python\n" "#!/usr/bin/env python3\n" _script_content "${_script_content}")
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${_script} "${_script_content}")
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${_script}
+    DESTINATION lib/${PROJECT_NAME}
+  )
+endforeach()
 
 if(BUILD_TESTING)
   find_package(launch_testing_ament_cmake REQUIRED)

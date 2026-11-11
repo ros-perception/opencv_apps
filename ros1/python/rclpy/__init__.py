@@ -30,8 +30,8 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# The part of rclpy used by scripts/face_recognition_trainer.py, on top of rospy, so that the script written for
-# ROS2 also runs on ROS1. The script puts ros1/python on sys.path when ROS_VERSION is not 2.
+# The part of rclpy used by scripts/face_recognition_trainer.py and scripts/set_image.py, on top of rospy, so that
+# the scripts written for ROS2 also run on ROS1. The scripts put ros1/python on sys.path when ROS_VERSION is not 2.
 
 import rospy
 
@@ -51,3 +51,8 @@ def spin(node=None):
 
 def shutdown():
     rospy.signal_shutdown('rclpy.shutdown()')
+
+
+def spin_until_future_complete(node, future, timeout_sec=None):
+    # futures of ros1/python/rclpy/node.py are done when they are returned
+    pass
