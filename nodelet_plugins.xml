@@ -147,6 +147,18 @@
     <description>Nodelet to detect objects with a DNN model (cv::dnn::DetectionModel), e.g. YOLO</description>
   </class>
 
+  <class name="opencv_apps/qrcode_detection" type="opencv_apps::QRCodeDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect and decode QR codes (cv::QRCodeDetector)</description>
+  </class>
+
+  <class name="opencv_apps/barcode_detection" type="opencv_apps::BarcodeDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect and decode barcodes (cv::barcode::BarcodeDetector)</description>
+  </class>
+
+  <class name="opencv_apps/aruco_detection" type="opencv_apps::ArucoDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect ArUco markers, and their poses with the camera info (cv::aruco)</description>
+  </class>
+
   <!--
       for backward compatibility, can be removed in M-turtle
   -->

@@ -58,6 +58,8 @@ TEST_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FACE_VIDEO = os.path.join(TEST_DIR, 'face_detector_withface_test_diamondback.mp4')
 # narrow_stereo/left/image_rect (5s - 15s) of vslam_tutorial.bag, used by the optical flow tests
 VSLAM_VIDEO = os.path.join(TEST_DIR, 'vslam_tutorial.mp4')
+# a QR code, a barcode and ArUco markers, made by test/make_codes_video.py
+CODES_VIDEO = os.path.join(TEST_DIR, 'codes.mp4')
 GUI = LaunchConfiguration('gui')
 
 
