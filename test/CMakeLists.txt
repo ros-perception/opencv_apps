@@ -106,10 +106,25 @@ add_rostest(test-watershed_segmentation.test ARGS gui:=false)
 add_rostest(test-simple_example.test ARGS gui:=false)
 add_rostest(test-simple_compressed_example.test ARGS gui:=false)
 
+# OpenCV 4 nodes, see OPENCV_HAVE_DNN in ../CMakeLists.txt
+set(_skip_test_files)
+# the tests of the dnn nodes download the models by libcurl
+if(OPENCV_HAVE_DNN AND CURL_FOUND)
+  add_rostest(test-dnn_face_detection.test ARGS gui:=false)
+  add_rostest(test-dnn_face_recognition.test ARGS gui:=false)
+  add_rostest(test-dnn_object_detection.test ARGS gui:=false)
+else()
+  list(APPEND _skip_test_files test-dnn_face_detection.test test-dnn_face_recognition.test
+    test-dnn_object_detection.test)
+endif()
+
 if(roslaunch_VERSION VERSION_LESS "1.11.1")
   message(WARNING "roslaunch_add_file check fails with unsupported doc attributes ${roslaunch_VERSION}")
 else()
   file(GLOB LAUNCH_FILES *.test)
+  foreach(_skip_test_file ${_skip_test_files})
+    list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${_skip_test_file})
+  endforeach()
   foreach(LAUNCH_FILE ${LAUNCH_FILES})
     roslaunch_add_file_check(${LAUNCH_FILE})
   endforeach()

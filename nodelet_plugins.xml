@@ -135,6 +135,18 @@
     <description>Nodelet for histogram equalization</description>
   </class>
 
+  <class name="opencv_apps/dnn_face_detection" type="opencv_apps::DNNFaceDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect faces with YuNet (cv::FaceDetectorYN)</description>
+  </class>
+
+  <class name="opencv_apps/dnn_face_recognition" type="opencv_apps::DNNFaceRecognitionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to recognize faces with YuNet and SFace (cv::FaceRecognizerSF)</description>
+  </class>
+
+  <class name="opencv_apps/dnn_object_detection" type="opencv_apps::DNNObjectDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect objects with a DNN model (cv::dnn::DetectionModel), e.g. YOLO</description>
+  </class>
+
   <!--
       for backward compatibility, can be removed in M-turtle
   -->

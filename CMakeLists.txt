@@ -50,6 +50,17 @@ find_package(OpenCV REQUIRED)
 if(TARGET opencv_optflow)
   set(OPENCV_HAVE_OPTFLOW TRUE)
 endif()
+# dnn nodes require OpenCV 4.5.4 (cv::FaceDetectorYN) or later, e.g. Ubuntu 24.04
+if(NOT OpenCV_VERSION VERSION_LESS "4.5.4")
+  set(OPENCV_HAVE_DNN TRUE)
+  # libcurl downloads the models on the first run, without it the models must be given as files
+  find_package(CURL)
+  if(CURL_FOUND)
+    add_definitions(-DOPENCV_APPS_HAVE_CURL)
+  else()
+    message(WARNING "libcurl is not found, the dnn nodes do not download the models")
+  endif()
+endif()
 
 file(GLOB _msg_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} msg/*.msg srv/*.srv)
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -131,6 +142,19 @@ if(OPENCV_HAVE_OPTFLOW)
   list(APPEND _nodelets simple_flow:SimpleFlowNodelet)
   list(APPEND _nodelet_cppfiles src/nodelet/simple_flow_nodelet.cpp)
 endif()
+if(OPENCV_HAVE_DNN)
+  list(APPEND _nodelets
+    dnn_face_detection:DNNFaceDetectionNodelet
+    dnn_face_recognition:DNNFaceRecognitionNodelet
+    dnn_object_detection:DNNObjectDetectionNodelet
+  )
+  list(APPEND _nodelet_cppfiles
+    src/nodelet/dnn.cpp
+    src/nodelet/dnn_face_detection_nodelet.cpp
+    src/nodelet/dnn_face_recognition_nodelet.cpp
+    src/nodelet/dnn_object_detection_nodelet.cpp
+  )
+endif()
 
 add_library(${PROJECT_NAME}_nodelet SHARED
   src/nodelet/nodelet.cpp
@@ -152,6 +176,11 @@ target_link_libraries(${PROJECT_NAME}_nodelet
   ${std_srvs_TARGETS}
   ${OpenCV_LIBRARIES}
 )
+if(OPENCV_HAVE_DNN)
+  if(CURL_FOUND)
+    target_link_libraries(${PROJECT_NAME}_nodelet CURL::libcurl)
+  endif()
+endif()
 foreach(_nodelet ${_nodelets})
   string(REPLACE ":" ";" _nodelet ${_nodelet})
   list(GET _nodelet 0 _name)
@@ -190,6 +219,11 @@ if(BUILD_TESTING)
   else()
     set(_have_optflow 0)
     list(REMOVE_ITEM _launch_tests test/ros2/test_simple_flow.py)
+  endif()
+  # the tests of the dnn nodes download the models by libcurl
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_face_detection.py test/ros2/test_dnn_face_recognition.py
+      test/ros2/test_dnn_object_detection.py)
   endif()
   foreach(_launch_test ${_launch_tests})
     get_filename_component(_name ${_launch_test} NAME_WE)
@@ -231,6 +265,32 @@ message(STATUS "OpenCV VERSION: ${OpenCV_VERSION}")
 message(STATUS "OpenCV Components: ${OpenCV_LIB_COMPONENTS}")
 if(OpenCV_VERSION VERSION_LESS "3.0" OR TARGET opencv_optflow)
   set(OPENCV_HAVE_OPTFLOW TRUE)
+endif()
+# dnn nodes require OpenCV 4.5.4 (cv::FaceDetectorYN) or later, e.g. Ubuntu 24.04,
+# and C++17 (std::filesystem), which is the default since GCC 11. The C++ standard is not raised here
+# not to change the other nodes, e.g. on focal (GCC 9, C++14) with OpenCV 4.5.4 of JetPack 5
+# the standard is CMAKE_CXX_STANDARD, -std= of CMAKE_CXX_FLAGS, or the default of the compiler, in this order
+set(_opencv_apps_cxx_standard ${CMAKE_CXX_STANDARD})
+if(NOT _opencv_apps_cxx_standard AND CMAKE_CXX_FLAGS MATCHES "-std=(c|gnu)\\+\\+([0-9a-z]+)")
+  set(_opencv_apps_cxx_standard ${CMAKE_MATCH_2})
+endif()
+if(NOT _opencv_apps_cxx_standard)
+  set(_opencv_apps_cxx_standard ${CMAKE_CXX_STANDARD_COMPUTED_DEFAULT})
+endif()
+if(NOT _opencv_apps_cxx_standard OR _opencv_apps_cxx_standard MATCHES "^(98|03|0x|11|1y|14)$"
+    OR (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7"))  # -std=gnu++11 above
+  if(NOT OpenCV_VERSION VERSION_LESS "4.5.4")
+    message(WARNING "The dnn nodes are not built, as they require C++17 (C++${_opencv_apps_cxx_standard} is used), set -DCMAKE_CXX_STANDARD=17 to build them")
+  endif()
+elseif(NOT OpenCV_VERSION VERSION_LESS "4.5.4")
+  set(OPENCV_HAVE_DNN TRUE)
+  # libcurl downloads the models on the first run, without it the models must be given as files
+  find_package(CURL)
+  if(CURL_FOUND)
+    add_definitions(-DOPENCV_APPS_HAVE_CURL)
+  else()
+    message(WARNING "libcurl is not found, the dnn nodes do not download the models")
+  endif()
 endif()
 # Supporting CompressedImage in cv_bridge has been started from 1.11.9 (2015-11-29)
 # note : hydro 1.10.18, indigo : 1.11.13 ...
@@ -316,6 +376,9 @@ add_message_files(
    Contour.msg
    ContourArray.msg
    ContourArrayStamped.msg
+   Detection.msg
+   DetectionArray.msg
+   DetectionArrayStamped.msg
 )
 
 add_service_files(
@@ -566,6 +629,13 @@ opencv_apps_add_nodelet(simple_compressed_example src/nodelet/simple_compressed_
 if(OPENCV_HAVE_OPTFLOW)
   opencv_apps_add_nodelet(simple_flow src/nodelet/simple_flow_nodelet.cpp)
 endif()
+# https://github.com/opencv/opencv/tree/4.x/samples/dnn
+if(OPENCV_HAVE_DNN)
+  list(APPEND _opencv_apps_nodelet_cppfiles src/nodelet/dnn.cpp)
+  opencv_apps_add_nodelet(dnn_face_detection src/nodelet/dnn_face_detection_nodelet.cpp) # ./dnn/face_detect.cpp
+  opencv_apps_add_nodelet(dnn_face_recognition src/nodelet/dnn_face_recognition_nodelet.cpp) # ./dnn/face_detect.cpp
+  opencv_apps_add_nodelet(dnn_object_detection src/nodelet/dnn_object_detection_nodelet.cpp) # ./dnn/object_detection.cpp
+endif()
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/bgfg_gmg.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/hybridtrackingsample.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/linemod.cpp
@@ -580,6 +650,10 @@ add_library(${PROJECT_NAME} SHARED
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+if(OPENCV_HAVE_DNN AND CURL_FOUND)
+  target_include_directories(${PROJECT_NAME} PRIVATE ${CURL_INCLUDE_DIRS})
+  target_link_libraries(${PROJECT_NAME} ${CURL_LIBRARIES})
+endif()
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg ${PROJECT_NAME}_generate_messages_cpp)
 install(TARGETS ${PROJECT_NAME}
         DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -609,6 +683,12 @@ if(CATKIN_ENABLE_TESTING)
     message(WARNING "roslaunch_add_file check fails with unsupported doc attributes ${roslaunch_VERSION}")
   else()
     file(GLOB LAUNCH_FILES launch/*.launch)
+    # the nodes not built for this OpenCV
+    if(NOT OPENCV_HAVE_DNN)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_face_detection.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_face_recognition.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_object_detection.launch)
+    endif()
     foreach(LAUNCH_FILE ${LAUNCH_FILES})
       roslaunch_add_file_check(${LAUNCH_FILE})
     endforeach()

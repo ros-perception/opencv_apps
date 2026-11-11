@@ -159,3 +159,28 @@ class ColorSpaceTest(TopicsTest):
         self.assertNotEqual(msg.header.frame_id, '')
         xyz = np.frombuffer(bytes(msg.data), np.float32).reshape(-1, 4)[:, :3]
         self.assertTrue(np.all((0.0 <= xyz) & (xyz <= 1.0)), 'x, y, z of %s are not within 0..1' % topic)
+
+
+class MessagesTest(TopicsTest):
+    """TopicsTest, and check that each topic of CHECKS receives a message that its function returns True for."""
+
+    # topic: (message type, function of the message)
+    CHECKS = {}
+
+    def test_messages(self):
+        rclpy.init()
+        try:
+            node = rclpy.create_node('test_messages_' + self.__class__.__name__.lower())
+            self.prepare(node)
+            found = set()
+            subscriptions = []
+            for topic, (msg_type, check) in self.CHECKS.items():
+                topic = topic if topic.startswith('/') else '/' + topic
+                subscriptions.append(node.create_subscription(
+                    msg_type, topic, lambda msg, topic=topic, check=check: check(msg) and found.add(topic), 10))
+            end_time = time.time() + self.TIMEOUT
+            while time.time() < end_time and len(found) < len(self.CHECKS):
+                rclpy.spin_once(node, timeout_sec=0.1)
+            self.assertEqual(sorted(t for t in self.CHECKS if (t if t.startswith('/') else '/' + t) not in found), [])
+        finally:
+            rclpy.shutdown()
