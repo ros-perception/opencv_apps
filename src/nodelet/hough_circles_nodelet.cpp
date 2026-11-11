@@ -309,8 +309,11 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
         }
         if (debug_image_pub_.getNumSubscribers() > 0)
         {
+          // src_gray and edges are mono8, frame is bgr8
+          const std::string debug_encoding =
+              debug_image.channels() == 1 ? sensor_msgs::image_encodings::MONO8 : sensor_msgs::image_encodings::BGR8;
           sensor_msgs::msg::Image::SharedPtr out_debug_img =
-              cv_bridge::CvImage(msg->header, msg->encoding, debug_image).toImageMsg();
+              cv_bridge::CvImage(msg->header, debug_encoding, debug_image).toImageMsg();
           debug_image_pub_.publish(out_debug_img);
         }
       }

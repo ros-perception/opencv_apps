@@ -322,7 +322,8 @@ class CamShiftNodelet : public opencv_apps::Nodelet
       }
 
       // Publish the image.
-      sensor_msgs::msg::Image::SharedPtr out_img1 = cv_bridge::CvImage(msg->header, msg->encoding, frame).toImageMsg();
+      sensor_msgs::msg::Image::SharedPtr out_img1 =
+          cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, frame).toImageMsg();
       sensor_msgs::msg::Image::SharedPtr out_img2 =
           cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::MONO8, backproj).toImageMsg();
       img_pub_.publish(out_img1);
