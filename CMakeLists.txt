@@ -193,6 +193,16 @@ if(OPENCV_HAVE_BGSEGM)
   set_source_files_properties(src/nodelet/background_subtraction_nodelet.cpp PROPERTIES
     COMPILE_DEFINITIONS OPENCV_APPS_HAVE_BGSEGM)
 endif()
+# tracking requires the tracking API of OpenCV 4.5.1 or later, and KCF, CSRT and the legacy trackers are in
+# opencv_contrib tracking module
+if(OpenCV_VERSION VERSION_GREATER_EQUAL "4.5.1")
+  set(OPENCV_HAVE_TRACKING_API TRUE)
+  list(APPEND _nodelets tracking:TrackingNodelet)
+  list(APPEND _nodelet_cppfiles src/nodelet/tracking_nodelet.cpp)
+  if(TARGET opencv_tracking)
+    set_source_files_properties(src/nodelet/tracking_nodelet.cpp PROPERTIES COMPILE_DEFINITIONS OPENCV_APPS_HAVE_TRACKING)
+  endif()
+endif()
 
 add_library(${PROJECT_NAME}_nodelet SHARED
   src/nodelet/nodelet.cpp
@@ -418,6 +428,7 @@ generate_dynamic_reconfigure_options(
   cfg/WatershedSegmentation.cfg
   cfg/BlobDetection.cfg
   cfg/BackgroundSubtraction.cfg
+  cfg/Tracking.cfg
   )
 
 ## Generate messages in the 'msg' folder
@@ -462,6 +473,7 @@ add_message_files(
 add_service_files(
   FILES
   FaceRecognitionTrain.srv
+  SetROI.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -699,6 +711,16 @@ opencv_apps_add_nodelet(watershed_segmentation src/nodelet/watershed_segmentatio
 # ros examples
 opencv_apps_add_nodelet(simple_example src/nodelet/simple_example_nodelet.cpp)
 opencv_apps_add_nodelet(simple_compressed_example src/nodelet/simple_compressed_example_nodelet.cpp)
+# https://docs.opencv.org/4.x/d2/d0a/tutorial_introduction_to_tracker.html
+# tracking requires the tracking API of OpenCV 4.5.1 or later, and KCF, CSRT and the legacy trackers are in
+# opencv_contrib tracking module
+if(NOT OpenCV_VERSION VERSION_LESS "4.5.1")
+  set(OPENCV_HAVE_TRACKING_API TRUE)
+  opencv_apps_add_nodelet(tracking src/nodelet/tracking_nodelet.cpp)
+  if(TARGET opencv_tracking)
+    set_source_files_properties(src/nodelet/tracking_nodelet.cpp PROPERTIES COMPILE_DEFINITIONS OPENCV_APPS_HAVE_TRACKING)
+  endif()
+endif()
 
 
 # TApi
@@ -796,6 +818,9 @@ if(CATKIN_ENABLE_TESTING)
     endif()
     if(NOT OPENCV_HAVE_LSD)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/line_segment_detector.launch)
+    endif()
+    if(NOT OPENCV_HAVE_TRACKING_API)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/tracking.launch)
     endif()
     foreach(LAUNCH_FILE ${LAUNCH_FILES})
       roslaunch_add_file_check(${LAUNCH_FILE})
