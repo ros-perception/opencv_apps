@@ -76,6 +76,7 @@ class LKFlowNodelet : public opencv_apps::Nodelet
   bool addRemovePt;
   cv::Mat gray, prevGray;
   std::vector<cv::Point2f> points[2];
+  size_t num_detected_points_;
 
   float quality_level_;
   int min_distance_;
@@ -134,6 +135,15 @@ class LKFlowNodelet : public opencv_apps::Nodelet
     need_config_update_ = true;
   }
 
+  void detectPoints(const cv::TermCriteria& termcrit, const cv::Size& sub_pix_win_size)
+  {
+    cv::goodFeaturesToTrack(gray, points[1], MAX_COUNT, quality_level_, min_distance_, cv::Mat(), block_size_, false,
+                            harris_k_);
+    if (!points[1].empty())
+      cv::cornerSubPix(gray, points[1], sub_pix_win_size, cv::Size(-1, -1), termcrit);
+    num_detected_points_ = points[1].size();
+  }
+
   void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& msg, const std::string& input_frame_from_msg)
   {
     // Work on the image.
@@ -184,9 +194,7 @@ class LKFlowNodelet : public opencv_apps::Nodelet
       if (needToInit)
       {
         // automatic initialization
-        cv::goodFeaturesToTrack(gray, points[1], MAX_COUNT, quality_level_, min_distance_, cv::Mat(), block_size_,
-                                false, harris_k_);
-        cv::cornerSubPix(gray, points[1], sub_pix_win_size, cv::Size(-1, -1), termcrit);
+        detectPoints(termcrit, sub_pix_win_size);
         addRemovePt = false;
       }
       else if (!points[0].empty())
@@ -196,8 +204,9 @@ class LKFlowNodelet : public opencv_apps::Nodelet
         if (prevGray.empty())
           gray.copyTo(prevGray);
         cv::calcOpticalFlowPyrLK(prevGray, gray, points[0], points[1], status, err, win_size, 3, termcrit, 0, 0.001);
-        size_t i;
-        for (i = 0; i < points[1].size(); i++)
+        // status has the size of points[1] here, and the loop compacts points[1] in place
+        size_t i, k, n = status.size();
+        for (i = k = 0; i < n; i++)
         {
           if (addRemovePt)
           {
@@ -224,6 +233,19 @@ class LKFlowNodelet : public opencv_apps::Nodelet
           flow_msg.velocity = velocity_msg;
           flows_msg.status.push_back(status[i]);
           flows_msg.flow.push_back(flow_msg);
+
+          // keep tracking only the points found in this frame, as the OpenCV sample does
+          if (status[i])
+            points[1][k++] = points[1][i];
+        }
+        points[1].resize(k);
+
+        // detect the points again when most of them are lost, e.g. they went out of the view
+        if (points[1].size() * 2 < num_detected_points_)
+        {
+          RCLCPP_DEBUG(get_logger(), "Only %zu of %zu points are tracked, detect the points again", points[1].size(),
+                       num_detected_points_);
+          detectPoints(termcrit, sub_pix_win_size);
         }
       }
 
@@ -324,6 +346,7 @@ public:
     window_name_ = "LK Demo";
     MAX_COUNT = 500;
     needToInit = true;
+    num_detected_points_ = 0;
     nightMode = false;
     addRemovePt = false;
 
