@@ -172,7 +172,7 @@ class DiscreteFourierTransformNodelet : public opencv_apps::Nodelet
         int c = cv::waitKey(1);
       }
       img_pub_.publish(
-          *cv_bridge::CvImage(image_msg->header, sensor_msgs::image_encodings::MONO8, result_image).toImageMsg());
+          cv_bridge::CvImage(image_msg->header, sensor_msgs::image_encodings::MONO8, result_image).toImageMsg());
     }
     catch (cv::Exception& e)
     {

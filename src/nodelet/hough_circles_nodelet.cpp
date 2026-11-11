@@ -311,13 +311,13 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
         {
           sensor_msgs::msg::Image::SharedPtr out_debug_img =
               cv_bridge::CvImage(msg->header, msg->encoding, debug_image).toImageMsg();
-          debug_image_pub_.publish(*out_debug_img);
+          debug_image_pub_.publish(out_debug_img);
         }
       }
 
       // Publish the image.
       sensor_msgs::msg::Image::SharedPtr out_img = cv_bridge::CvImage(msg->header, "bgr8", out_image).toImageMsg();
-      img_pub_.publish(*out_img);
+      img_pub_.publish(out_img);
       msg_pub_->publish(circles_msg);
     }
     catch (cv::Exception& e)

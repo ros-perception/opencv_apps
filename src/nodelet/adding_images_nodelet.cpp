@@ -256,7 +256,7 @@ private:
 #endif
         int c = cv::waitKey(1);
       }
-      img_pub_.publish(*image_msg3);
+      img_pub_.publish(image_msg3);
     }
     catch (cv::Exception& e)
     {

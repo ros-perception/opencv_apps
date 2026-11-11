@@ -194,13 +194,13 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
       // Publish the image.
       sensor_msgs::msg::Image::SharedPtr out_img =
           cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, frame).toImageMsg();
-      img_pub_.publish(*out_img);
+      img_pub_.publish(out_img);
       msg_pub_->publish(faces_msg);
       if (!faces.empty())
       {
         sensor_msgs::msg::Image::SharedPtr out_face_img =
             cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, face_image).toImageMsg();
-        face_img_pub_.publish(*out_face_img);
+        face_img_pub_.publish(out_face_img);
       }
     }
     catch (cv::Exception& e)

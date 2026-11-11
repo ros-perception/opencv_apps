@@ -424,6 +424,11 @@ public:
   {
     pub_.publish(msg);
   }
+  // takes the ownership as ROS2, and publishes it without copy to the subscribers in the same nodelet manager
+  void publish(std::unique_ptr<T> msg) const
+  {
+    pub_.publish(boost::shared_ptr<T>(msg.release()));
+  }
 };
 
 template <class T>
