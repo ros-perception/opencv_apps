@@ -54,4 +54,4 @@ def generate_test_description():
 
 class TestCamshift(TopicsTest, unittest.TestCase):
 
-    TOPICS = ['camshift/track_box', 'camshift_roi/track_box']
+    TOPICS = ['camshift/track_box', 'camshift/confidence', 'camshift_roi/track_box', 'camshift_roi/confidence']

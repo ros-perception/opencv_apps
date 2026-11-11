@@ -50,6 +50,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <opencv_apps/msg/rotated_rect_stamped.hpp>
+#include <std_msgs/msg/float64.hpp>
 
 namespace opencv_apps
 {
@@ -59,6 +60,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
   rclcpp::Publisher<opencv_apps::msg::RotatedRectStamped>::SharedPtr msg_pub_;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr conf_pub_;
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
@@ -258,6 +260,8 @@ class CamShiftNodelet : public opencv_apps::Nodelet
       // Convert the image into something opencv can handle.
       cv::Mat frame = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::BGR8)->image;
       cv::Mat backproj;
+      bool tracked = false;
+      std_msgs::msg::Float64 conf_msg;
 
       // Messages
       opencv_apps::msg::RotatedRectStamped rect_msg;
@@ -395,6 +399,26 @@ class CamShiftNodelet : public opencv_apps::Nodelet
             trackWindow = cv::Rect(cols / 2 - r, rows / 2 - r, cols / 2 + r, rows / 2 + r) & cv::Rect(0, 0, cols, rows);
           }
 
+          // confidence of tracking: ratio of the back projected pixels in the track_box ellipse,
+          // computed only in the bounding box of the ellipse
+          {
+            cv::Rect bbox = track_box.boundingRect() & cv::Rect(0, 0, backproj.cols, backproj.rows);
+            int area = 0, count = 0;
+            // CamShift returns an empty box when it loses the target, whose bounding box is still 1x1
+            if (bbox.area() > 0 && track_box.size.width > 0 && track_box.size.height > 0)
+            {
+              cv::RotatedRect box_in_bbox = track_box;
+              box_in_bbox.center -= cv::Point2f(bbox.tl());
+              cv::Mat ellipse_mask = cv::Mat::zeros(bbox.size(), CV_8UC1), backproj_in_ellipse;
+              cv::ellipse(ellipse_mask, box_in_bbox, cv::Scalar(255), -1);
+              cv::bitwise_and(backproj(bbox), ellipse_mask, backproj_in_ellipse);
+              area = cv::countNonZero(ellipse_mask);
+              count = cv::countNonZero(backproj_in_ellipse);
+            }
+            conf_msg.data = area > 0 ? static_cast<double>(count) / area : 0.0;
+            tracked = true;
+          }
+
           if (backprojMode)
             cv::cvtColor(backproj, frame, cv::COLOR_GRAY2BGR);
 #ifndef CV_VERSION_EPOCH
@@ -467,6 +491,8 @@ class CamShiftNodelet : public opencv_apps::Nodelet
       bproj_pub_.publish(out_img2);
       if (trackObject)
         msg_pub_->publish(rect_msg);
+      if (tracked)
+        conf_pub_->publish(conf_msg);
     }
     catch (cv::Exception& e)
     {
@@ -541,6 +567,7 @@ public:
     img_pub_ = advertiseImage("~/image", 1);
     bproj_pub_ = advertiseImage("~/back_project", 1);
     msg_pub_ = advertise<opencv_apps::msg::RotatedRectStamped>("~/track_box", 1);
+    conf_pub_ = advertise<std_msgs::msg::Float64>("~/confidence", 1);
 
     RCLCPP_INFO(get_logger(), "Hot keys: ");
     RCLCPP_INFO(get_logger(), "\tESC - quit the program");

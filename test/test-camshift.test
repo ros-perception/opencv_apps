@@ -52,5 +52,17 @@
       <param name="hzerror" value="10.0" />
       <param name="test_duration" value="1.0" />
     </test>
+    <param name="camshift_confidence_test/topic" value="camshift/confidence" />    <!-- std_msgs/Float64 -->
+    <test test-name="camshift_confidence_test" pkg="rostest" type="hztest" name="camshift_confidence_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
+    <param name="camshift_roi_confidence_test/topic" value="camshift_roi/confidence" />
+    <test test-name="camshift_roi_confidence_test" pkg="rostest" type="hztest" name="camshift_roi_confidence_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
   </group>
 </launch>
