@@ -1,0 +1,21 @@
+<launch>
+  <arg name="node_name" default="aruco_detection" />
+
+  <arg name="image" default="image" description="The image topic. Should be remapped to the name of the real image topic." />
+
+  <arg name="use_camera_info" default="false" description="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
+  <arg name="debug_view" default="true" description="Specify whether the node displays a window to show the result" />
+  <arg name="queue_size" default="3" description="Specify queue_size of input image subscribers" />
+  <arg name="dictionary" default="DICT_4X4_50" description="Predefined dictionary of the markers, e.g. DICT_4X4_50, DICT_6X6_250, DICT_ARUCO_ORIGINAL, DICT_APRILTAG_36h11" />
+  <arg name="marker_length" default="0.0" description="Length of the side of the markers in meters, to publish their poses with the camera info (use_camera_info:=true), 0 not to publish" />
+
+  <!-- aruco_detection_nodelet.cpp, ArUco marker detection -->
+  <node name="$(var node_name)" pkg="opencv_apps" exec="aruco_detection" >
+    <remap from="image" to="$(var image)" />
+    <param name="use_camera_info" value="$(var use_camera_info)" />
+    <param name="debug_view" value="$(var debug_view)" />
+    <param name="queue_size" value="$(var queue_size)" />
+    <param name="dictionary" value="$(var dictionary)" />
+    <param name="marker_length" value="$(var marker_length)" />
+  </node>
+</launch>

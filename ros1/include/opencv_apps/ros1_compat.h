@@ -84,6 +84,10 @@
 #endif
 
 // <pkg>::msg::Foo -> <pkg>::Foo
+namespace geometry_msgs
+{
+namespace msg = ::geometry_msgs;
+}
 namespace sensor_msgs
 {
 namespace msg = ::sensor_msgs;
