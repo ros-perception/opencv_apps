@@ -1,0 +1,111 @@
+<launch>
+  <arg name="gui" default="false" />
+  <param name="use_sim_time" value="true" />
+  <node name="play_face_bag" pkg="rosbag" type="play" args="-l $(find opencv_apps)/test/face_detector_withface_test_diamondback.bag --clock -r 0.1" />
+
+  <group ns="wide_stereo/left" >
+    <node name="image_proc" pkg="image_proc" type="image_proc" />
+    <node name="image_view" pkg="image_view" type="image_view" args="image:=image_rect_color" if="$(arg gui)" />
+
+    <!-- background_subtraction.cpp, method 0: MOG2, 1: KNN, 2: MOG, 3: GMG, 4: CNT, 5: GSOC, 6: LSBP
+         (2 - 6 need the bgsegm module of opencv_contrib, otherwise they use MOG2) -->
+    <include file="$(find opencv_apps)/launch/background_subtraction.launch" >
+      <arg name="node_name" value="background_subtraction_mog2" />
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect_color" />
+      <arg name="method" value="0" />
+    </include>
+    <include file="$(find opencv_apps)/launch/background_subtraction.launch" >
+      <arg name="node_name" value="background_subtraction_knn" />
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect_color" />
+      <arg name="method" value="1" />
+    </include>
+    <include file="$(find opencv_apps)/launch/background_subtraction.launch" >
+      <arg name="node_name" value="background_subtraction_mog" />
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect_color" />
+      <arg name="method" value="2" />
+    </include>
+    <include file="$(find opencv_apps)/launch/background_subtraction.launch" >
+      <arg name="node_name" value="background_subtraction_gmg" />
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect_color" />
+      <arg name="method" value="3" />
+    </include>
+    <include file="$(find opencv_apps)/launch/background_subtraction.launch" >
+      <arg name="node_name" value="background_subtraction_cnt" />
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect_color" />
+      <arg name="method" value="4" />
+    </include>
+    <include file="$(find opencv_apps)/launch/background_subtraction.launch" >
+      <arg name="node_name" value="background_subtraction_gsoc" />
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect_color" />
+      <arg name="method" value="5" />
+    </include>
+    <include file="$(find opencv_apps)/launch/background_subtraction.launch" >
+      <arg name="node_name" value="background_subtraction_lsbp" />
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect_color" />
+      <arg name="method" value="6" />
+    </include>
+
+    <!-- Test Codes -->
+    <param name="background_subtraction_mog2_test/topic" value="background_subtraction_mog2/image" />
+    <test test-name="background_subtraction_mog2_test" pkg="rostest" type="hztest" name="background_subtraction_mog2_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
+    <param name="background_subtraction_knn_test/topic" value="background_subtraction_knn/image" />
+    <test test-name="background_subtraction_knn_test" pkg="rostest" type="hztest" name="background_subtraction_knn_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
+    <param name="background_subtraction_mog_test/topic" value="background_subtraction_mog/image" />
+    <test test-name="background_subtraction_mog_test" pkg="rostest" type="hztest" name="background_subtraction_mog_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
+    <param name="background_subtraction_gmg_test/topic" value="background_subtraction_gmg/image" />
+    <test test-name="background_subtraction_gmg_test" pkg="rostest" type="hztest" name="background_subtraction_gmg_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
+    <param name="background_subtraction_cnt_test/topic" value="background_subtraction_cnt/image" />
+    <test test-name="background_subtraction_cnt_test" pkg="rostest" type="hztest" name="background_subtraction_cnt_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
+    <param name="background_subtraction_gsoc_test/topic" value="background_subtraction_gsoc/image" />
+    <test test-name="background_subtraction_gsoc_test" pkg="rostest" type="hztest" name="background_subtraction_gsoc_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
+    <param name="background_subtraction_lsbp_test/topic" value="background_subtraction_lsbp/image" />
+    <test test-name="background_subtraction_lsbp_test" pkg="rostest" type="hztest" name="background_subtraction_lsbp_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
+    <param name="background_subtraction_mog2_background_test/topic" value="background_subtraction_mog2/background" />
+    <test test-name="background_subtraction_mog2_background_test" pkg="rostest" type="hztest" name="background_subtraction_mog2_background_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
+    <param name="background_subtraction_gsoc_background_test/topic" value="background_subtraction_gsoc/background" />
+    <test test-name="background_subtraction_gsoc_background_test" pkg="rostest" type="hztest" name="background_subtraction_gsoc_background_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
+  </group>
+</launch>

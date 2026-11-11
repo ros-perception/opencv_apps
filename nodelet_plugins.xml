@@ -67,6 +67,10 @@
     <description>Nodelet for detecting corners using Harris method</description>
   </class>
 
+  <class name="opencv_apps/background_subtraction" type="opencv_apps::BackgroundSubtractionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to segment the foreground from the background with background subtraction methods</description>
+  </class>
+
   <class name="opencv_apps/camshift" type="opencv_apps::CamShiftNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to show mean-shift based tracking</description>
   </class>

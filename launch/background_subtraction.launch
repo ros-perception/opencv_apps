@@ -1,0 +1,23 @@
+<launch>
+  <arg name="node_name" default="background_subtraction" />
+  <arg name="image" default="image" doc="The image topic. Should be remapped to the name of the real image topic." />
+
+  <arg name="use_camera_info" default="false" doc="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
+  <arg name="debug_view" default="true" doc="Specify whether the node displays a window to show the foreground mask" />
+  <arg name="queue_size" default="3" doc="Specify queue_size of input image subscribers" />
+
+  <arg name="method" default="0" doc="Background subtraction method, 0: MOG2, 1: KNN, 2: MOG, 3: GMG, 4: CNT, 5: GSOC, 6: LSBP (MOG, GMG, CNT, GSOC and LSBP need the bgsegm module of opencv_contrib, otherwise MOG2 is used)" />
+  <arg name="learning_rate" default="-1.0" doc="Learning rate of the background model, negative: automatically chosen, 0: not updated, 1: reinitialized from the last frame (CNT, GSOC and LSBP may still update the model at 0, and GMG, GSOC and LSBP do not reinitialize it at 1)" />
+
+  <!-- background_subtraction.cpp -->
+  <node name="$(arg node_name)"
+        pkg="opencv_apps" type="background_subtraction">
+    <remap from="image" to="$(arg image)" />
+    <param name="use_camera_info" value="$(arg use_camera_info)" />
+    <param name="debug_view" value="$(arg debug_view)" />
+    <param name="queue_size" value="$(arg queue_size)" />
+    <param name="method" value="$(arg method)" />
+    <param name="learning_rate" value="$(arg learning_rate)" />
+  </node>
+
+</launch>

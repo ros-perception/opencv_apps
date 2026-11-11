@@ -69,6 +69,10 @@ if(NOT OpenCV_VERSION VERSION_LESS "4.5.4")
     set(OPENCV_HAVE_ARUCO TRUE)
   endif()
 endif()
+# MOG, GMG, CNT, GSOC and LSBP of background_subtraction are in opencv_contrib's bgsegm module
+if(TARGET opencv_bgsegm)
+  set(OPENCV_HAVE_BGSEGM TRUE)
+endif()
 
 file(GLOB _msg_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} msg/*.msg srv/*.srv)
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -112,6 +116,7 @@ set(_nodelets
   watershed_segmentation:WatershedSegmentationNodelet
   simple_example:SimpleExampleNodelet
   simple_compressed_example:SimpleCompressedExampleNodelet
+  background_subtraction:BackgroundSubtractionNodelet
 )
 set(_nodelet_cppfiles
   src/nodelet/adding_images_nodelet.cpp
@@ -144,6 +149,7 @@ set(_nodelet_cppfiles
   src/nodelet/watershed_segmentation_nodelet.cpp
   src/nodelet/simple_example_nodelet.cpp
   src/nodelet/simple_compressed_example_nodelet.cpp
+  src/nodelet/background_subtraction_nodelet.cpp
 )
 # simple flow requires opencv-contrib https://github.com/ros-perception/vision_opencv/issues/108
 if(OPENCV_HAVE_OPTFLOW)
@@ -172,6 +178,10 @@ if(OPENCV_HAVE_DNN)
     list(APPEND _nodelets aruco_detection:ArucoDetectionNodelet)
     list(APPEND _nodelet_cppfiles src/nodelet/aruco_detection_nodelet.cpp)
   endif()
+endif()
+if(OPENCV_HAVE_BGSEGM)
+  set_source_files_properties(src/nodelet/background_subtraction_nodelet.cpp PROPERTIES
+    COMPILE_DEFINITIONS OPENCV_APPS_HAVE_BGSEGM)
 endif()
 
 add_library(${PROJECT_NAME}_nodelet SHARED
@@ -327,6 +337,15 @@ elseif(NOT OpenCV_VERSION VERSION_LESS "4.5.4")
     set(OPENCV_HAVE_ARUCO TRUE)
   endif()
 endif()
+# MOG, GMG, CNT, GSOC and LSBP of background_subtraction are in opencv_contrib's bgsegm module
+if(TARGET opencv_bgsegm)
+  set(OPENCV_HAVE_BGSEGM TRUE)
+endif()
+# cv::createBackgroundSubtractorMOG2() and the cv::BackgroundSubtractor interface of background_subtraction are
+# since OpenCV 3.0
+if(NOT OpenCV_VERSION VERSION_LESS "3.0")
+  set(OPENCV_HAVE_BACKGROUND_SUBTRACTION TRUE)
+endif()
 # Supporting CompressedImage in cv_bridge has been started from 1.11.9 (2015-11-29)
 # note : hydro 1.10.18, indigo : 1.11.13 ...
 # https://github.com/ros-perception/vision_opencv/pull/70
@@ -375,6 +394,7 @@ generate_dynamic_reconfigure_options(
   cfg/LabColorFilter.cfg
   cfg/WatershedSegmentation.cfg
   cfg/BlobDetection.cfg
+  cfg/BackgroundSubtraction.cfg
   )
 
 ## Generate messages in the 'msg' folder
@@ -552,6 +572,13 @@ opencv_apps_add_nodelet(corner_harris src/nodelet/corner_harris_nodelet.cpp)  # 
 
 # videoio
  # ./tutorial_code/video/bg_sub.cpp
+if(OPENCV_HAVE_BACKGROUND_SUBTRACTION)
+  opencv_apps_add_nodelet(background_subtraction src/nodelet/background_subtraction_nodelet.cpp) # ./tutorial_code/video/bg_sub.cpp, ./bgfg_segm.cpp
+  if(OPENCV_HAVE_BGSEGM)
+    set_source_files_properties(src/nodelet/background_subtraction_nodelet.cpp PROPERTIES
+      COMPILE_DEFINITIONS OPENCV_APPS_HAVE_BGSEGM)
+  endif()
+endif()
  # ./tutorial_code/videoio/video-input-psnr-ssim/video-input-psnr-ssim.cpp
  # ./tutorial_code/videoio/video-write/video-write.cpp
 
@@ -737,6 +764,9 @@ if(CATKIN_ENABLE_TESTING)
     endif()
     if(NOT OPENCV_HAVE_ARUCO)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/aruco_detection.launch)
+    endif()
+    if(NOT OPENCV_HAVE_BACKGROUND_SUBTRACTION)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/background_subtraction.launch)
     endif()
     foreach(LAUNCH_FILE ${LAUNCH_FILES})
       roslaunch_add_file_check(${LAUNCH_FILE})
