@@ -55,6 +55,10 @@ if(NOT OpenCV_VERSION VERSION_LESS "4.5.4")
   if(NOT OpenCV_VERSION VERSION_LESS "4.7" OR TARGET opencv_aruco)
     set(OPENCV_HAVE_ARUCO TRUE)
   endif()
+  # objectness (cv::saliency::ObjectnessBING) requires opencv-contrib, and modelFile() of dnn.cpp
+  if(TARGET opencv_saliency)
+    set(OPENCV_HAVE_OBJECTNESS TRUE)
+  endif()
 endif()
 
 file(GLOB _msg_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} msg/*.msg srv/*.srv)
@@ -157,6 +161,10 @@ if(OPENCV_HAVE_DNN)
     list(APPEND _nodelets aruco_detection:ArucoDetectionNodelet)
     list(APPEND _nodelet_cppfiles src/nodelet/aruco_detection_nodelet.cpp)
   endif()
+  if(OPENCV_HAVE_OBJECTNESS)
+    list(APPEND _nodelets objectness:ObjectnessNodelet)
+    list(APPEND _nodelet_cppfiles src/nodelet/objectness_nodelet.cpp)
+  endif()
 endif()
 
 add_library(${PROJECT_NAME}_nodelet SHARED
@@ -234,6 +242,9 @@ if(BUILD_TESTING)
   if(NOT OPENCV_HAVE_ARUCO)
     list(REMOVE_ITEM _launch_tests test/ros2/test_aruco_detection.py)
   endif()
+  if(NOT OPENCV_HAVE_OBJECTNESS)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_objectness.py)
+  endif()
   foreach(_launch_test ${_launch_tests})
     get_filename_component(_name ${_launch_test} NAME_WE)
     add_launch_test(${_launch_test} TARGET ${_name} TIMEOUT 180
@@ -291,6 +302,10 @@ if(NOT OpenCV_VERSION VERSION_LESS "4.5.4")
   if(NOT OpenCV_VERSION VERSION_LESS "4.7" OR TARGET opencv_aruco)
     set(OPENCV_HAVE_ARUCO TRUE)
   endif()
+  # objectness (cv::saliency::ObjectnessBING) requires opencv-contrib, and modelFile() of dnn.cpp
+  if(TARGET opencv_saliency)
+    set(OPENCV_HAVE_OBJECTNESS TRUE)
+  endif()
 endif()
 # Supporting CompressedImage in cv_bridge has been started from 1.11.9 (2015-11-29)
 # note : hydro 1.10.18, indigo : 1.11.13 ...
@@ -339,6 +354,7 @@ generate_dynamic_reconfigure_options(
   cfg/LabColorFilter.cfg
   cfg/WatershedSegmentation.cfg
   cfg/BlobDetection.cfg
+  cfg/Objectness.cfg
   )
 
 ## Generate messages in the 'msg' folder
@@ -640,6 +656,9 @@ if(OPENCV_HAVE_DNN)
   if(OPENCV_HAVE_ARUCO)
     opencv_apps_add_nodelet(aruco_detection src/nodelet/aruco_detection_nodelet.cpp) # ./cpp/tutorial_code/objectDetection/detect_markers.cpp
   endif()
+  if(OPENCV_HAVE_OBJECTNESS)
+    opencv_apps_add_nodelet(objectness src/nodelet/objectness_nodelet.cpp) # opencv_contrib/modules/saliency/samples/computeSaliency.cpp
+  endif()
 endif()
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/bgfg_gmg.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/hybridtrackingsample.cpp
@@ -700,6 +719,9 @@ if(CATKIN_ENABLE_TESTING)
     endif()
     if(NOT OPENCV_HAVE_ARUCO)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/aruco_detection.launch)
+    endif()
+    if(NOT OPENCV_HAVE_OBJECTNESS)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/objectness.launch)
     endif()
     foreach(LAUNCH_FILE ${LAUNCH_FILES})
       roslaunch_add_file_check(${LAUNCH_FILE})

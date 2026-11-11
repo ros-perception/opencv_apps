@@ -1,0 +1,29 @@
+<launch>
+  <arg name="gui" default="true" />
+
+  <!-- the video in a loop, on camera/image_raw and camera/camera_info -->
+  <node name="camera" pkg="image_publisher" type="image_publisher" args="$(find opencv_apps)/test/face_detector_withface_test_diamondback.mp4" >
+    <param name="publish_rate" value="10" />
+  </node>
+
+  <!-- objectness_nodelet.cpp, downloads the trained model at the first time -->
+  <include file="$(find opencv_apps)/launch/objectness.launch" >
+    <arg name="debug_view" value="$(arg gui)" />
+    <arg name="image" value="camera/image_raw" />
+  </include>
+
+  <param name="objectness_rects_test/topic" value="objectness/rects" />
+  <test test-name="objectness_rects_test" pkg="rostest" type="hztest" name="objectness_rects_test" time-limit="300" >
+    <param name="hz" value="10" />
+    <param name="hzerror" value="8" />
+    <param name="test_duration" value="2.0" />
+    <param name="wait_time" value="240.0" />
+  </test>
+  <param name="objectness_image_test/topic" value="objectness/image" />
+  <test test-name="objectness_image_test" pkg="rostest" type="hztest" name="objectness_image_test" time-limit="300" >
+    <param name="hz" value="10" />
+    <param name="hzerror" value="8" />
+    <param name="test_duration" value="2.0" />
+    <param name="wait_time" value="240.0" />
+  </test>
+</launch>
