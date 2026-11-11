@@ -60,6 +60,7 @@ add_rostest(test-equalize_histogram.test ARGS gui:=false)
 
 add_rostest(test-hough_lines.test ARGS gui:=false)
 add_rostest(test-hough_circles.test ARGS gui:=false)
+add_rostest(test-blob_detection.test ARGS gui:=false)
 add_rostest(test-find_contours.test ARGS gui:=false)
 add_rostest(test-convex_hull.test ARGS gui:=false)
 add_rostest(test-general_contours.test ARGS gui:=false)

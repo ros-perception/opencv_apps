@@ -61,6 +61,7 @@ set(_nodelets
   edge_detection:EdgeDetectionNodelet
   hough_lines:HoughLinesNodelet
   hough_circles:HoughCirclesNodelet
+  blob_detection:BlobDetectionNodelet
   find_contours:FindContoursNodelet
   convex_hull:ConvexHullNodelet
   general_contours:GeneralContoursNodelet
@@ -91,6 +92,7 @@ set(_nodelet_cppfiles
   src/nodelet/edge_detection_nodelet.cpp
   src/nodelet/hough_lines_nodelet.cpp
   src/nodelet/hough_circles_nodelet.cpp
+  src/nodelet/blob_detection_nodelet.cpp
   src/nodelet/find_contours_nodelet.cpp
   src/nodelet/convex_hull_nodelet.cpp
   src/nodelet/general_contours_nodelet.cpp
@@ -260,6 +262,7 @@ generate_dynamic_reconfigure_options(
   cfg/HSVColorFilter.cfg
   cfg/LabColorFilter.cfg
   cfg/WatershedSegmentation.cfg
+  cfg/BlobDetection.cfg
   )
 
 ## Generate messages in the 'msg' folder
@@ -461,6 +464,7 @@ opencv_apps_add_nodelet(camshift src/nodelet/camshift_nodelet.cpp) # ./camshiftd
 # ./delaunay2.cpp
 # ./demhist.cpp
 # ./detect_blob.cpp
+opencv_apps_add_nodelet(blob_detection src/nodelet/blob_detection_nodelet.cpp) # ./detect_blob.cpp
 # ./detect_mser.cpp
 # ./dft.cpp
 # ./distrans.cpp
