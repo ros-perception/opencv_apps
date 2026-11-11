@@ -42,6 +42,8 @@
 #include "opencv_apps/nodelet.h"
 
 #include <iostream>
+#include <mutex>
+#include <string>
 #include <ctype.h>
 #include <opencv2/video/tracking.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -66,6 +68,19 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
   bool use_camera_info_;
 
+  // guards the state shared by doWork() and parametersCallback()
+  std::mutex mutex_;
+  // incremented when the user sets the rectangle, to reject the rectangle computed before it by this node
+  unsigned int rect_generation_;
+  // the parameters being set by setInternalParameters() on this thread, e.g. the rectangle selected with the mouse,
+  // so that parametersCallback(), which set_parameters() calls on the calling thread, tells them from the user's
+  struct InternalSet
+  {
+    const CamShiftNodelet* node;
+    unsigned int generation;  // rect_generation_ when they were computed
+  };
+  static thread_local InternalSet internal_set_;
+
   std::string window_name_, histogram_name_;
   static bool need_config_update_;
   static bool on_mouse_update_;
@@ -74,8 +89,11 @@ class CamShiftNodelet : public opencv_apps::Nodelet
   static int on_mouse_y_;
 
   int vmin_, vmax_, smin_;
+  // rectangle to track, center x-y (same convention as opencv_apps/Rect and track_box), 0 width/height for none
+  int x_, y_, width_, height_;
   bool backprojMode;
   bool selectObject;
+  int showSelected;
   int trackObject;
   bool showHist;
   cv::Point origin;
@@ -99,6 +117,25 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
   rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
+    std::lock_guard<std::mutex> lock(mutex_);
+    rcl_interfaces::msg::SetParametersResult result;
+    bool internal = internal_set_.node == this;
+    // reject the rectangle written back by this node if the user set the rectangle after it was computed, not to
+    // overwrite the user's one
+    if (internal && internal_set_.generation != rect_generation_)
+    {
+      for (const rclcpp::Parameter& parameter : parameters)
+      {
+        const std::string& name = parameter.get_name();
+        if (name == "x" || name == "y" || name == "width" || name == "height")
+        {
+          result.successful = false;
+          result.reason = "the rectangle was set by the user after this one was computed";
+          return result;
+        }
+      }
+    }
+    bool restart = false;
     for (const rclcpp::Parameter& parameter : parameters)
     {
       if (parameter.get_name() == "use_camera_info")
@@ -109,10 +146,71 @@ class CamShiftNodelet : public opencv_apps::Nodelet
         vmax_ = parameter.as_int();
       else if (parameter.get_name() == "smin")
         smin_ = parameter.as_int();
+      else if (parameter.get_name() == "x")
+        restart |= setRectValue(parameter, x_, internal);
+      else if (parameter.get_name() == "y")
+        restart |= setRectValue(parameter, y_, internal);
+      else if (parameter.get_name() == "width")
+        restart |= setRectValue(parameter, width_, internal);
+      else if (parameter.get_name() == "height")
+        restart |= setRectValue(parameter, height_, internal);
     }
-    rcl_interfaces::msg::SetParametersResult result;
+    // (re)start the tracking when the user sets the rectangle, even to the same values (e.g. after losing the target),
+    // or stop it when the user sets width/height to 0
+    if (restart)
+    {
+      rect_generation_++;
+      if (width_ > 0 && height_ > 0)
+        startTrackingFromParameters();
+      else
+        stopTracking();
+    }
     result.successful = true;
     return result;
+  }
+
+  // set value of a rectangle parameter, returns true if it is set by the user (not by setInternalParameters())
+  static bool setRectValue(const rclcpp::Parameter& parameter, int& value, bool internal)
+  {
+    value = static_cast<int>(parameter.as_int());
+    return !internal;
+  }
+
+  // start tracking the rectangle of x/y/width/height parameters, it is clipped to the image in doWork()
+  void startTrackingFromParameters()
+  {
+    if (width_ <= 0 || height_ <= 0)
+      return;
+    selection = cv::Rect(x_ - width_ / 2, y_ - height_ / 2, width_, height_);
+    selectObject = false;
+    trackObject = -1;
+  }
+
+  void stopTracking()
+  {
+    selection = cv::Rect();
+    selectObject = false;
+    showSelected = 0;
+    trackObject = 0;
+    histimg = cv::Scalar::all(0);
+  }
+
+  // set parameters from this node, without restarting the tracking, computed at rect_generation_ of generation
+  void setInternalParameters(const std::vector<rclcpp::Parameter>& parameters, unsigned int generation)
+  {
+    struct Guard
+    {
+      Guard(const CamShiftNodelet* node, unsigned int generation)
+      {
+        internal_set_ = InternalSet{ node, generation };
+      }
+      ~Guard()
+      {
+        internal_set_ = InternalSet{ nullptr, 0 };
+      }
+    } guard(this, generation);
+    // all at once, not to mix the fields of the rectangle with an external update
+    set_parameters_atomically(parameters);
   }
 
   const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
@@ -140,6 +238,20 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
   void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& msg, const std::string& input_frame_from_msg)
   {
+    // parameters to set after unlocking mutex_, as set_parameters() calls parametersCallback()
+    std::vector<rclcpp::Parameter> parameters;
+    unsigned int generation;
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      processImage(msg, parameters);
+      generation = rect_generation_;
+    }
+    if (!parameters.empty())
+      setInternalParameters(parameters, generation);
+  }
+
+  void processImage(const sensor_msgs::msg::Image::ConstSharedPtr& msg, std::vector<rclcpp::Parameter>& parameters)
+  {
     // Work on the image.
     try
     {
@@ -166,9 +278,9 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 
         if (need_config_update_)
         {
-          set_parameter(rclcpp::Parameter("vmin", vmin_));
-          set_parameter(rclcpp::Parameter("vmax", vmax_));
-          set_parameter(rclcpp::Parameter("smin", smin_));
+          parameters.push_back(rclcpp::Parameter("vmin", vmin_));
+          parameters.push_back(rclcpp::Parameter("vmax", vmax_));
+          parameters.push_back(rclcpp::Parameter("smin", smin_));
           need_config_update_ = false;
         }
       }
@@ -199,10 +311,30 @@ class CamShiftNodelet : public opencv_apps::Nodelet
           case cv::EVENT_LBUTTONUP:
             selectObject = false;
             if (selection.width > 0 && selection.height > 0)
+            {
               trackObject = -1;
+              // reflect the selected rectangle to the parameters, x_ ... height_ are set by parametersCallback() when
+              // they are accepted, not to be mixed with an external update coming before them
+              parameters.push_back(rclcpp::Parameter("x", selection.x + selection.width / 2));
+              parameters.push_back(rclcpp::Parameter("y", selection.y + selection.height / 2));
+              parameters.push_back(rclcpp::Parameter("width", selection.width));
+              parameters.push_back(rclcpp::Parameter("height", selection.height));
+            }
             break;
         }
         on_mouse_update_ = false;
+      }
+
+      if (trackObject < 0)
+      {
+        // the rectangle from the parameters may be out of the image
+        selection &= cv::Rect(0, 0, frame.cols, frame.rows);
+        if (selection.width <= 0 || selection.height <= 0)
+        {
+          RCLCPP_WARN(get_logger(), "The rectangle to track (x:%d y:%d width:%d height:%d) is out of the image (%dx%d)",
+                      x_, y_, width_, height_, frame.cols, frame.rows);
+          trackObject = 0;
+        }
       }
 
       if (!paused)
@@ -230,10 +362,11 @@ class CamShiftNodelet : public opencv_apps::Nodelet
             {
               hist_value[i] = hist.at<float>(i);
             }
-            set_parameter(rclcpp::Parameter("histogram", hist_value));
+            parameters.push_back(rclcpp::Parameter("histogram", hist_value));
 
             trackWindow = selection;
             trackObject = 1;
+            showSelected = 10;
 
             histimg = cv::Scalar::all(0);
             int bin_w = histimg.cols / hsize;
@@ -284,11 +417,15 @@ class CamShiftNodelet : public opencv_apps::Nodelet
       else if (trackObject < 0)
         paused = false;
 
-      if (selectObject && selection.width > 0 && selection.height > 0)
+      // clipped to the frame, which may be smaller than the one the selection was made in
+      cv::Rect shown = selection & cv::Rect(0, 0, frame.cols, frame.rows);
+      if ((showSelected > 0 || selectObject) && shown.area() > 0)
       {
-        cv::Mat roi(frame, selection);
+        cv::Mat roi(frame, shown);
         bitwise_not(roi, roi);
       }
+      if (showSelected > 0)
+        showSelected--;
 
       if (debug_view_)
       {
@@ -357,7 +494,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
   }
 
 public:
-  explicit CamShiftNodelet(const rclcpp::NodeOptions& options) : Nodelet("camshift", options)
+  explicit CamShiftNodelet(const rclcpp::NodeOptions& options) : Nodelet("camshift", options), rect_generation_(0)
   {
     queue_size_ = declare_parameter("queue_size", 3);
     debug_view_ = declare_parameter("debug_view", false);
@@ -372,6 +509,7 @@ public:
 
     backprojMode = false;
     selectObject = false;
+    showSelected = 0;
     trackObject = 0;
     showHist = true;
     paused = false;
@@ -389,6 +527,14 @@ public:
     vmin_ = declare_parameter("vmin", 10, paramDescriptor("Vmin", 1, 256));
     vmax_ = declare_parameter("vmax", 256, paramDescriptor("Vmax", 1, 256));
     smin_ = declare_parameter("smin", 30, paramDescriptor("Smin", 1, 256));
+    x_ = declare_parameter("x", 0, paramDescriptor("Center x of the rectangle to track", 0, 4096));
+    y_ = declare_parameter("y", 0, paramDescriptor("Center y of the rectangle to track", 0, 4096));
+    width_ = declare_parameter(
+        "width", 0,
+        paramDescriptor("Width of the rectangle to track, 0 for none (setting it to 0 stops tracking)", 0, 4096));
+    height_ = declare_parameter(
+        "height", 0,
+        paramDescriptor("Height of the rectangle to track, 0 for none (setting it to 0 stops tracking)", 0, 4096));
     on_set_parameters_callback_handle_ =
         add_on_set_parameters_callback(std::bind(&CamShiftNodelet::parametersCallback, this, std::placeholders::_1));
 
@@ -402,7 +548,7 @@ public:
     RCLCPP_INFO(get_logger(), "\tb - switch to/from backprojection view");
     RCLCPP_INFO(get_logger(), "\th - show/hide object histogram");
     RCLCPP_INFO(get_logger(), "\tp - pause video");
-    RCLCPP_INFO(get_logger(), "To initialize tracking, select the object with mouse");
+    RCLCPP_INFO(get_logger(), "To initialize tracking, select the object with mouse, or set x/y/width/height");
 
     std::vector<double> hist_value = declare_parameter("histogram", std::vector<double>());
     if (hist_value.size() == hsize)
@@ -429,10 +575,13 @@ public:
                       cv::Scalar(buf.at<cv::Vec3b>(i)), -1, 8);
       }
     }
+    // the rectangle given at startup has priority over the histogram
+    startTrackingFromParameters();
     onInitPostProcess();
   }
 };
 bool CamShiftNodelet::need_config_update_ = false;
+thread_local CamShiftNodelet::InternalSet CamShiftNodelet::internal_set_ = { nullptr, 0 };
 bool CamShiftNodelet::on_mouse_update_ = false;
 int CamShiftNodelet::on_mouse_event_ = 0;
 int CamShiftNodelet::on_mouse_x_ = 0;

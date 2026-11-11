@@ -47,9 +47,11 @@ def generate_test_description():
         include('camshift', image='image',
                 histogram='[0.0, 255.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]',
                 vmin='120', vmax='230', smin='60'),
+        # track the rectangle given by the parameters, which is partly out of the image
+        include('camshift', node_name='camshift_roi', image='image', x='600', y='240', width='200', height='100'),
     )
 
 
 class TestCamshift(TopicsTest, unittest.TestCase):
 
-    TOPICS = ['camshift/track_box']
+    TOPICS = ['camshift/track_box', 'camshift_roi/track_box']
