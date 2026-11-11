@@ -35,7 +35,7 @@
 
 import unittest
 
-from opencv_apps_test import camera, description, FACE_VIDEO, image_view, include, TopicsTest
+from opencv_apps_test import camera, ColorSpaceTest, description, FACE_VIDEO, image_view, include
 import pytest
 
 
@@ -49,6 +49,6 @@ def generate_test_description():
     )
 
 
-class TestLabColorFilter(TopicsTest, unittest.TestCase):
+class TestLabColorFilter(ColorSpaceTest, unittest.TestCase):
 
-    TOPICS = ['lab_color_filter/image']
+    TOPICS = ['lab_color_filter/image', 'lab_color_filter/color_space']

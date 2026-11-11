@@ -70,6 +70,7 @@
   <test_depend condition="$ROS_VERSION==2">image_publisher</test_depend>
   <test_depend condition="$ROS_VERSION==2">launch_ros</test_depend>
   <test_depend condition="$ROS_VERSION==2">launch_testing_ament_cmake</test_depend>
+  <test_depend condition="$ROS_VERSION==2">python3-numpy</test_depend>
   <test_depend condition="$ROS_VERSION==2">python3-opencv</test_depend>
   <test_depend condition="$ROS_VERSION==2">rosidl_runtime_py</test_depend>
   <test_depend>image_proc</test_depend>
