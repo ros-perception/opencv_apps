@@ -184,7 +184,7 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
 
       // Publish the image.
       sensor_msgs::msg::Image::SharedPtr out_img = cv_bridge::CvImage(msg->header, msg->encoding, frame).toImageMsg();
-      img_pub_.publish(*out_img);
+      img_pub_.publish(out_img);
       msg_pub_->publish(found_msg);
     }
     catch (cv::Exception& e)

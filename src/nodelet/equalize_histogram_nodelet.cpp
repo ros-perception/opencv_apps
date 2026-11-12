@@ -184,7 +184,7 @@ class EqualizeHistogramNodelet : public opencv_apps::Nodelet
           cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::MONO8, dst).toImageMsg();
 #endif
       out_img->header.frame_id = input_frame_from_msg;
-      img_pub_.publish(*out_img);
+      img_pub_.publish(out_img);
     }
     catch (cv::Exception& e)
     {

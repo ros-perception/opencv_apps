@@ -67,6 +67,7 @@
 #include <std_msgs/Float64.h>
 #include <std_srvs/Empty.h>
 
+#include <algorithm>
 #include <chrono>
 #include <climits>
 #include <functional>
@@ -423,6 +424,11 @@ public:
   {
     pub_.publish(msg);
   }
+  // takes the ownership as ROS2, and publishes it without copy to the subscribers in the same nodelet manager
+  void publish(std::unique_ptr<T> msg) const
+  {
+    pub_.publish(boost::shared_ptr<T>(msg.release()));
+  }
 };
 
 template <class T>
@@ -490,6 +496,7 @@ public:
   {
     T value;
     pnh_.param(name, value, default_value);
+    value = clampToRange(descriptor, value);
     std::lock_guard<std::mutex> lock(parameters_mutex_);
     parameters_[name] = rclcpp::Parameter(name, value);
     descriptors_[name] = descriptor;
@@ -759,11 +766,14 @@ private:
     }
     for (size_t i = 0; i < req.config.ints.size(); i++)
     {
-      parameters.push_back(rclcpp::Parameter(req.config.ints[i].name, static_cast<int>(req.config.ints[i].value)));
+      const std::string& name = req.config.ints[i].name;
+      parameters.push_back(
+          rclcpp::Parameter(name, clampToRange(descriptor(name), static_cast<int>(req.config.ints[i].value))));
     }
     for (size_t i = 0; i < req.config.doubles.size(); i++)
     {
-      parameters.push_back(rclcpp::Parameter(req.config.doubles[i].name, req.config.doubles[i].value));
+      const std::string& name = req.config.doubles[i].name;
+      parameters.push_back(rclcpp::Parameter(name, clampToRange(descriptor(name), req.config.doubles[i].value)));
     }
     for (size_t i = 0; i < req.config.strs.size(); i++)
     {
@@ -773,6 +783,40 @@ private:
     res.config = parameterUpdates();
     updates_pub_.publish(res.config);
     return true;
+  }
+
+  rcl_interfaces::msg::ParameterDescriptor descriptor(const std::string& name)
+  {
+    std::lock_guard<std::mutex> lock(parameters_mutex_);
+    std::map<std::string, rcl_interfaces::msg::ParameterDescriptor>::const_iterator it = descriptors_.find(name);
+    return (it == descriptors_.end()) ? rcl_interfaces::msg::ParameterDescriptor() : it->second;
+  }
+
+  // clamp to the range of the descriptor, as dynamic_reconfigure does, while ROS2 rejects the value
+  template <class T>
+  static T clampToRange(const rcl_interfaces::msg::ParameterDescriptor& /* descriptor */, const T& value)
+  {
+    return value;
+  }
+  static int clampToRange(const rcl_interfaces::msg::ParameterDescriptor& descriptor, int value)
+  {
+    if (descriptor.integer_range.empty())
+    {
+      return value;
+    }
+    // in int64_t, as the range may not fit in int
+    int64_t from = std::max(descriptor.integer_range[0].from_value, static_cast<int64_t>(INT_MIN));
+    int64_t to = std::min(descriptor.integer_range[0].to_value, static_cast<int64_t>(INT_MAX));
+    return static_cast<int>(std::min(std::max(static_cast<int64_t>(value), from), to));
+  }
+  static double clampToRange(const rcl_interfaces::msg::ParameterDescriptor& descriptor, double value)
+  {
+    if (descriptor.floating_point_range.empty())
+    {
+      return value;
+    }
+    return std::min(std::max(value, descriptor.floating_point_range[0].from_value),
+                    descriptor.floating_point_range[0].to_value);
   }
 
   // current values, which are also set to the parameter server as dynamic_reconfigure does

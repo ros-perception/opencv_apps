@@ -122,7 +122,7 @@ protected:
       // Publish the image.
       sensor_msgs::msg::Image::SharedPtr out_img =
           cv_bridge::CvImage(image_msg->header, sensor_msgs::image_encodings::MONO8, out_frame).toImageMsg();
-      img_pub_.publish(*out_img);
+      img_pub_.publish(out_img);
     }
     catch (cv::Exception& e)
     {

@@ -243,7 +243,7 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
       if (publish_drawing)
       {
         sensor_msgs::msg::Image::SharedPtr out_img = cv_bridge::CvImage(msg->header, "bgr8", drawing).toImageMsg();
-        img_pub_.publish(*out_img);
+        img_pub_.publish(out_img);
       }
       msg_pub_->publish(moments_msg);
     }

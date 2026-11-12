@@ -49,6 +49,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace opencv_apps
@@ -163,7 +164,9 @@ https://github.com/ros-perception/vision_opencv/pull/70
 
 // Output modified video stream
 #ifndef CV_BRIDGE_COMPRESSED_IMAGE_IS_NOT_SUPPORTED
-    image_pub_->publish(*cv_ptr->toCompressedImageMsg());
+    std::unique_ptr<sensor_msgs::msg::CompressedImage> out_msg(new sensor_msgs::msg::CompressedImage());
+    cv_ptr->toCompressedImageMsg(*out_msg);
+    image_pub_->publish(std::move(out_msg));
 #else
     image_pub_->publish(toCompressedImageMsg(cv_ptr));
 #endif
