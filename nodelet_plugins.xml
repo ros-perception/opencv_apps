@@ -31,6 +31,10 @@
     <description>Nodelet to find circles</description>
   </class>
 
+  <class name="opencv_apps/blob_detection" type="opencv_apps::BlobDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect blobs using the SimpleBlobDetector</description>
+  </class>
+
   <class name="opencv_apps/find_contours" type="opencv_apps::FindContoursNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to find contours</description>
   </class>

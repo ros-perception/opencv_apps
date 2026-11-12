@@ -1,0 +1,56 @@
+<launch>
+  <arg name="node_name" default="blob_detection" />
+
+  <arg name="image" default="image" doc="The image topic, typically a binary mask (e.g. hsv_color_filter/image). Should be remapped to the name of the real image topic." />
+
+  <arg name="use_camera_info" default="false" doc="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
+  <arg name="debug_view" default="true" doc="Specify whether the node displays a window to show the detected blobs" />
+  <arg name="queue_size" default="3" doc="Specify queue_size of input image subscribers" />
+
+  <arg name="threshold_step" default="10.0" doc="Step of the thresholds from min_threshold to max_threshold" />
+  <arg name="min_threshold" default="50.0" doc="The minimum threshold to binarize the image" />
+  <arg name="max_threshold" default="220.0" doc="The maximum threshold (exclusive) to binarize the image" />
+  <arg name="min_repeatability" default="2" doc="The minimum number of the binarized images in which a blob is detected" />
+  <arg name="min_dist_between_blobs" default="10.0" doc="The blobs located closer than min_dist_between_blobs are merged" />
+  <arg name="filter_by_color" default="true" doc="Filter the blobs by the color of the center" />
+  <arg name="blob_color" default="255" doc="0 to extract dark blobs and 255 to extract light blobs" />
+  <arg name="filter_by_area" default="true" doc="Filter the blobs by the area" />
+  <arg name="min_area" default="25.0" doc="The minimum area (inclusive) of the blobs [pixel]" />
+  <arg name="max_area" default="100000.0" doc="The maximum area (exclusive) of the blobs [pixel]" />
+  <arg name="filter_by_circularity" default="false" doc="Filter the blobs by the circularity (4*pi*area/perimeter^2)" />
+  <arg name="min_circularity" default="0.8" doc="The minimum circularity (inclusive) of the blobs" />
+  <arg name="max_circularity" default="1.0" doc="The maximum circularity (exclusive) of the blobs, 1.0 means no limit" />
+  <arg name="filter_by_inertia" default="false" doc="Filter the blobs by the inertia ratio (minor axis / major axis, 0: line, 1: circle)" />
+  <arg name="min_inertia_ratio" default="0.1" doc="The minimum inertia ratio (inclusive) of the blobs" />
+  <arg name="max_inertia_ratio" default="1.0" doc="The maximum inertia ratio (exclusive) of the blobs, 1.0 means no limit" />
+  <arg name="filter_by_convexity" default="false" doc="Filter the blobs by the convexity (area / area of convex hull)" />
+  <arg name="min_convexity" default="0.95" doc="The minimum convexity (inclusive) of the blobs" />
+  <arg name="max_convexity" default="1.0" doc="The maximum convexity (exclusive) of the blobs, 1.0 means no limit" />
+
+  <!-- blob_detection.cpp -->
+  <node name="$(arg node_name)" pkg="opencv_apps" type="blob_detection">
+    <remap from="image" to="$(arg image)" />
+    <param name="use_camera_info" value="$(arg use_camera_info)" />
+    <param name="debug_view" value="$(arg debug_view)" />
+    <param name="queue_size" value="$(arg queue_size)" />
+    <param name="threshold_step" value="$(arg threshold_step)" />
+    <param name="min_threshold" value="$(arg min_threshold)" />
+    <param name="max_threshold" value="$(arg max_threshold)" />
+    <param name="min_repeatability" value="$(arg min_repeatability)" />
+    <param name="min_dist_between_blobs" value="$(arg min_dist_between_blobs)" />
+    <param name="filter_by_color" value="$(arg filter_by_color)" />
+    <param name="blob_color" value="$(arg blob_color)" />
+    <param name="filter_by_area" value="$(arg filter_by_area)" />
+    <param name="min_area" value="$(arg min_area)" />
+    <param name="max_area" value="$(arg max_area)" />
+    <param name="filter_by_circularity" value="$(arg filter_by_circularity)" />
+    <param name="min_circularity" value="$(arg min_circularity)" />
+    <param name="max_circularity" value="$(arg max_circularity)" />
+    <param name="filter_by_inertia" value="$(arg filter_by_inertia)" />
+    <param name="min_inertia_ratio" value="$(arg min_inertia_ratio)" />
+    <param name="max_inertia_ratio" value="$(arg max_inertia_ratio)" />
+    <param name="filter_by_convexity" value="$(arg filter_by_convexity)" />
+    <param name="min_convexity" value="$(arg min_convexity)" />
+    <param name="max_convexity" value="$(arg max_convexity)" />
+  </node>
+</launch>
