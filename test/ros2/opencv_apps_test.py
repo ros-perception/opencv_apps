@@ -62,6 +62,11 @@ VSLAM_VIDEO = os.path.join(TEST_DIR, 'vslam_tutorial.mp4')
 CODES_VIDEO = os.path.join(TEST_DIR, 'codes.mp4')
 GUI = LaunchConfiguration('gui')
 
+# Fast DDS profile with the shared memory large enough for the images, for this process and the nodes it launches,
+# see fastdds.xml (FASTRTPS_ for Fast DDS 2 of jazzy, FASTDDS_ for Fast DDS 3)
+for _variable in ['FASTRTPS_DEFAULT_PROFILES_FILE', 'FASTDDS_DEFAULT_PROFILES_FILE']:
+    os.environ.setdefault(_variable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'fastdds.xml'))
+
 
 def face_data_dir():
     """Extract test/face_data.tar.gz (the trained data of face_recognition) to a temporary directory."""
