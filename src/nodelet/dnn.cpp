@@ -127,10 +127,12 @@ bool download(const std::string& url, const fs::path& path, const rclcpp::Logger
   curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 60L);
   CURLcode result = curl_easy_perform(curl);
   curl_easy_cleanup(curl);
-  fclose(fp);
-  if (result != CURLE_OK)
+  // the last buffered write may fail at fclose(), e.g. on a full disk
+  bool closed = fclose(fp) == 0;
+  if (result != CURLE_OK || !closed)
   {
-    RCLCPP_ERROR(logger, "Failed to download %s: %s", url.c_str(), error[0] ? error : curl_easy_strerror(result));
+    RCLCPP_ERROR(logger, "Failed to download %s: %s", url.c_str(),
+                 !closed ? "failed to write the file" : (error[0] ? error : curl_easy_strerror(result)));
     fs::remove(tmp_path);
     return false;
   }
@@ -156,9 +158,11 @@ bool download(const std::string& url, const fs::path& path, const rclcpp::Logger
 }
 #endif
 // the file to save the URL (without the scheme) in, not to mix the files of the same name, e.g. of other versions.
+// The files are under the directory of the scheme (http or https), not to use a model downloaded by http:// for
+// https://, and not to use the files of the older versions, which were saved without the scheme.
 // The query is replaced with its hash to keep the extension, which OpenCV uses to find the format of the model.
 // Returns false for the URL which would be saved out of the models directory, e.g. with "..".
-bool cachePath(const std::string& url, fs::path& path)
+bool cachePath(const std::string& scheme, const std::string& url, fs::path& path)
 {
   std::string location = url.substr(0, url.find_first_of("?#"));
   std::string query = url.substr(location.size());
@@ -170,7 +174,7 @@ bool cachePath(const std::string& url, fs::path& path)
     if (part == "." || part == "..")
       return false;
   }
-  path = rosHome() / "opencv_apps" / "models" / relative.parent_path();
+  path = rosHome() / "opencv_apps" / "models" / scheme / relative.parent_path();
   if (!query.empty())
   {
     std::stringstream ss;
@@ -184,13 +188,14 @@ bool cachePath(const std::string& url, fs::path& path)
 
 std::string modelFile(const std::string& model, const rclcpp::Logger& logger)
 {
-  const std::vector<std::string> schemes = { "https://", "http://" };
+  const std::vector<std::string> schemes = { "https", "http" };
   for (const std::string& scheme : schemes)
   {
-    if (model.compare(0, scheme.size(), scheme) != 0)
+    const std::string prefix = scheme + "://";
+    if (model.compare(0, prefix.size(), prefix) != 0)
       continue;
     fs::path path;
-    if (!cachePath(model.substr(scheme.size()), path))
+    if (!cachePath(scheme, model.substr(prefix.size()), path))
     {
       RCLCPP_ERROR(logger, "Invalid model URL %s", model.c_str());
       return std::string();
