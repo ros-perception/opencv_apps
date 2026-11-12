@@ -78,55 +78,114 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
     return value >= 1.0 ? FLT_MAX : static_cast<float>(value);
   }
 
+  static cv::Ptr<cv::SimpleBlobDetector> createDetector(const cv::SimpleBlobDetector::Params& params)
+  {
+#if CV_MAJOR_VERSION >= 3
+    return cv::SimpleBlobDetector::create(params);
+#else
+    return new cv::SimpleBlobDetector(params);
+#endif
+  }
+
+  // KeyPoint::size is the diameter of the blob since OpenCV 3, but the radius on OpenCV 2
+  static double blobRadius(const cv::KeyPoint& keypoint)
+  {
+#if CV_MAJOR_VERSION >= 3
+    return keypoint.size / 2.0;
+#else
+    return keypoint.size;
+#endif
+  }
+
+  // create the detector and run it on an empty image, as OpenCV rejects some parameters
+  // (e.g. min_area larger than max_area) only when detecting
+  static cv::Ptr<cv::SimpleBlobDetector> checkedDetector(const cv::SimpleBlobDetector::Params& params,
+                                                         std::string& reason)
+  {
+    if (params.minThreshold >= params.maxThreshold)
+    {
+      reason = "min_threshold must be smaller than max_threshold";
+      return cv::Ptr<cv::SimpleBlobDetector>();
+    }
+    if (params.filterByArea && params.minArea >= params.maxArea)
+    {
+      reason = "min_area must be smaller than max_area";
+      return cv::Ptr<cv::SimpleBlobDetector>();
+    }
+    try
+    {
+      cv::Ptr<cv::SimpleBlobDetector> detector = createDetector(params);
+      std::vector<cv::KeyPoint> keypoints;
+      detector->detect(cv::Mat::zeros(16, 16, CV_8UC1), keypoints);
+      return detector;
+    }
+    catch (cv::Exception& e)
+    {
+      reason = e.what();
+      return cv::Ptr<cv::SimpleBlobDetector>();
+    }
+  }
+
   rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
     std::lock_guard<std::mutex> lock(mutex_);
+    // apply the parameters to copies so that invalid ones keep the working detector
+    bool use_camera_info = use_camera_info_;
+    cv::SimpleBlobDetector::Params params = params_;
     for (const rclcpp::Parameter& parameter : parameters)
     {
       const std::string& name = parameter.get_name();
       if (name == "use_camera_info")
-        use_camera_info_ = parameter.as_bool();
+        use_camera_info = parameter.as_bool();
       else if (name == "threshold_step")
-        params_.thresholdStep = static_cast<float>(parameter.as_double());
+        params.thresholdStep = static_cast<float>(parameter.as_double());
       else if (name == "min_threshold")
-        params_.minThreshold = static_cast<float>(parameter.as_double());
+        params.minThreshold = static_cast<float>(parameter.as_double());
       else if (name == "max_threshold")
-        params_.maxThreshold = static_cast<float>(parameter.as_double());
+        params.maxThreshold = static_cast<float>(parameter.as_double());
       else if (name == "min_repeatability")
-        params_.minRepeatability = static_cast<size_t>(parameter.as_int());
+        params.minRepeatability = static_cast<size_t>(parameter.as_int());
       else if (name == "min_dist_between_blobs")
-        params_.minDistBetweenBlobs = static_cast<float>(parameter.as_double());
+        params.minDistBetweenBlobs = static_cast<float>(parameter.as_double());
       else if (name == "filter_by_color")
-        params_.filterByColor = parameter.as_bool();
+        params.filterByColor = parameter.as_bool();
       else if (name == "blob_color")
-        params_.blobColor = static_cast<uchar>(parameter.as_int());
+        params.blobColor = static_cast<uchar>(parameter.as_int());
       else if (name == "filter_by_area")
-        params_.filterByArea = parameter.as_bool();
+        params.filterByArea = parameter.as_bool();
       else if (name == "min_area")
-        params_.minArea = static_cast<float>(parameter.as_double());
+        params.minArea = static_cast<float>(parameter.as_double());
       else if (name == "max_area")
-        params_.maxArea = static_cast<float>(parameter.as_double());
+        params.maxArea = static_cast<float>(parameter.as_double());
       else if (name == "filter_by_circularity")
-        params_.filterByCircularity = parameter.as_bool();
+        params.filterByCircularity = parameter.as_bool();
       else if (name == "min_circularity")
-        params_.minCircularity = static_cast<float>(parameter.as_double());
+        params.minCircularity = static_cast<float>(parameter.as_double());
       else if (name == "max_circularity")
-        params_.maxCircularity = upperLimit(parameter.as_double());
+        params.maxCircularity = upperLimit(parameter.as_double());
       else if (name == "filter_by_inertia")
-        params_.filterByInertia = parameter.as_bool();
+        params.filterByInertia = parameter.as_bool();
       else if (name == "min_inertia_ratio")
-        params_.minInertiaRatio = static_cast<float>(parameter.as_double());
+        params.minInertiaRatio = static_cast<float>(parameter.as_double());
       else if (name == "max_inertia_ratio")
-        params_.maxInertiaRatio = upperLimit(parameter.as_double());
+        params.maxInertiaRatio = upperLimit(parameter.as_double());
       else if (name == "filter_by_convexity")
-        params_.filterByConvexity = parameter.as_bool();
+        params.filterByConvexity = parameter.as_bool();
       else if (name == "min_convexity")
-        params_.minConvexity = static_cast<float>(parameter.as_double());
+        params.minConvexity = static_cast<float>(parameter.as_double());
       else if (name == "max_convexity")
-        params_.maxConvexity = upperLimit(parameter.as_double());
+        params.maxConvexity = upperLimit(parameter.as_double());
     }
-    detector_.release();  // re-created with the new parameters in doWork()
     rcl_interfaces::msg::SetParametersResult result;
+    cv::Ptr<cv::SimpleBlobDetector> detector = checkedDetector(params, result.reason);
+    if (detector.empty())
+    {
+      result.successful = false;
+      return result;
+    }
+    use_camera_info_ = use_camera_info;
+    params_ = params;
+    detector_ = detector;
     result.successful = true;
     return result;
   }
@@ -151,9 +210,9 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
       std::vector<cv::KeyPoint> keypoints;
       {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (!detector_)
+        if (detector_.empty())
         {
-          detector_ = cv::SimpleBlobDetector::create(params_);
+          detector_ = createDetector(params_);
         }
         detector_->detect(gray, keypoints);
       }
@@ -167,7 +226,7 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
         opencv_apps::msg::Circle circle_msg;
         circle_msg.center.x = keypoint.pt.x;
         circle_msg.center.y = keypoint.pt.y;
-        circle_msg.radius = keypoint.size / 2.0;  // KeyPoint::size is the diameter
+        circle_msg.radius = blobRadius(keypoint);
         circles_msg.circles.push_back(circle_msg);
       }
       msg_pub_->publish(circles_msg);
@@ -181,7 +240,7 @@ class BlobDetectionNodelet : public opencv_apps::Nodelet
         {
           cv::Point center(cvRound(keypoint.pt.x), cvRound(keypoint.pt.y));
           cv::circle(out_image, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0);
-          cv::circle(out_image, center, cvRound(keypoint.size / 2.0), cv::Scalar(0, 0, 255), 2, 8, 0);
+          cv::circle(out_image, center, cvRound(blobRadius(keypoint)), cv::Scalar(0, 0, 255), 2, 8, 0);
         }
 
         if (debug_view_)
@@ -284,6 +343,12 @@ public:
     params_.maxConvexity = upperLimit(declare_parameter(
         "max_convexity", 1.0,
         paramDescriptor("The maximum convexity (exclusive) of the blobs, 1.0 means no limit", 0.0, 1.0)));
+    std::string reason;
+    detector_ = checkedDetector(params_, reason);
+    if (detector_.empty())
+    {
+      RCLCPP_ERROR(get_logger(), "Invalid blob detector parameters: %s", reason.c_str());
+    }
     on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
         std::bind(&BlobDetectionNodelet::parametersCallback, this, std::placeholders::_1));
 
