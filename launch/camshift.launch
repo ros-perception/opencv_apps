@@ -11,6 +11,10 @@
   <arg name="vmin" default="10" doc="Min threshould of lightness."/>
   <arg name="vmax" default="230" doc="Max threshould of lightness." />
   <arg name="smin" default="60" doc="Min value of saturation." />
+  <arg name="x" default="0" doc="Center x of the rectangle to track." />
+  <arg name="y" default="0" doc="Center y of the rectangle to track." />
+  <arg name="width" default="0" doc="Width of the rectangle to track, 0 for none: at startup the histogram is used instead, setting it to 0 at runtime stops tracking." />
+  <arg name="height" default="0" doc="Height of the rectangle to track, 0 for none: at startup the histogram is used instead, setting it to 0 at runtime stops tracking." />
 
   <!-- camshift.cpp -->
   <node name="$(arg node_name)" pkg="opencv_apps" type="camshift" >
@@ -24,5 +28,9 @@
     <param name="vmin" value="$(arg vmin)" />
     <param name="vmax" value="$(arg vmax)" />
     <param name="smin" value="$(arg smin)" />
+    <param name="x" value="$(arg x)" />
+    <param name="y" value="$(arg y)" />
+    <param name="width" value="$(arg width)" />
+    <param name="height" value="$(arg height)" />
   </node>
 </launch>

@@ -16,6 +16,16 @@
       <arg name="vmax" value="230" />
       <arg name="smin" value="60" />
     </include>
+    <!-- track the rectangle given by the parameters, which is partly out of the image -->
+    <include file="$(find opencv_apps)/launch/camshift.launch" >
+      <arg name="node_name" value="camshift_roi" />
+      <arg name="debug_view" value="$(arg gui)" />
+      <arg name="image" value="image_rect_color" />
+      <arg name="x" value="600" />
+      <arg name="y" value="240" />
+      <arg name="width" value="200" />
+      <arg name="height" value="100" />
+    </include>
 
     <!-- Test Codes -->
     <node name="camshift_saver_result" pkg="image_view" type="image_saver" >
@@ -32,6 +42,24 @@
     </node>
     <param name="camshift_test/topic" value="camshift/track_box" />    <!-- opencv_apps/Point2DArrayStamped -->
     <test test-name="camshift_test" pkg="rostest" type="hztest" name="camshift_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
+    <param name="camshift_roi_test/topic" value="camshift_roi/track_box" />
+    <test test-name="camshift_roi_test" pkg="rostest" type="hztest" name="camshift_roi_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
+    <param name="camshift_confidence_test/topic" value="camshift/confidence" />    <!-- std_msgs/Float64 -->
+    <test test-name="camshift_confidence_test" pkg="rostest" type="hztest" name="camshift_confidence_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
+    <param name="camshift_roi_confidence_test/topic" value="camshift_roi/confidence" />
+    <test test-name="camshift_roi_confidence_test" pkg="rostest" type="hztest" name="camshift_roi_confidence_test" >
       <param name="hz" value="30" />
       <param name="hzerror" value="10.0" />
       <param name="test_duration" value="1.0" />
