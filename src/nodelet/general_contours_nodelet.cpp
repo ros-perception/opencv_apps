@@ -222,7 +222,7 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
       // Publish the image.
       sensor_msgs::msg::Image::SharedPtr out_img =
           cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, drawing).toImageMsg();
-      img_pub_.publish(*out_img);
+      img_pub_.publish(out_img);
       rects_pub_->publish(rects_msg);
       ellipses_pub_->publish(ellipses_msg);
     }

@@ -213,7 +213,7 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
       cv::swap(prevColor, color);
       // Publish the image.
       sensor_msgs::msg::Image::SharedPtr out_img = cv_bridge::CvImage(msg->header, "bgr8", frame).toImageMsg();
-      img_pub_.publish(*out_img);
+      img_pub_.publish(out_img);
       msg_pub_->publish(flows_msg);
     }
     catch (cv::Exception& e)

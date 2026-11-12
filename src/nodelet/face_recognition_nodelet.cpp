@@ -40,6 +40,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <opencv2/opencv.hpp>
 #include <pwd.h>
 #include <unistd.h>
@@ -451,9 +452,9 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
       face_pub_->publish(ret_msg);
       if (publish_debug_image)
       {
-        sensor_msgs::msg::Image::SharedPtr debug_img =
-            cv_bridge::CvImage(image->header, enc::BGR8, cv_img).toImageMsg();
-        debug_img_pub_->publish(*debug_img);
+        std::unique_ptr<sensor_msgs::msg::Image> debug_img(new sensor_msgs::msg::Image());
+        cv_bridge::CvImage(image->header, enc::BGR8, cv_img).toImageMsg(*debug_img);
+        debug_img_pub_->publish(std::move(debug_img));
         RCLCPP_DEBUG(get_logger(), "Published debug image");
       }
     }

@@ -186,7 +186,7 @@ class SmoothingNodelet : public opencv_apps::Nodelet
 
       // Publish the image.
       sensor_msgs::msg::Image::SharedPtr out_img = cv_bridge::CvImage(msg->header, "bgr8", out_image).toImageMsg();
-      img_pub_.publish(*out_img);
+      img_pub_.publish(out_img);
     }
     catch (cv::Exception& e)
     {

@@ -181,7 +181,7 @@ class FBackFlowNodelet : public opencv_apps::Nodelet
 
       // Publish the image.
       sensor_msgs::msg::Image::SharedPtr out_img = cv_bridge::CvImage(msg->header, "bgr8", cflow).toImageMsg();
-      img_pub_.publish(*out_img);
+      img_pub_.publish(out_img);
       msg_pub_->publish(flows_msg);
     }
     catch (cv::Exception& e)
