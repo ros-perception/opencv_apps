@@ -1,3 +1,15 @@
+# Build optimized binaries by default for source builds (catkin_make,
+# catkin build, colcon) when no build type is given. Package builds
+# (bloom/debhelper) pass their own CMAKE_BUILD_TYPE, and multi-config
+# generators ignore it. Called after project(), so that a build type set by
+# the toolchain file is respected.
+macro(opencv_apps_default_build_type)
+  if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    #catkin_lint: ignore_once global_var_collision
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel" FORCE)
+  endif()
+endmacro()
+
 # $ENV{ROS_VERSION} is set by ros_environment, which is missing on
 # pre-ros_environment distros (e.g. indigo) and on ROS2 builds that do not
 # depend on it (e.g. the buildfarm's binary jobs). Guess it then: ament sets
@@ -17,6 +29,7 @@ if($ENV{ROS_VERSION} EQUAL 2)
 #catkin_lint: skip (catkin_lint does not evaluate $ENV{ROS_VERSION}, and checks only the ROS1 part below)
 cmake_minimum_required(VERSION 3.8)
 project(opencv_apps)
+opencv_apps_default_build_type()
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -193,6 +206,7 @@ else() # if($ENV{ROS_VERSION} EQUAL 2)
 #catkin_lint: ignore_once order_violation (only the ROS_VERSION guess above comes before it)
 cmake_minimum_required(VERSION 3.5)
 project(opencv_apps)
+opencv_apps_default_build_type()
 
 ## https://stackoverflow.com/questions/10984442/how-to-detect-c11-support-of-a-compiler-with-cmake
 if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7")
