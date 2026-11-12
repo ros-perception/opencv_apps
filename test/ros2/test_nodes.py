@@ -52,8 +52,8 @@ NODES = [
     'convex_hull', 'corner_harris', 'discrete_fourier_transform', 'edge_detection', 'equalize_histogram',
     'face_detection', 'fback_flow', 'find_contours', 'general_contours', 'goodfeature_track', 'hls_color_filter',
     'hough_circles', 'hough_lines', 'hsv_color_filter', 'lab_color_filter', 'line_segment_detector', 'lk_flow',
-    'morphology', 'people_detect', 'phase_corr', 'pyramids', 'rgb_color_filter', 'segment_objects', 'simple_flow',
-    'smoothing', 'threshold', 'watershed_segmentation',
+    'match_template', 'morphology', 'people_detect', 'phase_corr', 'pyramids', 'rgb_color_filter', 'segment_objects',
+    'simple_flow', 'smoothing', 'threshold', 'watershed_segmentation',
 ]
 if os.environ.get('OPENCV_APPS_HAVE_OPTFLOW', '1') == '0':  # simple_flow needs opencv_contrib's optflow
     NODES.remove('simple_flow')
@@ -111,6 +111,11 @@ class TestNodes(unittest.TestCase):
         # watershed_segmentation needs seed points
         seed_pub = node.create_publisher(Point2DArray, '/watershed_segmentation/add_seed_points', 10)
         seeds = Point2DArray(points=[Point2D(x=10.0, y=10.0), Point2D(x=240.0, y=160.0), Point2D(x=100.0, y=100.0)])
+        # match_template needs a template, the green circle
+        template_pub = node.create_publisher(Image, '/match_template/template', 10)
+        templ = np.ascontiguousarray(self.camera_image(0)[110:210, 190:290])
+        templ_msg = Image(height=templ.shape[0], width=templ.shape[1], encoding='bgr8', step=templ.shape[1] * 3,
+                          data=templ.tobytes())
 
         count = 0
         end_time = time.time() + 60
@@ -129,6 +134,7 @@ class TestNodes(unittest.TestCase):
             info_pub.publish(info)
             compressed_pub.publish(compressed)
             seed_pub.publish(seeds)
+            template_pub.publish(templ_msg)
             rclpy.spin_once(node, timeout_sec=0.1)
             count += 1
         self.assertEqual(sorted(set(OUTPUTS) - set(received)), [])
