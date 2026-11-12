@@ -51,12 +51,14 @@ NODES = [
     'adding_images', 'background_subtraction', 'blob_detection', 'camshift', 'compare_histogram', 'contour_moments',
     'convex_hull', 'corner_harris', 'discrete_fourier_transform', 'edge_detection', 'equalize_histogram',
     'face_detection', 'fback_flow', 'find_contours', 'general_contours', 'goodfeature_track', 'hls_color_filter',
-    'hough_circles', 'hough_lines', 'hsv_color_filter', 'lab_color_filter', 'lk_flow', 'morphology', 'people_detect',
-    'phase_corr', 'pyramids', 'rgb_color_filter', 'segment_objects', 'simple_flow', 'smoothing', 'threshold',
-    'watershed_segmentation',
+    'hough_circles', 'hough_lines', 'hsv_color_filter', 'lab_color_filter', 'line_segment_detector', 'lk_flow',
+    'morphology', 'people_detect', 'phase_corr', 'pyramids', 'rgb_color_filter', 'segment_objects', 'simple_flow',
+    'smoothing', 'threshold', 'watershed_segmentation',
 ]
 if os.environ.get('OPENCV_APPS_HAVE_OPTFLOW', '1') == '0':  # simple_flow needs opencv_contrib's optflow
     NODES.remove('simple_flow')
+if os.environ.get('OPENCV_APPS_HAVE_LSD', '1') == '0':  # see OPENCV_HAVE_LSD in CMakeLists.txt
+    NODES.remove('line_segment_detector')
 OUTPUTS = ['/%s/image' % name for name in NODES] + ['/image_converter/output_video/raw',
                                                      '/image_converter/output_video/compressed']
 

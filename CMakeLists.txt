@@ -50,6 +50,12 @@ find_package(OpenCV REQUIRED)
 if(TARGET opencv_optflow)
   set(OPENCV_HAVE_OPTFLOW TRUE)
 endif()
+# cv::createLineSegmentDetector() is not in OpenCV 2.x, and throws "Implementation has been removed due original code
+# license issues" on OpenCV 3.4.6 - 4.5.3 (e.g. noetic's 4.2), it is back since 4.5.4
+if(NOT OpenCV_VERSION VERSION_LESS "3.0" AND
+    (OpenCV_VERSION VERSION_LESS "3.4.6" OR NOT OpenCV_VERSION VERSION_LESS "4.5.4"))
+  set(OPENCV_HAVE_LSD TRUE)
+endif()
 # dnn and objdetect nodes require OpenCV 4.5.4 (cv::FaceDetectorYN) or later, e.g. Ubuntu 24.04
 if(NOT OpenCV_VERSION VERSION_LESS "4.5.4")
   set(OPENCV_HAVE_DNN TRUE)
@@ -155,6 +161,10 @@ set(_nodelet_cppfiles
 if(OPENCV_HAVE_OPTFLOW)
   list(APPEND _nodelets simple_flow:SimpleFlowNodelet)
   list(APPEND _nodelet_cppfiles src/nodelet/simple_flow_nodelet.cpp)
+endif()
+if(OPENCV_HAVE_LSD)
+  list(APPEND _nodelets line_segment_detector:LineSegmentDetectorNodelet)
+  list(APPEND _nodelet_cppfiles src/nodelet/line_segment_detector_nodelet.cpp)
 endif()
 if(OPENCV_HAVE_DNN)
   list(APPEND _nodelets
@@ -263,10 +273,16 @@ if(BUILD_TESTING)
   if(NOT OPENCV_HAVE_ARUCO)
     list(REMOVE_ITEM _launch_tests test/ros2/test_aruco_detection.py)
   endif()
+  if(OPENCV_HAVE_LSD)
+    set(_have_lsd 1)
+  else()
+    set(_have_lsd 0)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_line_segment_detector.py)
+  endif()
   foreach(_launch_test ${_launch_tests})
     get_filename_component(_name ${_launch_test} NAME_WE)
     add_launch_test(${_launch_test} TARGET ${_name} TIMEOUT 180
-      ENV OPENCV_APPS_HAVE_OPTFLOW=${_have_optflow}
+      ENV OPENCV_APPS_HAVE_OPTFLOW=${_have_optflow} OPENCV_APPS_HAVE_LSD=${_have_lsd}
       APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/test/ros2)
     # they use the same ROS domain and topic names (e.g. /image)
     set_tests_properties(${_name} PROPERTIES RUN_SERIAL TRUE)
@@ -346,6 +362,12 @@ endif()
 if(NOT OpenCV_VERSION VERSION_LESS "3.0")
   set(OPENCV_HAVE_BACKGROUND_SUBTRACTION TRUE)
 endif()
+# cv::createLineSegmentDetector() is not in OpenCV 2.x, and throws "Implementation has been removed due original code
+# license issues" on OpenCV 3.4.6 - 4.5.3 (e.g. noetic's 4.2), it is back since 4.5.4
+if(NOT OpenCV_VERSION VERSION_LESS "3.0" AND
+    (OpenCV_VERSION VERSION_LESS "3.4.6" OR NOT OpenCV_VERSION VERSION_LESS "4.5.4"))
+  set(OPENCV_HAVE_LSD TRUE)
+endif()
 # Supporting CompressedImage in cv_bridge has been started from 1.11.9 (2015-11-29)
 # note : hydro 1.10.18, indigo : 1.11.13 ...
 # https://github.com/ros-perception/vision_opencv/pull/70
@@ -392,6 +414,7 @@ generate_dynamic_reconfigure_options(
   cfg/HLSColorFilter.cfg
   cfg/HSVColorFilter.cfg
   cfg/LabColorFilter.cfg
+  cfg/LineSegmentDetector.cfg
   cfg/WatershedSegmentation.cfg
   cfg/BlobDetection.cfg
   cfg/BackgroundSubtraction.cfg
@@ -639,6 +662,9 @@ opencv_apps_add_nodelet(fback_flow src/nodelet/fback_flow_nodelet.cpp) # ./fback
 opencv_apps_add_nodelet(lk_flow src/nodelet/lk_flow_nodelet.cpp) # ./lkdemo.cpp
 # ./logistic_regression.cpp
 # ./lsd_lines.cpp
+if(OPENCV_HAVE_LSD)
+  opencv_apps_add_nodelet(line_segment_detector src/nodelet/line_segment_detector_nodelet.cpp) # ./lsd_lines.cpp
+endif()
 # ./mask_tmpl.cpp
 # ./matchmethod_orb_akaze_brisk.cpp
 # ./minarea.cpp
@@ -767,6 +793,9 @@ if(CATKIN_ENABLE_TESTING)
     endif()
     if(NOT OPENCV_HAVE_BACKGROUND_SUBTRACTION)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/background_subtraction.launch)
+    endif()
+    if(NOT OPENCV_HAVE_LSD)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/line_segment_detector.launch)
     endif()
     foreach(LAUNCH_FILE ${LAUNCH_FILES})
       roslaunch_add_file_check(${LAUNCH_FILE})

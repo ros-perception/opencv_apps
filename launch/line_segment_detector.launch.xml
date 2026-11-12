@@ -1,0 +1,36 @@
+<launch>
+  <arg name="node_name" default="line_segment_detector" />
+
+  <arg name="image" default="image" description="The image topic. Should be remapped to the name of the real image topic." />
+
+  <arg name="use_camera_info" default="false" description="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
+  <arg name="debug_view" default="true" description="Specify whether the node displays a window to show line segment image" />
+  <arg name="queue_size" default="3" description="Specify queue_size of input image subscribers" />
+
+  <arg name="lsd_refine_type" default="0" description="Line Segment Detector Modes. 0: No refinement applied, 1: Standard refinement is applied, 2, Advanced refinement is applied."/>
+  <arg name="lsd_scale" default="0.8" description="The scale of the image that will be used to find the lines. Range [0.1..1]" />
+  <arg name="lsd_sigma_scale" default="0.6" description="Sigma for Gaussian filter. It is computed as sigma = _sigma_scale/_scale" />
+  <arg name="lsd_quant" default="2.0" description="Bound to the quantization error on the gradient norm" />
+  <arg name="lsd_angle_threshold" default="22.5" description="Gradient angle tolerance in degrees" />
+  <arg name="lsd_log_eps" default="0.0" description="Detection threshold: -log10(NFA) > log_eps. Used only when advanced refinement is chosen" />
+  <arg name="lsd_density_threshold" default="0.7" description="Minimal density of aligned region points in the enclosing rectangle" />
+  <arg name="lsd_n_bins" default="1024" description="Number of bins in pseudo-ordering of gradient modulus" />
+  <arg name="lsd_line_length_threshold" default="100.0" description="Threshold of line length. Shorter lines are not published nor drawn." />
+
+  <!-- line_segment_detector.cpp  -->
+  <node name="$(var node_name)" pkg="opencv_apps" exec="line_segment_detector" >
+    <remap from="image" to="$(var image)" />
+    <param name="use_camera_info" value="$(var use_camera_info)" />
+    <param name="debug_view" value="$(var debug_view)" />
+    <param name="queue_size" value="$(var queue_size)" />
+    <param name="lsd_refine_type" value="$(var lsd_refine_type)" />
+    <param name="lsd_scale" value="$(var lsd_scale)" />
+    <param name="lsd_sigma_scale" value="$(var lsd_sigma_scale)" />
+    <param name="lsd_quant" value="$(var lsd_quant)" />
+    <param name="lsd_angle_threshold" value="$(var lsd_angle_threshold)" />
+    <param name="lsd_log_eps" value="$(var lsd_log_eps)" />
+    <param name="lsd_density_threshold" value="$(var lsd_density_threshold)" />
+    <param name="lsd_n_bins" value="$(var lsd_n_bins)" />
+    <param name="lsd_line_length_threshold" value="$(var lsd_line_length_threshold)" />
+  </node>
+</launch>
