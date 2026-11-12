@@ -332,9 +332,9 @@ if(NOT _opencv_apps_cxx_standard)
   set(_opencv_apps_cxx_standard ${CMAKE_CXX_STANDARD_COMPUTED_DEFAULT})
 endif()
 if(NOT _opencv_apps_cxx_standard OR _opencv_apps_cxx_standard MATCHES "^(98|03|0x|11|1y|14)$"
-    OR (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7"))  # -std=gnu++11 above
+    OR (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9"))  # std::filesystem of GCC 9
   if(NOT OpenCV_VERSION VERSION_LESS "4.5.4")
-    message(WARNING "The dnn and objdetect nodes are not built, as they require C++17 (C++${_opencv_apps_cxx_standard} is used), set -DCMAKE_CXX_STANDARD=17 to build them")
+    message(WARNING "The dnn and objdetect nodes are not built, as they require C++17 (C++${_opencv_apps_cxx_standard} is used, set -DCMAKE_CXX_STANDARD=17 to build them) and std::filesystem of GCC 9 or later")
   endif()
 elseif(NOT OpenCV_VERSION VERSION_LESS "4.5.4")
   set(OPENCV_HAVE_DNN TRUE)

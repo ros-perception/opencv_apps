@@ -276,6 +276,7 @@ class ArucoDetectionNodelet : public opencv_apps::Nodelet
 
       // poses of the markers, in the order of the detections, only for a calibrated camera (K is all 0 if not)
       cv::Mat camera_matrix, dist_coeffs;
+      bool fisheye = false;
       if (cam_info)
       {
 // the fields of sensor_msgs/CameraInfo are lower case on ROS2
@@ -283,10 +284,12 @@ class ArucoDetectionNodelet : public opencv_apps::Nodelet
         const double* k = cam_info->k.data();
         const double* p = cam_info->p.data();
         const std::vector<double>& d = cam_info->d;
+        const std::string& distortion_model = cam_info->distortion_model;
 #else
         const double* k = cam_info->K.data();
         const double* p = cam_info->P.data();
         const std::vector<double>& d = cam_info->D;
+        const std::string& distortion_model = cam_info->distortion_model;
 #endif
         if (rectified)
         {
@@ -297,6 +300,8 @@ class ArucoDetectionNodelet : public opencv_apps::Nodelet
         {
           camera_matrix = cv::Mat(3, 3, CV_64F, const_cast<double*>(k)).clone();
           dist_coeffs = cv::Mat(d, true);
+          // the 4 coefficients of a fisheye camera, which solvePnP() does not take, the corners are undistorted
+          fisheye = distortion_model == "equidistant";
         }
         // K is of the full resolution image, adjust it to the image cropped by roi and binned (0 means 1)
         double binning_x = std::max(1u, static_cast<unsigned int>(cam_info->binning_x));
@@ -321,10 +326,37 @@ class ArucoDetectionNodelet : public opencv_apps::Nodelet
         for (size_t i = 0; i < ids.size(); i++)
         {
           cv::Vec3d rvec, tvec;
-          cv::solvePnP(object_points, corners[i], camera_matrix, dist_coeffs, rvec, tvec, false,
-                       cv::SOLVEPNP_IPPE_SQUARE);
+          if (fisheye)
+          {
+            // the corners undistorted by the fisheye model, on the image of camera_matrix without distortion
+            std::vector<cv::Point2f> undistorted;
+            cv::fisheye::undistortPoints(corners[i], undistorted, camera_matrix, dist_coeffs, cv::noArray(),
+                                         camera_matrix);
+            cv::solvePnP(object_points, undistorted, camera_matrix, cv::noArray(), rvec, tvec, false,
+                         cv::SOLVEPNP_IPPE_SQUARE);
+          }
+          else
+          {
+            cv::solvePnP(object_points, corners[i], camera_matrix, dist_coeffs, rvec, tvec, false,
+                         cv::SOLVEPNP_IPPE_SQUARE);
+          }
           poses_msg.poses.push_back(pose(rvec, tvec));
-          cv::drawFrameAxes(frame, camera_matrix, dist_coeffs, rvec, tvec, static_cast<float>(marker_length));
+          if (fisheye)
+          {
+            // drawFrameAxes() projects with the pinhole model, so project the axes by the fisheye model onto the raw
+            // image, x: red, y: green, z: blue as drawFrameAxes()
+            std::vector<cv::Point3d> axes = { cv::Point3d(0, 0, 0), cv::Point3d(marker_length, 0, 0),
+                                              cv::Point3d(0, marker_length, 0), cv::Point3d(0, 0, marker_length) };
+            std::vector<cv::Point2d> projected;
+            cv::fisheye::projectPoints(axes, projected, rvec, tvec, camera_matrix, dist_coeffs);
+            const cv::Scalar colors[] = { cv::Scalar(0, 0, 255), cv::Scalar(0, 255, 0), cv::Scalar(255, 0, 0) };
+            for (int j = 0; j < 3; j++)
+              cv::line(frame, projected[0], projected[j + 1], colors[j], 3);
+          }
+          else
+          {
+            cv::drawFrameAxes(frame, camera_matrix, dist_coeffs, rvec, tvec, static_cast<float>(marker_length));
+          }
         }
       }
 
