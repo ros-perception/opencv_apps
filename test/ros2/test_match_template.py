@@ -32,7 +32,8 @@
 
 
 # ROS2 version of test/test-match_template.test: the template (the face at the center) is cropped from the first
-# frame of the video, and given by ~template_file and ~mask_file, or published on ~template.
+# frame of the video, and given by ~template_file and ~mask_file, published on ~template, or set by ~set_roi with
+# set_image.py as the tracking node.
 
 import atexit
 import os
@@ -41,6 +42,7 @@ import tempfile
 import unittest
 
 import cv2
+import launch_ros.actions
 from opencv_apps_test import camera, description, FACE_VIDEO, image_view, include, TopicsTest
 import numpy as np
 import pytest
@@ -78,6 +80,11 @@ def generate_test_description():
         include('match_template', image='image', template_file=template_file, mask_file=mask_file, match_method='3',
                 match_threshold='0.9', max_matches='5', node_name='match_template_mask'),
         include('match_template', image='image', match_method='1', node_name='match_template_topic'),
+        include('match_template', image='image', node_name='match_template_roi'),
+        # the face of the next input image is the template of match_template_roi
+        launch_ros.actions.Node(package='opencv_apps', executable='set_image.py', name='match_template_set_roi',
+                                arguments=['378', '208', '60', '64'],
+                                remappings=[('set_roi', 'match_template_roi/set_roi')]),
     )
 
 
@@ -85,7 +92,8 @@ class TestMatchTemplate(TopicsTest, unittest.TestCase):
 
     TOPICS = ['match_template/image', 'match_template/matched_image', 'match_template/output', 'match_template/score',
               'match_template_mask/image', 'match_template_mask/output',
-              'match_template_topic/image', 'match_template_topic/output']
+              'match_template_topic/image', 'match_template_topic/output',
+              'match_template_roi/image', 'match_template_roi/output']
 
     def prepare(self, node):
         # match_template_topic has no template_file, publish the template on ~/template until the test ends
@@ -94,3 +102,4 @@ class TestMatchTemplate(TopicsTest, unittest.TestCase):
                     data=templ.tobytes())
         self.template_pub = node.create_publisher(Image, '/match_template_topic/template', 1)
         self.timer = node.create_timer(0.5, lambda: self.template_pub.publish(msg))
+

@@ -21,6 +21,15 @@
       <arg name="max_matches" value="5" />
       <arg name="node_name" value="match_template_sqdiff" />
     </include>
+    <!-- the face of the next input image is the template, set by ~set_roi as the tracking node -->
+    <include file="$(find opencv_apps)/launch/match_template.launch" >
+      <arg name="debug_view" value="false" />
+      <arg name="image" value="image_color" />
+      <arg name="node_name" value="match_template_roi" />
+    </include>
+    <node name="match_template_set_roi" pkg="opencv_apps" type="set_image.py" args="377 211 50 50" >
+      <remap from="set_roi" to="match_template_roi/set_roi" />
+    </node>
 
     <!-- Test Codes -->
     <node name="match_template_saver" pkg="image_view" type="image_saver" >
@@ -61,6 +70,12 @@
     </test>
     <param name="match_template_sqdiff_output_test/topic" value="match_template_sqdiff/output" />
     <test test-name="match_template_sqdiff_output_test" pkg="rostest" type="hztest" name="match_template_sqdiff_output_test" >
+      <param name="hz" value="20" />
+      <param name="hzerror" value="15" />
+      <param name="test_duration" value="5.0" />
+    </test>
+    <param name="match_template_roi_output_test/topic" value="match_template_roi/output" />
+    <test test-name="match_template_roi_output_test" pkg="rostest" type="hztest" name="match_template_roi_output_test" >
       <param name="hz" value="20" />
       <param name="hzerror" value="15" />
       <param name="test_duration" value="5.0" />

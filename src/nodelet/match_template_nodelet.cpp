@@ -45,6 +45,7 @@
 #include "opencv_apps/nodelet.h"
 #include <opencv_apps/msg/rect.hpp>
 #include <opencv_apps/msg/rect_array_stamped.hpp>
+#include <opencv_apps/srv/set_roi.hpp>
 #include <std_msgs/msg/float64.hpp>
 
 #include <algorithm>
@@ -82,6 +83,7 @@ class MatchTemplateNodelet : public opencv_apps::Nodelet
   image_transport::CameraSubscriber cam_sub_;
   rclcpp::Publisher<opencv_apps::msg::RectArrayStamped>::SharedPtr rects_pub_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr score_pub_;
+  rclcpp::Service<opencv_apps::srv::SetROI>::SharedPtr roi_srv_;
 
   std::mutex mutex_;
   bool use_camera_info_;
@@ -89,9 +91,11 @@ class MatchTemplateNodelet : public opencv_apps::Nodelet
   double match_threshold_;
   int max_matches_;
 
-  // the latest template and mask, from template_file/mask_file or ~template/~mask topics
+  // the latest template and mask, from template_file/mask_file, ~template/~mask topics, ~set_roi or mouse
   cv::Mat template_;
   cv::Mat mask_;
+  // the rect of ~set_roi without image, the template is cropped from the next input image (empty if none)
+  cv::Rect pending_roi_;
 
   static bool lowerIsBetter(int method)
   {
@@ -157,6 +161,7 @@ class MatchTemplateNodelet : public opencv_apps::Nodelet
         {
           std::lock_guard<std::mutex> lock(mutex_);
           template_ = frame(selection_).clone();
+          pending_roi_ = cv::Rect();
         }
       }
     }
@@ -194,6 +199,49 @@ class MatchTemplateNodelet : public opencv_apps::Nodelet
     catch (cv_bridge::Exception& e)
     {
       RCLCPP_ERROR(get_logger(), "Failed to convert the template image: %s", e.what());
+    }
+  }
+
+  // the template is cropped by the rect (x-y is the center) from the image, or from the next input image if the
+  // image is empty, as ~set_roi of tracking node
+  void setROICb(const std::shared_ptr<opencv_apps::srv::SetROI::Request> req,
+                std::shared_ptr<opencv_apps::srv::SetROI::Response> res)
+  {
+    cv::Rect roi(cvRound(req->rect.x - req->rect.width / 2), cvRound(req->rect.y - req->rect.height / 2),
+                 cvRound(req->rect.width), cvRound(req->rect.height));
+    res->ok = false;
+    if (roi.empty())
+    {
+      res->error = "ROI is empty";
+      RCLCPP_ERROR_STREAM(get_logger(), res->error);
+      return;
+    }
+    try
+    {
+      if (req->image.data.empty())
+      {
+        std::lock_guard<std::mutex> lock(mutex_);
+        pending_roi_ = roi;
+        res->ok = true;
+        return;
+      }
+      cv::Mat image = cv_bridge::toCvCopy(req->image, sensor_msgs::image_encodings::BGR8)->image;
+      roi &= cv::Rect(0, 0, image.cols, image.rows);
+      if (roi.empty())
+      {
+        res->error = "ROI is out of the image";
+        RCLCPP_ERROR_STREAM(get_logger(), res->error);
+        return;
+      }
+      std::lock_guard<std::mutex> lock(mutex_);
+      template_ = image(roi).clone();
+      pending_roi_ = cv::Rect();
+      res->ok = true;
+    }
+    catch (cv_bridge::Exception& e)
+    {
+      res->error = std::string("Failed to convert the image: ") + e.what();
+      RCLCPP_ERROR_STREAM(get_logger(), res->error);
     }
   }
 
@@ -318,6 +366,15 @@ class MatchTemplateNodelet : public opencv_apps::Nodelet
       double match_threshold;
       {
         std::lock_guard<std::mutex> lock(mutex_);
+        if (!pending_roi_.empty())
+        {
+          cv::Rect roi = pending_roi_ & cv::Rect(0, 0, frame.cols, frame.rows);
+          if (roi.empty())
+            RCLCPP_ERROR(get_logger(), "ROI of ~set_roi is out of the image (%dx%d)", frame.cols, frame.rows);
+          else
+            template_ = frame(roi).clone();
+          pending_roi_ = cv::Rect();
+        }
         templ = template_;
         mask = mask_;
         match_method = match_method_;
@@ -327,8 +384,9 @@ class MatchTemplateNodelet : public opencv_apps::Nodelet
 
       if (templ.empty())
       {
-        RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000,
-                             "No template image, set ~template_file, publish ~template, or select it with mouse");
+        RCLCPP_WARN_THROTTLE(
+            get_logger(), *get_clock(), 5000,
+            "No template image, set ~template_file, publish ~template, call ~set_roi, or select it with mouse");
         showDebugView(frame, templ);
         return;
       }
@@ -556,6 +614,8 @@ public:
     matched_img_pub_ = advertiseImage("~/matched_image", 1);
     rects_pub_ = advertise<opencv_apps::msg::RectArrayStamped>("~/output", 1);
     score_pub_ = advertise<std_msgs::msg::Float64>("~/score", 1);
+    roi_srv_ = create_service<opencv_apps::srv::SetROI>(
+        "~/set_roi", std::bind(&MatchTemplateNodelet::setROICb, this, std::placeholders::_1, std::placeholders::_2));
     onInitPostProcess();
   }
 };
