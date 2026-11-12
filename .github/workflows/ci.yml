@@ -29,9 +29,10 @@ jobs:
             DOCKER_IMAGE : debian:unstable
     steps:
       - name: Setup OS
+        # no apt-get upgrade of the runner, as the builds run in docker, and the upgrade fails time to time, e.g. the
+        # firefox package of the runner image fails without the snap store
         run: |
           sudo apt-get update -y
-          sudo apt-get upgrade -y
       - name: Setup Git
         run: |
           sudo apt-get install -y git
