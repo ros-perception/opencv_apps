@@ -43,6 +43,11 @@ Nodelet::Nodelet(const std::string& node_name, const rclcpp::NodeOptions& option
   always_subscribe_ = declare_parameter("always_subscribe", false);
   verbose_connection_ = declare_parameter("verbose_connection", false);
   latch_ = declare_parameter("latch", false);
+  reliable_subscription_ = declare_parameter(
+      "reliable_subscription", false,
+      paramDescriptor("Subscribe the input topics with the reliable QoS, which does not connect to best effort "
+                      "publishers, instead of the sensor data (best effort) QoS, which may lose large messages, e.g. "
+                      "images through a network. Read at the start"));
   // timer to warn when no connection in a few seconds
   timer_ = create_wall_timer(std::chrono::seconds(5), [this]() {
     timer_->cancel();
@@ -87,6 +92,10 @@ rclcpp::QoS Nodelet::qos(int queue_size) const
 
 rclcpp::QoS Nodelet::subscriberQos(int queue_size) const
 {
+  if (reliable_subscription_)
+  {
+    return rclcpp::QoS(queue_size);
+  }
   return rclcpp::SensorDataQoS().keep_last(queue_size);
 }
 
