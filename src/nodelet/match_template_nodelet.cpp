@@ -96,6 +96,8 @@ class MatchTemplateNodelet : public opencv_apps::Nodelet
   cv::Mat mask_;
   // the rect of ~set_roi without image, the template is cropped from the next input image (empty if none)
   cv::Rect pending_roi_;
+  // the current mask_file, the mask is cleared only when it is changed to empty, not by the masks of ~mask topic
+  std::string mask_file_;
 
   static bool lowerIsBetter(int method)
   {
@@ -195,6 +197,7 @@ class MatchTemplateNodelet : public opencv_apps::Nodelet
       cv::Mat templ = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8)->image;
       std::lock_guard<std::mutex> lock(mutex_);
       template_ = templ;
+      pending_roi_ = cv::Rect();  // the newer template than the pending ~set_roi
     }
     catch (cv_bridge::Exception& e)
     {
@@ -318,19 +321,28 @@ class MatchTemplateNodelet : public opencv_apps::Nodelet
     rcl_interfaces::msg::SetParametersResult result;
     // read the template and mask files first, not to change anything when one of them cannot be read
     cv::Mat templ, mask;
+    std::string mask_file = mask_file_;
     for (const rclcpp::Parameter& parameter : parameters)
     {
       if (parameter.get_name() == "template_file" && !parameter.as_string().empty() &&
           !readTemplate(parameter.as_string(), templ, result.reason))
         return result;
-      if (parameter.get_name() == "mask_file" && !parameter.as_string().empty() &&
-          !readMask(parameter.as_string(), mask, result.reason))
-        return result;
+      if (parameter.get_name() == "mask_file")
+      {
+        mask_file = parameter.as_string();
+        if (!mask_file.empty() && !readMask(mask_file, mask, result.reason))
+          return result;
+      }
     }
     if (!templ.empty())
+    {
       template_ = templ;
-    if (!mask.empty())
+      pending_roi_ = cv::Rect();  // the newer template than the pending ~set_roi
+    }
+    // an empty mask_file stops using the mask
+    if (!mask.empty() || (mask_file.empty() && !mask_file_.empty()))
       mask_ = mask;
+    mask_file_ = mask_file;
     for (const rclcpp::Parameter& parameter : parameters)
     {
       if (parameter.get_name() == "use_camera_info")
@@ -440,12 +452,15 @@ class MatchTemplateNodelet : public opencv_apps::Nodelet
       double best_score = std::numeric_limits<double>::quiet_NaN();
       for (int i = 0; i < max_matches; i++)
       {
+        // no valid score left, e.g. all the scores are nan, where minMaxLoc() does not give a location
+        if (cv::countNonZero(valid) == 0)
+          break;
         double min_val, max_val;
         cv::Point min_loc(-1, -1), max_loc(-1, -1);
         cv::minMaxLoc(score, &min_val, &max_val, &min_loc, &max_loc, valid);
         cv::Point loc = lower_is_better ? min_loc : max_loc;
         double val = lower_is_better ? min_val : max_val;
-        if (loc.x < 0)  // no valid score left
+        if (loc.x < 0)
           break;
         if (i == 0)
           best_score = val;
@@ -459,6 +474,8 @@ class MatchTemplateNodelet : public opencv_apps::Nodelet
         rect.width = templ.cols;
         rect.height = templ.rows;
         rects_msg.rects.push_back(rect);
+        if (static_cast<int>(matches.size()) >= max_matches)  // no more match, no need to suppress
+          break;
         // suppress the matches whose rectangles overlap more than half of the template with this one, the overlap
         // of the rectangle at loc + (dx, dy) is (width - |dx|) * (height - |dy|)
         cv::Rect around =
@@ -580,6 +597,7 @@ public:
       RCLCPP_ERROR(get_logger(), "%s", error.c_str());
     if (!mask_file.empty() && !readMask(mask_file, mask_, error))
       RCLCPP_ERROR(get_logger(), "%s", error.c_str());
+    mask_file_ = mask_file;
 
     ////////////////////////////////////////////////////////
     // Dynamic Reconfigure
