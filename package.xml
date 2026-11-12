@@ -24,7 +24,9 @@
   <build_depend>cv_bridge</build_depend>
   <build_depend condition="$ROS_VERSION==1">dynamic_reconfigure</build_depend>
   <build_depend>g++-static</build_depend>
+  <build_depend>geometry_msgs</build_depend>
   <build_depend>image_transport</build_depend>
+  <build_depend>curl</build_depend>
   <build_depend condition="$ROS_VERSION==1">message_generation</build_depend>
   <build_depend condition="$ROS_VERSION==1">nodelet</build_depend>
   <build_depend condition="$ROS_VERSION==1">roscpp</build_depend>
@@ -47,8 +49,10 @@
 
   <exec_depend>cv_bridge</exec_depend>
   <exec_depend condition="$ROS_VERSION==1">dynamic_reconfigure</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>image_transport</exec_depend>
   <exec_depend>image_view</exec_depend>
+  <exec_depend>curl</exec_depend>
   <exec_depend condition="$ROS_VERSION==1">message_runtime</exec_depend>
   <exec_depend condition="$ROS_VERSION==1">nodelet</exec_depend>
   <exec_depend condition="$ROS_VERSION==1">roscpp</exec_depend>
@@ -67,7 +71,7 @@
   <test_depend condition="$ROS_VERSION==1">rosservice</test_depend>
   <test_depend condition="$ROS_VERSION==1">rostopic</test_depend>
   <test_depend condition="$ROS_VERSION==2">ament_index_python</test_depend>
-  <test_depend condition="$ROS_VERSION==2">image_publisher</test_depend>
+  <test_depend>image_publisher</test_depend>
   <test_depend condition="$ROS_VERSION==2">launch_ros</test_depend>
   <test_depend condition="$ROS_VERSION==2">launch_testing_ament_cmake</test_depend>
   <test_depend condition="$ROS_VERSION==2">python3-numpy</test_depend>
