@@ -193,6 +193,16 @@ if(OPENCV_HAVE_BGSEGM)
   set_source_files_properties(src/nodelet/background_subtraction_nodelet.cpp PROPERTIES
     COMPILE_DEFINITIONS OPENCV_APPS_HAVE_BGSEGM)
 endif()
+# tracking requires the tracking API of OpenCV 4.5.1 or later, and KCF, CSRT and the legacy trackers are in
+# opencv_contrib tracking module
+if(OpenCV_VERSION VERSION_GREATER_EQUAL "4.5.1")
+  set(OPENCV_HAVE_TRACKING_API TRUE)
+  list(APPEND _nodelets tracking:TrackingNodelet)
+  list(APPEND _nodelet_cppfiles src/nodelet/tracking_nodelet.cpp)
+  if(TARGET opencv_tracking)
+    set_source_files_properties(src/nodelet/tracking_nodelet.cpp PROPERTIES COMPILE_DEFINITIONS OPENCV_APPS_HAVE_TRACKING)
+  endif()
+endif()
 
 add_library(${PROJECT_NAME}_nodelet SHARED
   src/nodelet/nodelet.cpp
@@ -240,14 +250,16 @@ install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
   FILES_MATCHING PATTERN "*.launch.xml"
 )
-# with a python3 shebang (the script keeps "python" for ROS1 melodic and older)
-file(READ scripts/face_recognition_trainer.py _trainer)
-set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS scripts/face_recognition_trainer.py)
-string(REGEX REPLACE "^#! */usr/bin/env python\n" "#!/usr/bin/env python3\n" _trainer "${_trainer}")
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/face_recognition_trainer.py "${_trainer}")
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/face_recognition_trainer.py
-  DESTINATION lib/${PROJECT_NAME}
-)
+# with a python3 shebang (the scripts keep "python" for ROS1 melodic and older)
+foreach(_script face_recognition_trainer.py set_image.py)
+  file(READ scripts/${_script} _script_content)
+  set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS scripts/${_script})
+  string(REGEX REPLACE "^#! */usr/bin/env python\n" "#!/usr/bin/env python3\n" _script_content "${_script_content}")
+  file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${_script} "${_script_content}")
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/${_script}
+    DESTINATION lib/${PROJECT_NAME}
+  )
+endforeach()
 
 if(BUILD_TESTING)
   find_package(launch_testing_ament_cmake REQUIRED)
@@ -279,10 +291,19 @@ if(BUILD_TESTING)
     set(_have_lsd 0)
     list(REMOVE_ITEM _launch_tests test/ros2/test_line_segment_detector.py)
   endif()
+  if(NOT OPENCV_HAVE_TRACKING_API)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_tracking.py)
+  endif()
+  if(TARGET opencv_tracking)
+    set(_have_tracking 1)
+  else()
+    set(_have_tracking 0)
+  endif()
   foreach(_launch_test ${_launch_tests})
     get_filename_component(_name ${_launch_test} NAME_WE)
     add_launch_test(${_launch_test} TARGET ${_name} TIMEOUT 180
       ENV OPENCV_APPS_HAVE_OPTFLOW=${_have_optflow} OPENCV_APPS_HAVE_LSD=${_have_lsd}
+          OPENCV_APPS_HAVE_TRACKING=${_have_tracking}
       APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/test/ros2)
     # they use the same ROS domain and topic names (e.g. /image)
     set_tests_properties(${_name} PROPERTIES RUN_SERIAL TRUE)
@@ -418,6 +439,7 @@ generate_dynamic_reconfigure_options(
   cfg/WatershedSegmentation.cfg
   cfg/BlobDetection.cfg
   cfg/BackgroundSubtraction.cfg
+  cfg/Tracking.cfg
   )
 
 ## Generate messages in the 'msg' folder
@@ -462,6 +484,7 @@ add_message_files(
 add_service_files(
   FILES
   FaceRecognitionTrain.srv
+  SetROI.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -699,6 +722,16 @@ opencv_apps_add_nodelet(watershed_segmentation src/nodelet/watershed_segmentatio
 # ros examples
 opencv_apps_add_nodelet(simple_example src/nodelet/simple_example_nodelet.cpp)
 opencv_apps_add_nodelet(simple_compressed_example src/nodelet/simple_compressed_example_nodelet.cpp)
+# https://docs.opencv.org/4.x/d2/d0a/tutorial_introduction_to_tracker.html
+# tracking requires the tracking API of OpenCV 4.5.1 or later, and KCF, CSRT and the legacy trackers are in
+# opencv_contrib tracking module
+if(NOT OpenCV_VERSION VERSION_LESS "4.5.1")
+  set(OPENCV_HAVE_TRACKING_API TRUE)
+  opencv_apps_add_nodelet(tracking src/nodelet/tracking_nodelet.cpp)
+  if(TARGET opencv_tracking)
+    set_source_files_properties(src/nodelet/tracking_nodelet.cpp PROPERTIES COMPILE_DEFINITIONS OPENCV_APPS_HAVE_TRACKING)
+  endif()
+endif()
 
 
 # TApi
@@ -796,6 +829,9 @@ if(CATKIN_ENABLE_TESTING)
     endif()
     if(NOT OPENCV_HAVE_LSD)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/line_segment_detector.launch)
+    endif()
+    if(NOT OPENCV_HAVE_TRACKING_API)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/tracking.launch)
     endif()
     foreach(LAUNCH_FILE ${LAUNCH_FILES})
       roslaunch_add_file_check(${LAUNCH_FILE})

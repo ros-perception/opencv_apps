@@ -1,0 +1,8 @@
+# Set the region of interest, e.g. the target of the tracking node.
+# The image on which the rect is given. If it is empty (no data), the rect is set on the next input image.
+sensor_msgs/Image image
+# The region of interest, x-y is its center point as in opencv_apps/Rect.
+Rect rect
+---
+bool ok
+string error
