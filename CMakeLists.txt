@@ -61,6 +61,7 @@ rosidl_get_typesupport_target(_cpp_typesupport_target ${PROJECT_NAME} rosidl_typ
 # nodelets are rclcpp components, and each has an executable with the same name as ROS1
 set(_nodelets
   adding_images:AddingImagesNodelet
+  compare_histogram:CompareHistogramNodelet
   discrete_fourier_transform:DiscreteFourierTransformNodelet
   equalize_histogram:EqualizeHistogramNodelet
   morphology:MorphologyNodelet
@@ -95,6 +96,7 @@ set(_nodelets
 )
 set(_nodelet_cppfiles
   src/nodelet/adding_images_nodelet.cpp
+  src/nodelet/compare_histogram_nodelet.cpp
   src/nodelet/discrete_fourier_transform_nodelet.cpp
   src/nodelet/equalize_histogram_nodelet.cpp
   src/nodelet/morphology_nodelet.cpp
@@ -262,6 +264,7 @@ generate_dynamic_reconfigure_options(
   cfg/GoodfeatureTrack.cfg
   cfg/CornerHarris.cfg
   #
+  cfg/CompareHistogram.cfg
   cfg/EqualizeHistogram.cfg
   cfg/CamShift.cfg
   cfg/FBackFlow.cfg
@@ -383,6 +386,7 @@ opencv_apps_add_nodelet(discrete_fourier_transform src/nodelet/discrete_fourier_
   # ./tutorial_code/Histograms_Matching/calcBackProject_Demo2.cpp
   # ./tutorial_code/Histograms_Matching/calcHist_Demo.cpp
   #  ./tutorial_code/Histograms_Matching/compareHist_Demo.cpp
+  opencv_apps_add_nodelet(compare_histogram src/nodelet/compare_histogram_nodelet.cpp) # calcHist_Demo.cpp and compareHist_Demo.cpp
   opencv_apps_add_nodelet(equalize_histogram src/nodelet/equalize_histogram_nodelet.cpp) # ./tutorial_code/Histograms_Matching/EqualizeHist_Demo.cpp
   # ./tutorial_code/Histograms_Matching/MatchTemplate_Demo.cpp
 

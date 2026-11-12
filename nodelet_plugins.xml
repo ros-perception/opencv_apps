@@ -127,6 +127,10 @@
     <description>Nodelet to demonstrate the famous watershed segmentation algorithm in OpenCV: watershed()</description>
   </class>
 
+  <class name="opencv_apps/compare_histogram" type="opencv_apps::CompareHistogramNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to compute the histogram of an image and compare it with a reference histogram: calcHist(), compareHist()</description>
+  </class>
+
   <class name="opencv_apps/equalize_histogram" type="opencv_apps::EqualizeHistogramNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet for histogram equalization</description>
   </class>

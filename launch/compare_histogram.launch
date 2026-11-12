@@ -1,0 +1,24 @@
+<launch>
+  <arg name="node_name" default="compare_histogram" />
+
+  <arg name="image" default="image" doc="The image topic. Should be remapped to the name of the real image topic." />
+
+  <arg name="use_camera_info" default="false" doc="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
+  <arg name="debug_view" default="true" doc="Specify whether the node displays a window to show the histogram" />
+  <arg name="queue_size" default="3" doc="Specify queue_size of input image subscribers" />
+
+  <arg name="histogram_size" default="64" doc="Number of bins of the histogram of each channel" />
+  <arg name="histogram_comparison_type" default="0" doc="Histogram comparison method. 0: Correlation, 1: Chi-Square, 2: Intersection, 3: Bhattacharyya" />
+  <arg name="reference_histogram" default="[]" doc="Reference of the histogram comparison: channels x histogram_size numbers in the layout of ~histogram, i.e. [b0, b1, ..., g0, g1, ..., r0, r1, ...] for BGR images, [v0, v1, ...] for gray images. A YAML list of integers and/or decimals (newlines are fine). [] to disable the comparison." />
+
+  <!-- compare_histogram.cpp  -->
+  <node name="$(arg node_name)" pkg="opencv_apps" type="compare_histogram" >
+    <remap from="image" to="$(arg image)" />
+    <param name="use_camera_info" value="$(arg use_camera_info)" />
+    <param name="debug_view" value="$(arg debug_view)" />
+    <param name="queue_size" value="$(arg queue_size)" />
+    <param name="histogram_size" value="$(arg histogram_size)" />
+    <param name="histogram_comparison_type" value="$(arg histogram_comparison_type)" />
+    <rosparam param="reference_histogram" subst_value="true">$(arg reference_histogram)</rosparam>
+  </node>
+</launch>
