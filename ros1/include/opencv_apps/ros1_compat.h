@@ -546,6 +546,17 @@ public:
     return result;
   }
 
+  // all or none of the parameters are set, by one call of the callbacks
+  rcl_interfaces::msg::SetParametersResult set_parameters_atomically(const std::vector<rclcpp::Parameter>& parameters)
+  {
+    rcl_interfaces::msg::SetParametersResult result = setParameters(parameters);
+    if (result.successful)
+    {
+      publishParameterUpdates();
+    }
+    return result;
+  }
+
   std::vector<rcl_interfaces::msg::SetParametersResult> set_parameters(const std::vector<rclcpp::Parameter>& parameters)
   {
     std::vector<rcl_interfaces::msg::SetParametersResult> results;
@@ -663,6 +674,10 @@ private:
 
   rcl_interfaces::msg::SetParametersResult setParameters(const std::vector<rclcpp::Parameter>& parameters)
   {
+    // validate (by the callbacks) and store the parameters as one transaction, as rclcpp, so that another set
+    // (e.g. by dynamic_reconfigure on another thread) cannot come between them. Recursive for a callback setting
+    // parameters.
+    std::lock_guard<std::recursive_mutex> transaction(set_parameters_mutex_);
     rcl_interfaces::msg::SetParametersResult result;
     result.successful = true;
     for (size_t i = 0; i < on_set_parameters_callbacks_.size() && result.successful; i++)
@@ -907,6 +922,7 @@ private:
   std::vector<std::string> parameter_names_;
   std::vector<rclcpp::node_interfaces::OnSetParametersCallbackHandle::Ptr> on_set_parameters_callbacks_;
   mutable std::mutex parameters_mutex_;
+  std::recursive_mutex set_parameters_mutex_;
   ros::Publisher descriptions_pub_;
   ros::Publisher updates_pub_;
   ros::ServiceServer reconfigure_service_;
