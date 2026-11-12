@@ -37,6 +37,29 @@ find_package(OpenCV REQUIRED)
 if(TARGET opencv_optflow)
   set(OPENCV_HAVE_OPTFLOW TRUE)
 endif()
+# dnn and objdetect nodes require OpenCV 4.5.4 (cv::FaceDetectorYN) or later, e.g. Ubuntu 24.04
+if(NOT OpenCV_VERSION VERSION_LESS "4.5.4")
+  set(OPENCV_HAVE_DNN TRUE)
+  # libcurl downloads the models on the first run, without it the models must be given as files
+  find_package(CURL)
+  if(CURL_FOUND)
+    add_definitions(-DOPENCV_APPS_HAVE_CURL)
+  else()
+    message(WARNING "libcurl is not found, the dnn nodes do not download the models")
+  endif()
+  find_package(geometry_msgs REQUIRED)
+  # barcode is in objdetect since OpenCV 4.8, and aruco since 4.7, they were in opencv-contrib
+  if(NOT OpenCV_VERSION VERSION_LESS "4.8" OR TARGET opencv_barcode)
+    set(OPENCV_HAVE_BARCODE TRUE)
+  endif()
+  if(NOT OpenCV_VERSION VERSION_LESS "4.7" OR TARGET opencv_aruco)
+    set(OPENCV_HAVE_ARUCO TRUE)
+  endif()
+  # objectness (cv::saliency::ObjectnessBING) requires opencv-contrib, and modelFile() of dnn.cpp
+  if(TARGET opencv_saliency)
+    set(OPENCV_HAVE_OBJECTNESS TRUE)
+  endif()
+endif()
 
 file(GLOB _msg_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} msg/*.msg srv/*.srv)
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -116,6 +139,33 @@ if(OPENCV_HAVE_OPTFLOW)
   list(APPEND _nodelets simple_flow:SimpleFlowNodelet)
   list(APPEND _nodelet_cppfiles src/nodelet/simple_flow_nodelet.cpp)
 endif()
+if(OPENCV_HAVE_DNN)
+  list(APPEND _nodelets
+    dnn_face_detection:DNNFaceDetectionNodelet
+    dnn_face_recognition:DNNFaceRecognitionNodelet
+    dnn_object_detection:DNNObjectDetectionNodelet
+    qrcode_detection:QRCodeDetectionNodelet
+  )
+  list(APPEND _nodelet_cppfiles
+    src/nodelet/dnn.cpp
+    src/nodelet/dnn_face_detection_nodelet.cpp
+    src/nodelet/dnn_face_recognition_nodelet.cpp
+    src/nodelet/dnn_object_detection_nodelet.cpp
+    src/nodelet/qrcode_detection_nodelet.cpp
+  )
+  if(OPENCV_HAVE_BARCODE)
+    list(APPEND _nodelets barcode_detection:BarcodeDetectionNodelet)
+    list(APPEND _nodelet_cppfiles src/nodelet/barcode_detection_nodelet.cpp)
+  endif()
+  if(OPENCV_HAVE_ARUCO)
+    list(APPEND _nodelets aruco_detection:ArucoDetectionNodelet)
+    list(APPEND _nodelet_cppfiles src/nodelet/aruco_detection_nodelet.cpp)
+  endif()
+  if(OPENCV_HAVE_OBJECTNESS)
+    list(APPEND _nodelets objectness:ObjectnessNodelet)
+    list(APPEND _nodelet_cppfiles src/nodelet/objectness_nodelet.cpp)
+  endif()
+endif()
 
 add_library(${PROJECT_NAME}_nodelet SHARED
   src/nodelet/nodelet.cpp
@@ -137,6 +187,12 @@ target_link_libraries(${PROJECT_NAME}_nodelet
   ${std_srvs_TARGETS}
   ${OpenCV_LIBRARIES}
 )
+if(OPENCV_HAVE_DNN)
+  target_link_libraries(${PROJECT_NAME}_nodelet ${geometry_msgs_TARGETS})
+  if(CURL_FOUND)
+    target_link_libraries(${PROJECT_NAME}_nodelet CURL::libcurl)
+  endif()
+endif()
 foreach(_nodelet ${_nodelets})
   string(REPLACE ":" ";" _nodelet ${_nodelet})
   list(GET _nodelet 0 _name)
@@ -176,6 +232,19 @@ if(BUILD_TESTING)
     set(_have_optflow 0)
     list(REMOVE_ITEM _launch_tests test/ros2/test_simple_flow.py)
   endif()
+  if(NOT OPENCV_HAVE_DNN)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_face_detection.py test/ros2/test_dnn_face_recognition.py
+      test/ros2/test_dnn_object_detection.py test/ros2/test_qrcode_detection.py)
+  endif()
+  if(NOT OPENCV_HAVE_BARCODE)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_barcode_detection.py)
+  endif()
+  if(NOT OPENCV_HAVE_ARUCO)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_aruco_detection.py)
+  endif()
+  if(NOT OPENCV_HAVE_OBJECTNESS)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_objectness.py)
+  endif()
   foreach(_launch_test ${_launch_tests})
     get_filename_component(_name ${_launch_test} NAME_WE)
     add_launch_test(${_launch_test} TARGET ${_name} TIMEOUT 180
@@ -208,13 +277,35 @@ if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7")
   endif()
 endif()
 
-find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure message_generation image_transport nodelet roscpp sensor_msgs std_msgs std_srvs class_loader)
+find_package(catkin REQUIRED COMPONENTS cv_bridge dynamic_reconfigure geometry_msgs message_generation image_transport nodelet roscpp sensor_msgs std_msgs std_srvs class_loader)
 
 find_package(OpenCV REQUIRED)
 message(STATUS "OpenCV VERSION: ${OpenCV_VERSION}")
 message(STATUS "OpenCV Components: ${OpenCV_LIB_COMPONENTS}")
 if(OpenCV_VERSION VERSION_LESS "3.0" OR TARGET opencv_optflow)
   set(OPENCV_HAVE_OPTFLOW TRUE)
+endif()
+# dnn and objdetect nodes require OpenCV 4.5.4 (cv::FaceDetectorYN) or later, e.g. Ubuntu 24.04
+if(NOT OpenCV_VERSION VERSION_LESS "4.5.4")
+  set(OPENCV_HAVE_DNN TRUE)
+  # libcurl downloads the models on the first run, without it the models must be given as files
+  find_package(CURL)
+  if(CURL_FOUND)
+    add_definitions(-DOPENCV_APPS_HAVE_CURL)
+  else()
+    message(WARNING "libcurl is not found, the dnn nodes do not download the models")
+  endif()
+  # barcode is in objdetect since OpenCV 4.8, and aruco since 4.7, they were in opencv-contrib
+  if(NOT OpenCV_VERSION VERSION_LESS "4.8" OR TARGET opencv_barcode)
+    set(OPENCV_HAVE_BARCODE TRUE)
+  endif()
+  if(NOT OpenCV_VERSION VERSION_LESS "4.7" OR TARGET opencv_aruco)
+    set(OPENCV_HAVE_ARUCO TRUE)
+  endif()
+  # objectness (cv::saliency::ObjectnessBING) requires opencv-contrib, and modelFile() of dnn.cpp
+  if(TARGET opencv_saliency)
+    set(OPENCV_HAVE_OBJECTNESS TRUE)
+  endif()
 endif()
 # Supporting CompressedImage in cv_bridge has been started from 1.11.9 (2015-11-29)
 # note : hydro 1.10.18, indigo : 1.11.13 ...
@@ -263,6 +354,7 @@ generate_dynamic_reconfigure_options(
   cfg/LabColorFilter.cfg
   cfg/WatershedSegmentation.cfg
   cfg/BlobDetection.cfg
+  cfg/Objectness.cfg
   )
 
 ## Generate messages in the 'msg' folder
@@ -299,6 +391,9 @@ add_message_files(
    Contour.msg
    ContourArray.msg
    ContourArrayStamped.msg
+   Detection.msg
+   DetectionArray.msg
+   DetectionArrayStamped.msg
 )
 
 add_service_files(
@@ -548,6 +643,23 @@ opencv_apps_add_nodelet(simple_compressed_example src/nodelet/simple_compressed_
 if(OPENCV_HAVE_OPTFLOW)
   opencv_apps_add_nodelet(simple_flow src/nodelet/simple_flow_nodelet.cpp)
 endif()
+# https://github.com/opencv/opencv/tree/4.x/samples/dnn
+if(OPENCV_HAVE_DNN)
+  list(APPEND _opencv_apps_nodelet_cppfiles src/nodelet/dnn.cpp)
+  opencv_apps_add_nodelet(dnn_face_detection src/nodelet/dnn_face_detection_nodelet.cpp) # ./dnn/face_detect.cpp
+  opencv_apps_add_nodelet(dnn_face_recognition src/nodelet/dnn_face_recognition_nodelet.cpp) # ./dnn/face_detect.cpp
+  opencv_apps_add_nodelet(dnn_object_detection src/nodelet/dnn_object_detection_nodelet.cpp) # ./dnn/object_detection.cpp
+  opencv_apps_add_nodelet(qrcode_detection src/nodelet/qrcode_detection_nodelet.cpp) # ./cpp/qrcode.cpp
+  if(OPENCV_HAVE_BARCODE)
+    opencv_apps_add_nodelet(barcode_detection src/nodelet/barcode_detection_nodelet.cpp) # ./cpp/barcode.cpp
+  endif()
+  if(OPENCV_HAVE_ARUCO)
+    opencv_apps_add_nodelet(aruco_detection src/nodelet/aruco_detection_nodelet.cpp) # ./cpp/tutorial_code/objectDetection/detect_markers.cpp
+  endif()
+  if(OPENCV_HAVE_OBJECTNESS)
+    opencv_apps_add_nodelet(objectness src/nodelet/objectness_nodelet.cpp) # opencv_contrib/modules/saliency/samples/computeSaliency.cpp
+  endif()
+endif()
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/bgfg_gmg.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/hybridtrackingsample.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/linemod.cpp
@@ -562,6 +674,10 @@ add_library(${PROJECT_NAME} SHARED
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+if(OPENCV_HAVE_DNN AND CURL_FOUND)
+  target_include_directories(${PROJECT_NAME} PRIVATE ${CURL_INCLUDE_DIRS})
+  target_link_libraries(${PROJECT_NAME} ${CURL_LIBRARIES})
+endif()
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg ${PROJECT_NAME}_generate_messages_cpp)
 install(TARGETS ${PROJECT_NAME}
         DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
@@ -591,6 +707,22 @@ if(CATKIN_ENABLE_TESTING)
     message(WARNING "roslaunch_add_file check fails with unsupported doc attributes ${roslaunch_VERSION}")
   else()
     file(GLOB LAUNCH_FILES launch/*.launch)
+    # the nodes not built for this OpenCV
+    if(NOT OPENCV_HAVE_DNN)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_face_detection.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_face_recognition.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_object_detection.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/qrcode_detection.launch)
+    endif()
+    if(NOT OPENCV_HAVE_BARCODE)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/barcode_detection.launch)
+    endif()
+    if(NOT OPENCV_HAVE_ARUCO)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/aruco_detection.launch)
+    endif()
+    if(NOT OPENCV_HAVE_OBJECTNESS)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/objectness.launch)
+    endif()
     foreach(LAUNCH_FILE ${LAUNCH_FILES})
       roslaunch_add_file_check(${LAUNCH_FILE})
     endforeach()

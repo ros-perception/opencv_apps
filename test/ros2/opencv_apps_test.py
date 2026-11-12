@@ -57,6 +57,8 @@ TEST_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FACE_VIDEO = os.path.join(TEST_DIR, 'face_detector_withface_test_diamondback.mp4')
 # narrow_stereo/left/image_rect (5s - 15s) of vslam_tutorial.bag, used by the optical flow tests
 VSLAM_VIDEO = os.path.join(TEST_DIR, 'vslam_tutorial.mp4')
+# a QR code, a barcode and ArUco markers, made by test/make_codes_video.py
+CODES_VIDEO = os.path.join(TEST_DIR, 'codes.mp4')
 GUI = LaunchConfiguration('gui')
 
 
@@ -127,5 +129,30 @@ class TopicsTest:
                             lambda msg, topic=topic: counts.__setitem__(topic, counts[topic] + 1), 10))
                 rclpy.spin_once(node, timeout_sec=0.1)
             self.assertEqual({t: counts.get(t, 0) for t in topics if counts.get(t, 0) < self.MIN_MESSAGES}, {})
+        finally:
+            rclpy.shutdown()
+
+
+class MessagesTest(TopicsTest):
+    """TopicsTest, and check that each topic of CHECKS receives a message that its function returns True for."""
+
+    # topic: (message type, function of the message)
+    CHECKS = {}
+
+    def test_messages(self):
+        rclpy.init()
+        try:
+            node = rclpy.create_node('test_messages_' + self.__class__.__name__.lower())
+            self.prepare(node)
+            found = set()
+            subscriptions = []
+            for topic, (msg_type, check) in self.CHECKS.items():
+                topic = topic if topic.startswith('/') else '/' + topic
+                subscriptions.append(node.create_subscription(
+                    msg_type, topic, lambda msg, topic=topic, check=check: check(msg) and found.add(topic), 10))
+            end_time = time.time() + self.TIMEOUT
+            while time.time() < end_time and len(found) < len(self.CHECKS):
+                rclpy.spin_once(node, timeout_sec=0.1)
+            self.assertEqual(sorted(t for t in self.CHECKS if (t if t.startswith('/') else '/' + t) not in found), [])
         finally:
             rclpy.shutdown()
