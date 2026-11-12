@@ -71,11 +71,15 @@ public:
   {
     queue_size_ = node_->declare_parameter("queue_size", 3);
     debug_view_ = node_->declare_parameter("debug_view", false);
+    // the reliable QoS, which does not connect to best effort publishers, instead of the sensor data (best effort)
+    // QoS, which may lose large messages, e.g. images through a network
+    bool reliable_subscription = node_->declare_parameter("reliable_subscription", false);
+    rclcpp::QoS subscriber_qos =
+        reliable_subscription ? rclcpp::QoS(queue_size_) : rclcpp::SensorDataQoS().keep_last(queue_size_);
 
     // Subscrive to input video feed and publish output video feed
     image_sub_ = node_->create_subscription<sensor_msgs::msg::CompressedImage>(
-        "image/compressed", rclcpp::SensorDataQoS().keep_last(queue_size_),
-        std::bind(&ImageConverter::imageCb, this, std::placeholders::_1));
+        "image/compressed", subscriber_qos, std::bind(&ImageConverter::imageCb, this, std::placeholders::_1));
     image_pub_ =
         node_->create_publisher<sensor_msgs::msg::CompressedImage>("/image_converter/output_video/compressed", 1);
 
