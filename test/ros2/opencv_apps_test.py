@@ -49,6 +49,7 @@ from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 import launch_ros.actions
 import launch_testing.actions
+import numpy as np
 import rclpy
 from rosidl_runtime_py.utilities import get_message
 
@@ -106,6 +107,9 @@ class TopicsTest:
     def prepare(self, node):
         """Override to publish or call services that the nodes under test need."""
 
+    def check_message(self, topic, msg):
+        """Override to check the content of the last message received on topic."""
+
     def test_topics(self):
         rclpy.init()
         try:
@@ -114,6 +118,12 @@ class TopicsTest:
             topics = [t if t.startswith('/') else '/' + t for t in self.TOPICS]
             counts = {}
             subscriptions = []
+            messages = {}
+
+            def callback(msg, topic):
+                counts[topic] += 1
+                messages[topic] = msg
+
             end_time = time.time() + self.TIMEOUT
             while time.time() < end_time and \
                     (len(counts) < len(topics) or min(counts.values()) < self.MIN_MESSAGES):
@@ -124,8 +134,28 @@ class TopicsTest:
                         counts[topic] = 0
                         subscriptions.append(node.create_subscription(
                             get_message(types[topic][0]), topic,
-                            lambda msg, topic=topic: counts.__setitem__(topic, counts[topic] + 1), 10))
+                            lambda msg, topic=topic: callback(msg, topic), 10))
                 rclpy.spin_once(node, timeout_sec=0.1)
             self.assertEqual({t: counts.get(t, 0) for t in topics if counts.get(t, 0) < self.MIN_MESSAGES}, {})
+            for topic in topics:
+                self.check_message(topic, messages[topic])
         finally:
             rclpy.shutdown()
+
+
+class ColorSpaceTest(TopicsTest):
+    """TopicsTest that also checks the ~color_space PointCloud2 of the color filters."""
+
+    def check_message(self, topic, msg):
+        if not topic.endswith('/color_space'):
+            return
+        float32 = 7  # sensor_msgs/PointField FLOAT32
+        self.assertEqual([(f.name, f.offset, f.datatype, f.count) for f in msg.fields],
+                         [('x', 0, float32, 1), ('y', 4, float32, 1), ('z', 8, float32, 1), ('rgb', 12, float32, 1)])
+        self.assertEqual(msg.point_step, 16)
+        self.assertEqual(msg.row_step, msg.width * msg.point_step)
+        self.assertGreater(msg.width * msg.height, 0)
+        self.assertEqual(len(msg.data), msg.height * msg.row_step)
+        self.assertNotEqual(msg.header.frame_id, '')
+        xyz = np.frombuffer(bytes(msg.data), np.float32).reshape(-1, 4)[:, :3]
+        self.assertTrue(np.all((0.0 <= xyz) & (xyz <= 1.0)), 'x, y, z of %s are not within 0..1' % topic)

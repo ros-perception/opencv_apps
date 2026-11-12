@@ -33,6 +33,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 #include "opencv_apps/nodelet.h"
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -53,6 +55,7 @@ protected:
   image_transport::Publisher img_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr color_space_pub_;
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
@@ -60,6 +63,7 @@ protected:
 
   int queue_size_;
   bool debug_view_;
+  int color_space_step_;
 
   std::string window_name_;
 
@@ -68,7 +72,80 @@ protected:
 
   std::mutex mutex_;
 
-  virtual void filter(const cv::Mat& input_image, cv::Mat& output_image) = 0;
+  /**
+   * @param input_image BGR8 input image
+   * @param color_space_image the input image converted to the color space of the filter (3 channels, 8 bit),
+   *        in the channel order of OpenCV (e.g. BGR for the RGB filter, HLS, HSV, Lab), colorSpacePoint() maps it to
+   *        the x, y, z of ~color_space
+   * @param output_image MONO8 mask of the pixels within the filter range
+   */
+  virtual void filter(const cv::Mat& input_image, cv::Mat& color_space_image, cv::Mat& output_image) = 0;
+
+  /**
+   * @brief position of a pixel of color_space_image (in its channel order) in ~color_space, each axis normalized to
+   * 0..1
+   */
+  virtual cv::Vec3f colorSpacePoint(const cv::Vec3b& color) const = 0;
+
+  /**
+   * @brief publish every color_space_step_-th pixel of the image as a point in its color space
+   * points within the filter range keep their color, the others are gray
+   */
+  void publishColorSpace(const std_msgs::msg::Header& header, const cv::Mat& input_image,
+                         const cv::Mat& color_space_image, const cv::Mat& mask)
+  {
+    sensor_msgs::msg::PointCloud2 cloud;
+    cloud.header = header;
+    sensor_msgs::PointCloud2Modifier modifier(cloud);
+    modifier.setPointCloud2Fields(4, "x", 1, sensor_msgs::msg::PointField::FLOAT32, "y", 1,
+                                  sensor_msgs::msg::PointField::FLOAT32, "z", 1, sensor_msgs::msg::PointField::FLOAT32,
+                                  "rgb", 1, sensor_msgs::msg::PointField::FLOAT32);
+    const int step = std::max(1, color_space_step_);
+    const int rows = (input_image.rows + step - 1) / step;
+    const int cols = (input_image.cols + step - 1) / step;
+    modifier.resize(rows * cols);  // height = 1, width = rows * cols, row_step = width * point_step
+    cloud.is_dense = true;
+
+    sensor_msgs::PointCloud2Iterator<float> iter_x(cloud, "x");
+    sensor_msgs::PointCloud2Iterator<float> iter_y(cloud, "y");
+    sensor_msgs::PointCloud2Iterator<float> iter_z(cloud, "z");
+    sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(cloud, "r");
+    sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(cloud, "g");
+    sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(cloud, "b");
+    for (int v = 0; v < input_image.rows; v += step)
+    {
+      const cv::Vec3b* input_row = input_image.ptr<cv::Vec3b>(v);
+      const cv::Vec3b* color_space_row = color_space_image.ptr<cv::Vec3b>(v);
+      const uchar* mask_row = mask.ptr<uchar>(v);
+      for (int u = 0; u < input_image.cols; u += step)
+      {
+        const cv::Vec3f p = colorSpacePoint(color_space_row[u]);
+        *iter_x = p[0];
+        *iter_y = p[1];
+        *iter_z = p[2];
+        const cv::Vec3b& bgr = input_row[u];
+        if (mask_row[u])
+        {
+          *iter_r = bgr[2];
+          *iter_g = bgr[1];
+          *iter_b = bgr[0];
+        }
+        else
+        {
+          // out of the filter range: gray, slightly lifted so that black points are still visible
+          const uint8_t gray = 16 + (bgr[0] + bgr[1] + bgr[2]) / 3 * (255 - 16) / 255;
+          *iter_r = *iter_g = *iter_b = gray;
+        }
+        ++iter_x;
+        ++iter_y;
+        ++iter_z;
+        ++iter_r;
+        ++iter_g;
+        ++iter_b;
+      }
+    }
+    color_space_pub_->publish(cloud);
+  }
 
   const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
   {
@@ -97,8 +174,13 @@ protected:
       cv::Mat frame = cv_bridge::toCvShare(image_msg, sensor_msgs::image_encodings::BGR8)->image;
 
       // Do the work
-      cv::Mat out_frame;
-      filter(frame, out_frame);
+      cv::Mat color_space_frame, out_frame;
+      filter(frame, color_space_frame, out_frame);
+
+      if (color_space_pub_->get_subscription_count() > 0)
+      {
+        publishColorSpace(image_msg->header, frame, color_space_frame, out_frame);
+      }
 
       /// Create window
       if (debug_view_)
@@ -165,7 +247,12 @@ public:
         paramDescriptor("Indicates that the camera_info topic should be subscribed to to get the default "
                         "input_frame_id. Otherwise the frame from the image message will be used."));
 
+    color_space_step_ = declare_parameter(
+        "color_space_step", 4,
+        paramDescriptor("Publish every color_space_step-th pixel in x and y of the image to ~color_space", 1, 64));
+
     img_pub_ = advertiseImage("~/image", 1);
+    color_space_pub_ = advertise<sensor_msgs::msg::PointCloud2>("~/color_space", 1);
   }
 };
 
@@ -217,9 +304,17 @@ protected:
     upper_color_range_ = cv::Scalar(b_max_, g_max_, r_max_);
   }
 
-  void filter(const cv::Mat& input_image, cv::Mat& output_image)  // NOLINT(modernize-use-override)
+  void filter(const cv::Mat& input_image, cv::Mat& color_space_image,
+              cv::Mat& output_image)  // NOLINT(modernize-use-override)
   {
+    color_space_image = input_image;
     cv::inRange(input_image, lower_color_range_, upper_color_range_, output_image);
+  }
+
+  // x = R / 255, y = G / 255, z = B / 255
+  cv::Vec3f colorSpacePoint(const cv::Vec3b& bgr) const  // NOLINT(modernize-use-override)
+  {
+    return cv::Vec3f(bgr[2] / 255.0f, bgr[1] / 255.0f, bgr[0] / 255.0f);
   }
 
 public:
@@ -285,9 +380,9 @@ protected:
     upper_color_range_ = cv::Scalar(h_max_ / 2, l_max_, s_max_, 0);
   }
 
-  void filter(const cv::Mat& input_image, cv::Mat& output_image)  // NOLINT(modernize-use-override)
+  void filter(const cv::Mat& input_image, cv::Mat& hls_image,
+              cv::Mat& output_image)  // NOLINT(modernize-use-override)
   {
-    cv::Mat hls_image;
     cv::cvtColor(input_image, hls_image, cv::COLOR_BGR2HLS);
     if (lower_color_range_[0] < upper_color_range_[0])
     {
@@ -304,6 +399,12 @@ protected:
       cv::inRange(hls_image, lower_color_range_360, upper_color_range_360, output_image_360);
       output_image = output_image_0 | output_image_360;
     }
+  }
+
+  // x = H / 180 (OpenCV 8 bit hue is 0..180), y = L / 255, z = S / 255
+  cv::Vec3f colorSpacePoint(const cv::Vec3b& c) const  // NOLINT(modernize-use-override)
+  {
+    return cv::Vec3f(c[0] / 180.0f, c[1] / 255.0f, c[2] / 255.0f);
   }
 
 public:
@@ -371,9 +472,9 @@ protected:
     upper_color_range_ = cv::Scalar(h_max_ / 2, s_max_, v_max_, 0);
   }
 
-  void filter(const cv::Mat& input_image, cv::Mat& output_image)  // NOLINT(modernize-use-override)
+  void filter(const cv::Mat& input_image, cv::Mat& hsv_image,
+              cv::Mat& output_image)  // NOLINT(modernize-use-override)
   {
-    cv::Mat hsv_image;
     cv::cvtColor(input_image, hsv_image, cv::COLOR_BGR2HSV);
     if (lower_color_range_[0] < upper_color_range_[0])
     {
@@ -390,6 +491,12 @@ protected:
       cv::inRange(hsv_image, lower_color_range_360, upper_color_range_360, output_image_360);
       output_image = output_image_0 | output_image_360;
     }
+  }
+
+  // x = H / 180 (OpenCV 8 bit hue is 0..180), y = S / 255, z = V / 255
+  cv::Vec3f colorSpacePoint(const cv::Vec3b& c) const  // NOLINT(modernize-use-override)
+  {
+    return cv::Vec3f(c[0] / 180.0f, c[1] / 255.0f, c[2] / 255.0f);
   }
 
 public:
@@ -458,11 +565,17 @@ protected:
     upper_color_range_ = cv::Scalar(l_max_, a_max_, b_max_);
   }
 
-  void filter(const cv::Mat& input_image, cv::Mat& output_image)  // NOLINT(modernize-use-override)
+  void filter(const cv::Mat& input_image, cv::Mat& lab_image,
+              cv::Mat& output_image)  // NOLINT(modernize-use-override)
   {
-    cv::Mat lab_image;
     cv::cvtColor(input_image, lab_image, cv::COLOR_BGR2Lab);
     cv::inRange(lab_image, lower_color_range_, upper_color_range_, output_image);
+  }
+
+  // x = L / 255, y = a / 255, z = b / 255 (OpenCV 8 bit Lab: L = L* * 255 / 100, a = a* + 128, b = b* + 128)
+  cv::Vec3f colorSpacePoint(const cv::Vec3b& c) const  // NOLINT(modernize-use-override)
+  {
+    return cv::Vec3f(c[0] / 255.0f, c[1] / 255.0f, c[2] / 255.0f);
   }
 
 public:

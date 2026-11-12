@@ -32,5 +32,11 @@
       <param name="hzerror" value="10.0" />
       <param name="test_duration" value="1.0" />
     </test>
+    <param name="hls_color_filter_color_space_test/topic" value="hls_color_filter/color_space" />
+    <test test-name="hls_color_filter_color_space_test" pkg="rostest" type="hztest" name="hls_color_filter_color_space_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
   </group>
 </launch>
