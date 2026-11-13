@@ -163,6 +163,34 @@
     <description>Nodelet to track the target with the DNN based trackers of OpenCV (DaSiamRPN, NanoTrack, VitTrack)</description>
   </class>
 
+  <class name="opencv_apps/dnn_facial_expression_recognition" type="opencv_apps::DNNFacialExpressionRecognitionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to recognize the facial expressions with YuNet and MobileFaceNet</description>
+  </class>
+
+  <class name="opencv_apps/dnn_image_classification" type="opencv_apps::DNNImageClassificationNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to classify the images with a DNN model, e.g. PP-ResNet50 (ImageNet)</description>
+  </class>
+
+  <class name="opencv_apps/dnn_depth_estimation" type="opencv_apps::DNNDepthEstimationNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of monocular depth estimation with a DNN model, e.g. MiDaS</description>
+  </class>
+
+  <class name="opencv_apps/dnn_pose_estimation" type="opencv_apps::DNNPoseEstimationNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to estimate the human poses with MediaPipe person detection and pose estimation</description>
+  </class>
+
+  <class name="opencv_apps/dnn_hand_pose_estimation" type="opencv_apps::DNNHandPoseEstimationNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to estimate the hand poses with MediaPipe palm detection and hand pose estimation</description>
+  </class>
+
+  <class name="opencv_apps/dnn_semantic_segmentation" type="opencv_apps::DNNSemanticSegmentationNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of semantic segmentation with a DNN model, e.g. PP-HumanSeg</description>
+  </class>
+
+  <class name="opencv_apps/dnn_text_detection" type="opencv_apps::DNNTextDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect and recognize texts with DB (cv::dnn::TextDetectionModel_DB) and CRNN (cv::dnn::TextRecognitionModel)</description>
+  </class>
+
   <class name="opencv_apps/qrcode_detection" type="opencv_apps::QRCodeDetectionNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to detect and decode QR codes (cv::QRCodeDetector)</description>
   </class>

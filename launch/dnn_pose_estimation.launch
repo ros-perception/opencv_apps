@@ -1,0 +1,39 @@
+<launch>
+  <arg name="node_name" default="dnn_pose_estimation" />
+
+  <arg name="image" default="image" doc="The image topic. Should be remapped to the name of the real image topic." />
+
+  <arg name="use_camera_info" default="false" doc="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
+  <arg name="debug_view" default="true" doc="Specify whether the node displays a window to show the result" />
+  <arg name="queue_size" default="3" doc="Specify queue_size of input image subscribers" />
+  <arg name="person_detection_model" default="" doc="Path or URL of the MediaPipe person detection model (onnx), empty for person_detection_mediapipe_2023mar.onnx of opencv_zoo" />
+  <arg name="pose_estimation_model" default="" doc="Path or URL of the MediaPipe pose estimation model (onnx), empty for pose_estimation_mediapipe_2023mar.onnx of opencv_zoo" />
+  <arg name="backend" default="auto" doc="Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise." />
+  <arg name="confidence_threshold" default="0.5" doc="Threshold of the confidence to detect the persons and to estimate their poses" />
+  <arg name="nms_threshold" default="0.3" doc="Threshold of the overlap of the persons to suppress, by non maximum suppression" />
+  <arg name="tracking" default="true" doc="Track the persons by their poses in the previous image, as MediaPipe, and run the person detection every detection_interval images, otherwise every image" />
+  <arg name="detection_interval" default="10" doc="Interval of the person detection to find the new persons while tracking" />
+  <arg name="smoothing" default="true" doc="Smooth the landmarks of the tracked persons by One Euro filter" />
+  <arg name="smoothing_min_cutoff" default="0.05" doc="Minimum cutoff frequency (Hz) of One Euro filter, smaller is smoother when still" />
+  <arg name="smoothing_beta" default="80.0" doc="Speed coefficient of One Euro filter, larger follows the fast motion with less lag" />
+  <arg name="smoothing_derivative_cutoff" default="1.0" doc="Cutoff frequency (Hz) of the velocity of One Euro filter" />
+
+  <!-- dnn_pose_estimation_nodelet.cpp, MediaPipe pose estimation (OpenCV 4.9 or later), ~skeletons has a Skeleton for each person, whose keypoints are the 33 landmarks -->
+  <node name="$(arg node_name)" pkg="opencv_apps" type="dnn_pose_estimation" >
+    <remap from="image" to="$(arg image)" />
+    <param name="use_camera_info" value="$(arg use_camera_info)" />
+    <param name="debug_view" value="$(arg debug_view)" />
+    <param name="queue_size" value="$(arg queue_size)" />
+    <param name="person_detection_model" value="$(arg person_detection_model)" />
+    <param name="pose_estimation_model" value="$(arg pose_estimation_model)" />
+    <param name="backend" value="$(arg backend)" />
+    <param name="confidence_threshold" type="double" value="$(arg confidence_threshold)" />
+    <param name="nms_threshold" type="double" value="$(arg nms_threshold)" />
+    <param name="tracking" value="$(arg tracking)" />
+    <param name="detection_interval" value="$(arg detection_interval)" />
+    <param name="smoothing" value="$(arg smoothing)" />
+    <param name="smoothing_min_cutoff" type="double" value="$(arg smoothing_min_cutoff)" />
+    <param name="smoothing_beta" type="double" value="$(arg smoothing_beta)" />
+    <param name="smoothing_derivative_cutoff" type="double" value="$(arg smoothing_derivative_cutoff)" />
+  </node>
+</launch>

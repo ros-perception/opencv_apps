@@ -1,0 +1,39 @@
+<launch>
+  <arg name="node_name" default="dnn_hand_pose_estimation" />
+
+  <arg name="image" default="image" description="The image topic. Should be remapped to the name of the real image topic." />
+
+  <arg name="use_camera_info" default="false" description="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
+  <arg name="debug_view" default="true" description="Specify whether the node displays a window to show the result" />
+  <arg name="queue_size" default="3" description="Specify queue_size of input image subscribers" />
+  <arg name="palm_detection_model" default="" description="Path or URL of the MediaPipe palm detection model (onnx), empty for palm_detection_mediapipe_2023feb.onnx of opencv_zoo" />
+  <arg name="hand_pose_estimation_model" default="" description="Path or URL of the MediaPipe hand pose estimation model (onnx), empty for handpose_estimation_mediapipe_2023feb.onnx of opencv_zoo" />
+  <arg name="backend" default="auto" description="Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise." />
+  <arg name="confidence_threshold" default="0.5" description="Threshold of the confidence to detect the palms and to estimate the hands" />
+  <arg name="nms_threshold" default="0.3" description="Threshold of the overlap of the hands to suppress, by non maximum suppression" />
+  <arg name="tracking" default="true" description="Track the hands by their poses in the previous image, as MediaPipe, and run the palm detection every detection_interval images, otherwise every image" />
+  <arg name="detection_interval" default="10" description="Interval of the palm detection to find the new hands while tracking" />
+  <arg name="smoothing" default="true" description="Smooth the landmarks of the tracked hands by One Euro filter" />
+  <arg name="smoothing_min_cutoff" default="0.05" description="Minimum cutoff frequency (Hz) of One Euro filter, smaller is smoother when still" />
+  <arg name="smoothing_beta" default="80.0" description="Speed coefficient of One Euro filter, larger follows the fast motion with less lag" />
+  <arg name="smoothing_derivative_cutoff" default="1.0" description="Cutoff frequency (Hz) of the velocity of One Euro filter" />
+
+  <!-- dnn_hand_pose_estimation_nodelet.cpp, MediaPipe hand pose estimation (OpenCV 4.9 or later), ~skeletons has a Skeleton for each hand, whose keypoints are the 21 landmarks -->
+  <node name="$(var node_name)" pkg="opencv_apps" exec="dnn_hand_pose_estimation" >
+    <remap from="image" to="$(var image)" />
+    <param name="use_camera_info" value="$(var use_camera_info)" />
+    <param name="debug_view" value="$(var debug_view)" />
+    <param name="queue_size" value="$(var queue_size)" />
+    <param name="palm_detection_model" type="str" value="$(var palm_detection_model)" />
+    <param name="hand_pose_estimation_model" type="str" value="$(var hand_pose_estimation_model)" />
+    <param name="backend" type="str" value="$(var backend)" />
+    <param name="confidence_threshold" value="$(var confidence_threshold)" />
+    <param name="nms_threshold" value="$(var nms_threshold)" />
+    <param name="tracking" value="$(var tracking)" />
+    <param name="detection_interval" value="$(var detection_interval)" />
+    <param name="smoothing" value="$(var smoothing)" />
+    <param name="smoothing_min_cutoff" value="$(var smoothing_min_cutoff)" />
+    <param name="smoothing_beta" value="$(var smoothing_beta)" />
+    <param name="smoothing_derivative_cutoff" value="$(var smoothing_derivative_cutoff)" />
+  </node>
+</launch>

@@ -1,0 +1,29 @@
+<launch>
+  <arg name="node_name" default="dnn_facial_expression_recognition" />
+
+  <arg name="image" default="image" doc="The image topic. Should be remapped to the name of the real image topic." />
+
+  <arg name="use_camera_info" default="false" doc="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
+  <arg name="debug_view" default="true" doc="Specify whether the node displays a window to show the result" />
+  <arg name="queue_size" default="3" doc="Specify queue_size of input image subscribers" />
+  <arg name="detection_model" default="" doc="Path or URL of the YuNet model (onnx), empty for the default for this OpenCV version" />
+  <arg name="recognition_model" default="" doc="Path or URL of the facial expression recognition model (onnx), empty for MobileFaceNet of opencv_zoo" />
+  <arg name="backend" default="auto" doc="Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise." />
+  <arg name="score_threshold" default="0.9" doc="Threshold of the score to detect the faces" />
+  <arg name="nms_threshold" default="0.3" doc="Threshold of the overlap of the faces to suppress, by non maximum suppression" />
+  <arg name="top_k" default="5000" doc="Number of the candidates to keep before non maximum suppression" />
+
+  <!-- dnn_facial_expression_recognition_nodelet.cpp, DNN facial expression recognition, YuNet and MobileFaceNet of opencv_zoo -->
+  <node name="$(arg node_name)" pkg="opencv_apps" type="dnn_facial_expression_recognition" >
+    <remap from="image" to="$(arg image)" />
+    <param name="use_camera_info" value="$(arg use_camera_info)" />
+    <param name="debug_view" value="$(arg debug_view)" />
+    <param name="queue_size" value="$(arg queue_size)" />
+    <param name="detection_model" type="str" value="$(arg detection_model)" />
+    <param name="recognition_model" type="str" value="$(arg recognition_model)" />
+    <param name="backend" type="str" value="$(arg backend)" />
+    <param name="score_threshold" type="double" value="$(arg score_threshold)" />
+    <param name="nms_threshold" type="double" value="$(arg nms_threshold)" />
+    <param name="top_k" value="$(arg top_k)" />
+  </node>
+</launch>
