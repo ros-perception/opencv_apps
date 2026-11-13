@@ -174,6 +174,7 @@ if(OPENCV_HAVE_DNN)
     dnn_face_recognition:DNNFaceRecognitionNodelet
     dnn_object_detection:DNNObjectDetectionNodelet
     dnn_tracking:DNNTrackingNodelet
+    dnn_depth_estimation:DNNDepthEstimationNodelet
     dnn_semantic_segmentation:DNNSemanticSegmentationNodelet
     dnn_text_detection:DNNTextDetectionNodelet
     qrcode_detection:QRCodeDetectionNodelet
@@ -184,6 +185,7 @@ if(OPENCV_HAVE_DNN)
     src/nodelet/dnn_face_recognition_nodelet.cpp
     src/nodelet/dnn_object_detection_nodelet.cpp
     src/nodelet/dnn_tracking_nodelet.cpp
+    src/nodelet/dnn_depth_estimation_nodelet.cpp
     src/nodelet/dnn_semantic_segmentation_nodelet.cpp
     src/nodelet/dnn_text_detection_nodelet.cpp
     src/nodelet/qrcode_detection_nodelet.cpp
@@ -283,7 +285,7 @@ if(BUILD_TESTING)
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_face_detection.py test/ros2/test_dnn_face_recognition.py
       test/ros2/test_dnn_object_detection.py test/ros2/test_dnn_text_detection.py
-      test/ros2/test_dnn_semantic_segmentation.py)
+      test/ros2/test_dnn_semantic_segmentation.py test/ros2/test_dnn_depth_estimation.py)
   endif()
   if(NOT OPENCV_HAVE_DNN)
     list(REMOVE_ITEM _launch_tests test/ros2/test_qrcode_detection.py)
@@ -779,6 +781,7 @@ if(OPENCV_HAVE_DNN)
   opencv_apps_add_nodelet(dnn_face_recognition src/nodelet/dnn_face_recognition_nodelet.cpp) # ./dnn/face_detect.cpp
   opencv_apps_add_nodelet(dnn_object_detection src/nodelet/dnn_object_detection_nodelet.cpp) # ./dnn/object_detection.cpp
   opencv_apps_add_nodelet(dnn_tracking src/nodelet/dnn_tracking_nodelet.cpp) # ./dnn/dasiamrpn_tracker.cpp, ./dnn/nanotrack_tracker.cpp
+  opencv_apps_add_nodelet(dnn_depth_estimation src/nodelet/dnn_depth_estimation_nodelet.cpp) # https://github.com/isl-org/MiDaS
   opencv_apps_add_nodelet(dnn_semantic_segmentation src/nodelet/dnn_semantic_segmentation_nodelet.cpp) # ./dnn/segmentation.cpp
   opencv_apps_add_nodelet(dnn_text_detection src/nodelet/dnn_text_detection_nodelet.cpp) # ./dnn/text_detection.cpp
   opencv_apps_add_nodelet(qrcode_detection src/nodelet/qrcode_detection_nodelet.cpp) # ./cpp/qrcode.cpp
@@ -842,6 +845,7 @@ if(CATKIN_ENABLE_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_face_recognition.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_object_detection.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_tracking.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_depth_estimation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_semantic_segmentation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_text_detection.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/qrcode_detection.launch)
