@@ -97,6 +97,10 @@ const int NUM_POSE_POINTS = 39;
 const double PERSON_BOX_ENLARGE_FACTOR = 1.25;
 // the region of the tracked person is enlarged by this factor from the auxiliary landmarks, as MediaPipe
 const float TRACKING_ROI_SCALE = 1.25f;
+// a lost person keeps the id for this number of images, and a new person near the person (the distance of the
+// centers of their boxes is less than this ratio of the size of the box of the lost person) gets the id
+const int LOST_PERSON_IMAGES = 10;
+const double LOST_PERSON_DISTANCE = 0.5;
 // only the landmarks of this presence are drawn, as opencv_zoo
 const double LANDMARK_PRESENCE_THRESHOLD = 0.8;
 
@@ -196,6 +200,16 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
   };
 
   std::vector<Person> tracked_persons_;
+  // the boxes of the poses of the previous image, and the persons lost recently, to give a person found again the
+  // same id
+  struct LostPerson
+  {
+    int id;
+    cv::Rect2d box;
+    int images;  // the number of the images since the person is lost
+  };
+  std::map<int, cv::Rect2d> previous_boxes_;
+  std::vector<LostPerson> lost_persons_;
   std::map<int, LandmarksFilter> filters_;
   int next_id_;
   int images_since_detection_;
@@ -464,6 +478,29 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
     filter.time = time;
   }
 
+  // the id of the lost person nearest to the new person, or a new id, called with mutex_
+  int lostPersonId(const cv::Rect2d& box)
+  {
+    std::vector<LostPerson>::iterator best = lost_persons_.end();
+    double best_distance = 0;
+    cv::Point2d center = (box.tl() + box.br()) * 0.5;
+    for (std::vector<LostPerson>::iterator it = lost_persons_.begin(); it != lost_persons_.end(); ++it)
+    {
+      double distance = cv::norm(center - (it->box.tl() + it->box.br()) * 0.5);
+      if (distance < LOST_PERSON_DISTANCE * std::max(it->box.width, it->box.height) &&
+          (best == lost_persons_.end() || distance < best_distance))
+      {
+        best_distance = distance;
+        best = it;
+      }
+    }
+    if (best == lost_persons_.end())
+      return next_id_++;
+    int id = best->id;
+    lost_persons_.erase(best);
+    return id;
+  }
+
   static double iou(const cv::Rect2d& a, const cv::Rect2d& b)
   {
     double intersection = (a & b).area();
@@ -474,6 +511,7 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
   // then track the persons by the auxiliary landmarks of their poses, called with mutex_
   std::vector<Pose> estimatePoses(const cv::Mat& frame, double time)
   {
+    const cv::Rect2d image_box(0, 0, frame.cols, frame.rows);
     std::vector<Pose> candidates;
     auto estimate = [&](const std::vector<Person>& persons) {
       bool lost = false;
@@ -503,6 +541,17 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
     std::stable_sort(candidates.begin(), candidates.end(), [](const Pose& a, const Pose& b) {
       return (a.id >= 0) != (b.id >= 0) ? a.id >= 0 : a.confidence > b.confidence;
     });
+    // the persons lost in this image (whose poses are not estimated), before giving the ids to the new persons, so
+    // that a person lost and found again by the person detection in this image keeps the id
+    for (LostPerson& lost : lost_persons_)
+      lost.images++;
+    lost_persons_.erase(std::remove_if(lost_persons_.begin(), lost_persons_.end(),
+                                       [](const LostPerson& lost) { return lost.images > LOST_PERSON_IMAGES; }),
+                        lost_persons_.end());
+    for (const std::pair<const int, cv::Rect2d>& previous : previous_boxes_)
+      if (std::none_of(candidates.begin(), candidates.end(),
+                       [&](const Pose& pose) { return pose.id == previous.first; }))
+        lost_persons_.push_back(LostPerson{ previous.first, previous.second, 0 });
     std::vector<Pose> poses;
     std::vector<cv::Rect2d> kept_boxes;  // the boxes of the poses kept, before the smoothing
     tracked_persons_.clear();
@@ -510,12 +559,18 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
     {
       if (std::any_of(kept_boxes.begin(), kept_boxes.end(),
                       [&](const cv::Rect2d& kept) { return iou(pose.box, kept) > nms_threshold_; }))
+      {
+        // a tracked person overlapping another person is lost, at the box of the previous image
+        std::map<int, cv::Rect2d>::const_iterator previous = previous_boxes_.find(pose.id);
+        if (previous != previous_boxes_.end())
+          lost_persons_.push_back(LostPerson{ previous->first, previous->second, 0 });
         continue;
+      }
       kept_boxes.push_back(pose.box);
       if (!tracking_)
         pose.id = -1;
       else if (pose.id < 0)
-        pose.id = next_id_++;
+        pose.id = lostPersonId(pose.box & image_box);
       if (tracking_ && smoothing_)
       {
         smooth(pose, time);
@@ -533,6 +588,11 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
             Person{ pose.confidence, mid_hip, mid_hip + (full_body - mid_hip) * TRACKING_ROI_SCALE, pose.id });
       }
     }
+    // the boxes in the image, as the landmarks out of the image (e.g. the feet) are guessed differently
+    previous_boxes_.clear();
+    if (tracking_)
+      for (const Pose& pose : poses)
+        previous_boxes_[pose.id] = pose.box & image_box;
     // the filters of the persons not tracked any more
     for (std::map<int, LandmarksFilter>::iterator it = filters_.begin(); it != filters_.end();)
     {

@@ -117,6 +117,10 @@ const double PALM_BOX_ENLARGE_FACTOR = 3;
 // the box of the landmarks is shifted and enlarged by these factors to the box of the hand, as opencv_zoo
 const double HAND_BOX_SHIFT_Y = -0.1;
 const double HAND_BOX_ENLARGE_FACTOR = 1.65;
+// a lost hand keeps the id for this number of images, and a new hand near the hand (the distance of the centers of
+// their boxes is less than this ratio of the size of the box of the lost hand) gets the id, as dnn_pose_estimation
+const int LOST_HAND_IMAGES = 10;
+const double LOST_HAND_DISTANCE = 0.5;
 
 // the lines between the landmarks to draw the skeleton
 const int SKELETON[][2] = { { 0, 1 },   { 1, 2 },   { 2, 3 },   { 3, 4 },   { 0, 5 },   { 5, 6 },   { 6, 7 },
@@ -234,6 +238,15 @@ class DNNHandPoseEstimationNodelet : public opencv_apps::Nodelet
   };
 
   std::vector<Palm> tracked_palms_;
+  // the boxes of the hands of the previous image, and the hands lost recently, to give a hand found again the same id
+  struct LostHand
+  {
+    int id;
+    cv::Rect2d box;
+    int images;  // the number of the images since the hand is lost
+  };
+  std::map<int, cv::Rect2d> previous_boxes_;
+  std::vector<LostHand> lost_hands_;
   std::map<int, LandmarksFilter> filters_;
   int next_id_;
   int images_since_detection_;
@@ -540,6 +553,29 @@ class DNNHandPoseEstimationNodelet : public opencv_apps::Nodelet
     filter.time = time;
   }
 
+  // the id of the lost hand nearest to the new hand, or a new id, called with mutex_
+  int lostHandId(const cv::Rect2d& box)
+  {
+    std::vector<LostHand>::iterator best = lost_hands_.end();
+    double best_distance = 0;
+    cv::Point2d center = (box.tl() + box.br()) * 0.5;
+    for (std::vector<LostHand>::iterator it = lost_hands_.begin(); it != lost_hands_.end(); ++it)
+    {
+      double distance = cv::norm(center - (it->box.tl() + it->box.br()) * 0.5);
+      if (distance < LOST_HAND_DISTANCE * std::max(it->box.width, it->box.height) &&
+          (best == lost_hands_.end() || distance < best_distance))
+      {
+        best_distance = distance;
+        best = it;
+      }
+    }
+    if (best == lost_hands_.end())
+      return next_id_++;
+    int id = best->id;
+    lost_hands_.erase(best);
+    return id;
+  }
+
   static double iou(const cv::Rect2d& a, const cv::Rect2d& b)
   {
     double intersection = (a & b).area();
@@ -550,6 +586,7 @@ class DNNHandPoseEstimationNodelet : public opencv_apps::Nodelet
   // hands by the palm landmarks of their poses, called with mutex_
   std::vector<Hand> estimateHands(const cv::Mat& frame, double time)
   {
+    const cv::Rect2d image_box(0, 0, frame.cols, frame.rows);
     std::vector<Hand> candidates;
     auto estimate = [&](const std::vector<Palm>& palms) {
       bool lost = false;
@@ -579,6 +616,17 @@ class DNNHandPoseEstimationNodelet : public opencv_apps::Nodelet
     std::stable_sort(candidates.begin(), candidates.end(), [](const Hand& a, const Hand& b) {
       return (a.id >= 0) != (b.id >= 0) ? a.id >= 0 : a.confidence > b.confidence;
     });
+    // the hands lost in this image (whose poses are not estimated), before giving the ids to the new hands, so that
+    // a hand lost and found again by the palm detection in this image keeps the id
+    for (LostHand& lost : lost_hands_)
+      lost.images++;
+    lost_hands_.erase(std::remove_if(lost_hands_.begin(), lost_hands_.end(),
+                                     [](const LostHand& lost) { return lost.images > LOST_HAND_IMAGES; }),
+                      lost_hands_.end());
+    for (const std::pair<const int, cv::Rect2d>& previous : previous_boxes_)
+      if (std::none_of(candidates.begin(), candidates.end(),
+                       [&](const Hand& hand) { return hand.id == previous.first; }))
+        lost_hands_.push_back(LostHand{ previous.first, previous.second, 0 });
     std::vector<Hand> hands;
     std::vector<cv::Rect2d> kept_boxes;  // the boxes of the hands kept, before the smoothing
     tracked_palms_.clear();
@@ -586,12 +634,18 @@ class DNNHandPoseEstimationNodelet : public opencv_apps::Nodelet
     {
       if (std::any_of(kept_boxes.begin(), kept_boxes.end(),
                       [&](const cv::Rect2d& kept) { return iou(hand.box, kept) > nms_threshold_; }))
+      {
+        // a tracked hand overlapping another hand is lost, at the box of the previous image
+        std::map<int, cv::Rect2d>::const_iterator previous = previous_boxes_.find(hand.id);
+        if (previous != previous_boxes_.end())
+          lost_hands_.push_back(LostHand{ previous->first, previous->second, 0 });
         continue;
+      }
       kept_boxes.push_back(hand.box);
       if (!tracking_)
         hand.id = -1;
       else if (hand.id < 0)
-        hand.id = next_id_++;
+        hand.id = lostHandId(hand.box & image_box);
       if (tracking_ && smoothing_)
       {
         smooth(hand, time);
@@ -608,6 +662,10 @@ class DNNHandPoseEstimationNodelet : public opencv_apps::Nodelet
         tracked_palms_.push_back(palm);
       }
     }
+    previous_boxes_.clear();
+    if (tracking_)
+      for (const Hand& hand : hands)
+        previous_boxes_[hand.id] = hand.box & image_box;
     // the filters of the hands not tracked any more
     for (std::map<int, LandmarksFilter>::iterator it = filters_.begin(); it != filters_.end();)
     {
