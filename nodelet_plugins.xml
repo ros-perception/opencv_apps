@@ -179,6 +179,10 @@
     <description>Nodelet to estimate the human poses with MediaPipe person detection and pose estimation</description>
   </class>
 
+  <class name="opencv_apps/dnn_hand_pose_estimation" type="opencv_apps::DNNHandPoseEstimationNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to estimate the hand poses with MediaPipe palm detection and hand pose estimation</description>
+  </class>
+
   <class name="opencv_apps/dnn_semantic_segmentation" type="opencv_apps::DNNSemanticSegmentationNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet of semantic segmentation with a DNN model, e.g. PP-HumanSeg</description>
   </class>

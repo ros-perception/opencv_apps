@@ -178,6 +178,7 @@ if(OPENCV_HAVE_DNN)
     dnn_image_classification:DNNImageClassificationNodelet
     dnn_depth_estimation:DNNDepthEstimationNodelet
     dnn_pose_estimation:DNNPoseEstimationNodelet
+    dnn_hand_pose_estimation:DNNHandPoseEstimationNodelet
     dnn_semantic_segmentation:DNNSemanticSegmentationNodelet
     dnn_text_detection:DNNTextDetectionNodelet
     qrcode_detection:QRCodeDetectionNodelet
@@ -192,6 +193,7 @@ if(OPENCV_HAVE_DNN)
     src/nodelet/dnn_image_classification_nodelet.cpp
     src/nodelet/dnn_depth_estimation_nodelet.cpp
     src/nodelet/dnn_pose_estimation_nodelet.cpp
+    src/nodelet/dnn_hand_pose_estimation_nodelet.cpp
     src/nodelet/dnn_semantic_segmentation_nodelet.cpp
     src/nodelet/dnn_text_detection_nodelet.cpp
     src/nodelet/qrcode_detection_nodelet.cpp
@@ -302,9 +304,9 @@ if(BUILD_TESTING)
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.7")
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_tracking.py test/ros2/test_dnn_tracking_nanotrack.py)
   endif()
-  # the MediaPipe models of dnn_pose_estimation need OpenCV 4.9 or later
+  # the MediaPipe models of dnn_pose_estimation and dnn_hand_pose_estimation need OpenCV 4.9 or later
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.9")
-    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_pose_estimation.py)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_pose_estimation.py test/ros2/test_dnn_hand_pose_estimation.py)
   endif()
   if(NOT OPENCV_HAVE_BARCODE)
     list(REMOVE_ITEM _launch_tests test/ros2/test_barcode_detection.py)
@@ -800,6 +802,7 @@ if(OPENCV_HAVE_DNN)
   opencv_apps_add_nodelet(dnn_image_classification src/nodelet/dnn_image_classification_nodelet.cpp) # ./dnn/classification.cpp
   opencv_apps_add_nodelet(dnn_depth_estimation src/nodelet/dnn_depth_estimation_nodelet.cpp) # https://github.com/isl-org/MiDaS
   opencv_apps_add_nodelet(dnn_pose_estimation src/nodelet/dnn_pose_estimation_nodelet.cpp) # opencv_zoo pose_estimation_mediapipe
+  opencv_apps_add_nodelet(dnn_hand_pose_estimation src/nodelet/dnn_hand_pose_estimation_nodelet.cpp) # opencv_zoo handpose_estimation_mediapipe
   opencv_apps_add_nodelet(dnn_semantic_segmentation src/nodelet/dnn_semantic_segmentation_nodelet.cpp) # ./dnn/segmentation.cpp
   opencv_apps_add_nodelet(dnn_text_detection src/nodelet/dnn_text_detection_nodelet.cpp) # ./dnn/text_detection.cpp
   opencv_apps_add_nodelet(qrcode_detection src/nodelet/qrcode_detection_nodelet.cpp) # ./cpp/qrcode.cpp
@@ -867,6 +870,7 @@ if(CATKIN_ENABLE_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_image_classification.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_depth_estimation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_pose_estimation.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_hand_pose_estimation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_semantic_segmentation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_text_detection.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/qrcode_detection.launch)
