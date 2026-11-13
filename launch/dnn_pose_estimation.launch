@@ -11,6 +11,8 @@
   <arg name="backend" default="auto" doc="Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise." />
   <arg name="confidence_threshold" default="0.5" doc="Threshold of the confidence to detect the persons and to estimate their poses" />
   <arg name="nms_threshold" default="0.3" doc="Threshold of the overlap of the persons to suppress, by non maximum suppression" />
+  <arg name="tracking" default="true" doc="Track the persons by their poses in the previous image, as MediaPipe, and run the person detection every detection_interval images, otherwise every image" />
+  <arg name="detection_interval" default="10" doc="Interval of the person detection to find the new persons while tracking" />
 
   <!-- dnn_pose_estimation_nodelet.cpp, MediaPipe pose estimation (OpenCV 4.9 or later), ~skeletons has a Skeleton for each person, whose keypoints are the 33 landmarks -->
   <node name="$(arg node_name)" pkg="opencv_apps" type="dnn_pose_estimation" >
@@ -23,5 +25,7 @@
     <param name="backend" value="$(arg backend)" />
     <param name="confidence_threshold" type="double" value="$(arg confidence_threshold)" />
     <param name="nms_threshold" type="double" value="$(arg nms_threshold)" />
+    <param name="tracking" value="$(arg tracking)" />
+    <param name="detection_interval" value="$(arg detection_interval)" />
   </node>
 </launch>

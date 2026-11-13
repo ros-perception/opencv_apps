@@ -38,11 +38,13 @@
 /**
  * Human pose estimation with MediaPipe BlazePose of opencv_zoo (Apache 2.0): the persons are detected by the person
  * detection model, then the 33 landmarks of each person are estimated by the pose estimation model, on the image
- * rotated so that the person stands upright. The models need OpenCV 4.9 or later (OpenCV 4.6 cannot read them).
+ * rotated so that the person stands upright. As MediaPipe, the persons are tracked by the auxiliary landmarks of
+ * their poses in the previous image, and the person detection runs every detection_interval images to find the new
+ * persons, or when no person is tracked. The models need OpenCV 4.9 or later (OpenCV 4.6 cannot read them).
  *
- * ~skeletons has a Skeleton for each person: label "person", score the confidence of the pose, rect the bounding box
- * of the landmarks, and keypoints the 33 landmarks in the image coordinates with their visibility and presence, in
- * the order of MediaPipe (LANDMARK_NAMES).
+ * ~skeletons has a Skeleton for each person: label "person", id the id while tracked, score the confidence of the
+ * pose, rect the bounding box of the landmarks, and keypoints the 33 landmarks in the image coordinates with their
+ * visibility and presence, in the order of MediaPipe (LANDMARK_NAMES).
  */
 
 #include "opencv_apps/nodelet.h"
@@ -91,6 +93,8 @@ const char* const LANDMARK_NAMES[NUM_LANDMARKS] = {
 const int NUM_POSE_POINTS = 39;
 // the box of the landmarks is enlarged by this factor, as opencv_zoo
 const double PERSON_BOX_ENLARGE_FACTOR = 1.25;
+// the region of the tracked person is enlarged by this factor from the auxiliary landmarks, as MediaPipe
+const float TRACKING_ROI_SCALE = 1.25f;
 // only the landmarks of this presence are drawn, as opencv_zoo
 const double LANDMARK_PRESENCE_THRESHOLD = 0.8;
 
@@ -149,6 +153,8 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
   std::string backend_;
   double confidence_threshold_;
   double nms_threshold_;
+  bool tracking_;
+  int detection_interval_;
 
   std::mutex mutex_;
   cv::dnn::Net person_detection_;
@@ -157,13 +163,26 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
   bool need_model_update_;
   bool read_failed_;  // the models could not be read, not retried until the parameters change
 
-  // a person detected by the person detection model
+  // a person detected by the person detection model, or tracked by the auxiliary landmarks of the previous pose
   struct Person
   {
     float score;
     cv::Point2f mid_hip;    // the center of the full body
     cv::Point2f full_body;  // the point on the circle of the full body
+    int id;                 // id of the tracked person, or -1 for the detected one
   };
+  // a pose estimated for a person
+  struct Pose
+  {
+    int id;
+    cv::Mat landmarks;
+    float confidence;
+    cv::Rect2d box;  // the box of the landmarks
+  };
+
+  std::vector<Person> tracked_persons_;
+  int next_id_;
+  int images_since_detection_;
 
   rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
@@ -176,6 +195,10 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
         confidence_threshold_ = parameter.as_double();
       else if (parameter.get_name() == "nms_threshold")
         nms_threshold_ = parameter.as_double();
+      else if (parameter.get_name() == "tracking")
+        tracking_ = parameter.as_bool();
+      else if (parameter.get_name() == "detection_interval")
+        detection_interval_ = parameter.as_int();
       else
       {
         if (parameter.get_name() == "person_detection_model")
@@ -287,7 +310,7 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
       boxes.push_back(cv::Rect2d(center.x - size.x / 2, center.y - size.y / 2, size.x, size.y));
       confidences.push_back(score);
       // the keypoints: mid hip, full body, mid shoulder and upper body
-      candidates.push_back(Person{ score, point(delta + 4, anchors_[i]), point(delta + 6, anchors_[i]) });
+      candidates.push_back(Person{ score, point(delta + 4, anchors_[i]), point(delta + 6, anchors_[i]), -1 });
     }
     std::vector<int> indices;
     cv::dnn::NMSBoxes(boxes, confidences, static_cast<float>(confidence_threshold_), static_cast<float>(nms_threshold_),
@@ -375,6 +398,80 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
     return true;
   }
 
+  static cv::Rect2d landmarksBox(const cv::Mat& landmarks)
+  {
+    double min_x, max_x, min_y, max_y;
+    cv::Mat points = landmarks.rowRange(0, NUM_LANDMARKS);
+    cv::minMaxLoc(points.col(0), &min_x, &max_x);
+    cv::minMaxLoc(points.col(1), &min_y, &max_y);
+    return cv::Rect2d(min_x, min_y, max_x - min_x, max_y - min_y);
+  }
+
+  static double iou(const cv::Rect2d& a, const cv::Rect2d& b)
+  {
+    double intersection = (a & b).area();
+    return intersection > 0 ? intersection / (a.area() + b.area() - intersection) : 0.0;
+  }
+
+  // estimate the poses of the tracked persons and of the detected persons, and keep one pose for each person,
+  // then track the persons by the auxiliary landmarks of their poses, called with mutex_
+  std::vector<Pose> estimatePoses(const cv::Mat& frame)
+  {
+    std::vector<Pose> candidates;
+    auto estimate = [&](const std::vector<Person>& persons) {
+      bool lost = false;
+      for (const Person& person : persons)
+      {
+        Pose pose;
+        pose.id = person.id;
+        if (!estimatePose(frame, person, pose.landmarks, pose.confidence))
+        {
+          lost = true;
+          continue;
+        }
+        pose.box = landmarksBox(pose.landmarks);
+        candidates.push_back(pose);
+      }
+      return lost;
+    };
+    // the person detection runs also when a tracked person is lost, to find the person again in this image
+    bool lost = tracking_ && estimate(tracked_persons_);
+    if (!tracking_ || tracked_persons_.empty() || lost || ++images_since_detection_ >= detection_interval_)
+    {
+      images_since_detection_ = 0;
+      estimate(detectPersons(frame));
+    }
+    // the poses of the tracked persons first, then of the new persons, in the order of the confidence, which do
+    // not overlap the poses kept already
+    std::stable_sort(candidates.begin(), candidates.end(), [](const Pose& a, const Pose& b) {
+      return (a.id >= 0) != (b.id >= 0) ? a.id >= 0 : a.confidence > b.confidence;
+    });
+    std::vector<Pose> poses;
+    tracked_persons_.clear();
+    for (Pose& pose : candidates)
+    {
+      if (std::any_of(poses.begin(), poses.end(),
+                      [&](const Pose& kept) { return iou(pose.box, kept.box) > nms_threshold_; }))
+        continue;
+      if (!tracking_)
+        pose.id = -1;
+      else if (pose.id < 0)
+        pose.id = next_id_++;
+      poses.push_back(pose);
+      if (tracking_)
+      {
+        // the auxiliary landmarks 33 and 34 are the mid hip and the point on the circle of the full body, as the
+        // keypoints of the person detection, and the circle is enlarged by 1.25 as pose_landmarks_to_roi of MediaPipe
+        const cv::Mat& l = pose.landmarks;
+        cv::Point2f mid_hip(l.at<float>(33, 0), l.at<float>(33, 1));
+        cv::Point2f full_body(l.at<float>(34, 0), l.at<float>(34, 1));
+        tracked_persons_.push_back(
+            Person{ pose.confidence, mid_hip, mid_hip + (full_body - mid_hip) * TRACKING_ROI_SCALE, pose.id });
+      }
+    }
+    return poses;
+  }
+
   const std::string& frameWithDefault(const std::string& frame, const std::string& image_frame)
   {
     if (frame.empty())
@@ -411,8 +508,7 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
       skeletons_msg.header = msg->header;
 
       // Do the work
-      std::vector<cv::Mat> poses;
-      std::vector<float> confidences;
+      std::vector<Pose> poses;
       {
         std::lock_guard<std::mutex> lock(mutex_);
         if (!updateModel())
@@ -420,29 +516,18 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
           RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 10000, "Models are not loaded");
           return;
         }
-        for (const Person& person : detectPersons(frame))
-        {
-          cv::Mat landmarks;
-          float confidence;
-          if (estimatePose(frame, person, landmarks, confidence))
-          {
-            poses.push_back(landmarks);
-            confidences.push_back(confidence);
-          }
-        }
+        poses = estimatePoses(frame);
       }
 
-      for (size_t i = 0; i < poses.size(); i++)
+      for (const Pose& pose : poses)
       {
-        const cv::Mat& landmarks = poses[i];
-        // the box of all the points, enlarged
-        double min_x, max_x, min_y, max_y;
-        cv::minMaxLoc(landmarks.col(0), &min_x, &max_x);
-        cv::minMaxLoc(landmarks.col(1), &min_y, &max_y);
+        const cv::Mat& landmarks = pose.landmarks;
+        // the box of the landmarks, enlarged
+        double min_x = pose.box.x, max_x = pose.box.br().x, min_y = pose.box.y, max_y = pose.box.br().y;
         opencv_apps::msg::Skeleton skeleton_msg;
         skeleton_msg.label = "person";
-        skeleton_msg.id = -1;
-        skeleton_msg.score = confidences[i];
+        skeleton_msg.id = pose.id;
+        skeleton_msg.score = pose.confidence;
         skeleton_msg.rect.x = (min_x + max_x) / 2;
         skeleton_msg.rect.y = (min_y + max_y) / 2;
         skeleton_msg.rect.width = (max_x - min_x) * PERSON_BOX_ENLARGE_FACTOR;
@@ -465,7 +550,9 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
                                  skeleton_msg.rect.y - skeleton_msg.rect.height / 2, skeleton_msg.rect.width,
                                  skeleton_msg.rect.height),
                       cv::Scalar(0, 255, 0), 2);
-        cv::putText(frame, cv::format("person %.2f", confidences[i]),
+        cv::putText(frame,
+                    pose.id >= 0 ? cv::format("person %d %.2f", pose.id, pose.confidence) :
+                                   cv::format("person %.2f", pose.confidence),
                     cv::Point(cvRound(skeleton_msg.rect.x - skeleton_msg.rect.width / 2),
                               std::max(15, cvRound(skeleton_msg.rect.y - skeleton_msg.rect.height / 2) - 5)),
                     cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 1);
@@ -536,6 +623,8 @@ public:
     need_model_update_ = true;
     read_failed_ = false;
     anchors_ = personDetectionAnchors();
+    next_id_ = 0;
+    images_since_detection_ = 0;
 
     use_camera_info_ = declare_parameter(
         "use_camera_info", false,
@@ -558,6 +647,13 @@ public:
     nms_threshold_ = declare_parameter(
         "nms_threshold", 0.3,
         paramDescriptor("Threshold of the overlap of the persons to suppress, by non maximum suppression", 0.0, 1.0));
+    tracking_ = declare_parameter(
+        "tracking", true,
+        paramDescriptor("Track the persons by their poses in the previous image, as MediaPipe, and run the person "
+                        "detection every detection_interval images, otherwise every image"));
+    detection_interval_ = declare_parameter(
+        "detection_interval", 10,
+        paramDescriptor("Interval of the person detection to find the new persons while tracking", 1, 1000));
     on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
         std::bind(&DNNPoseEstimationNodelet::parametersCallback, this, std::placeholders::_1));
 
