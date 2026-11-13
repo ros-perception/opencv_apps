@@ -95,7 +95,11 @@ def main():
     paste(sheet, aruco(ARUCO_IDS[0], 160), 400, 300)
     paste(sheet, aruco(ARUCO_IDS[1], 160), 600, 300)
     sheet = cv2.cvtColor(sheet, cv2.COLOR_GRAY2BGR)
+    write_video(sheet, out)
 
+
+def write_video(sheet, out):
+    """Write the video of the sheet (BGR image), which moves around and tilts a little in the view, to out."""
     w, h, fps, frames = 640, 480, 10, 100
     writer = cv2.VideoWriter(out, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
     sh, sw = sheet.shape[:2]

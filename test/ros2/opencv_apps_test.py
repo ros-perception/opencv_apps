@@ -60,6 +60,8 @@ FACE_VIDEO = os.path.join(TEST_DIR, 'face_detector_withface_test_diamondback.mp4
 VSLAM_VIDEO = os.path.join(TEST_DIR, 'vslam_tutorial.mp4')
 # a QR code, a barcode and ArUco markers, made by test/make_codes_video.py
 CODES_VIDEO = os.path.join(TEST_DIR, 'codes.mp4')
+# words on a sheet, made by test/make_text_video.py
+TEXT_VIDEO = os.path.join(TEST_DIR, 'text.mp4')
 GUI = LaunchConfiguration('gui')
 
 # Fast DDS profile with the shared memory large enough for the images, for this process and the nodes it launches,
