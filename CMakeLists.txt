@@ -93,6 +93,7 @@ set(_nodelets
   compare_histogram:CompareHistogramNodelet
   discrete_fourier_transform:DiscreteFourierTransformNodelet
   equalize_histogram:EqualizeHistogramNodelet
+  match_template:MatchTemplateNodelet
   morphology:MorphologyNodelet
   pyramids:PyramidsNodelet
   smoothing:SmoothingNodelet
@@ -129,6 +130,7 @@ set(_nodelet_cppfiles
   src/nodelet/compare_histogram_nodelet.cpp
   src/nodelet/discrete_fourier_transform_nodelet.cpp
   src/nodelet/equalize_histogram_nodelet.cpp
+  src/nodelet/match_template_nodelet.cpp
   src/nodelet/morphology_nodelet.cpp
   src/nodelet/pyramids_nodelet.cpp
   src/nodelet/smoothing_nodelet.cpp
@@ -383,6 +385,10 @@ endif()
 if(NOT OpenCV_VERSION VERSION_LESS "3.0")
   set(OPENCV_HAVE_BACKGROUND_SUBTRACTION TRUE)
 endif()
+# match_template uses the mask of cv::matchTemplate() and cv::IMREAD_* of OpenCV 3.0 or later
+if(NOT OpenCV_VERSION VERSION_LESS "3.0")
+  set(OPENCV_HAVE_MATCH_TEMPLATE TRUE)
+endif()
 # cv::createLineSegmentDetector() is not in OpenCV 2.x, and throws "Implementation has been removed due original code
 # license issues" on OpenCV 3.4.6 - 4.5.3 (e.g. noetic's 4.2), it is back since 4.5.4
 if(NOT OpenCV_VERSION VERSION_LESS "3.0" AND
@@ -426,6 +432,7 @@ generate_dynamic_reconfigure_options(
   cfg/CamShift.cfg
   cfg/FBackFlow.cfg
   cfg/LKFlow.cfg
+  cfg/MatchTemplate.cfg
   cfg/PeopleDetect.cfg
   cfg/PhaseCorr.cfg
   cfg/SegmentObjects.cfg
@@ -553,6 +560,9 @@ opencv_apps_add_nodelet(discrete_fourier_transform src/nodelet/discrete_fourier_
   opencv_apps_add_nodelet(compare_histogram src/nodelet/compare_histogram_nodelet.cpp) # calcHist_Demo.cpp and compareHist_Demo.cpp
   opencv_apps_add_nodelet(equalize_histogram src/nodelet/equalize_histogram_nodelet.cpp) # ./tutorial_code/Histograms_Matching/EqualizeHist_Demo.cpp
   # ./tutorial_code/Histograms_Matching/MatchTemplate_Demo.cpp
+if(OPENCV_HAVE_MATCH_TEMPLATE)
+  opencv_apps_add_nodelet(match_template src/nodelet/match_template_nodelet.cpp) # ./tutorial_code/Histograms_Matching/MatchTemplate_Demo.cpp
+endif()
 
 # imagecodecs
   # ./tutorial_code/imgcodecs/GDAL_IO/gdal-image.cpp
@@ -826,6 +836,9 @@ if(CATKIN_ENABLE_TESTING)
     endif()
     if(NOT OPENCV_HAVE_BACKGROUND_SUBTRACTION)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/background_subtraction.launch)
+    endif()
+    if(NOT OPENCV_HAVE_MATCH_TEMPLATE)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/match_template.launch)
     endif()
     if(NOT OPENCV_HAVE_LSD)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/line_segment_detector.launch)

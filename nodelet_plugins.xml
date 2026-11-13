@@ -171,6 +171,10 @@
     <description>Nodelet to detect ArUco markers, and their poses with the camera info (cv::aruco)</description>
   </class>
 
+  <class name="opencv_apps/match_template" type="opencv_apps::MatchTemplateNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to find a template image in the image: matchTemplate()</description>
+  </class>
+
   <!--
       for backward compatibility, can be removed in M-turtle
   -->

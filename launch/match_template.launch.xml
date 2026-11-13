@@ -1,0 +1,28 @@
+<launch>
+  <arg name="node_name" default="match_template" />
+
+  <arg name="image" default="image" description="The image topic. Should be remapped to the name of the real image topic." />
+
+  <arg name="use_camera_info" default="false" description="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
+  <arg name="debug_view" default="true" description="Specify whether the node displays a window to show the match, the template can be selected with mouse on the window" />
+  <arg name="queue_size" default="3" description="Specify queue_size of input image subscribers" />
+
+  <arg name="match_method" default="5" description="Matching method. 0: TM_SQDIFF, 1: TM_SQDIFF_NORMED, 2: TM_CCORR, 3: TM_CCORR_NORMED, 4: TM_CCOEFF, 5: TM_CCOEFF_NORMED" />
+  <arg name="match_threshold" default="0.0" description="Minimum similarity of a match (score of TM_CCORR_NORMED and TM_CCOEFF_NORMED, 1 - score of TM_SQDIFF_NORMED), not used by the methods which are not normalized" />
+  <arg name="max_matches" default="1" description="Maximum number of the matches. 1: the best match only, more than 1: the matches above match_threshold, after a non-maximum suppression" />
+  <arg name="template_file" default="" description="File name of the template image, it is replaced by the image on ~/template topic" />
+  <arg name="mask_file" default="" description="File name of the mask image of the template (non-zero pixels are used), it is replaced by the image on ~/mask topic" />
+
+  <!-- match_template_nodelet.cpp -->
+  <node name="$(var node_name)" pkg="opencv_apps" exec="match_template" >
+    <remap from="image" to="$(var image)" />
+    <param name="use_camera_info" value="$(var use_camera_info)" />
+    <param name="debug_view" value="$(var debug_view)" />
+    <param name="queue_size" value="$(var queue_size)" />
+    <param name="match_method" value="$(var match_method)" />
+    <param name="match_threshold" value="$(var match_threshold)" />
+    <param name="max_matches" value="$(var max_matches)" />
+    <param name="template_file" value="$(var template_file)" />
+    <param name="mask_file" value="$(var mask_file)" />
+  </node>
+</launch>
