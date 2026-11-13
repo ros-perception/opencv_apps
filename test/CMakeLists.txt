@@ -134,10 +134,12 @@ if(OPENCV_HAVE_DNN AND CURL_FOUND)
   add_rostest(test-dnn_text_detection.test ARGS gui:=false)
   add_rostest(test-dnn_semantic_segmentation.test ARGS gui:=false)
   add_rostest(test-dnn_depth_estimation.test ARGS gui:=false)
+  add_rostest(test-dnn_image_classification.test ARGS gui:=false)
 else()
   list(APPEND _skip_test_files test-dnn_face_detection.test test-dnn_face_recognition.test
     test-dnn_object_detection.test test-dnn_text_detection.test
-    test-dnn_semantic_segmentation.test test-dnn_depth_estimation.test)
+    test-dnn_semantic_segmentation.test test-dnn_depth_estimation.test
+    test-dnn_image_classification.test)
 endif()
 # the MediaPipe models of dnn_pose_estimation need OpenCV 4.9 or later
 if(OPENCV_HAVE_DNN AND CURL_FOUND AND NOT OpenCV_VERSION VERSION_LESS "4.9")
