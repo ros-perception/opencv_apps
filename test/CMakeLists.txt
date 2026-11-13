@@ -139,6 +139,12 @@ else()
     test-dnn_object_detection.test test-dnn_text_detection.test
     test-dnn_semantic_segmentation.test test-dnn_depth_estimation.test)
 endif()
+# the MediaPipe models of dnn_pose_estimation need OpenCV 4.9 or later
+if(OPENCV_HAVE_DNN AND CURL_FOUND AND NOT OpenCV_VERSION VERSION_LESS "4.9")
+  add_rostest(test-dnn_pose_estimation.test ARGS gui:=false)
+else()
+  list(APPEND _skip_test_files test-dnn_pose_estimation.test)
+endif()
 if(OPENCV_HAVE_DNN)
   add_rostest(test-qrcode_detection.test ARGS gui:=false)
 else()

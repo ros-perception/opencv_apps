@@ -167,6 +167,10 @@
     <description>Nodelet of monocular depth estimation with a DNN model, e.g. MiDaS</description>
   </class>
 
+  <class name="opencv_apps/dnn_pose_estimation" type="opencv_apps::DNNPoseEstimationNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to estimate the human poses with MediaPipe person detection and pose estimation</description>
+  </class>
+
   <class name="opencv_apps/dnn_semantic_segmentation" type="opencv_apps::DNNSemanticSegmentationNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet of semantic segmentation with a DNN model, e.g. PP-HumanSeg</description>
   </class>
