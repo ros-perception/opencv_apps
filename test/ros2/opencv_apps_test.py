@@ -42,6 +42,7 @@ import tempfile
 import time
 
 from ament_index_python.packages import get_package_share_directory
+import cv2
 import launch
 from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription
 from launch.conditions import IfCondition
@@ -52,6 +53,7 @@ import launch_testing.actions
 import numpy as np
 import rclpy
 from rosidl_runtime_py.utilities import get_message
+from sensor_msgs.msg import Image
 
 TEST_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # wide_stereo/left of face_detector_withface_test_diamondback.bag, used by most of the ROS1 tests
@@ -193,3 +195,51 @@ class MessagesTest(TopicsTest):
             self.assertEqual(sorted(t for t in self.CHECKS if (t if t.startswith('/') else '/' + t) not in found), [])
         finally:
             rclpy.shutdown()
+
+
+def video_frames(video, first, last):
+    """Read the frames first..last of the video (BGR)."""
+    capture = cv2.VideoCapture(video)
+    frames = []
+    for i in range(last + 1):
+        ok, frame = capture.read()
+        if not ok:
+            break
+        if i >= first:
+            frames.append(frame)
+    return frames
+
+
+def publish_frames(node, frames, topics, timeout=30.0, subscribers=1):
+    """Publish the frames on image one by one at 10 fps of their stamps, each after the outputs of the previous one.
+
+    Return the messages of each topic of topics ({topic: message type}) for each frame, or None if no message is
+    received within timeout. The results do not depend on the speed of the nodes, unlike the camera. The frames are
+    published after the number of the subscribers of image reaches subscribers, which raises RuntimeError otherwise.
+    """
+    received = {topic: {} for topic in topics}
+    subscriptions = [node.create_subscription(
+        msg_type, topic, lambda msg, topic=topic: received[topic].__setitem__(
+            (msg.header.stamp.sec, msg.header.stamp.nanosec), msg), 10) for topic, msg_type in topics.items()]
+    publisher = node.create_publisher(Image, 'image', 10)
+    end_time = time.time() + timeout
+    while publisher.get_subscription_count() < subscribers and time.time() < end_time:
+        rclpy.spin_once(node, timeout_sec=0.1)
+    if publisher.get_subscription_count() < subscribers:
+        raise RuntimeError('%d subscribers of image, not %d' % (publisher.get_subscription_count(), subscribers))
+    results = []
+    for i, frame in enumerate(frames):
+        msg = Image(height=frame.shape[0], width=frame.shape[1], encoding='bgr8', step=frame.shape[1] * 3,
+                    data=frame.tobytes())
+        msg.header.frame_id = 'camera'
+        msg.header.stamp.sec, msg.header.stamp.nanosec = 100 + i // 10, (i % 10) * 100000000
+        stamp = (msg.header.stamp.sec, msg.header.stamp.nanosec)
+        publisher.publish(msg)
+        end_time = time.time() + timeout
+        while not all(stamp in received[topic] for topic in topics) and time.time() < end_time:
+            rclpy.spin_once(node, timeout_sec=0.05)
+        results.append({topic: received[topic].pop(stamp, None) for topic in topics})
+    for subscription in subscriptions:
+        node.destroy_subscription(subscription)
+    node.destroy_publisher(publisher)
+    return results
