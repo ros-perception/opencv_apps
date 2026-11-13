@@ -174,6 +174,7 @@ if(OPENCV_HAVE_DNN)
     dnn_face_recognition:DNNFaceRecognitionNodelet
     dnn_object_detection:DNNObjectDetectionNodelet
     dnn_tracking:DNNTrackingNodelet
+    dnn_facial_expression_recognition:DNNFacialExpressionRecognitionNodelet
     dnn_image_classification:DNNImageClassificationNodelet
     dnn_depth_estimation:DNNDepthEstimationNodelet
     dnn_pose_estimation:DNNPoseEstimationNodelet
@@ -187,6 +188,7 @@ if(OPENCV_HAVE_DNN)
     src/nodelet/dnn_face_recognition_nodelet.cpp
     src/nodelet/dnn_object_detection_nodelet.cpp
     src/nodelet/dnn_tracking_nodelet.cpp
+    src/nodelet/dnn_facial_expression_recognition_nodelet.cpp
     src/nodelet/dnn_image_classification_nodelet.cpp
     src/nodelet/dnn_depth_estimation_nodelet.cpp
     src/nodelet/dnn_pose_estimation_nodelet.cpp
@@ -290,7 +292,7 @@ if(BUILD_TESTING)
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_face_detection.py test/ros2/test_dnn_face_recognition.py
       test/ros2/test_dnn_object_detection.py test/ros2/test_dnn_text_detection.py
       test/ros2/test_dnn_semantic_segmentation.py test/ros2/test_dnn_depth_estimation.py
-      test/ros2/test_dnn_image_classification.py)
+      test/ros2/test_dnn_image_classification.py test/ros2/test_dnn_facial_expression_recognition.py)
   endif()
   if(NOT OPENCV_HAVE_DNN)
     list(REMOVE_ITEM _launch_tests test/ros2/test_qrcode_detection.py)
@@ -794,6 +796,7 @@ if(OPENCV_HAVE_DNN)
   opencv_apps_add_nodelet(dnn_face_recognition src/nodelet/dnn_face_recognition_nodelet.cpp) # ./dnn/face_detect.cpp
   opencv_apps_add_nodelet(dnn_object_detection src/nodelet/dnn_object_detection_nodelet.cpp) # ./dnn/object_detection.cpp
   opencv_apps_add_nodelet(dnn_tracking src/nodelet/dnn_tracking_nodelet.cpp) # ./dnn/dasiamrpn_tracker.cpp, ./dnn/nanotrack_tracker.cpp
+  opencv_apps_add_nodelet(dnn_facial_expression_recognition src/nodelet/dnn_facial_expression_recognition_nodelet.cpp) # opencv_zoo facial_expression_recognition
   opencv_apps_add_nodelet(dnn_image_classification src/nodelet/dnn_image_classification_nodelet.cpp) # ./dnn/classification.cpp
   opencv_apps_add_nodelet(dnn_depth_estimation src/nodelet/dnn_depth_estimation_nodelet.cpp) # https://github.com/isl-org/MiDaS
   opencv_apps_add_nodelet(dnn_pose_estimation src/nodelet/dnn_pose_estimation_nodelet.cpp) # opencv_zoo pose_estimation_mediapipe
@@ -860,6 +863,7 @@ if(CATKIN_ENABLE_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_face_recognition.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_object_detection.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_tracking.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_facial_expression_recognition.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_image_classification.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_depth_estimation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_pose_estimation.launch

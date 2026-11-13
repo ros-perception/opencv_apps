@@ -163,6 +163,10 @@
     <description>Nodelet to track the target with the DNN based trackers of OpenCV (DaSiamRPN, NanoTrack, VitTrack)</description>
   </class>
 
+  <class name="opencv_apps/dnn_facial_expression_recognition" type="opencv_apps::DNNFacialExpressionRecognitionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to recognize the facial expressions with YuNet and MobileFaceNet</description>
+  </class>
+
   <class name="opencv_apps/dnn_image_classification" type="opencv_apps::DNNImageClassificationNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to classify the images with a DNN model, e.g. PP-ResNet50 (ImageNet)</description>
   </class>
