@@ -191,10 +191,11 @@ public:
     morph_operator_ = declare_parameter(
         "morph_operator", 1,
         paramDescriptor("Morphology Operation Methods, 0: Opening, 1: Closing, 2: Gradient, 3: Top_Hat, 4: Black_Hat",
-                        0, 3));
+                        0, 4));
     morph_element_ = declare_parameter("morph_element", 0,
                                        paramDescriptor("Type of the kernel 0: Rect, 1: Cross, 2: Ellipse", 0, 2));
-    morph_size_ = declare_parameter("morph_size", 0, paramDescriptor("Size of the kernel. Must be odd.", 0, 101));
+    morph_size_ = declare_parameter("morph_size", 0,
+                                    paramDescriptor("Radius of the kernel, whose size is 2 * morph_size + 1.", 0, 101));
     on_set_parameters_callback_handle_ =
         add_on_set_parameters_callback(std::bind(&MorphologyNodelet::parametersCallback, this, std::placeholders::_1));
 
