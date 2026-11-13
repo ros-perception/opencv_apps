@@ -13,6 +13,10 @@
   <arg name="nms_threshold" default="0.3" description="Threshold of the overlap of the persons to suppress, by non maximum suppression" />
   <arg name="tracking" default="true" description="Track the persons by their poses in the previous image, as MediaPipe, and run the person detection every detection_interval images, otherwise every image" />
   <arg name="detection_interval" default="10" description="Interval of the person detection to find the new persons while tracking" />
+  <arg name="smoothing" default="true" description="Smooth the landmarks of the tracked persons by One Euro filter" />
+  <arg name="smoothing_min_cutoff" default="0.05" description="Minimum cutoff frequency (Hz) of One Euro filter, smaller is smoother when still" />
+  <arg name="smoothing_beta" default="80.0" description="Speed coefficient of One Euro filter, larger follows the fast motion with less lag" />
+  <arg name="smoothing_derivative_cutoff" default="1.0" description="Cutoff frequency (Hz) of the velocity of One Euro filter" />
 
   <!-- dnn_pose_estimation_nodelet.cpp, MediaPipe pose estimation (OpenCV 4.9 or later), ~skeletons has a Skeleton for each person, whose keypoints are the 33 landmarks -->
   <node name="$(var node_name)" pkg="opencv_apps" exec="dnn_pose_estimation" >
@@ -27,5 +31,9 @@
     <param name="nms_threshold" value="$(var nms_threshold)" />
     <param name="tracking" value="$(var tracking)" />
     <param name="detection_interval" value="$(var detection_interval)" />
+    <param name="smoothing" value="$(var smoothing)" />
+    <param name="smoothing_min_cutoff" value="$(var smoothing_min_cutoff)" />
+    <param name="smoothing_beta" value="$(var smoothing_beta)" />
+    <param name="smoothing_derivative_cutoff" value="$(var smoothing_derivative_cutoff)" />
   </node>
 </launch>

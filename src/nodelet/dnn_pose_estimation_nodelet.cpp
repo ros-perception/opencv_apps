@@ -40,7 +40,8 @@
  * detection model, then the 33 landmarks of each person are estimated by the pose estimation model, on the image
  * rotated so that the person stands upright. As MediaPipe, the persons are tracked by the auxiliary landmarks of
  * their poses in the previous image, and the person detection runs every detection_interval images to find the new
- * persons, or when no person is tracked. The models need OpenCV 4.9 or later (OpenCV 4.6 cannot read them).
+ * persons, or when no person is tracked. The landmarks of the tracked persons are smoothed by One Euro filter, as
+ * MediaPipe. The models need OpenCV 4.9 or later (OpenCV 4.6 cannot read them).
  *
  * ~skeletons has a Skeleton for each person: label "person", id the id while tracked, score the confidence of the
  * pose, rect the bounding box of the landmarks, and keypoints the 33 landmarks in the image coordinates with their
@@ -60,6 +61,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <map>
 #include <mutex>
 #include <string>
 #include <utility>
@@ -155,6 +157,10 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
   double nms_threshold_;
   bool tracking_;
   int detection_interval_;
+  bool smoothing_;
+  double smoothing_min_cutoff_;
+  double smoothing_beta_;
+  double smoothing_derivative_cutoff_;
 
   std::mutex mutex_;
   cv::dnn::Net person_detection_;
@@ -180,7 +186,17 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
     cv::Rect2d box;  // the box of the landmarks
   };
 
+  // One Euro filter of the landmarks of a tracked person
+  struct LandmarksFilter
+  {
+    double time;
+    cv::Mat value;       // the smoothed landmarks, NUM_POSE_POINTS x 2 (x, y), CV_64F
+    cv::Mat raw_value;   // the landmarks of the previous image, to compute the velocity as MediaPipe
+    cv::Mat derivative;  // in the scale of the person per second
+  };
+
   std::vector<Person> tracked_persons_;
+  std::map<int, LandmarksFilter> filters_;
   int next_id_;
   int images_since_detection_;
 
@@ -199,6 +215,14 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
         tracking_ = parameter.as_bool();
       else if (parameter.get_name() == "detection_interval")
         detection_interval_ = parameter.as_int();
+      else if (parameter.get_name() == "smoothing")
+        smoothing_ = parameter.as_bool();
+      else if (parameter.get_name() == "smoothing_min_cutoff")
+        smoothing_min_cutoff_ = parameter.as_double();
+      else if (parameter.get_name() == "smoothing_beta")
+        smoothing_beta_ = parameter.as_double();
+      else if (parameter.get_name() == "smoothing_derivative_cutoff")
+        smoothing_derivative_cutoff_ = parameter.as_double();
       else
       {
         if (parameter.get_name() == "person_detection_model")
@@ -407,6 +431,39 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
     return cv::Rect2d(min_x, min_y, max_x - min_x, max_y - min_y);
   }
 
+  // smooth the landmarks of the tracked person by One Euro filter, whose velocity is in the scale of the person as
+  // LandmarksSmoothingCalculator of MediaPipe, called with mutex_
+  void smooth(Pose& pose, double time)
+  {
+    cv::Mat value;
+    pose.landmarks.colRange(0, 2).convertTo(value, CV_64F);
+    std::map<int, LandmarksFilter>::iterator it = filters_.find(pose.id);
+    // restart the filter when the time goes back (e.g. the video loops) or jumps
+    if (it == filters_.end() || time <= it->second.time || time - it->second.time > 1.0)
+    {
+      filters_[pose.id] = LandmarksFilter{ time, value, value.clone(), cv::Mat::zeros(value.size(), CV_64F) };
+      return;
+    }
+    LandmarksFilter& filter = it->second;
+    double dt = time - filter.time;
+    double scale = std::max(1.0, (pose.box.width + pose.box.height) / 2);
+    auto alpha = [dt](double cutoff) { return 1.0 / (1.0 + 1.0 / (2 * CV_PI * cutoff * dt)); };
+    double derivative_alpha = alpha(smoothing_derivative_cutoff_);
+    filter.derivative =
+        derivative_alpha * (value - filter.raw_value) / (dt * scale) + (1 - derivative_alpha) * filter.derivative;
+    for (int i = 0; i < value.rows; i++)
+    {
+      for (int j = 0; j < value.cols; j++)
+      {
+        double a = alpha(smoothing_min_cutoff_ + smoothing_beta_ * std::abs(filter.derivative.at<double>(i, j)));
+        filter.value.at<double>(i, j) = a * value.at<double>(i, j) + (1 - a) * filter.value.at<double>(i, j);
+        pose.landmarks.at<float>(i, j) = static_cast<float>(filter.value.at<double>(i, j));
+      }
+    }
+    filter.raw_value = value;
+    filter.time = time;
+  }
+
   static double iou(const cv::Rect2d& a, const cv::Rect2d& b)
   {
     double intersection = (a & b).area();
@@ -415,7 +472,7 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
 
   // estimate the poses of the tracked persons and of the detected persons, and keep one pose for each person,
   // then track the persons by the auxiliary landmarks of their poses, called with mutex_
-  std::vector<Pose> estimatePoses(const cv::Mat& frame)
+  std::vector<Pose> estimatePoses(const cv::Mat& frame, double time)
   {
     std::vector<Pose> candidates;
     auto estimate = [&](const std::vector<Person>& persons) {
@@ -447,16 +504,23 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
       return (a.id >= 0) != (b.id >= 0) ? a.id >= 0 : a.confidence > b.confidence;
     });
     std::vector<Pose> poses;
+    std::vector<cv::Rect2d> kept_boxes;  // the boxes of the poses kept, before the smoothing
     tracked_persons_.clear();
     for (Pose& pose : candidates)
     {
-      if (std::any_of(poses.begin(), poses.end(),
-                      [&](const Pose& kept) { return iou(pose.box, kept.box) > nms_threshold_; }))
+      if (std::any_of(kept_boxes.begin(), kept_boxes.end(),
+                      [&](const cv::Rect2d& kept) { return iou(pose.box, kept) > nms_threshold_; }))
         continue;
+      kept_boxes.push_back(pose.box);
       if (!tracking_)
         pose.id = -1;
       else if (pose.id < 0)
         pose.id = next_id_++;
+      if (tracking_ && smoothing_)
+      {
+        smooth(pose, time);
+        pose.box = landmarksBox(pose.landmarks);
+      }
       poses.push_back(pose);
       if (tracking_)
       {
@@ -468,6 +532,14 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
         tracked_persons_.push_back(
             Person{ pose.confidence, mid_hip, mid_hip + (full_body - mid_hip) * TRACKING_ROI_SCALE, pose.id });
       }
+    }
+    // the filters of the persons not tracked any more
+    for (std::map<int, LandmarksFilter>::iterator it = filters_.begin(); it != filters_.end();)
+    {
+      if (std::none_of(poses.begin(), poses.end(), [&](const Pose& pose) { return pose.id == it->first; }))
+        it = filters_.erase(it);
+      else
+        ++it;
     }
     return poses;
   }
@@ -516,7 +588,7 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
           RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 10000, "Models are not loaded");
           return;
         }
-        poses = estimatePoses(frame);
+        poses = estimatePoses(frame, rclcpp::Time(msg->header.stamp).seconds());
       }
 
       for (const Pose& pose : poses)
@@ -654,6 +726,19 @@ public:
     detection_interval_ = declare_parameter(
         "detection_interval", 10,
         paramDescriptor("Interval of the person detection to find the new persons while tracking", 1, 1000));
+    smoothing_ = declare_parameter("smoothing", true,
+                                   paramDescriptor("Smooth the landmarks of the tracked persons by One Euro filter"));
+    smoothing_min_cutoff_ = declare_parameter(
+        "smoothing_min_cutoff", 0.05,
+        paramDescriptor("Minimum cutoff frequency (Hz) of One Euro filter, smaller is smoother when still", 0.001,
+                        100.0));
+    smoothing_beta_ = declare_parameter(
+        "smoothing_beta", 80.0,
+        paramDescriptor("Speed coefficient of One Euro filter, larger follows the fast motion with less lag", 0.0,
+                        10000.0));
+    smoothing_derivative_cutoff_ =
+        declare_parameter("smoothing_derivative_cutoff", 1.0,
+                          paramDescriptor("Cutoff frequency (Hz) of the velocity of One Euro filter", 0.001, 100.0));
     on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
         std::bind(&DNNPoseEstimationNodelet::parametersCallback, this, std::placeholders::_1));
 
