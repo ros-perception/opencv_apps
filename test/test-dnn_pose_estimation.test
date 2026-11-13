@@ -12,8 +12,8 @@
     <arg name="image" value="camera/image_raw" />
   </include>
 
-  <param name="dnn_pose_estimation_detections_test/topic" value="dnn_pose_estimation/detections" />
-  <test test-name="dnn_pose_estimation_detections_test" pkg="rostest" type="hztest" name="dnn_pose_estimation_detections_test" time-limit="300" >
+  <param name="dnn_pose_estimation_skeletons_test/topic" value="dnn_pose_estimation/skeletons" />
+  <test test-name="dnn_pose_estimation_skeletons_test" pkg="rostest" type="hztest" name="dnn_pose_estimation_skeletons_test" time-limit="300" >
     <param name="hz" value="10" />
     <param name="hzerror" value="8" />
     <param name="test_duration" value="2.0" />

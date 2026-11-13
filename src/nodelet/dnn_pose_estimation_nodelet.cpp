@@ -40,12 +40,9 @@
  * detection model, then the 33 landmarks of each person are estimated by the pose estimation model, on the image
  * rotated so that the person stands upright. The models need OpenCV 4.9 or later (OpenCV 4.6 cannot read them).
  *
- * ~detections has a Detection for each person: label "person", id -1, score the confidence of the pose, rect the
- * bounding box of the landmarks, and corners the 33 landmarks in the image coordinates, in the order of MediaPipe
- * (0 nose, 1-3 left eye inner / eye / outer, 4-6 right eye inner / eye / outer, 7 left ear, 8 right ear, 9-10 mouth
- * left / right, 11 left shoulder, 12 right shoulder, 13 left elbow, 14 right elbow, 15 left wrist, 16 right wrist,
- * 17-22 pinky, index and thumb of the left / right hands, 23 left hip, 24 right hip, 25 left knee, 26 right knee,
- * 27 left ankle, 28 right ankle, 29 left heel, 30 right heel, 31 left foot index, 32 right foot index).
+ * ~skeletons has a Skeleton for each person: label "person", score the confidence of the pose, rect the bounding box
+ * of the landmarks, and keypoints the 33 landmarks in the image coordinates with their visibility and presence, in
+ * the order of MediaPipe (LANDMARK_NAMES).
  */
 
 #include "opencv_apps/nodelet.h"
@@ -55,8 +52,9 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <opencv_apps/msg/detection.hpp>
-#include <opencv_apps/msg/detection_array_stamped.hpp>
+#include <opencv_apps/msg/keypoint.hpp>
+#include <opencv_apps/msg/skeleton.hpp>
+#include <opencv_apps/msg/skeleton_array_stamped.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -81,6 +79,15 @@ const int PERSON_DETECTION_INPUT_SIZE = 224;
 const int POSE_ESTIMATION_INPUT_SIZE = 256;
 // 33 landmarks and 6 auxiliary points
 const int NUM_LANDMARKS = 33;
+const char* const LANDMARK_NAMES[NUM_LANDMARKS] = {
+  "nose",        "left_eye_inner",  "left_eye",        "left_eye_outer", "right_eye_inner",
+  "right_eye",   "right_eye_outer", "left_ear",        "right_ear",      "mouth_left",
+  "mouth_right", "left_shoulder",   "right_shoulder",  "left_elbow",     "right_elbow",
+  "left_wrist",  "right_wrist",     "left_pinky",      "right_pinky",    "left_index",
+  "right_index", "left_thumb",      "right_thumb",     "left_hip",       "right_hip",
+  "left_knee",   "right_knee",      "left_ankle",      "right_ankle",    "left_heel",
+  "right_heel",  "left_foot_index", "right_foot_index"
+};
 const int NUM_POSE_POINTS = 39;
 // the box of the landmarks is enlarged by this factor, as opencv_zoo
 const double PERSON_BOX_ENLARGE_FACTOR = 1.25;
@@ -127,7 +134,7 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
   image_transport::Publisher img_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
-  rclcpp::Publisher<opencv_apps::msg::DetectionArrayStamped>::SharedPtr msg_pub_;
+  rclcpp::Publisher<opencv_apps::msg::SkeletonArrayStamped>::SharedPtr msg_pub_;
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
@@ -400,8 +407,8 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
       }
 
       // Messages
-      opencv_apps::msg::DetectionArrayStamped detections_msg;
-      detections_msg.header = msg->header;
+      opencv_apps::msg::SkeletonArrayStamped skeletons_msg;
+      skeletons_msg.header = msg->header;
 
       // Do the work
       std::vector<cv::Mat> poses;
@@ -432,32 +439,35 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
         double min_x, max_x, min_y, max_y;
         cv::minMaxLoc(landmarks.col(0), &min_x, &max_x);
         cv::minMaxLoc(landmarks.col(1), &min_y, &max_y);
-        opencv_apps::msg::Detection detection_msg;
-        detection_msg.label = "person";
-        detection_msg.id = -1;
-        detection_msg.score = confidences[i];
-        detection_msg.rect.x = (min_x + max_x) / 2;
-        detection_msg.rect.y = (min_y + max_y) / 2;
-        detection_msg.rect.width = (max_x - min_x) * PERSON_BOX_ENLARGE_FACTOR;
-        detection_msg.rect.height = (max_y - min_y) * PERSON_BOX_ENLARGE_FACTOR;
+        opencv_apps::msg::Skeleton skeleton_msg;
+        skeleton_msg.label = "person";
+        skeleton_msg.id = -1;
+        skeleton_msg.score = confidences[i];
+        skeleton_msg.rect.x = (min_x + max_x) / 2;
+        skeleton_msg.rect.y = (min_y + max_y) / 2;
+        skeleton_msg.rect.width = (max_x - min_x) * PERSON_BOX_ENLARGE_FACTOR;
+        skeleton_msg.rect.height = (max_y - min_y) * PERSON_BOX_ENLARGE_FACTOR;
         for (int j = 0; j < NUM_LANDMARKS; j++)
         {
-          opencv_apps::msg::Point2D point_msg;
-          point_msg.x = landmarks.at<float>(j, 0);
-          point_msg.y = landmarks.at<float>(j, 1);
-          detection_msg.corners.push_back(point_msg);
+          opencv_apps::msg::Keypoint keypoint_msg;
+          keypoint_msg.name = LANDMARK_NAMES[j];
+          keypoint_msg.x = landmarks.at<float>(j, 0);
+          keypoint_msg.y = landmarks.at<float>(j, 1);
+          keypoint_msg.visibility = landmarks.at<float>(j, 3);
+          keypoint_msg.presence = landmarks.at<float>(j, 4);
+          skeleton_msg.keypoints.push_back(keypoint_msg);
         }
-        detections_msg.detections.push_back(detection_msg);
+        skeletons_msg.skeletons.push_back(skeleton_msg);
 
         // draw the box, and the skeleton of the landmarks of enough presence
         cv::rectangle(frame,
-                      cv::Rect2d(detection_msg.rect.x - detection_msg.rect.width / 2,
-                                 detection_msg.rect.y - detection_msg.rect.height / 2, detection_msg.rect.width,
-                                 detection_msg.rect.height),
+                      cv::Rect2d(skeleton_msg.rect.x - skeleton_msg.rect.width / 2,
+                                 skeleton_msg.rect.y - skeleton_msg.rect.height / 2, skeleton_msg.rect.width,
+                                 skeleton_msg.rect.height),
                       cv::Scalar(0, 255, 0), 2);
         cv::putText(frame, cv::format("person %.2f", confidences[i]),
-                    cv::Point(cvRound(detection_msg.rect.x - detection_msg.rect.width / 2),
-                              std::max(15, cvRound(detection_msg.rect.y - detection_msg.rect.height / 2) - 5)),
+                    cv::Point(cvRound(skeleton_msg.rect.x - skeleton_msg.rect.width / 2),
+                              std::max(15, cvRound(skeleton_msg.rect.y - skeleton_msg.rect.height / 2) - 5)),
                     cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0), 1);
         auto visible = [&](int j) { return landmarks.at<float>(j, 4) > LANDMARK_PRESENCE_THRESHOLD; };
         auto landmark = [&](int j) {
@@ -482,7 +492,7 @@ class DNNPoseEstimationNodelet : public opencv_apps::Nodelet
       sensor_msgs::msg::Image::SharedPtr out_img =
           cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, frame).toImageMsg();
       img_pub_.publish(out_img);
-      msg_pub_->publish(detections_msg);
+      msg_pub_->publish(skeletons_msg);
     }
     catch (cv_bridge::Exception& e)
     {
@@ -552,7 +562,7 @@ public:
         std::bind(&DNNPoseEstimationNodelet::parametersCallback, this, std::placeholders::_1));
 
     img_pub_ = advertiseImage("~/image", 1);
-    msg_pub_ = advertise<opencv_apps::msg::DetectionArrayStamped>("~/detections", 1);
+    msg_pub_ = advertise<opencv_apps::msg::SkeletonArrayStamped>("~/skeletons", 1);
 
     onInitPostProcess();
   }

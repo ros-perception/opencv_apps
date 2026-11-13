@@ -506,6 +506,10 @@ add_message_files(
    Detection.msg
    DetectionArray.msg
    DetectionArrayStamped.msg
+   Keypoint.msg
+   Skeleton.msg
+   SkeletonArray.msg
+   SkeletonArrayStamped.msg
 )
 
 add_service_files(

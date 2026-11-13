@@ -35,7 +35,7 @@
 
 import unittest
 
-from opencv_apps.msg import DetectionArrayStamped
+from opencv_apps.msg import SkeletonArrayStamped
 from opencv_apps_test import camera, description, FACE_VIDEO, image_view, include, MessagesTest
 import pytest
 
@@ -50,13 +50,18 @@ def generate_test_description():
 
 
 def has_pose(msg):
-    # a person with the 33 landmarks, the nose (0) above the shoulders (11, 12) and the shoulders above the hips (23, 24)
-    return any(d.label == 'person' and d.score > 0.5 and len(d.corners) == 33 and
-               d.corners[0].y < min(d.corners[11].y, d.corners[12].y) and
-               max(d.corners[11].y, d.corners[12].y) < min(d.corners[23].y, d.corners[24].y) for d in msg.detections)
+    # a person with the 33 keypoints, the nose above the shoulders and the shoulders above the hips, visible
+    for skeleton in msg.skeletons:
+        k = {keypoint.name: keypoint for keypoint in skeleton.keypoints}
+        if skeleton.label == 'person' and skeleton.score > 0.5 and len(k) == 33 and \
+                k['nose'].y < min(k['left_shoulder'].y, k['right_shoulder'].y) and \
+                max(k['left_shoulder'].y, k['right_shoulder'].y) < min(k['left_hip'].y, k['right_hip'].y) and \
+                min(k[name].visibility for name in ['nose', 'left_shoulder', 'right_shoulder']) > 0.5:
+            return True
+    return False
 
 
 class TestDNNPoseEstimation(MessagesTest, unittest.TestCase):
 
-    TOPICS = ['dnn_pose_estimation/detections', 'dnn_pose_estimation/image']
-    CHECKS = {'dnn_pose_estimation/detections': (DetectionArrayStamped, has_pose)}
+    TOPICS = ['dnn_pose_estimation/skeletons', 'dnn_pose_estimation/image']
+    CHECKS = {'dnn_pose_estimation/skeletons': (SkeletonArrayStamped, has_pose)}

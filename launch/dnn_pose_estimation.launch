@@ -12,7 +12,7 @@
   <arg name="confidence_threshold" default="0.5" doc="Threshold of the confidence to detect the persons and to estimate their poses" />
   <arg name="nms_threshold" default="0.3" doc="Threshold of the overlap of the persons to suppress, by non maximum suppression" />
 
-  <!-- dnn_pose_estimation_nodelet.cpp, MediaPipe pose estimation (OpenCV 4.9 or later), ~detections has a Detection for each person, whose corners are the 33 landmarks -->
+  <!-- dnn_pose_estimation_nodelet.cpp, MediaPipe pose estimation (OpenCV 4.9 or later), ~skeletons has a Skeleton for each person, whose keypoints are the 33 landmarks -->
   <node name="$(arg node_name)" pkg="opencv_apps" type="dnn_pose_estimation" >
     <remap from="image" to="$(arg image)" />
     <param name="use_camera_info" value="$(arg use_camera_info)" />
