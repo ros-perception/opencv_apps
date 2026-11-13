@@ -159,6 +159,10 @@
     <description>Nodelet to track the target with OpenCV trackers</description>
   </class>
 
+  <class name="opencv_apps/dnn_tracking" type="opencv_apps::DNNTrackingNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to track the target with the DNN based trackers of OpenCV (DaSiamRPN, NanoTrack, VitTrack)</description>
+  </class>
+
   <class name="opencv_apps/qrcode_detection" type="opencv_apps::QRCodeDetectionNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to detect and decode QR codes (cv::QRCodeDetector)</description>
   </class>

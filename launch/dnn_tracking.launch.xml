@@ -1,0 +1,35 @@
+<launch>
+  <arg name="node_name" default="dnn_tracking" />
+  <arg name="image" default="image" description="The image topic. Should be remapped to the name of the real image topic." />
+
+  <arg name="use_camera_info" default="false" description="Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used." />
+  <arg name="debug_view" default="true" description="Specify whether the node displays a window to show tracking image" />
+  <arg name="queue_size" default="3" description="Specify queue_size of input image subscribers" />
+
+  <arg name="tracking_algorithm" default="-1" description="Tracking algorithm -1: the newest one of this OpenCV (VitTrack, NanoTrack or DaSiamRPN), 0: DaSiamRPN, 1: NanoTrack (OpenCV 4.7 or later), 2: VitTrack (OpenCV 4.9 or later)" />
+  <arg name="backend" default="auto" description="Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise." />
+  <arg name="dasiamrpn_model" default="" description="dasiamrpn_model.onnx of DaSiamRPN, a path or URL (downloaded to ~/.ros/opencv_apps/models/ at the first time), empty for the default" />
+  <arg name="dasiamrpn_kernel_cls1" default="" description="dasiamrpn_kernel_cls1.onnx of DaSiamRPN, a path or URL (downloaded to ~/.ros/opencv_apps/models/ at the first time), empty for the default" />
+  <arg name="dasiamrpn_kernel_r1" default="" description="dasiamrpn_kernel_r1.onnx of DaSiamRPN, a path or URL (downloaded to ~/.ros/opencv_apps/models/ at the first time), empty for the default" />
+  <arg name="nanotrack_backbone" default="" description="Backbone model (onnx) of NanoTrack, a path or URL (downloaded to ~/.ros/opencv_apps/models/ at the first time), empty for the default (NanoTrack v2)" />
+  <arg name="nanotrack_neckhead" default="" description="Neck and head model (onnx) of NanoTrack, a path or URL (downloaded to ~/.ros/opencv_apps/models/ at the first time), empty for the default (NanoTrack v2)" />
+  <arg name="vittrack_model" default="" description="Model (onnx) of VitTrack, a path or URL (downloaded to ~/.ros/opencv_apps/models/ at the first time), empty for the default (object_tracking_vittrack_2023sep.onnx of opencv_zoo)" />
+
+  <!-- dnn_tracking_nodelet.cpp, the DNN based trackers with the same interface as tracking.launch -->
+  <node name="$(var node_name)"
+        pkg="opencv_apps" exec="dnn_tracking">
+    <remap from="image" to="$(var image)" />
+    <param name="use_camera_info" value="$(var use_camera_info)" />
+    <param name="debug_view" value="$(var debug_view)" />
+    <param name="queue_size" value="$(var queue_size)" />
+    <param name="tracking_algorithm" value="$(var tracking_algorithm)" />
+    <param name="backend" type="str" value="$(var backend)" />
+    <param name="dasiamrpn_model" type="str" value="$(var dasiamrpn_model)" />
+    <param name="dasiamrpn_kernel_cls1" type="str" value="$(var dasiamrpn_kernel_cls1)" />
+    <param name="dasiamrpn_kernel_r1" type="str" value="$(var dasiamrpn_kernel_r1)" />
+    <param name="nanotrack_backbone" type="str" value="$(var nanotrack_backbone)" />
+    <param name="nanotrack_neckhead" type="str" value="$(var nanotrack_neckhead)" />
+    <param name="vittrack_model" type="str" value="$(var vittrack_model)" />
+  </node>
+
+</launch>
