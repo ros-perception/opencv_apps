@@ -105,6 +105,8 @@ class DNNTrackingNodelet : public opencv_apps::TrackerNodelet
     }
   };
   Config config_;
+  // the error of prepareTracker(), not to download the models again with mutex_ locked
+  std::string prepare_error_;
 
   // the newest tracker of this OpenCV for tracking_algorithm -1
   static int autoAlgorithm()
@@ -197,8 +199,8 @@ class DNNTrackingNodelet : public opencv_apps::TrackerNodelet
     return createTracker(config_, error);
   }
 
-  bool setTrackerParameters(const std::vector<rclcpp::Parameter>& parameters, cv::Ptr<cv::Tracker>& tracker,
-                            std::string& error) override
+  // the parameters of the tracker with parameters, which are changed from config_
+  Config configWith(const std::vector<rclcpp::Parameter>& parameters) const
   {
     Config config = config_;
     for (const rclcpp::Parameter& parameter : parameters)
@@ -221,9 +223,47 @@ class DNNTrackingNodelet : public opencv_apps::TrackerNodelet
       else if (name == "vittrack_model")
         config.vittrack_model = parameter.as_string();
     }
+    return config;
+  }
+
+  // download the models of the new parameters, which are used by setTrackerParameters() with mutex_ locked
+  void prepareTracker(const std::vector<rclcpp::Parameter>& parameters) override
+  {
+    prepare_error_.clear();
+    Config config = configWith(parameters);
+    if (config == config_)
+      return;
+    std::string& error = prepare_error_;
+    switch (config.tracking_algorithm == DNNTracking_AUTO ? autoAlgorithm() : config.tracking_algorithm)
+    {
+      case DNNTracking_DaSiamRPN:
+        model(config.dasiamrpn_model, DASIAMRPN_MODEL_URL, error);
+        model(config.dasiamrpn_kernel_cls1, DASIAMRPN_KERNEL_CLS1_URL, error);
+        model(config.dasiamrpn_kernel_r1, DASIAMRPN_KERNEL_R1_URL, error);
+        break;
+      case DNNTracking_NanoTrack:
+        model(config.nanotrack_backbone, NANOTRACK_BACKBONE_URL, error);
+        model(config.nanotrack_neckhead, NANOTRACK_NECKHEAD_URL, error);
+        break;
+      case DNNTracking_VitTrack:
+        model(config.vittrack_model, VITTRACK_MODEL_URL, error);
+        break;
+    }
+  }
+
+  bool setTrackerParameters(const std::vector<rclcpp::Parameter>& parameters, cv::Ptr<cv::Tracker>& tracker,
+                            std::string& error) override
+  {
+    Config config = configWith(parameters);
     if (config == config_)
       return true;
-    // reject the parameters with which the tracker cannot be created, e.g. a model which cannot be read
+    // reject the parameters with which the tracker cannot be created, e.g. a model which cannot be downloaded or
+    // read
+    if (!prepare_error_.empty())
+    {
+      error = prepare_error_;
+      return false;
+    }
     tracker = createTracker(config, error);
     if (!tracker)
       return false;

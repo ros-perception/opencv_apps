@@ -276,6 +276,8 @@ class TrackerNodelet : public opencv_apps::Nodelet
 
   rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
+    // e.g. download the models, not to stop the current tracker while preparing the new one
+    prepareTracker(parameters);
     std::lock_guard<std::mutex> lock(mutex_);
     rcl_interfaces::msg::SetParametersResult result;
     result.successful = true;
@@ -425,6 +427,12 @@ protected:
   // false is returned with error. mutex_ is locked.
   virtual bool setTrackerParameters(const std::vector<rclcpp::Parameter>& parameters, cv::Ptr<cv::Tracker>& tracker,
                                     std::string& error) = 0;
+
+  // prepare the tracker of the parameters before setTrackerParameters() is called with mutex_ locked, e.g. download
+  // its models, without locking mutex_
+  virtual void prepareTracker(const std::vector<rclcpp::Parameter>& /*parameters*/)
+  {
+  }
 
   // declare the parameters common to the trackers, the derived class declares the parameters of its tracker, and
   // then calls startTracking()
