@@ -132,9 +132,11 @@ if(OPENCV_HAVE_DNN AND CURL_FOUND)
   add_rostest(test-dnn_face_recognition.test ARGS gui:=false)
   add_rostest(test-dnn_object_detection.test ARGS gui:=false)
   add_rostest(test-dnn_text_detection.test ARGS gui:=false)
+  add_rostest(test-dnn_semantic_segmentation.test ARGS gui:=false)
 else()
   list(APPEND _skip_test_files test-dnn_face_detection.test test-dnn_face_recognition.test
-    test-dnn_object_detection.test test-dnn_text_detection.test)
+    test-dnn_object_detection.test test-dnn_text_detection.test
+    test-dnn_semantic_segmentation.test)
 endif()
 if(OPENCV_HAVE_DNN)
   add_rostest(test-qrcode_detection.test ARGS gui:=false)
