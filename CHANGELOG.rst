@@ -2,6 +2,28 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+3.0.0 (2026-11-14)
+------------------
+* Port to ROS2 (jazzy, kilted, lyrical), keeping ROS1 (noetic, ROS One) with the same source and compat headers (`#153 <https://github.com/ros-perception/opencv_apps/issues/153>`_)
+* Follow-ups to the ROS2 port: lk_flow re-detection, ROS1 parameter clamping, zero-copy publishing (`#154 <https://github.com/ros-perception/opencv_apps/issues/154>`_)
+* Add OpenCV 4 nodes: dnn_face_detection (YuNet), dnn_face_recognition (SFace), dnn_object_detection (YOLOX), qrcode_detection, barcode_detection and aruco_detection (`#165 <https://github.com/ros-perception/opencv_apps/issues/165>`_)
+* Fixes of the dnn and aruco_detection nodes: model cache per URL scheme, fisheye camera model (`#169 <https://github.com/ros-perception/opencv_apps/issues/169>`_)
+* Add DNN nodes: dnn_text_detection (OCR), dnn_semantic_segmentation, dnn_depth_estimation, dnn_pose_estimation, dnn_hand_pose_estimation (with tracking and smoothing, Keypoint / Skeleton messages), dnn_image_classification and dnn_facial_expression_recognition (`#171 <https://github.com/ros-perception/opencv_apps/issues/171>`_)
+* Add tracking node with the OpenCV trackers (port of `#129 <https://github.com/ros-perception/opencv_apps/issues/129>`_), and dnn_tracking node with the DNN based trackers (DaSiamRPN, NanoTrack, VitTrack), with the same interface (~set_roi, ~output) (`#157 <https://github.com/ros-perception/opencv_apps/issues/157>`_, `#170 <https://github.com/ros-perception/opencv_apps/issues/170>`_, `#172 <https://github.com/ros-perception/opencv_apps/issues/172>`_)
+* Add match_template node (port of `#68 <https://github.com/ros-perception/opencv_apps/issues/68>`_) (`#163 <https://github.com/ros-perception/opencv_apps/issues/163>`_)
+* Add background_subtraction node (port of `#62 <https://github.com/ros-perception/opencv_apps/issues/62>`_) (`#164 <https://github.com/ros-perception/opencv_apps/issues/164>`_)
+* Add blob_detection node (port of `#130 <https://github.com/ros-perception/opencv_apps/issues/130>`_) (`#162 <https://github.com/ros-perception/opencv_apps/issues/162>`_)
+* Add compare_histogram node (port of `#128 <https://github.com/ros-perception/opencv_apps/issues/128>`_, `#104 <https://github.com/ros-perception/opencv_apps/issues/104>`_) (`#160 <https://github.com/ros-perception/opencv_apps/issues/160>`_)
+* Add line_segment_detector node (port of `#35 <https://github.com/ros-perception/opencv_apps/issues/35>`_) (`#159 <https://github.com/ros-perception/opencv_apps/issues/159>`_)
+* color filters: publish the pixels in the color space as PointCloud2 (port of `#61 <https://github.com/ros-perception/opencv_apps/issues/61>`_) (`#161 <https://github.com/ros-perception/opencv_apps/issues/161>`_)
+* camshift: tracking rectangle from parameters, publish the confidence (port of `#141 <https://github.com/ros-perception/opencv_apps/issues/141>`_) (`#158 <https://github.com/ros-perception/opencv_apps/issues/158>`_)
+* morph_size range, Release build, bgr8 encoding (ports of `#135 <https://github.com/ros-perception/opencv_apps/issues/135>`_, `#105 <https://github.com/ros-perception/opencv_apps/issues/105>`_ and `#102 <https://github.com/ros-perception/opencv_apps/issues/102>`_) (`#155 <https://github.com/ros-perception/opencv_apps/issues/155>`_)
+* Fix the descriptions of theta of hough_lines, morph_size of morphology, filter_by_inertia of blob_detection and padding of people_detect, and the range of morph_operator of morphology (0 - 4) (`#173 <https://github.com/ros-perception/opencv_apps/issues/173>`_)
+* Add the documentation, published to https://ros-perception.github.io/opencv_apps/, with the demos of all the nodes, and a new README (`#173 <https://github.com/ros-perception/opencv_apps/issues/173>`_)
+* Add CONTRIBUTING.md (rewrite of `#110 <https://github.com/ros-perception/opencv_apps/issues/110>`_) (`#156 <https://github.com/ros-perception/opencv_apps/issues/156>`_)
+* CI: ROS-O test, fix flaky ROS2 tests (Fast DDS shared memory for the images) (`#152 <https://github.com/ros-perception/opencv_apps/issues/152>`_, `#167 <https://github.com/ros-perception/opencv_apps/issues/167>`_)
+* Contributors: Kei Okada, Fan Shi, HuiShiSerenaShi, Iori Yanokura, Ryosuke Tajima
+
 2.0.3 (2025-05-22)
 ------------------
 * [lk_flow] Keep matching information for sparse optical flow (`#149 <https://github.com/ros-perception/opencv_apps/issues/149>`_)
