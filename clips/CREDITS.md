@@ -11,6 +11,7 @@ are trimmed and resized (960x540, 10 fps; Tears of Steel is also cropped from 19
 | ballpit | Ballpitballs-japan-2020-1-3 | Nesnad | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | https://commons.wikimedia.org/wiki/File:Ballpitballs-japan-2020-1-3.webm |
 | street | Hyperlapse Frisco main St and Coleman Blvd - July 2026 | Ranch9613 | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) | https://commons.wikimedia.org/wiki/File:Hyperlapse_Frisco_main_St_and_Coleman_Blvd_-_July_2026.webm |
 | keybridge | Crossing the Key Bridge (Baltimore) | Charlotte Jackson | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | https://commons.wikimedia.org/wiki/File:Crossing_the_Key_Bridge_(Baltimore).webm |
+| tum_walking | freiburg3_walking_xyz (TUM RGB-D dataset), every third image of the first 240, 640x480 | J. Sturm, N. Engelhard, F. Endres, W. Burgard and D. Cremers (TUM) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | https://cvg.cit.tum.de/data/datasets/rgbd-dataset |
 
 Changes: audio removed, trimmed and resized.
 
