@@ -40,6 +40,8 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>std_srvs</build_depend>
+  <build_depend>tf2_ros</build_depend>
+  <build_depend>vision_msgs</build_depend>
   <build_depend>class_loader</build_depend>
 
   <!-- run_depend before format 3: CATKIN_DEPENDS of catkin_package(), and the msgs used in the generated headers -->
@@ -67,6 +69,8 @@
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>std_srvs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>vision_msgs</exec_depend>
   <exec_depend>class_loader</exec_depend>
 
   <test_depend condition="$ROS_VERSION==1">roslaunch</test_depend>

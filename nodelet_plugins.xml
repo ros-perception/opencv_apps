@@ -190,6 +190,9 @@
   <class name="opencv_apps/dnn_text_detection" type="opencv_apps::DNNTextDetectionNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to detect and recognize texts with DB (cv::dnn::TextDetectionModel_DB) and CRNN (cv::dnn::TextRecognitionModel)</description>
   </class>
+  <class name="opencv_apps/detection_3d" type="opencv_apps::Detection3DNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to publish the 3D boxes and the TF frames of the 2D detections, faces or tracked targets, with a depth image</description>
+  </class>
 
   <class name="opencv_apps/qrcode_detection" type="opencv_apps::QRCodeDetectionNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to detect and decode QR codes (cv::QRCodeDetector)</description>

@@ -221,6 +221,12 @@ if(OpenCV_VERSION VERSION_GREATER_EQUAL "4.5.1")
     set_source_files_properties(src/nodelet/tracking_nodelet.cpp PROPERTIES COMPILE_DEFINITIONS OPENCV_APPS_HAVE_TRACKING)
   endif()
 endif()
+# detection_3d: the 3D boxes (vision_msgs) and the TF frames of the 2D detections, with a depth image
+find_package(geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(vision_msgs REQUIRED)
+list(APPEND _nodelets detection_3d:Detection3DNodelet)
+list(APPEND _nodelet_cppfiles src/nodelet/detection_3d_nodelet.cpp)
 
 add_library(${PROJECT_NAME}_nodelet SHARED
   src/nodelet/nodelet.cpp
@@ -248,6 +254,7 @@ if(OPENCV_HAVE_DNN)
     target_link_libraries(${PROJECT_NAME}_nodelet CURL::libcurl)
   endif()
 endif()
+target_link_libraries(${PROJECT_NAME}_nodelet ${geometry_msgs_TARGETS} tf2_ros::tf2_ros ${vision_msgs_TARGETS})
 foreach(_nodelet ${_nodelets})
   string(REPLACE ":" ";" _nodelet ${_nodelet})
   list(GET _nodelet 0 _name)
@@ -295,6 +302,10 @@ if(BUILD_TESTING)
       test/ros2/test_dnn_object_detection.py test/ros2/test_dnn_text_detection.py
       test/ros2/test_dnn_semantic_segmentation.py test/ros2/test_dnn_depth_estimation.py
       test/ros2/test_dnn_image_classification.py test/ros2/test_dnn_facial_expression_recognition.py)
+  endif()
+  # the test of detection_3d detects the people with dnn_object_detection
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_detection_3d.py)
   endif()
   if(NOT OPENCV_HAVE_DNN)
     list(REMOVE_ITEM _launch_tests test/ros2/test_qrcode_detection.py)
@@ -825,12 +836,25 @@ endif()
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/video_homography.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/videocapture_pvapi.cpp
 
+# detection_3d: the 3D boxes (vision_msgs) and the TF frames of the 2D detections, with a depth image; tf2_ros and
+# vision_msgs are found here, not in the components of catkin above, and the node is skipped without them
+find_package(tf2_ros QUIET)
+find_package(vision_msgs QUIET)
+if(tf2_ros_FOUND AND vision_msgs_FOUND)
+  include_directories(${tf2_ros_INCLUDE_DIRS} ${vision_msgs_INCLUDE_DIRS})
+  opencv_apps_add_nodelet(detection_3d src/nodelet/detection_3d_nodelet.cpp)
+  set(OPENCV_APPS_HAVE_DETECTION_3D TRUE)
+endif()
+
 add_library(${PROJECT_NAME} SHARED
   src/nodelet/nodelet.cpp
   ${_opencv_apps_nodelet_cppfiles}
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+if(OPENCV_APPS_HAVE_DETECTION_3D)
+  target_link_libraries(${PROJECT_NAME} ${tf2_ros_LIBRARIES})
+endif()
 if(OPENCV_HAVE_DNN AND CURL_FOUND)
   target_include_directories(${PROJECT_NAME} PRIVATE ${CURL_INCLUDE_DIRS})
   target_link_libraries(${PROJECT_NAME} ${CURL_LIBRARIES})
@@ -881,6 +905,9 @@ if(CATKIN_ENABLE_TESTING)
     endif()
     if(NOT OPENCV_HAVE_BARCODE)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/barcode_detection.launch)
+    endif()
+    if(NOT OPENCV_APPS_HAVE_DETECTION_3D)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/detection_3d.launch)
     endif()
     if(NOT OPENCV_HAVE_ARUCO)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/aruco_detection.launch)
