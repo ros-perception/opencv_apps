@@ -37,9 +37,9 @@ Download the input video of the demo above, publish it as ``image`` with ``image
 
 .. code-block:: bash
 
-   wget https://ros-perception.github.io/opencv_apps/media/clips/tos_indoor.mp4
+   wget https://ros-perception.github.io/opencv_apps/media/clips/tum_walking.mp4
    # terminal 1: publish the video as image in a loop
-   ros2 run image_publisher image_publisher_node tos_indoor.mp4 --ros-args -p publish_rate:=10.0 -r image_raw:=image
+   ros2 run image_publisher image_publisher_node tum_walking.mp4 --ros-args -p publish_rate:=10.0 -r image_raw:=image
    # terminal 2: run the node
    ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image
    # terminal 3: view the result
@@ -50,7 +50,7 @@ In ROS 1:
 .. code-block:: bash
 
    # terminal 1
-   rosrun image_publisher image_publisher tos_indoor.mp4 _publish_rate:=10 __name:=camera
+   rosrun image_publisher image_publisher tum_walking.mp4 _publish_rate:=10 __name:=camera
    # terminal 2
    roslaunch opencv_apps dnn_object_detection.launch image:=camera/image_raw
 
@@ -71,6 +71,8 @@ YOLOX-S (default)
 
    ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image
 
+YOLOX-S of opencv_zoo (AP 40.5 on COCO, 36 MB, onnx): the first choice, accurate and fast enough on a GPU or a desktop CPU, and read by OpenCV 4 and 5.
+
 YOLOX-S int8
 ^^^^^^^^^^^^
 
@@ -81,7 +83,7 @@ YOLOX-S int8
 
    ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image model:=https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/object_detection_yolox/object_detection_yolox_2022nov_int8.onnx
 
-YOLOX-S quantized to int8 of opencv_zoo, smaller (9 MB) and faster on the CPU.
+YOLOX-S quantized to int8 of opencv_zoo (AP 32.6, 9 MB, onnx): a little less accurate, smaller and faster on a CPU without a GPU, e.g. a small computer of a robot; with CUDA, use YOLOX-S, as int8 runs on the CPU.
 
 YOLOv4-tiny (darknet)
 ^^^^^^^^^^^^^^^^^^^^^
@@ -93,7 +95,7 @@ YOLOv4-tiny (darknet)
 
    ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image classes:=https://raw.githubusercontent.com/AlexeyAB/darknet/59596d7880f6504768df41d6daa586f5cb2b932f/data/coco.names config:=https://raw.githubusercontent.com/AlexeyAB/darknet/59596d7880f6504768df41d6daa586f5cb2b932f/cfg/yolov4-tiny.cfg input_height:=416 input_width:=416 model:=https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v4_pre/yolov4-tiny.weights model_type:=detection_model
 
-YOLOv4-tiny of darknet (OpenCV 4; OpenCV 5 reads only onnx), trained on COCO.
+YOLOv4-tiny of darknet (AP 21.7 on COCO, 23 MB): the fastest and least accurate, and an example of darknet models, e.g. your own model trained with darknet; OpenCV 4 only, as OpenCV 5 reads only onnx.
 
 Subscribed topics
 -----------------

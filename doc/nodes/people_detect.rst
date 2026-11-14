@@ -35,22 +35,22 @@ Download the input video of the demo above, publish it as ``image`` with ``image
 
 .. code-block:: bash
 
-   wget https://ros-perception.github.io/opencv_apps/media/clips/tos_bridge.mp4
+   wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/face_detector_withface_test_diamondback.mp4
    # terminal 1: publish the video as image in a loop
-   ros2 run image_publisher image_publisher_node tos_bridge.mp4 --ros-args -p publish_rate:=10.0 -r image_raw:=image
+   ros2 run image_publisher image_publisher_node face_detector_withface_test_diamondback.mp4 --ros-args -p publish_rate:=10.0 -r image_raw:=image
    # terminal 2: run the node
    ros2 launch opencv_apps people_detect.launch.xml image:=image
    # terminal 3: view the result
    ros2 run rqt_image_view rqt_image_view /people_detect/image
 
-HOG needs full-body people of about 64x128 pixels, which this clip does not have, so most boxes are false.
+HOG finds the people whose whole body is in the image, of about 64x128 pixels or larger.
 
 In ROS 1:
 
 .. code-block:: bash
 
    # terminal 1
-   rosrun image_publisher image_publisher tos_bridge.mp4 _publish_rate:=10 __name:=camera
+   rosrun image_publisher image_publisher face_detector_withface_test_diamondback.mp4 _publish_rate:=10 __name:=camera
    # terminal 2
    roslaunch opencv_apps people_detect.launch image:=camera/image_raw
 

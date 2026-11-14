@@ -170,7 +170,8 @@ CATEGORY_DESCRIPTIONS = {
                      'regions of segment_objects and watershed_segmentation'),
     'Image classification': ('Find what the whole image shows, the classes of ImageNet.',
                              '``~/detections`` (DetectionArrayStamped), the classes with their scores'),
-    'Object detection': ('Find the bounding boxes of the people and the objects.',
+    'Object detection': ('Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of '
+                         'dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn).',
                          '``~/detections`` (DetectionArrayStamped)'),
     'Codes and markers': ('Find and decode QR codes, barcodes and ArUco markers.',
                           '``~/detections`` (DetectionArrayStamped), with the decoded data and the corners'),

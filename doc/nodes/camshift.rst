@@ -35,24 +35,24 @@ Download the input video of the demo above, publish it as ``image`` with ``image
 
 .. code-block:: bash
 
-   wget https://ros-perception.github.io/opencv_apps/media/clips/sign.mp4
+   wget https://ros-perception.github.io/opencv_apps/media/clips/tos_canal.mp4
    # terminal 1: publish the video as image in a loop
-   ros2 run image_publisher image_publisher_node sign.mp4 --ros-args -p publish_rate:=10.0 -r image_raw:=image
+   ros2 run image_publisher image_publisher_node tos_canal.mp4 --ros-args -p publish_rate:=10.0 -r image_raw:=image
    # terminal 2: run the node with the parameters of the demo
-   ros2 launch opencv_apps camshift.launch.xml image:=image height:=170 node_name:=camshift_roi width:=140 x:=410 y:=90
+   ros2 launch opencv_apps camshift.launch.xml image:=image height:=220 node_name:=camshift_roi width:=160 x:=300 y:=160
    # terminal 3: view the result
    ros2 run rqt_image_view rqt_image_view /camshift_roi/image
 
-The ROI is the face, and the ellipse also takes the red shirt of the same hue; back_project and image are shown.
+The ROI is the man, as the other tracking nodes; camshift tracks the hue histogram of the ROI, and the ellipse also takes the areas of the same hue; back_project and image are shown.
 
 In ROS 1:
 
 .. code-block:: bash
 
    # terminal 1
-   rosrun image_publisher image_publisher sign.mp4 _publish_rate:=10 __name:=camera
+   rosrun image_publisher image_publisher tos_canal.mp4 _publish_rate:=10 __name:=camera
    # terminal 2
-   roslaunch opencv_apps camshift.launch image:=camera/image_raw height:=170 node_name:=camshift_roi width:=140 x:=410 y:=90
+   roslaunch opencv_apps camshift.launch image:=camera/image_raw height:=220 node_name:=camshift_roi width:=160 x:=300 y:=160
 
 See :doc:`../credits` for the license of the video.
 

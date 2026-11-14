@@ -42,14 +42,15 @@ blob_detection:
   - ros2 launch opencv_apps hsv_color_filter.launch.xml h_limit_min:=40 h_limit_max:=70 s_limit_min:=150 s_limit_max:=255
     v_limit_min:=120 v_limit_max:=255 &
 camshift:
-  clip: sign.mp4
+  clip: tos_canal.mp4
   launch_args:
-    height: 170
+    height: 220
     node_name: camshift_roi
-    width: 140
-    x: 410
-    y: 90
-  note: The ROI is the face, and the ellipse also takes the red shirt of the same hue; back_project and image are shown.
+    width: 160
+    x: 300
+    y: 160
+  note: The ROI is the man, as the other tracking nodes; camshift tracks the hue histogram of the ROI, and the ellipse
+    also takes the areas of the same hue; back_project and image are shown.
 compare_histogram:
   clip: street.mp4
   launch_args:
@@ -101,18 +102,22 @@ dnn_image_classification:
   - name: ppresnet50
     title: PP-ResNet50 (default)
     default: true
+    note: 'The most accurate (top-1 82.3 % on ImageNet, 98 MB): use it unless the computer is slow, e.g. with a GPU
+      or a desktop CPU.'
   - name: mobilenetv1
     title: MobileNetV1
     launch_args:
       model: https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/image_classification_mobilenet/image_classification_mobilenetv1_2022apr.onnx
-    note: MobileNetV1 of opencv_zoo, needs OpenCV 4.9 or later.
+    note: 'MobileNetV1 of opencv_zoo (top-1 67.6 %, 16 MB, OpenCV 4.9 or later): much faster and smaller than
+      PP-ResNet50, for a small computer without a GPU, e.g. a Raspberry Pi; MobileNetV2 is a little more accurate.'
   - name: mobilenetv2
     title: MobileNetV2
     launch_args:
       model: https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/image_classification_mobilenet/image_classification_mobilenetv2_2022apr.onnx
-    note: MobileNetV2 of opencv_zoo, needs OpenCV 4.9 or later.
+    note: 'MobileNetV2 of opencv_zoo (top-1 69.4 %, 14 MB, OpenCV 4.9 or later): the more accurate of the two
+      MobileNets at about the same speed, the first choice for a small computer.'
 dnn_object_detection:
-  clip: tos_indoor.mp4
+  clip: tum_walking.mp4
   variants_title: Models
   variants_note: The node runs YOLOX (``model_type:=yolox``, onnx), by default YOLOX-S trained on COCO of opencv_zoo,
     or a model of ``cv::dnn::DetectionModel`` (``model_type:=detection_model``), e.g. YOLO of darknet and SSD, with
@@ -121,11 +126,14 @@ dnn_object_detection:
   - name: yolox
     title: YOLOX-S (default)
     default: true
+    note: 'YOLOX-S of opencv_zoo (AP 40.5 on COCO, 36 MB, onnx): the first choice, accurate and fast enough on a
+      GPU or a desktop CPU, and read by OpenCV 4 and 5.'
   - name: yoloxint8
     title: YOLOX-S int8
     launch_args:
       model: https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/object_detection_yolox/object_detection_yolox_2022nov_int8.onnx
-    note: YOLOX-S quantized to int8 of opencv_zoo, smaller (9 MB) and faster on the CPU.
+    note: 'YOLOX-S quantized to int8 of opencv_zoo (AP 32.6, 9 MB, onnx): a little less accurate, smaller and faster
+      on a CPU without a GPU, e.g. a small computer of a robot; with CUDA, use YOLOX-S, as int8 runs on the CPU.'
   - name: yolov4tiny
     title: YOLOv4-tiny (darknet)
     launch_args:
@@ -135,7 +143,8 @@ dnn_object_detection:
       classes: https://raw.githubusercontent.com/AlexeyAB/darknet/59596d7880f6504768df41d6daa586f5cb2b932f/data/coco.names
       input_width: 416
       input_height: 416
-    note: YOLOv4-tiny of darknet (OpenCV 4; OpenCV 5 reads only onnx), trained on COCO.
+    note: 'YOLOv4-tiny of darknet (AP 21.7 on COCO, 23 MB): the fastest and least accurate, and an example of
+      darknet models, e.g. your own model trained with darknet; OpenCV 4 only, as OpenCV 5 reads only onnx.'
 dnn_pose_estimation:
   clip: tos_bridge.mp4
   note: Needs OpenCV 4.9 or later; recorded with OpenCV 4.12 on CUDA.
@@ -272,8 +281,9 @@ morphology:
     morph_operator: 0
     morph_size: 10
 people_detect:
-  clip: tos_bridge.mp4
-  note: HOG needs full-body people of about 64x128 pixels, which this clip does not have, so most boxes are false.
+  clip: test/face_detector_withface_test_diamondback.mp4
+  launch_args: {}
+  note: HOG finds the people whose whole body is in the image, of about 64x128 pixels or larger.
 phase_corr:
   clip: keybridge.mp4
   launch_args:
