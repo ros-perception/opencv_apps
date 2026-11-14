@@ -21,10 +21,29 @@ Filter and transform the images: edges, histogram equalization, morphology, imag
    nodes/threshold
    nodes/dnn_depth_estimation
 
-Color and region masks
-----------------------
+Features and shapes
+-------------------
 
-Extract the regions of the image: the pixels in a range of colors, the foreground, and the classes of a DNN segmentation. Output: the mask or label image, ``~/image`` of the color filters and background_subtraction, ``~/label`` of dnn_semantic_segmentation.
+Find the corners, the lines and the line segments, the circles and the blobs, and the contours with their bounding shapes, moments and convex hulls. Output: ``~/corners`` (Point2DArrayStamped), ``~/lines`` (LineArrayStamped), ``~/circles`` (CircleArrayStamped) and ``~/contours`` (ContourArrayStamped, ``~/hulls`` of convex_hull), by the kind of the features.
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/corner_harris
+   nodes/goodfeature_track
+   nodes/hough_lines
+   nodes/line_segment_detector
+   nodes/hough_circles
+   nodes/blob_detection
+   nodes/find_contours
+   nodes/general_contours
+   nodes/contour_moments
+   nodes/convex_hull
+
+Segmentation
+------------
+
+Divide the image into regions by the class of each pixel: the pixels in a range of colors, the foreground, the connected regions, and the classes of a DNN. Output: the mask or label image, ``~/image`` of the color filters and background_subtraction, ``~/label`` of dnn_semantic_segmentation, and ``~/contours`` (ContourArrayStamped) of the regions of segment_objects and watershed_segmentation.
 
 .. toctree::
    :maxdepth: 1
@@ -34,71 +53,52 @@ Extract the regions of the image: the pixels in a range of colors, the foregroun
    nodes/lab_color_filter
    nodes/rgb_color_filter
    nodes/background_subtraction
-   nodes/dnn_semantic_segmentation
-
-Corners
--------
-
-Find the corners. Output: ``~/corners`` (Point2DArrayStamped).
-
-.. toctree::
-   :maxdepth: 1
-
-   nodes/corner_harris
-   nodes/goodfeature_track
-
-Lines
------
-
-Find the lines and the line segments. Output: ``~/lines`` (LineArrayStamped).
-
-.. toctree::
-   :maxdepth: 1
-
-   nodes/hough_lines
-   nodes/line_segment_detector
-
-Circles and blobs
------------------
-
-Find the circles and the blobs. Output: ``~/circles`` (CircleArrayStamped).
-
-.. toctree::
-   :maxdepth: 1
-
-   nodes/hough_circles
-   nodes/blob_detection
-
-Contours
---------
-
-Find the contours, with their bounding shapes, moments and convex hulls, and segment the objects. Output: ``~/contours`` (ContourArrayStamped), ``~/hulls`` of convex_hull.
-
-.. toctree::
-   :maxdepth: 1
-
-   nodes/find_contours
-   nodes/general_contours
-   nodes/contour_moments
-   nodes/convex_hull
    nodes/segment_objects
    nodes/watershed_segmentation
+   nodes/dnn_semantic_segmentation
 
-Detection
----------
+Image classification
+--------------------
 
-Detect the people and the objects, decode QR codes, barcodes and ArUco markers, find texts, and classify the image. Output: ``~/detections`` (DetectionArrayStamped).
+Find what the whole image shows, the classes of ImageNet. Output: ``~/detections`` (DetectionArrayStamped), the classes with their scores.
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/dnn_image_classification
+
+Object detection
+----------------
+
+Find the bounding boxes of the people and the objects. Output: ``~/detections`` (DetectionArrayStamped).
 
 .. toctree::
    :maxdepth: 1
 
    nodes/people_detect
+   nodes/dnn_object_detection
+
+Codes and markers
+-----------------
+
+Find and decode QR codes, barcodes and ArUco markers. Output: ``~/detections`` (DetectionArrayStamped), with the decoded data and the corners.
+
+.. toctree::
+   :maxdepth: 1
+
    nodes/qrcode_detection
    nodes/barcode_detection
    nodes/aruco_detection
-   nodes/dnn_object_detection
+
+Text detection and recognition
+------------------------------
+
+Find the texts and read them (OCR). Output: ``~/detections`` (DetectionArrayStamped), with the recognized text.
+
+.. toctree::
+   :maxdepth: 1
+
    nodes/dnn_text_detection
-   nodes/dnn_image_classification
 
 Faces
 -----

@@ -13,7 +13,7 @@ Finds the contours of the edges of the image (``cv::findContours()``).
    * - OpenCV
      - any version of the distributions
    * - Group
-     - Contours, the nodes of which publish ``~/contours`` (ContourArrayStamped), ``~/hulls`` of convex_hull
+     - Features and shapes, the nodes of which publish ``~/corners`` (Point2DArrayStamped), ``~/lines`` (LineArrayStamped), ``~/circles`` (CircleArrayStamped) and ``~/contours`` (ContourArrayStamped, ``~/hulls`` of convex_hull), by the kind of the features
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/find_contours.gif
    :alt: demo of find_contours

@@ -12,10 +12,11 @@ functions of OpenCV just by running a launch file. The same source supports both
 What opencv_apps can do
 -----------------------
 
-The nodes are grouped by their output: the nodes of a group publish the same type of message, on the same topic except
-a few noted in the group, so that one can replace another, e.g. ``face_detection`` by ``dnn_face_detection``. Each
-group lists the nodes by the distributions that they run on, and each tile shows the main output of the node. Click a
-node to see its topics, parameters and usage.
+The nodes are grouped by what they find, e.g. what the whole image shows (image classification), the bounding boxes of
+the objects (object detection) or the regions of the pixels (segmentation). The nodes of a group publish the same kind
+of results, mostly the same type of message on the same topic, so that one can replace another, e.g.
+``face_detection`` by ``dnn_face_detection``. Each group lists the nodes by the distributions that they run on, and
+each tile shows the main output of the node. Click a node to see its topics, parameters and usage.
 
 .. include:: gallery.rst
 

@@ -13,7 +13,7 @@ Extracts the pixels in a range of red, green and blue. ``~/color_space`` shows t
    * - OpenCV
      - any version of the distributions
    * - Group
-     - Color and region masks, the nodes of which publish the mask or label image, ``~/image`` of the color filters and background_subtraction, ``~/label`` of dnn_semantic_segmentation
+     - Segmentation, the nodes of which publish the mask or label image, ``~/image`` of the color filters and background_subtraction, ``~/label`` of dnn_semantic_segmentation, and ``~/contours`` (ContourArrayStamped) of the regions of segment_objects and watershed_segmentation
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/rgb_color_filter.gif
    :alt: demo of rgb_color_filter

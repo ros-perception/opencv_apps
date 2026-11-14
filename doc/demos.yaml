@@ -92,9 +92,50 @@ dnn_hand_pose_estimation:
   clip: sign.mp4
   note: Needs OpenCV 4.9 or later; recorded with OpenCV 4.12 on CUDA.
 dnn_image_classification:
-  clip: pool.mp4
+  clip: tos_bridge.mp4
+  variants_title: Models
+  variants_note: The node runs the classification models of ImageNet with the same input (224x224, RGB normalized by
+    the mean and the standard deviation of ImageNet) and output (the logits of the 1000 classes), given by ``model``.
+    ImageNet has no class of the people, so the classes of this clip are the things around them.
+  variants:
+  - name: ppresnet50
+    title: PP-ResNet50 (default)
+    default: true
+  - name: mobilenetv1
+    title: MobileNetV1
+    launch_args:
+      model: https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/image_classification_mobilenet/image_classification_mobilenetv1_2022apr.onnx
+    note: MobileNetV1 of opencv_zoo, needs OpenCV 4.9 or later.
+  - name: mobilenetv2
+    title: MobileNetV2
+    launch_args:
+      model: https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/image_classification_mobilenet/image_classification_mobilenetv2_2022apr.onnx
+    note: MobileNetV2 of opencv_zoo, needs OpenCV 4.9 or later.
 dnn_object_detection:
   clip: tos_indoor.mp4
+  variants_title: Models
+  variants_note: The node runs YOLOX (``model_type:=yolox``, onnx), by default YOLOX-S trained on COCO of opencv_zoo,
+    or a model of ``cv::dnn::DetectionModel`` (``model_type:=detection_model``), e.g. YOLO of darknet and SSD, with
+    ``config``, ``classes``, ``input_width``, ``input_height``, ``scale`` and ``swap_rb``.
+  variants:
+  - name: yolox
+    title: YOLOX-S (default)
+    default: true
+  - name: yoloxint8
+    title: YOLOX-S int8
+    launch_args:
+      model: https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/object_detection_yolox/object_detection_yolox_2022nov_int8.onnx
+    note: YOLOX-S quantized to int8 of opencv_zoo, smaller (9 MB) and faster on the CPU.
+  - name: yolov4tiny
+    title: YOLOv4-tiny (darknet)
+    launch_args:
+      model_type: detection_model
+      model: https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v4_pre/yolov4-tiny.weights
+      config: https://raw.githubusercontent.com/AlexeyAB/darknet/59596d7880f6504768df41d6daa586f5cb2b932f/cfg/yolov4-tiny.cfg
+      classes: https://raw.githubusercontent.com/AlexeyAB/darknet/59596d7880f6504768df41d6daa586f5cb2b932f/data/coco.names
+      input_width: 416
+      input_height: 416
+    note: YOLOv4-tiny of darknet (OpenCV 4; OpenCV 5 reads only onnx), trained on COCO.
 dnn_pose_estimation:
   clip: tos_bridge.mp4
   note: Needs OpenCV 4.9 or later; recorded with OpenCV 4.12 on CUDA.

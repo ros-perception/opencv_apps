@@ -13,7 +13,7 @@ Detects and decodes the QR codes (``cv::QRCodeDetector``).
    * - OpenCV
      - OpenCV 4.5.4 or later
    * - Group
-     - Detection, the nodes of which publish ``~/detections`` (DetectionArrayStamped)
+     - Codes and markers, the nodes of which publish ``~/detections`` (DetectionArrayStamped), with the decoded data and the corners
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/qrcode_detection.gif
    :alt: demo of qrcode_detection

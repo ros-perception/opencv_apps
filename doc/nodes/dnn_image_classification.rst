@@ -15,7 +15,7 @@ Image classification, by default with PP-ResNet50 (ImageNet 1000 classes) of ope
    * - OpenCV
      - OpenCV 4.5.4 or later
    * - Group
-     - Detection, the nodes of which publish ``~/detections`` (DetectionArrayStamped)
+     - Image classification, the nodes of which publish ``~/detections`` (DetectionArrayStamped), the classes with their scores
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_image_classification.gif
    :alt: demo of dnn_image_classification
@@ -37,9 +37,9 @@ Download the input video of the demo above, publish it as ``image`` with ``image
 
 .. code-block:: bash
 
-   wget https://ros-perception.github.io/opencv_apps/media/clips/pool.mp4
+   wget https://ros-perception.github.io/opencv_apps/media/clips/tos_bridge.mp4
    # terminal 1: publish the video as image in a loop
-   ros2 run image_publisher image_publisher_node pool.mp4 --ros-args -p publish_rate:=10.0 -r image_raw:=image
+   ros2 run image_publisher image_publisher_node tos_bridge.mp4 --ros-args -p publish_rate:=10.0 -r image_raw:=image
    # terminal 2: run the node
    ros2 launch opencv_apps dnn_image_classification.launch.xml image:=image
    # terminal 3: view the result
@@ -50,11 +50,50 @@ In ROS 1:
 .. code-block:: bash
 
    # terminal 1
-   rosrun image_publisher image_publisher pool.mp4 _publish_rate:=10 __name:=camera
+   rosrun image_publisher image_publisher tos_bridge.mp4 _publish_rate:=10 __name:=camera
    # terminal 2
    roslaunch opencv_apps dnn_image_classification.launch image:=camera/image_raw
 
 See :doc:`../credits` for the license of the video.
+
+Models
+------
+
+The node runs the classification models of ImageNet with the same input (224x224, RGB normalized by the mean and the standard deviation of ImageNet) and output (the logits of the 1000 classes), given by ``model``. ImageNet has no class of the people, so the classes of this clip are the things around them.
+
+PP-ResNet50 (default)
+^^^^^^^^^^^^^^^^^^^^^
+
+.. image:: https://ros-perception.github.io/opencv_apps/media/dnn_image_classification.gif
+   :alt: demo of dnn_image_classification with ppresnet50
+
+.. code-block:: bash
+
+   ros2 launch opencv_apps dnn_image_classification.launch.xml image:=image
+
+MobileNetV1
+^^^^^^^^^^^
+
+.. image:: https://ros-perception.github.io/opencv_apps/media/dnn_image_classification_mobilenetv1.gif
+   :alt: demo of dnn_image_classification with mobilenetv1
+
+.. code-block:: bash
+
+   ros2 launch opencv_apps dnn_image_classification.launch.xml image:=image model:=https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/image_classification_mobilenet/image_classification_mobilenetv1_2022apr.onnx
+
+MobileNetV1 of opencv_zoo, needs OpenCV 4.9 or later.
+
+MobileNetV2
+^^^^^^^^^^^
+
+.. image:: https://ros-perception.github.io/opencv_apps/media/dnn_image_classification_mobilenetv2.gif
+   :alt: demo of dnn_image_classification with mobilenetv2
+
+.. code-block:: bash
+
+   ros2 launch opencv_apps dnn_image_classification.launch.xml image:=image model:=https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/image_classification_mobilenet/image_classification_mobilenetv2_2022apr.onnx
+
+MobileNetV2 of opencv_zoo, needs OpenCV 4.9 or later.
 
 Subscribed topics
 -----------------

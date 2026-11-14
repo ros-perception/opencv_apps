@@ -53,20 +53,21 @@ MEDIA_URL = DOCUMENTATION_URL + 'media/'
 CLIPS_URL = MEDIA_URL + 'clips/'
 TEST_VIDEOS_URL = 'https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/'
 
-# the groups of the nodes by their output: the nodes of a group publish the same type of message, so that one can
+# the groups of the nodes by what they find: the nodes of a group publish the same kind of results, so that one can
 # replace another, e.g. face_detection by dnn_face_detection
 CATEGORIES = [
     ('Image filters', ['adding_images', 'discrete_fourier_transform', 'edge_detection', 'equalize_histogram',
                        'morphology', 'pyramids', 'smoothing', 'threshold', 'dnn_depth_estimation']),
-    ('Color and region masks', ['hsv_color_filter', 'hls_color_filter', 'lab_color_filter', 'rgb_color_filter',
-                                'background_subtraction', 'dnn_semantic_segmentation']),
-    ('Corners', ['corner_harris', 'goodfeature_track']),
-    ('Lines', ['hough_lines', 'line_segment_detector']),
-    ('Circles and blobs', ['hough_circles', 'blob_detection']),
-    ('Contours', ['find_contours', 'general_contours', 'contour_moments', 'convex_hull', 'segment_objects',
-                  'watershed_segmentation']),
-    ('Detection', ['people_detect', 'qrcode_detection', 'barcode_detection', 'aruco_detection',
-                   'dnn_object_detection', 'dnn_text_detection', 'dnn_image_classification']),
+    ('Features and shapes', ['corner_harris', 'goodfeature_track', 'hough_lines', 'line_segment_detector',
+                             'hough_circles', 'blob_detection', 'find_contours', 'general_contours',
+                             'contour_moments', 'convex_hull']),
+    ('Segmentation', ['hsv_color_filter', 'hls_color_filter', 'lab_color_filter', 'rgb_color_filter',
+                      'background_subtraction', 'segment_objects', 'watershed_segmentation',
+                      'dnn_semantic_segmentation']),
+    ('Image classification', ['dnn_image_classification']),
+    ('Object detection', ['people_detect', 'dnn_object_detection']),
+    ('Codes and markers', ['qrcode_detection', 'barcode_detection', 'aruco_detection']),
+    ('Text detection and recognition', ['dnn_text_detection']),
     ('Faces', ['face_detection', 'face_recognition', 'dnn_face_detection', 'dnn_face_recognition',
                'dnn_facial_expression_recognition']),
     ('Human and hand poses', ['dnn_pose_estimation', 'dnn_hand_pose_estimation']),
@@ -157,17 +158,24 @@ CATEGORY_DESCRIPTIONS = {
     'Image filters': ('Filter and transform the images: edges, histogram equalization, morphology, image pyramids, '
                       'smoothing, thresholds, the Fourier transform and the depth estimated by a DNN.',
                       'the processed image in ``~/image``'),
-    'Color and region masks': ('Extract the regions of the image: the pixels in a range of colors, the foreground, '
-                               'and the classes of a DNN segmentation.',
-                               'the mask or label image, ``~/image`` of the color filters and background_subtraction, '
-                               '``~/label`` of dnn_semantic_segmentation'),
-    'Corners': ('Find the corners.', '``~/corners`` (Point2DArrayStamped)'),
-    'Lines': ('Find the lines and the line segments.', '``~/lines`` (LineArrayStamped)'),
-    'Circles and blobs': ('Find the circles and the blobs.', '``~/circles`` (CircleArrayStamped)'),
-    'Contours': ('Find the contours, with their bounding shapes, moments and convex hulls, and segment the objects.',
-                 '``~/contours`` (ContourArrayStamped), ``~/hulls`` of convex_hull'),
-    'Detection': ('Detect the people and the objects, decode QR codes, barcodes and ArUco markers, find texts, and '
-                  'classify the image.', '``~/detections`` (DetectionArrayStamped)'),
+    'Features and shapes': ('Find the corners, the lines and the line segments, the circles and the blobs, and the '
+                            'contours with their bounding shapes, moments and convex hulls.',
+                            '``~/corners`` (Point2DArrayStamped), ``~/lines`` (LineArrayStamped), ``~/circles`` '
+                            '(CircleArrayStamped) and ``~/contours`` (ContourArrayStamped, ``~/hulls`` of '
+                            'convex_hull), by the kind of the features'),
+    'Segmentation': ('Divide the image into regions by the class of each pixel: the pixels in a range of colors, '
+                     'the foreground, the connected regions, and the classes of a DNN.',
+                     'the mask or label image, ``~/image`` of the color filters and background_subtraction, '
+                     '``~/label`` of dnn_semantic_segmentation, and ``~/contours`` (ContourArrayStamped) of the '
+                     'regions of segment_objects and watershed_segmentation'),
+    'Image classification': ('Find what the whole image shows, the classes of ImageNet.',
+                             '``~/detections`` (DetectionArrayStamped), the classes with their scores'),
+    'Object detection': ('Find the bounding boxes of the people and the objects.',
+                         '``~/detections`` (DetectionArrayStamped)'),
+    'Codes and markers': ('Find and decode QR codes, barcodes and ArUco markers.',
+                          '``~/detections`` (DetectionArrayStamped), with the decoded data and the corners'),
+    'Text detection and recognition': ('Find the texts and read them (OCR).',
+                                       '``~/detections`` (DetectionArrayStamped), with the recognized text'),
     'Faces': ('Detect and recognize the faces and their expressions.', '``~/faces`` (FaceArrayStamped)'),
     'Human and hand poses': ('Estimate the poses of the people and the hands.',
                              '``~/skeletons`` (SkeletonArrayStamped)'),
@@ -185,7 +193,11 @@ NODE_OUTPUTS = {
     'line_segment_detector': '~/lines', 'hough_circles': '~/circles', 'blob_detection': '~/circles',
     'convex_hull': '~/hulls', 'camshift': '~/track_box', 'phase_corr': '~/shift', 'compare_histogram': '~/distance',
 }
-for _category, _topic in [('Contours', '~/contours'), ('Detection', '~/detections'), ('Faces', '~/faces'),
+for _node in ['find_contours', 'general_contours', 'contour_moments', 'segment_objects', 'watershed_segmentation']:
+    NODE_OUTPUTS[_node] = '~/contours'
+for _category, _topic in [('Image classification', '~/detections'), ('Object detection', '~/detections'),
+                          ('Codes and markers', '~/detections'), ('Text detection and recognition', '~/detections'),
+                          ('Faces', '~/faces'),
                           ('Human and hand poses', '~/skeletons'), ('Tracking', '~/output'),
                           ('Optical flow and motion', '~/flows')]:
     for _node in dict(CATEGORIES)[_category]:
@@ -443,6 +455,27 @@ def demo_section(node, demo):
     return lines
 
 
+def variants_section(node, demo):
+    """Return the demos of the variants of the node (e.g. the models of a dnn node), from variants of doc/demos.yaml.
+
+    Each variant has its demo video, <node>_<name>.gif (<node>.gif for the default), and its launch arguments.
+    """
+    title = demo.get('variants_title', 'Variants')
+    lines = [title, '-' * len(title), '', demo.get('variants_note', ''), '']
+    for variant in demo['variants']:
+        name = variant['name']
+        gif = node if variant.get('default') else '%s_%s' % (node, name)
+        lines += [variant['title'], '^' * len(variant['title']), '',
+                  '.. image:: %s%s.gif' % (MEDIA_URL, gif), '   :alt: demo of %s with %s' % (node, name), '']
+        arguments = ' '.join('%s:=%s' % (k, v) for k, v in sorted(variant.get('launch_args', {}).items()))
+        command = 'ros2 launch opencv_apps %s.launch.xml %s %s' % (
+            demo.get('launch_file', node), demo.get('image', 'image:=image'), arguments)
+        lines += ['.. code-block:: bash', '', '   ' + command.rstrip(), '']
+        if variant.get('note'):
+            lines += [variant['note'], '']
+    return lines
+
+
 def node_page(node, interface, classes, files, demo=None):
     arguments = launch_arguments(node)
     title = node
@@ -475,6 +508,8 @@ def node_page(node, interface, classes, files, demo=None):
                   if node == 'adding_images' else 'image:=/camera/image_raw', ros1_arguments(node)), '']
     if demo:
         lines += demo_section(node, demo)
+        if demo.get('variants'):
+            lines += variants_section(node, demo)
     if interface['subscriptions']:
         lines += ['Subscribed topics', '-----------------', '', table(
             ['Topic', 'Type'], [['``%s``' % t['name'].lstrip('/'), message_link(t['type'])]

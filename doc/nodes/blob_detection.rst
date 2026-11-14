@@ -13,7 +13,7 @@ Detects the blobs (regions of similar brightness or color) with ``cv::SimpleBlob
    * - OpenCV
      - any version of the distributions
    * - Group
-     - Circles and blobs, the nodes of which publish ``~/circles`` (CircleArrayStamped)
+     - Features and shapes, the nodes of which publish ``~/corners`` (Point2DArrayStamped), ``~/lines`` (LineArrayStamped), ``~/circles`` (CircleArrayStamped) and ``~/contours`` (ContourArrayStamped, ``~/hulls`` of convex_hull), by the kind of the features
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/blob_detection.gif
    :alt: demo of blob_detection

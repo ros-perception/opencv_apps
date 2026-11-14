@@ -13,7 +13,7 @@ Finds the contours and their convex hulls (``cv::convexHull()``).
    * - OpenCV
      - any version of the distributions
    * - Group
-     - Contours, the nodes of which publish ``~/contours`` (ContourArrayStamped), ``~/hulls`` of convex_hull
+     - Features and shapes, the nodes of which publish ``~/corners`` (Point2DArrayStamped), ``~/lines`` (LineArrayStamped), ``~/circles`` (CircleArrayStamped) and ``~/contours`` (ContourArrayStamped, ``~/hulls`` of convex_hull), by the kind of the features
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/convex_hull.gif
    :alt: demo of convex_hull

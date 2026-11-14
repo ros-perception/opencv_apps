@@ -13,7 +13,7 @@ Detects and decodes the barcodes, e.g. EAN-13 (``cv::barcode::BarcodeDetector``)
    * - OpenCV
      - OpenCV 4.8 or later, or the barcode module of opencv_contrib
    * - Group
-     - Detection, the nodes of which publish ``~/detections`` (DetectionArrayStamped)
+     - Codes and markers, the nodes of which publish ``~/detections`` (DetectionArrayStamped), with the decoded data and the corners
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/barcode_detection.gif
    :alt: demo of barcode_detection
