@@ -46,7 +46,7 @@
    }
    </style>
    <h3>Image filters</h3>
-   <p>Filter and transform the images: edges, histogram equalization, morphology, image pyramids, smoothing, thresholds, the Fourier transform and the depth estimated by a DNN.<br>Output: the processed image in <code>~/image</code>.</p>
+   <p>Filter and transform the images: edges, histogram equalization, morphology, image pyramids, smoothing, thresholds and the Fourier transform.<br>Output: the processed image in <code>~/image</code>.</p>
    <p class="opencv-apps-tier">ROS 1: noetic and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/adding_images.html"><img src="https://ros-perception.github.io/opencv_apps/media/adding_images_thumb.gif" alt="adding_images" loading="lazy"><span>adding_images<br><small>~/image</small></span></a>
@@ -60,7 +60,6 @@
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/equalize_histogram.html"><img src="https://ros-perception.github.io/opencv_apps/media/equalize_histogram_thumb.gif" alt="equalize_histogram" loading="lazy"><span>equalize_histogram<br><small>~/image</small></span></a>
    <a class="opencv-apps-tile" href="nodes/morphology.html"><img src="https://ros-perception.github.io/opencv_apps/media/morphology_thumb.gif" alt="morphology" loading="lazy"><span>morphology<br><small>~/image</small></span></a>
-   <a class="opencv-apps-tile" href="nodes/dnn_depth_estimation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_depth_estimation_thumb.gif" alt="dnn_depth_estimation" loading="lazy"><span>dnn_depth_estimation<br><small>~/inverse_depth</small></span></a>
    </div>
    <h3>Features and shapes</h3>
    <p>Find the corners, the lines and the line segments, the circles and the blobs, and the contours with their bounding shapes, moments and convex hulls.<br>Output: <code>~/corners</code> (Point2DArrayStamped), <code>~/lines</code> (LineArrayStamped), <code>~/circles</code> (CircleArrayStamped) and <code>~/contours</code> (ContourArrayStamped, <code>~/hulls</code> of convex_hull), by the kind of the features.</p>
@@ -173,9 +172,11 @@
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/compare_histogram.html"><img src="https://ros-perception.github.io/opencv_apps/media/compare_histogram_thumb.gif" alt="compare_histogram" loading="lazy"><span>compare_histogram<br><small>~/distance</small></span></a>
    </div>
-   <h3>3D localization</h3>
-   <p>Localize the objects, the faces and the tracked targets of the nodes above in 3D, with a depth image of an RGB-D camera or a point cloud of a LiDAR, and publish their TF frames.<br>Output: <code>~/detections</code> (vision_msgs/Detection3DArray) and the TF frames.</p>
+   <h3>Depth and 3D localization</h3>
+   <p>Estimate the depth of a color image by a DNN, and localize the objects, the faces and the tracked targets of the nodes above in 3D, with a depth image of an RGB-D camera or a point cloud of a LiDAR, and publish their TF frames.<br>Output: <code>~/inverse_depth</code> (Image) of dnn_depth_estimation, and <code>~/detections</code> (vision_msgs/Detection3DArray), <code>~/markers</code> (for rviz) and the TF frames of detection_3d.</p>
+   <p><img src="https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/doc/images/detection_3d_pipeline.svg" alt="the pipeline of detection_3d" style="width: 100%; max-width: 900px"></p>
    <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
+   <a class="opencv-apps-tile" href="nodes/dnn_depth_estimation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_depth_estimation_thumb.gif" alt="dnn_depth_estimation" loading="lazy"><span>dnn_depth_estimation<br><small>~/inverse_depth</small></span></a>
    <a class="opencv-apps-tile" href="nodes/detection_3d.html"><img src="https://ros-perception.github.io/opencv_apps/media/detection_3d_thumb.gif" alt="detection_3d" loading="lazy"><span>detection_3d<br><small>~/detections</small></span></a>
    </div>

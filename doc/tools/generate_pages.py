@@ -57,7 +57,7 @@ TEST_VIDEOS_URL = 'https://raw.githubusercontent.com/ros-perception/opencv_apps/
 # replace another, e.g. face_detection by dnn_face_detection
 CATEGORIES = [
     ('Image filters', ['adding_images', 'discrete_fourier_transform', 'edge_detection', 'equalize_histogram',
-                       'morphology', 'pyramids', 'smoothing', 'threshold', 'dnn_depth_estimation']),
+                       'morphology', 'pyramids', 'smoothing', 'threshold']),
     ('Features and shapes', ['corner_harris', 'goodfeature_track', 'hough_lines', 'line_segment_detector',
                              'hough_circles', 'blob_detection', 'find_contours', 'general_contours',
                              'contour_moments', 'convex_hull']),
@@ -74,7 +74,7 @@ CATEGORIES = [
     ('Tracking', ['tracking', 'match_template', 'dnn_tracking', 'camshift']),
     ('Optical flow and motion', ['fback_flow', 'lk_flow', 'simple_flow', 'phase_corr']),
     ('Histogram comparison', ['compare_histogram']),
-    ('3D localization', ['detection_3d']),
+    ('Depth and 3D localization', ['dnn_depth_estimation', 'detection_3d']),
 ]
 # the descriptions of the nodes, instead of the documentation comments of their sources, which are the comments of
 # the samples of OpenCV for the most of the nodes other than the dnn nodes
@@ -169,7 +169,7 @@ DESCRIPTIONS = {
 # the descriptions of the groups, and their common output (the message types are linked in the pages)
 CATEGORY_DESCRIPTIONS = {
     'Image filters': ('Filter and transform the images: edges, histogram equalization, morphology, image pyramids, '
-                      'smoothing, thresholds, the Fourier transform and the depth estimated by a DNN.',
+                      'smoothing, thresholds and the Fourier transform.',
                       'the processed image in ``~/image``'),
     'Features and shapes': ('Find the corners, the lines and the line segments, the circles and the blobs, and the '
                             'contours with their bounding shapes, moments and convex hulls.',
@@ -199,9 +199,12 @@ CATEGORY_DESCRIPTIONS = {
                                 '``~/flows`` (FlowArrayStamped), ``~/shift`` (Point2DStamped) of phase_corr'),
     'Histogram comparison': ('Compare the color histogram of the image with a reference.',
                              '``~/distance`` (Float64)'),
-    '3D localization': ('Localize the objects, the faces and the tracked targets of the nodes above in 3D, with a '
-                        'depth image of an RGB-D camera or a point cloud of a LiDAR, and publish their TF frames.',
-                        '``~/detections`` (vision_msgs/Detection3DArray) and the TF frames'),
+    'Depth and 3D localization': ('Estimate the depth of a color image by a DNN, and localize the objects, the faces '
+                                  'and the tracked targets of the nodes above in 3D, with a depth image of an RGB-D '
+                                  'camera or a point cloud of a LiDAR, and publish their TF frames.',
+                                  '``~/inverse_depth`` (Image) of dnn_depth_estimation, and ``~/detections`` '
+                                  '(vision_msgs/Detection3DArray), ``~/markers`` (for rviz) and the TF frames of '
+                                  'detection_3d'),
 }
 # the main output of each node, under its tile, when it is not ~/image
 NODE_OUTPUTS = {
@@ -374,6 +377,28 @@ def message_link(message_type):
     return '``%s``' % message_type
 
 
+# the inputs of the usage of the nodes whose input is not image, (ROS 2, ROS 1) if they differ, e.g. the topics of
+# realsense2_camera with align_depth for detection_3d
+USAGE_INPUTS = {
+    'adding_images': 'image1:=/camera/image_raw image2:=/camera2/image_raw approximate_sync:=true',
+    'detection_3d': ('input:=/dnn_object_detection/detections depth:=/camera/camera/aligned_depth_to_color/image_raw '
+                     'camera_info:=/camera/camera/color/camera_info',
+                     'input:=/dnn_object_detection/detections depth:=/camera/aligned_depth_to_color/image_raw '
+                     'camera_info:=/camera/color/camera_info'),
+}
+
+
+def usage_arguments(node, ros1=False):
+    """Return the arguments of the usage of the node: its inputs, and debug_view:=false if the launch file has it."""
+    arguments = USAGE_INPUTS.get(node, 'image:=/camera/image_raw')
+    if isinstance(arguments, tuple):
+        arguments = arguments[1 if ros1 else 0]
+    path = os.path.join(PACKAGE_DIR, 'launch', node + '.launch.xml')
+    if os.path.exists(path) and any(a.get('name') == 'debug_view' for a in ET.parse(path).getroot().iter('arg')):
+        arguments += ' debug_view:=false'
+    return arguments
+
+
 def ros1_arguments(launch_file):
     """Return the arguments for ROS 1 launch/<launch_file>.launch, use_opencv4:=true for the face nodes."""
     path = os.path.join(PACKAGE_DIR, 'launch', launch_file + '.launch')
@@ -523,16 +548,17 @@ def node_page(node, interface, classes, files, demo=None):
             category, CATEGORY_DESCRIPTIONS[category][1])]]:
         lines += ['   * - ' + name, '     - ' + value]
     lines += ['']
+    if demo and demo.get('figure'):
+        # a figure of the node in doc/images, e.g. its pipeline
+        lines += ['.. figure:: ../%s' % demo['figure']['path'], '   :alt: %s' % demo['figure']['caption'], '',
+                  '   ' + demo['figure']['caption'], '']
     lines += ['.. image:: %s%s.gif' % (MEDIA_URL, node), '   :alt: demo of %s' % node, '',
               'Usage', '-----', '', '.. code-block:: bash', '',
               '   # ROS 2',
-              '   ros2 launch opencv_apps %s.launch.xml %s debug_view:=false' % (
-                  node, 'image1:=/camera/image_raw image2:=/camera2/image_raw approximate_sync:=true'
-                  if node == 'adding_images' else 'image:=/camera/image_raw'),
+              '   ros2 launch opencv_apps %s.launch.xml %s' % (node, usage_arguments(node)),
               '   # ROS 1',
-              '   roslaunch opencv_apps %s.launch %s debug_view:=false%s' % (
-                  node, 'image1:=/camera/image_raw image2:=/camera2/image_raw approximate_sync:=true'
-                  if node == 'adding_images' else 'image:=/camera/image_raw', ros1_arguments(node)), '']
+              '   roslaunch opencv_apps %s.launch %s%s' % (
+                  node, usage_arguments(node, ros1=True), ros1_arguments(node)), '']
     if demo:
         lines += demo_section(node, demo)
         if demo.get('variants'):
@@ -609,12 +635,22 @@ def nodes_index():
     return '\n'.join(lines)
 
 
+# the figures of the groups, under the description of the group on the top page and README.md
+CATEGORY_FIGURES = {
+    'Depth and 3D localization': ('https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/doc/images/'
+                                  'detection_3d_pipeline.svg', 'the pipeline of detection_3d'),
+}
+
+
 def gallery_html(node_url, thumbnail_url):
     """Return the HTML of the tiles of the nodes of each category, linking node_url(node)."""
     lines = []
     for category, nodes in CATEGORIES:
         description, output = CATEGORY_DESCRIPTIONS[category]
         lines += ['<h3>%s</h3>' % category, '<p>%s<br>Output: %s.</p>' % (description, rst_to_html(output))]
+        if category in CATEGORY_FIGURES:
+            lines.append('<p><img src="%s" alt="%s" style="width: 100%%; max-width: 900px"></p>'
+                         % CATEGORY_FIGURES[category])
         for distributions, tier_nodes in tiers(nodes):
             lines += ['<p class="opencv-apps-tier">%s</p>' % tier_label(distributions),
                       '<div class="opencv-apps-gallery">']
@@ -687,6 +723,8 @@ def readme_gallery():
         description, output = CATEGORY_DESCRIPTIONS[category]
         # the inline literals of reStructuredText (``...``) in Markdown (`...`)
         lines += ['### %s' % category, '', ('%s Output: %s.' % (description, output)).replace('``', '`'), '']
+        if category in CATEGORY_FIGURES:
+            lines += ['<img src="%s" alt="%s" width="900">' % CATEGORY_FIGURES[category], '']
         for distributions, tier_nodes in tiers(nodes):
             lines += ['**%s**' % tier_label(distributions), '', '<table>']
             for i in range(0, len(tier_nodes), 4):

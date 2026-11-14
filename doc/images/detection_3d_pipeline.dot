@@ -1,0 +1,44 @@
+// the pipeline of detection_3d, rendered to detection_3d_pipeline.svg by
+//   dot -Tsvg doc/images/detection_3d_pipeline.dot -o doc/images/detection_3d_pipeline.svg
+digraph detection_3d {
+  rankdir=LR;
+  graph [fontname="Helvetica", fontsize=11, nodesep=0.25, ranksep=0.45, bgcolor="transparent"];
+  node [fontname="Helvetica", fontsize=11, shape=box, style="rounded,filled", fillcolor="#ffffff", color="#888888"];
+  edge [fontname="Courier", fontsize=9, color="#666666"];
+
+  subgraph cluster_sensors {
+    label="sensors"; style="rounded,dashed"; color="#aaaaaa"; fontcolor="#666666";
+    camera [label="camera\n(color image)"];
+    rgbd [label="RGB-D camera\n(depth registered to the color)"];
+    lidar [label="LiDAR\n(point cloud)"];
+  }
+  subgraph cluster_2d {
+    label="2D nodes of opencv_apps (replaceable)"; style="rounded,dashed"; color="#aaaaaa"; fontcolor="#666666";
+    detection [label="detection\ndnn_object_detection (YOLO), people_detect, ..."];
+    faces [label="faces\ndnn_face_detection, face_detection, ..."];
+    tracking [label="tracking\ntracking, dnn_tracking, match_template"];
+  }
+  detection_3d [label="detection_3d", fillcolor="#d8ecff", color="#3a7bd5", penwidth=2];
+  subgraph cluster_out {
+    label="results"; style="rounded,dashed"; color="#aaaaaa"; fontcolor="#666666";
+    boxes [label="3D boxes\nvision_msgs/Detection3DArray"];
+    markers [label="markers\nvisualization_msgs/MarkerArray"];
+    tf [label="TF frames\n<label>_<id>"];
+  }
+  rviz [label="rviz\n(rviz/detection_3d.rviz)", fillcolor="#f2f2f2"];
+  robot [label="robot\n(grasping, navigation, ...)", fillcolor="#f2f2f2"];
+
+  camera -> detection [label="image"];
+  camera -> faces [label="image"];
+  camera -> tracking [label="image"];
+  detection -> detection_3d [label="~/detections → input\ninput_type:=detections"];
+  faces -> detection_3d [label="~/faces → input\ninput_type:=faces"];
+  tracking -> detection_3d [label="~/output → input\ninput_type:=rects"];
+  camera -> detection_3d [label="camera_info"];
+  rgbd -> detection_3d [label="depth\ndepth_source:=depth"];
+  lidar -> detection_3d [label="points (+ TF extrinsics)\ndepth_source:=points"];
+  detection_3d -> boxes [label="~/detections"];
+  detection_3d -> markers [label="~/markers"];
+  detection_3d -> tf [label="/tf"];
+  markers -> rviz; tf -> rviz; boxes -> robot; tf -> robot;
+}

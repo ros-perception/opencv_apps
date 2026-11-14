@@ -89,12 +89,19 @@ detection_3d:
   launch_args: {}
   steps:
   - ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image &
-  view_command: ros2 run rviz2 rviz2 -f camera_rgb_optical_frame
+  view_command: ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d.rviz
+  figure:
+    path: images/detection_3d_pipeline.svg
+    caption: 'The pipeline of detection_3d: the 2D results of the other nodes (replaceable by remapping input),
+      the distances of an RGB-D camera or a LiDAR, and the 3D boxes, the markers and the TF frames of the objects.'
   note: 'The input is 20 RGB-D images of the TUM RGB-D freiburg3_walking_xyz sequence (image, depth in mm and
-    camera_info, by test/publish_rgbd.py), and the people of dnn_object_detection. In rviz2, add TF to show the
-    frames person_0, ..., or add Detection3DArray of vision_msgs_rviz_plugins to show the boxes.'
+    camera_info, by test/publish_rgbd.py, with the static TF of the camera on camera_link), and the objects of
+    dnn_object_detection. rviz/detection_3d.rviz shows ~/markers (the 3D boxes and the labels), the TF frames of the
+    objects and the image of dnn_object_detection; for your camera, give its frame by -f, e.g. -f camera_link.
+    rviz/detection_3d_ros1.rviz is the same for ROS 1.'
   variants_title: Sources of the distances
-  variants_note: The demos draw the 3D boxes of ``~/detections`` on the image, and their top view.
+  variants_note: The demos draw the 3D boxes of ``~/detections`` on the image, and their top view; rviz shows them with
+    rviz/detection_3d.rviz and rviz/detection_3d_lidar.rviz (the view of the objects farther away, and the points).
   variants:
   - name: rgbd
     title: RGB-D camera (default)
@@ -114,6 +121,7 @@ detection_3d:
     - wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/lidar_boreas_points.npz
     - python3 publish_lidar.py lidar_boreas.mp4 lidar_boreas_points.npz &
     - ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image &
+    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d_lidar.rviz &
     note: 20 images and the points of the LiDAR (in the frame lidar, with the static TF of the extrinsics from the
       frame camera) of the Boreas dataset, by test/publish_lidar.py; the objects are farther and move faster than
       indoors, so max_depth, depth_threshold and track_distance are larger.

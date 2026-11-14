@@ -1492,6 +1492,10 @@
     "type": "vision_msgs/msg/Detection3DArray"
    },
    {
+    "name": "~/markers",
+    "type": "visualization_msgs/msg/MarkerArray"
+   },
+   {
     "name": "/tf",
     "type": "tf2_msgs/msg/TFMessage"
    }

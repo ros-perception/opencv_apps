@@ -13,7 +13,12 @@ Publishes the 3D boxes (``vision_msgs/Detection3DArray``) and the TF frames ``<l
    * - OpenCV
      - any version of the distributions
    * - Group
-     - 3D localization, the nodes of which publish ``~/detections`` (vision_msgs/Detection3DArray) and the TF frames
+     - Depth and 3D localization, the nodes of which publish ``~/inverse_depth`` (Image) of dnn_depth_estimation, and ``~/detections`` (vision_msgs/Detection3DArray), ``~/markers`` (for rviz) and the TF frames of detection_3d
+
+.. figure:: ../images/detection_3d_pipeline.svg
+   :alt: The pipeline of detection_3d: the 2D results of the other nodes (replaceable by remapping input), the distances of an RGB-D camera or a LiDAR, and the 3D boxes, the markers and the TF frames of the objects.
+
+   The pipeline of detection_3d: the 2D results of the other nodes (replaceable by remapping input), the distances of an RGB-D camera or a LiDAR, and the 3D boxes, the markers and the TF frames of the objects.
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/detection_3d.gif
    :alt: demo of detection_3d
@@ -24,9 +29,9 @@ Usage
 .. code-block:: bash
 
    # ROS 2
-   ros2 launch opencv_apps detection_3d.launch.xml image:=/camera/image_raw debug_view:=false
+   ros2 launch opencv_apps detection_3d.launch.xml input:=/dnn_object_detection/detections depth:=/camera/camera/aligned_depth_to_color/image_raw camera_info:=/camera/camera/color/camera_info
    # ROS 1
-   roslaunch opencv_apps detection_3d.launch image:=/camera/image_raw debug_view:=false
+   roslaunch opencv_apps detection_3d.launch input:=/dnn_object_detection/detections depth:=/camera/aligned_depth_to_color/image_raw camera_info:=/camera/color/camera_info
 
 Try it with the demo video
 --------------------------
@@ -45,16 +50,16 @@ Download the input of the demo above, publish it, and run the node on it, in the
    # terminal 3: run, keep it running
    ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image
    # terminal 4: view the result
-   ros2 run rviz2 rviz2 -f camera_rgb_optical_frame
+   ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d.rviz
 
-The input is 20 RGB-D images of the TUM RGB-D freiburg3_walking_xyz sequence (image, depth in mm and camera_info, by test/publish_rgbd.py), and the people of dnn_object_detection. In rviz2, add TF to show the frames person_0, ..., or add Detection3DArray of vision_msgs_rviz_plugins to show the boxes.
+The input is 20 RGB-D images of the TUM RGB-D freiburg3_walking_xyz sequence (image, depth in mm and camera_info, by test/publish_rgbd.py, with the static TF of the camera on camera_link), and the objects of dnn_object_detection. rviz/detection_3d.rviz shows ~/markers (the 3D boxes and the labels), the TF frames of the objects and the image of dnn_object_detection; for your camera, give its frame by -f, e.g. -f camera_link. rviz/detection_3d_ros1.rviz is the same for ROS 1.
 
 See :doc:`../credits` for the license of the video.
 
 Sources of the distances
 ------------------------
 
-The demos draw the 3D boxes of ``~/detections`` on the image, and their top view.
+The demos draw the 3D boxes of ``~/detections`` on the image, and their top view; rviz shows them with rviz/detection_3d.rviz and rviz/detection_3d_lidar.rviz (the view of the objects farther away, and the points).
 
 RGB-D camera (default)
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -81,6 +86,7 @@ LiDAR
    wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/lidar_boreas_points.npz
    python3 publish_lidar.py lidar_boreas.mp4 lidar_boreas_points.npz &
    ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image &
+   ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d_lidar.rviz &
    ros2 launch opencv_apps detection_3d.launch.xml input:=/dnn_object_detection/detections points:=points camera_info:=camera_info depth_source:=points depth_threshold:=1.0 max_depth:=60.0 track_distance:=2.0
 
 20 images and the points of the LiDAR (in the frame lidar, with the static TF of the extrinsics from the frame camera) of the Boreas dataset, by test/publish_lidar.py; the objects are farther and move faster than indoors, so max_depth, depth_threshold and track_distance are larger.
@@ -110,6 +116,8 @@ Published topics
      - Type
    * - ``~/detections``
      - ``vision_msgs/msg/Detection3DArray``
+   * - ``~/markers``
+     - ``visualization_msgs/msg/MarkerArray``
    * - ``/tf``
      - ``tf2_msgs/msg/TFMessage``
 

@@ -15,7 +15,7 @@ Monocular depth estimation, by default with MiDaS v2.1 small, whose output is th
    * - OpenCV
      - OpenCV 4.5.4 or later
    * - Group
-     - Image filters, the nodes of which publish the processed image in ``~/image``
+     - Depth and 3D localization, the nodes of which publish ``~/inverse_depth`` (Image) of dnn_depth_estimation, and ``~/detections`` (vision_msgs/Detection3DArray), ``~/markers`` (for rviz) and the TF frames of detection_3d
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_depth_estimation.gif
    :alt: demo of dnn_depth_estimation
