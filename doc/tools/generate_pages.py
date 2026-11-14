@@ -623,7 +623,8 @@ def readme_gallery():
     lines = []
     for category, nodes in CATEGORIES:
         description, output = CATEGORY_DESCRIPTIONS[category]
-        lines += ['### %s' % category, '', '%s Output: %s.' % (description, output.replace('``', '`')), '']
+        # the inline literals of reStructuredText (``...``) in Markdown (`...`)
+        lines += ['### %s' % category, '', ('%s Output: %s.' % (description, output)).replace('``', '`'), '']
         for distributions, tier_nodes in tiers(nodes):
             lines += ['**%s**' % tier_label(distributions), '', '<table>']
             for i in range(0, len(tier_nodes), 4):
