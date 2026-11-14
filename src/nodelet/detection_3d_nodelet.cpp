@@ -132,15 +132,23 @@ class Detection3DNodelet : public opencv_apps::Nodelet
   };
 
   // the camera of camera_info: the raw image with the distortion (K and D), or the rectified image (P) without it,
-  // as image_geometry, adjusted to the image cropped by roi and binned
+  // as image_geometry, adjusted to the image cropped by roi and binned; the 3D points are in the optical frame of the
+  // camera, and the depths of the image in the frame of the image, rotated by R from the optical frame if rectified
   struct CameraModel
   {
     cv::Matx33d k;
     cv::Mat d;  // empty without the distortion
     bool fisheye;
+    cv::Matx33d r;  // the rotation of the rectified image (R), the identity for the raw image
     int width, height;
 
-    // the 3D points of the pixels at their depths
+    // the point of the optical frame in the frame of the image
+    cv::Point3d toImage(const cv::Point3d& p) const
+    {
+      return cv::Point3d(r * cv::Vec3d(p.x, p.y, p.z));
+    }
+
+    // the 3D points of the pixels at their depths (in the frame of the image), in the optical frame
     std::vector<cv::Point3d> backProject(const std::vector<cv::Point2d>& pixels, const std::vector<double>& depths) const
     {
       std::vector<cv::Point2d> rays;
@@ -153,17 +161,21 @@ class Detection3DNodelet : public opencv_apps::Nodelet
         cv::undistortPoints(pixels, rays, k, d);
       std::vector<cv::Point3d> points;
       for (size_t i = 0; i < rays.size(); i++)
-        points.push_back(cv::Point3d(rays[i].x * depths[i], rays[i].y * depths[i], depths[i]));
+        points.push_back(cv::Point3d(r.t() * cv::Vec3d(rays[i].x * depths[i], rays[i].y * depths[i], depths[i])));
       return points;
     }
 
-    // the pixels of the 3D points in front of the camera
+    // the pixels of the 3D points of the optical frame, (-1, -1) for the points behind the image
     std::vector<cv::Point2d> project(const std::vector<cv::Point3d>& points) const
     {
       std::vector<cv::Point2d> pixels;
       if (d.empty())
-        for (const cv::Point3d& p : points)
-          pixels.push_back(cv::Point2d(k(0, 0) * p.x / p.z + k(0, 2), k(1, 1) * p.y / p.z + k(1, 2)));
+        for (const cv::Point3d& point : points)
+        {
+          cv::Point3d p = toImage(point);
+          pixels.push_back(p.z > 0.0 ? cv::Point2d(k(0, 0) * p.x / p.z + k(0, 2), k(1, 1) * p.y / p.z + k(1, 2)) :
+                                       cv::Point2d(-1.0, -1.0));
+        }
       else if (!points.empty() && fisheye)
         cv::fisheye::projectPoints(points, pixels, cv::Vec3d(), cv::Vec3d(), k, d);
       else if (!points.empty())
@@ -461,7 +473,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
           for (size_t k = 0; k < input[i].keypoints.size(); k++)
             if (std::abs(pixel.x - input[i].keypoints[k].position.x) <= keypoint_radius_ &&
                 std::abs(pixel.y - input[i].keypoints[k].position.y) <= keypoint_radius_)
-              keypoint_depths[i][k].push_back(cloud[j].z);
+              keypoint_depths[i][k].push_back(camera.toImage(cloud[j]).z);
         }
       }
       std::vector<std::vector<Keypoint3D> > keypoints(input.size());
@@ -483,7 +495,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
   }
 
   // the camera model of camera_info, false if it is not calibrated: K and D of the raw image (rectified false), or P
-  // of the rectified image (rectified true), whose camera_info is the same as the raw image; K and P are of the full
+  // and R of the rectified image (rectified true), whose camera_info is the same as the raw image; K and P are of the full
   // resolution image, adjusted to the image cropped by roi and binned (0 means 1), as aruco_detection
   bool cameraModel(const sensor_msgs::msg::CameraInfo& info, CameraModel& camera)
   {
@@ -491,10 +503,12 @@ class Detection3DNodelet : public opencv_apps::Nodelet
 #ifdef ROS2
     const double* k = info.k.data();
     const double* p = info.p.data();
+    const double* r = info.r.data();
     const std::vector<double>& d = info.d;
 #else
     const double* k = info.K.data();
     const double* p = info.P.data();
+    const double* r = info.R.data();
     const std::vector<double>& d = info.D;
 #endif
     if (k[0] == 0.0 || k[4] == 0.0)
@@ -511,7 +525,10 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10000, "D of equidistant has %zu coefficients, not 4", d.size());
       return false;
     }
-    // P of the rectified image (the translation of P, of the stereo cameras, is not used)
+    // P and R of the rectified image (the translation of P, of the stereo cameras, is not used)
+    camera.r = cv::Matx33d::eye();
+    if (rectified_ && std::any_of(r, r + 9, [](double c) { return c != 0.0; }))
+      camera.r = cv::Matx33d(r);
     double fx = k[0], fy = k[4], cx = k[2], cy = k[5];
     if (rectified_ && p[0] != 0.0 && p[5] != 0.0)
     {
@@ -903,8 +920,8 @@ public:
     max_depth_ = declare_parameter("max_depth", 10.0, paramDescriptor("Maximum valid depth (m).", 0.0, 1000.0));
     rectified_ = declare_parameter(
         "rectified", false,
-        paramDescriptor("The 2D results are of the rectified image (e.g. image_rect), whose camera matrix is P of "
-                        "camera_info, instead of the raw image with the distortion of K and D"));
+        paramDescriptor("The 2D results are of the rectified image (e.g. image_rect), of P and R (the rotation from "
+                        "the optical frame) of camera_info, instead of the raw image with the distortion of K and D"));
     publish_tf_ = declare_parameter(
         "publish_tf", true,
         paramDescriptor("Publish the TF frame <tf_prefix><label>_<id> of each object; with it at the start, the node "

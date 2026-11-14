@@ -1465,7 +1465,7 @@
    },
    {
     "default": false,
-    "description": "The 2D results are of the rectified image (e.g. image_rect), whose camera matrix is P of camera_info, instead of the raw image with the distortion of K and D",
+    "description": "The 2D results are of the rectified image (e.g. image_rect), of P and R (the rotation from the optical frame) of camera_info, instead of the raw image with the distortion of K and D",
     "name": "rectified",
     "type": "bool"
    },

@@ -215,7 +215,7 @@ See also the :ref:`common parameters <common-parameters>`.
      - bool
      - false
      - yes
-     - The 2D results are of the rectified image (e.g. image_rect), whose camera matrix is P of camera_info, instead of the raw image with the distortion of K and D
+     - The 2D results are of the rectified image (e.g. image_rect), of P and R (the rotation from the optical frame) of camera_info, instead of the raw image with the distortion of K and D
    * - ``roi_scale``
      - double
      - 0.8 (0.1 - 1)

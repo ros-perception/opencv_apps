@@ -8,7 +8,7 @@
 
   <arg name="input_type" default="detections" doc="Type of input: detections (DetectionArrayStamped), faces (FaceArrayStamped), rects (RectArrayStamped) or skeletons (SkeletonArrayStamped)." />
   <arg name="depth_source" default="depth" doc="Source of the distances: depth (the depth image) or points (the point cloud)." />
-  <arg name="rectified" default="false" doc="The 2D results are of the rectified image (e.g. image_rect), whose camera matrix is P of camera_info, instead of the raw image with the distortion of K and D" />
+  <arg name="rectified" default="false" doc="The 2D results are of the rectified image (e.g. image_rect), of P and R (the rotation from the optical frame) of camera_info, instead of the raw image with the distortion of K and D" />
   <arg name="queue_size" default="10" doc="Queue size of the synchronized subscribers." />
   <arg name="roi_scale" default="0.8" doc="Scale of the 2D box whose depths are used, smaller to leave out the background at the edges of the box." />
   <arg name="depth_threshold" default="0.3" doc="The pixels within this distance (m) of the median depth of the box belong to the object." />
