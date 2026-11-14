@@ -1,4 +1,4 @@
-# an object detected by dnn_object_detection, or a code or a marker detected by qrcode_detection,
+# an object detected by dnn_object_detection or people_detect, or a code or a marker detected by qrcode_detection,
 # barcode_detection and aruco_detection
 string label        # class name of the object, QR_CODE, type of the barcode (e.g. EAN_13), or dictionary of the marker (e.g. DICT_4X4_50)
 string data         # decoded text of the code, or empty

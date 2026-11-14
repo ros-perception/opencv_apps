@@ -26,5 +26,11 @@
       <param name="hzerror" value="15.0" />
       <param name="test_duration" value="5.0" />
     </test>
+    <param name="people_detect_detections_test/topic" value="people_detect/detections" />    <!-- opencv_apps/DetectionArrayStamped -->
+    <test test-name="people_detect_detections_test" pkg="rostest" type="hztest" name="people_detect_detections_test" time-limit="120" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="15.0" />
+      <param name="test_duration" value="5.0" />
+    </test>
   </group>
 </launch>

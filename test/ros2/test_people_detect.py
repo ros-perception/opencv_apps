@@ -35,7 +35,8 @@
 
 import unittest
 
-from opencv_apps_test import camera, description, FACE_VIDEO, image_view, include, TopicsTest
+from opencv_apps.msg import DetectionArrayStamped
+from opencv_apps_test import camera, description, FACE_VIDEO, image_view, include, MessagesTest
 import pytest
 
 
@@ -48,6 +49,9 @@ def generate_test_description():
     )
 
 
-class TestPeopleDetect(TopicsTest, unittest.TestCase):
+class TestPeopleDetect(MessagesTest, unittest.TestCase):
 
-    TOPICS = ['people_detect/found']
+    TOPICS = ['people_detect/found', 'people_detect/detections']
+    # the video may have no people, so check the fields of the detections if any
+    CHECKS = {'people_detect/detections': (DetectionArrayStamped, lambda msg: all(
+        d.label == 'person' and d.id == -1 and d.rect.width > 0 and d.rect.height > 0 for d in msg.detections))}
