@@ -33,5 +33,11 @@
       <param name="hzerror" value="10.0" />
       <param name="test_duration" value="1.0" />
     </test>
+    <param name="face_recognition_faces_test/topic" value="face_recognition/faces" />    <!-- opencv_apps/FaceArrayStamped -->
+    <test test-name="face_recognition_faces_test" pkg="rostest" type="hztest" name="face_recognition_faces_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
   </group>
 </launch>
