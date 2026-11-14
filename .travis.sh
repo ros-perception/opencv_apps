@@ -132,7 +132,7 @@ function build {
     travis_time_start build.script
     source /opt/ros/$ROS_DISTRO/setup.bash
     cd ~/catkin_ws
-    catkin build -p1 -j1 --no-status
+    catkin build -p1 -j$_JOBS --no-status
     travis_time_end
 }
 
@@ -141,7 +141,12 @@ function run_test {
     travis_time_start run_test.script
     source /opt/ros/$ROS_DISTRO/setup.bash
     cd ~/catkin_ws
-    catkin run_tests -p1 -j1 --no-status -i opencv_apps --no-deps
+    # catkin run_tests runs the rostests one by one even with -j, so run them in parallel with make; the
+    # catkin_tools of kinetic and melodic skip opencv_apps (build type ament_cmake), then there is no test
+    if [ -d build/opencv_apps ]; then
+        source devel/setup.bash
+        make -C build/opencv_apps -j$_JOBS run_tests
+    fi
     catkin_test_results --verbose build || catkin_test_results --all build
     travis_time_end
 }
@@ -153,12 +158,14 @@ function build_install {
     cd ~/catkin_ws
     catkin clean -b --yes || catkin clean -b -a
     catkin config --install
-    catkin build -p1 -j1 --no-status
+    catkin build -p1 -j$_JOBS --no-status
     travis_time_end
 }
 
 # setup.bash override ROS_DISTRO...
 export _ROS_DISTRO=$ROS_DISTRO
+# build and test with all cores of the runner; each rostest runs its own master on a free port
+export _JOBS=$(nproc)
 
 travis_time_start apt.before_install
 apt-get -y -qq update || if [ $? -eq 100 ]; then sed -i 's/archive.ubuntu.com/old-releases.ubuntu.com/g' /etc/apt/sources.list; apt-get -y -qq update; fi
