@@ -267,13 +267,39 @@ class DNNImageClassificationNodelet : public opencv_apps::Nodelet
         }
       }
 
-      for (size_t i = 0; i < detections_msg.detections.size(); i++)
+      // the classes in a panel at the bottom left, with a bar of the score of each class, the size of the text
+      // relative to the image
+      if (!detections_msg.detections.empty())
       {
-        const opencv_apps::msg::Detection& detection = detections_msg.detections[i];
-        std::string text = cv::format("%s %.2f", detection.label.c_str(), detection.score);
-        cv::Point origin(10, 30 + 30 * static_cast<int>(i));
-        cv::putText(frame, text, origin, cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0, 0, 0), 4);
-        cv::putText(frame, text, origin, cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0, 255, 0), 2);
+        double font_scale = std::max(0.5, frame.cols / 900.0);
+        int thickness = std::max(1, cvRound(font_scale * 1.5));
+        int line_height = cvRound(32 * font_scale);
+        int bar_width = cvRound(160 * font_scale);
+        int text_width = 0;
+        for (const opencv_apps::msg::Detection& detection : detections_msg.detections)
+          text_width =
+              std::max(text_width, cv::getTextSize(cv::format("%s %.2f", detection.label.c_str(), detection.score),
+                                                   cv::FONT_HERSHEY_SIMPLEX, font_scale, thickness, nullptr)
+                                       .width);
+        int margin = cvRound(8 * font_scale);
+        int panel_height = line_height * static_cast<int>(detections_msg.detections.size()) + margin;
+        cv::Rect panel(margin, frame.rows - panel_height - margin, text_width + bar_width + 3 * margin, panel_height);
+        panel &= cv::Rect(0, 0, frame.cols, frame.rows);
+        cv::Mat roi = frame(panel);
+        roi = roi * 0.35;  // darken the background of the text
+        for (size_t i = 0; i < detections_msg.detections.size(); i++)
+        {
+          const opencv_apps::msg::Detection& detection = detections_msg.detections[i];
+          int y = panel.y + margin + line_height * static_cast<int>(i);
+          cv::Scalar color = i == 0 ? cv::Scalar(0, 255, 0) : cv::Scalar(255, 255, 255);
+          cv::rectangle(frame,
+                        cv::Rect(panel.x + margin, y + line_height / 6,
+                                 std::max(1, cvRound(bar_width * std::min(1.0, detection.score))), line_height * 2 / 3),
+                        i == 0 ? cv::Scalar(0, 160, 0) : cv::Scalar(120, 120, 120), cv::FILLED);
+          cv::putText(frame, cv::format("%s %.2f", detection.label.c_str(), detection.score),
+                      cv::Point(panel.x + bar_width + 2 * margin, y + line_height * 3 / 4), cv::FONT_HERSHEY_SIMPLEX,
+                      font_scale, color, thickness);
+        }
       }
 
       //-- Show what you got
