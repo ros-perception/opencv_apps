@@ -13,7 +13,7 @@ Detects the lines with the standard or the probabilistic Hough transform (``cv::
    * - OpenCV
      - any version of the distributions
    * - Group
-     - Lines, the nodes of which publish ``~/lines`` (LineArrayStamped)
+     - Features and shapes, the nodes of which publish ``~/corners`` (Point2DArrayStamped), ``~/lines`` (LineArrayStamped), ``~/circles`` (CircleArrayStamped) and ``~/contours`` (ContourArrayStamped, ``~/hulls`` of convex_hull), by the kind of the features
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/hough_lines.gif
    :alt: demo of hough_lines

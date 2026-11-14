@@ -13,7 +13,7 @@ Detects the circles with the Hough transform (``cv::HoughCircles()``).
    * - OpenCV
      - any version of the distributions
    * - Group
-     - Circles and blobs, the nodes of which publish ``~/circles`` (CircleArrayStamped)
+     - Features and shapes, the nodes of which publish ``~/corners`` (Point2DArrayStamped), ``~/lines`` (LineArrayStamped), ``~/circles`` (CircleArrayStamped) and ``~/contours`` (ContourArrayStamped, ``~/hulls`` of convex_hull), by the kind of the features
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/hough_circles.gif
    :alt: demo of hough_circles

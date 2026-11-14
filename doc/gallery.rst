@@ -62,13 +62,33 @@
    <a class="opencv-apps-tile" href="nodes/morphology.html"><img src="https://ros-perception.github.io/opencv_apps/media/morphology_thumb.gif" alt="morphology" loading="lazy"><span>morphology<br><small>~/image</small></span></a>
    <a class="opencv-apps-tile" href="nodes/dnn_depth_estimation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_depth_estimation_thumb.gif" alt="dnn_depth_estimation" loading="lazy"><span>dnn_depth_estimation<br><small>~/inverse_depth</small></span></a>
    </div>
-   <h3>Color and region masks</h3>
-   <p>Extract the regions of the image: the pixels in a range of colors, the foreground, and the classes of a DNN segmentation.<br>Output: the mask or label image, <code>~/image</code> of the color filters and background_subtraction, <code>~/label</code> of dnn_semantic_segmentation.</p>
+   <h3>Features and shapes</h3>
+   <p>Find the corners, the lines and the line segments, the circles and the blobs, and the contours with their bounding shapes, moments and convex hulls.<br>Output: <code>~/corners</code> (Point2DArrayStamped), <code>~/lines</code> (LineArrayStamped), <code>~/circles</code> (CircleArrayStamped) and <code>~/contours</code> (ContourArrayStamped, <code>~/hulls</code> of convex_hull), by the kind of the features.</p>
+   <p class="opencv-apps-tier">ROS 1: noetic and later, ROS 2: jazzy and later</p>
+   <div class="opencv-apps-gallery">
+   <a class="opencv-apps-tile" href="nodes/corner_harris.html"><img src="https://ros-perception.github.io/opencv_apps/media/corner_harris_thumb.gif" alt="corner_harris" loading="lazy"><span>corner_harris<br><small>~/corners</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/goodfeature_track.html"><img src="https://ros-perception.github.io/opencv_apps/media/goodfeature_track_thumb.gif" alt="goodfeature_track" loading="lazy"><span>goodfeature_track<br><small>~/corners</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/hough_lines.html"><img src="https://ros-perception.github.io/opencv_apps/media/hough_lines_thumb.gif" alt="hough_lines" loading="lazy"><span>hough_lines<br><small>~/lines</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/hough_circles.html"><img src="https://ros-perception.github.io/opencv_apps/media/hough_circles_thumb.gif" alt="hough_circles" loading="lazy"><span>hough_circles<br><small>~/circles</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/find_contours.html"><img src="https://ros-perception.github.io/opencv_apps/media/find_contours_thumb.gif" alt="find_contours" loading="lazy"><span>find_contours<br><small>~/contours</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/general_contours.html"><img src="https://ros-perception.github.io/opencv_apps/media/general_contours_thumb.gif" alt="general_contours" loading="lazy"><span>general_contours<br><small>~/contours</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/contour_moments.html"><img src="https://ros-perception.github.io/opencv_apps/media/contour_moments_thumb.gif" alt="contour_moments" loading="lazy"><span>contour_moments<br><small>~/contours</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/convex_hull.html"><img src="https://ros-perception.github.io/opencv_apps/media/convex_hull_thumb.gif" alt="convex_hull" loading="lazy"><span>convex_hull<br><small>~/hulls</small></span></a>
+   </div>
+   <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
+   <div class="opencv-apps-gallery">
+   <a class="opencv-apps-tile" href="nodes/line_segment_detector.html"><img src="https://ros-perception.github.io/opencv_apps/media/line_segment_detector_thumb.gif" alt="line_segment_detector" loading="lazy"><span>line_segment_detector<br><small>~/lines</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/blob_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/blob_detection_thumb.gif" alt="blob_detection" loading="lazy"><span>blob_detection<br><small>~/circles</small></span></a>
+   </div>
+   <h3>Segmentation</h3>
+   <p>Divide the image into regions by the class of each pixel: the pixels in a range of colors, the foreground, the connected regions, and the classes of a DNN.<br>Output: the mask or label image, <code>~/image</code> of the color filters and background_subtraction, <code>~/label</code> of dnn_semantic_segmentation, and <code>~/contours</code> (ContourArrayStamped) of the regions of segment_objects and watershed_segmentation.</p>
    <p class="opencv-apps-tier">ROS 1: noetic and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/hsv_color_filter.html"><img src="https://ros-perception.github.io/opencv_apps/media/hsv_color_filter_thumb.gif" alt="hsv_color_filter" loading="lazy"><span>hsv_color_filter<br><small>~/image</small></span></a>
    <a class="opencv-apps-tile" href="nodes/hls_color_filter.html"><img src="https://ros-perception.github.io/opencv_apps/media/hls_color_filter_thumb.gif" alt="hls_color_filter" loading="lazy"><span>hls_color_filter<br><small>~/image</small></span></a>
    <a class="opencv-apps-tile" href="nodes/rgb_color_filter.html"><img src="https://ros-perception.github.io/opencv_apps/media/rgb_color_filter_thumb.gif" alt="rgb_color_filter" loading="lazy"><span>rgb_color_filter<br><small>~/image</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/segment_objects.html"><img src="https://ros-perception.github.io/opencv_apps/media/segment_objects_thumb.gif" alt="segment_objects" loading="lazy"><span>segment_objects<br><small>~/contours</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/watershed_segmentation.html"><img src="https://ros-perception.github.io/opencv_apps/media/watershed_segmentation_thumb.gif" alt="watershed_segmentation" loading="lazy"><span>watershed_segmentation<br><small>~/contours</small></span></a>
    </div>
    <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
@@ -76,58 +96,35 @@
    <a class="opencv-apps-tile" href="nodes/background_subtraction.html"><img src="https://ros-perception.github.io/opencv_apps/media/background_subtraction_thumb.gif" alt="background_subtraction" loading="lazy"><span>background_subtraction<br><small>~/image</small></span></a>
    <a class="opencv-apps-tile" href="nodes/dnn_semantic_segmentation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_semantic_segmentation_thumb.gif" alt="dnn_semantic_segmentation" loading="lazy"><span>dnn_semantic_segmentation<br><small>~/label</small></span></a>
    </div>
-   <h3>Corners</h3>
-   <p>Find the corners.<br>Output: <code>~/corners</code> (Point2DArrayStamped).</p>
-   <p class="opencv-apps-tier">ROS 1: noetic and later, ROS 2: jazzy and later</p>
-   <div class="opencv-apps-gallery">
-   <a class="opencv-apps-tile" href="nodes/corner_harris.html"><img src="https://ros-perception.github.io/opencv_apps/media/corner_harris_thumb.gif" alt="corner_harris" loading="lazy"><span>corner_harris<br><small>~/corners</small></span></a>
-   <a class="opencv-apps-tile" href="nodes/goodfeature_track.html"><img src="https://ros-perception.github.io/opencv_apps/media/goodfeature_track_thumb.gif" alt="goodfeature_track" loading="lazy"><span>goodfeature_track<br><small>~/corners</small></span></a>
-   </div>
-   <h3>Lines</h3>
-   <p>Find the lines and the line segments.<br>Output: <code>~/lines</code> (LineArrayStamped).</p>
-   <p class="opencv-apps-tier">ROS 1: noetic and later, ROS 2: jazzy and later</p>
-   <div class="opencv-apps-gallery">
-   <a class="opencv-apps-tile" href="nodes/hough_lines.html"><img src="https://ros-perception.github.io/opencv_apps/media/hough_lines_thumb.gif" alt="hough_lines" loading="lazy"><span>hough_lines<br><small>~/lines</small></span></a>
-   </div>
+   <h3>Image classification</h3>
+   <p>Find what the whole image shows, the classes of ImageNet.<br>Output: <code>~/detections</code> (DetectionArrayStamped), the classes with their scores.</p>
    <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
-   <a class="opencv-apps-tile" href="nodes/line_segment_detector.html"><img src="https://ros-perception.github.io/opencv_apps/media/line_segment_detector_thumb.gif" alt="line_segment_detector" loading="lazy"><span>line_segment_detector<br><small>~/lines</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/dnn_image_classification.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_image_classification_thumb.gif" alt="dnn_image_classification" loading="lazy"><span>dnn_image_classification<br><small>~/detections</small></span></a>
    </div>
-   <h3>Circles and blobs</h3>
-   <p>Find the circles and the blobs.<br>Output: <code>~/circles</code> (CircleArrayStamped).</p>
-   <p class="opencv-apps-tier">ROS 1: noetic and later, ROS 2: jazzy and later</p>
-   <div class="opencv-apps-gallery">
-   <a class="opencv-apps-tile" href="nodes/hough_circles.html"><img src="https://ros-perception.github.io/opencv_apps/media/hough_circles_thumb.gif" alt="hough_circles" loading="lazy"><span>hough_circles<br><small>~/circles</small></span></a>
-   </div>
-   <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
-   <div class="opencv-apps-gallery">
-   <a class="opencv-apps-tile" href="nodes/blob_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/blob_detection_thumb.gif" alt="blob_detection" loading="lazy"><span>blob_detection<br><small>~/circles</small></span></a>
-   </div>
-   <h3>Contours</h3>
-   <p>Find the contours, with their bounding shapes, moments and convex hulls, and segment the objects.<br>Output: <code>~/contours</code> (ContourArrayStamped), <code>~/hulls</code> of convex_hull.</p>
-   <p class="opencv-apps-tier">ROS 1: noetic and later, ROS 2: jazzy and later</p>
-   <div class="opencv-apps-gallery">
-   <a class="opencv-apps-tile" href="nodes/find_contours.html"><img src="https://ros-perception.github.io/opencv_apps/media/find_contours_thumb.gif" alt="find_contours" loading="lazy"><span>find_contours<br><small>~/contours</small></span></a>
-   <a class="opencv-apps-tile" href="nodes/general_contours.html"><img src="https://ros-perception.github.io/opencv_apps/media/general_contours_thumb.gif" alt="general_contours" loading="lazy"><span>general_contours<br><small>~/contours</small></span></a>
-   <a class="opencv-apps-tile" href="nodes/contour_moments.html"><img src="https://ros-perception.github.io/opencv_apps/media/contour_moments_thumb.gif" alt="contour_moments" loading="lazy"><span>contour_moments<br><small>~/contours</small></span></a>
-   <a class="opencv-apps-tile" href="nodes/convex_hull.html"><img src="https://ros-perception.github.io/opencv_apps/media/convex_hull_thumb.gif" alt="convex_hull" loading="lazy"><span>convex_hull<br><small>~/hulls</small></span></a>
-   <a class="opencv-apps-tile" href="nodes/segment_objects.html"><img src="https://ros-perception.github.io/opencv_apps/media/segment_objects_thumb.gif" alt="segment_objects" loading="lazy"><span>segment_objects<br><small>~/contours</small></span></a>
-   <a class="opencv-apps-tile" href="nodes/watershed_segmentation.html"><img src="https://ros-perception.github.io/opencv_apps/media/watershed_segmentation_thumb.gif" alt="watershed_segmentation" loading="lazy"><span>watershed_segmentation<br><small>~/contours</small></span></a>
-   </div>
-   <h3>Detection</h3>
-   <p>Detect the people and the objects, decode QR codes, barcodes and ArUco markers, find texts, and classify the image.<br>Output: <code>~/detections</code> (DetectionArrayStamped).</p>
+   <h3>Object detection</h3>
+   <p>Find the bounding boxes of the people and the objects.<br>Output: <code>~/detections</code> (DetectionArrayStamped).</p>
    <p class="opencv-apps-tier">ROS 1: noetic and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/people_detect.html"><img src="https://ros-perception.github.io/opencv_apps/media/people_detect_thumb.gif" alt="people_detect" loading="lazy"><span>people_detect<br><small>~/detections</small></span></a>
    </div>
    <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
+   <a class="opencv-apps-tile" href="nodes/dnn_object_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_object_detection_thumb.gif" alt="dnn_object_detection" loading="lazy"><span>dnn_object_detection<br><small>~/detections</small></span></a>
+   </div>
+   <h3>Codes and markers</h3>
+   <p>Find and decode QR codes, barcodes and ArUco markers.<br>Output: <code>~/detections</code> (DetectionArrayStamped), with the decoded data and the corners.</p>
+   <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
+   <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/qrcode_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/qrcode_detection_thumb.gif" alt="qrcode_detection" loading="lazy"><span>qrcode_detection<br><small>~/detections</small></span></a>
    <a class="opencv-apps-tile" href="nodes/barcode_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/barcode_detection_thumb.gif" alt="barcode_detection" loading="lazy"><span>barcode_detection<br><small>~/detections</small></span></a>
    <a class="opencv-apps-tile" href="nodes/aruco_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/aruco_detection_thumb.gif" alt="aruco_detection" loading="lazy"><span>aruco_detection<br><small>~/detections</small></span></a>
-   <a class="opencv-apps-tile" href="nodes/dnn_object_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_object_detection_thumb.gif" alt="dnn_object_detection" loading="lazy"><span>dnn_object_detection<br><small>~/detections</small></span></a>
+   </div>
+   <h3>Text detection and recognition</h3>
+   <p>Find the texts and read them (OCR).<br>Output: <code>~/detections</code> (DetectionArrayStamped), with the recognized text.</p>
+   <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
+   <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/dnn_text_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_text_detection_thumb.gif" alt="dnn_text_detection" loading="lazy"><span>dnn_text_detection<br><small>~/detections</small></span></a>
-   <a class="opencv-apps-tile" href="nodes/dnn_image_classification.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_image_classification_thumb.gif" alt="dnn_image_classification" loading="lazy"><span>dnn_image_classification<br><small>~/detections</small></span></a>
    </div>
    <h3>Faces</h3>
    <p>Detect and recognize the faces and their expressions.<br>Output: <code>~/faces</code> (FaceArrayStamped).</p>

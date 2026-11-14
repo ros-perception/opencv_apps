@@ -13,7 +13,7 @@ Detects the line segments with the line segment detector (LSD, ``cv::LineSegment
    * - OpenCV
      - OpenCV 3.0 - 3.4.5 or 4.5.4 or later, which have cv::createLineSegmentDetector()
    * - Group
-     - Lines, the nodes of which publish ``~/lines`` (LineArrayStamped)
+     - Features and shapes, the nodes of which publish ``~/corners`` (Point2DArrayStamped), ``~/lines`` (LineArrayStamped), ``~/circles`` (CircleArrayStamped) and ``~/contours`` (ContourArrayStamped, ``~/hulls`` of convex_hull), by the kind of the features
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/line_segment_detector.gif
    :alt: demo of line_segment_detector

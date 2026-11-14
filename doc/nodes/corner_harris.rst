@@ -13,7 +13,7 @@ Detects the corners with the Harris corner detector (``cv::cornerHarris()``).
    * - OpenCV
      - any version of the distributions
    * - Group
-     - Corners, the nodes of which publish ``~/corners`` (Point2DArrayStamped)
+     - Features and shapes, the nodes of which publish ``~/corners`` (Point2DArrayStamped), ``~/lines`` (LineArrayStamped), ``~/circles`` (CircleArrayStamped) and ``~/contours`` (ContourArrayStamped, ``~/hulls`` of convex_hull), by the kind of the features
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/corner_harris.gif
    :alt: demo of corner_harris
