@@ -44,6 +44,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include <opencv_apps/msg/contour.hpp>
+#include <opencv_apps/msg/contour_array_stamped.hpp>
 #include <opencv_apps/msg/moment.hpp>
 #include <opencv_apps/msg/moment_array.hpp>
 #include <opencv_apps/msg/moment_array_stamped.hpp>
@@ -65,6 +67,7 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
   rclcpp::Publisher<opencv_apps::msg::MomentArrayStamped>::SharedPtr msg_pub_;
+  rclcpp::Publisher<opencv_apps::msg::ContourArrayStamped>::SharedPtr contours_pub_;
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
@@ -127,6 +130,8 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
       // Messages
       opencv_apps::msg::MomentArrayStamped moments_msg;
       moments_msg.header = msg->header;
+      opencv_apps::msg::ContourArrayStamped contours_msg;
+      contours_msg.header = msg->header;
 
       // Do the work
       cv::Mat src_gray;
@@ -231,6 +236,16 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
         moment_msg.area = cv::contourArea(contours[i]);
         moment_msg.length = cv::arcLength(contours[i], true);
         moments_msg.moments.push_back(moment_msg);
+
+        opencv_apps::msg::Contour contour_msg;
+        for (const cv::Point& point : contours[i])
+        {
+          opencv_apps::msg::Point2D point_msg;
+          point_msg.x = point.x;
+          point_msg.y = point.y;
+          contour_msg.points.push_back(point_msg);
+        }
+        contours_msg.contours.push_back(contour_msg);
       }
 
       if (debug_view_)
@@ -246,6 +261,7 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
         img_pub_.publish(out_img);
       }
       msg_pub_->publish(moments_msg);
+      contours_pub_->publish(contours_msg);
     }
     catch (cv::Exception& e)
     {
@@ -296,6 +312,8 @@ public:
 
     img_pub_ = advertiseImage("~/image", 1);
     msg_pub_ = advertise<opencv_apps::msg::MomentArrayStamped>("~/moments", 1);
+    // the contours of the moments, in the same order (sorted by the area)
+    contours_pub_ = advertise<opencv_apps::msg::ContourArrayStamped>("~/contours", 1);
     onInitPostProcess();
   }
 };

@@ -44,6 +44,8 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include <opencv_apps/msg/contour.hpp>
+#include <opencv_apps/msg/contour_array_stamped.hpp>
 #include <opencv_apps/msg/rotated_rect.hpp>
 #include <opencv_apps/msg/rotated_rect_array.hpp>
 #include <opencv_apps/msg/rotated_rect_array_stamped.hpp>
@@ -56,6 +58,7 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
   rclcpp::Publisher<opencv_apps::msg::RotatedRectArrayStamped>::SharedPtr rects_pub_, ellipses_pub_;
+  rclcpp::Publisher<opencv_apps::msg::ContourArrayStamped>::SharedPtr contours_pub_;
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
@@ -119,6 +122,8 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
       opencv_apps::msg::RotatedRectArrayStamped rects_msg, ellipses_msg;
       rects_msg.header = msg->header;
       ellipses_msg.header = msg->header;
+      opencv_apps::msg::ContourArrayStamped contours_msg;
+      contours_msg.header = msg->header;
 
       // Do the work
       cv::Mat src_gray;
@@ -203,6 +208,16 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
 
         rects_msg.rects.push_back(rect_msg);
         ellipses_msg.rects.push_back(ellipse_msg);
+
+        opencv_apps::msg::Contour contour_msg;
+        for (const cv::Point& point : contours[i])
+        {
+          opencv_apps::msg::Point2D point_msg;
+          point_msg.x = point.x;
+          point_msg.y = point.y;
+          contour_msg.points.push_back(point_msg);
+        }
+        contours_msg.contours.push_back(contour_msg);
       }
 
       /// Create a Trackbar for user to enter threshold
@@ -224,6 +239,7 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
           cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, drawing).toImageMsg();
       img_pub_.publish(out_img);
       rects_pub_->publish(rects_msg);
+      contours_pub_->publish(contours_msg);
       ellipses_pub_->publish(ellipses_msg);
     }
     catch (cv::Exception& e)
@@ -276,6 +292,8 @@ public:
     img_pub_ = advertiseImage("~/image", 1);
     rects_pub_ = advertise<opencv_apps::msg::RotatedRectArrayStamped>("~/rectangles", 1);
     ellipses_pub_ = advertise<opencv_apps::msg::RotatedRectArrayStamped>("~/ellipses", 1);
+    // the contours of the rectangles and the ellipses, in the same order
+    contours_pub_ = advertise<opencv_apps::msg::ContourArrayStamped>("~/contours", 1);
 
     onInitPostProcess();
   }

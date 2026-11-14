@@ -26,5 +26,11 @@
       <param name="hzerror" value="10.0" />
       <param name="test_duration" value="1.0" />
     </test>
+    <param name="contour_moments_contours_test/topic" value="contour_moments/contours" />    <!-- opencv_apps/ContourArrayStamped -->
+    <test test-name="contour_moments_contours_test" pkg="rostest" type="hztest" name="contour_moments_contours_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
   </group>
 </launch>
