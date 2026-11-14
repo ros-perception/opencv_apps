@@ -51,4 +51,4 @@ def generate_test_description():
 
 class TestFaceRecognition(TopicsTest, unittest.TestCase):
 
-    TOPICS = ['face_recognition/output']
+    TOPICS = ['face_recognition/output', 'face_recognition/faces']

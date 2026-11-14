@@ -55,10 +55,10 @@ def generate_test_description():
 
 class TestDNNFaceRecognition(MessagesTest, unittest.TestCase):
 
-    TOPICS = ['dnn_face_recognition/output', 'dnn_face_recognition/image']
-    # the trained face is recognized in the other frames
-    CHECKS = {'dnn_face_recognition/output': (FaceArrayStamped, lambda msg: any(
-        f.label == 'test_person' for f in msg.faces))}
+    TOPICS = ['dnn_face_recognition/output', 'dnn_face_recognition/faces', 'dnn_face_recognition/image']
+    # the trained face is recognized in the other frames, on ~/faces as on ~/output
+    CHECKS = {topic: (FaceArrayStamped, lambda msg: any(f.label == 'test_person' for f in msg.faces))
+              for topic in ['dnn_face_recognition/output', 'dnn_face_recognition/faces']}
 
     def prepare(self, node):
         # train the face in a frame of the camera, as face_recognition_trainer.py

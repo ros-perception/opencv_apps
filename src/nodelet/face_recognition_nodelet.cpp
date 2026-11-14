@@ -312,6 +312,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
   message_filters::Subscriber<opencv_apps::msg::FaceArrayStamped> face_sub_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr debug_img_pub_;
   rclcpp::Publisher<opencv_apps::msg::FaceArrayStamped>::SharedPtr face_pub_;
+  rclcpp::Publisher<opencv_apps::msg::FaceArrayStamped>::SharedPtr faces_pub_;
   rclcpp::Service<opencv_apps::srv::FaceRecognitionTrain>::SharedPtr train_srv_;
 
   bool save_train_data_;
@@ -450,6 +451,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
           drawFace(cv_img, ret_msg.faces[i]);
       }
       face_pub_->publish(ret_msg);
+      faces_pub_->publish(ret_msg);
       if (publish_debug_image)
       {
         std::unique_ptr<sensor_msgs::msg::Image> debug_img(new sensor_msgs::msg::Image());
@@ -751,7 +753,9 @@ public:
 
     // advertise
     debug_img_pub_ = advertise<sensor_msgs::msg::Image>("~/debug_image", 1);
+    // ~/faces is the same as ~/output, with the name of the topic of the other face nodes
     face_pub_ = advertise<opencv_apps::msg::FaceArrayStamped>("~/output", 1);
+    faces_pub_ = advertise<opencv_apps::msg::FaceArrayStamped>("~/faces", 1);
     train_srv_ = create_service<opencv_apps::srv::FaceRecognitionTrain>(
         "~/train",
         std::bind(&FaceRecognitionNodelet::trainCallback, this, std::placeholders::_1, std::placeholders::_2));
