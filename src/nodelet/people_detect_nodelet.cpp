@@ -44,6 +44,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
 
+#include <opencv_apps/msg/detection_array_stamped.hpp>
 #include <opencv_apps/msg/rect.hpp>
 #include <opencv_apps/msg/rect_array_stamped.hpp>
 
@@ -55,6 +56,7 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
   rclcpp::Publisher<opencv_apps::msg::RectArrayStamped>::SharedPtr msg_pub_;
+  rclcpp::Publisher<opencv_apps::msg::DetectionArrayStamped>::SharedPtr detections_pub_;
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
@@ -130,6 +132,8 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
       // Messages
       opencv_apps::msg::RectArrayStamped found_msg;
       found_msg.header = msg->header;
+      opencv_apps::msg::DetectionArrayStamped detections_msg;
+      detections_msg.header = msg->header;
 
       // Do the work
       if (debug_view_)
@@ -137,12 +141,14 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
         cv::namedWindow(window_name_, cv::WINDOW_AUTOSIZE);
       }
 
-      std::vector<cv::Rect> found, found_filtered;
+      std::vector<cv::Rect> found;
+      std::vector<double> weights;
+      std::vector<size_t> found_filtered;
       double t = (double)cv::getTickCount();
       // run the detector with default parameters. to get a higher hit-rate
       // (and more false alarms, respectively), decrease the hitThreshold and
       // groupThreshold (set groupThreshold to 0 to turn off the grouping completely).
-      hog_.detectMultiScale(frame, found, hit_threshold_, cv::Size(win_stride_, win_stride_),
+      hog_.detectMultiScale(frame, found, weights, hit_threshold_, cv::Size(win_stride_, win_stride_),
                             cv::Size(padding_, padding_), scale0_, group_threshold_);
       t = (double)cv::getTickCount() - t;
       RCLCPP_INFO(get_logger(), "tdetection time = %gms", t * 1000. / cv::getTickFrequency());
@@ -154,11 +160,11 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
           if (j != i && (r & found[j]) == r)
             break;
         if (j == found.size())
-          found_filtered.push_back(r);
+          found_filtered.push_back(i);
       }
       for (i = 0; i < found_filtered.size(); i++)
       {
-        cv::Rect r = found_filtered[i];
+        cv::Rect r = found[found_filtered[i]];
         // the HOG detector returns slightly larger rectangles than the real objects.
         // so we slightly shrink the rectangles to get a nicer output.
         r.x += cvRound(r.width * 0.1);
@@ -173,6 +179,17 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
         rect_msg.width = r.width;
         rect_msg.height = r.height;
         found_msg.rects.push_back(rect_msg);
+
+        opencv_apps::msg::Detection detection_msg;
+        detection_msg.label = "person";
+        detection_msg.id = -1;
+        // the SVM score of the detection window, grouped with the rectangles
+        detection_msg.score = found_filtered[i] < weights.size() ? weights[found_filtered[i]] : 1.0;
+        detection_msg.rect.x = r.x + r.width / 2.0;
+        detection_msg.rect.y = r.y + r.height / 2.0;
+        detection_msg.rect.width = r.width;
+        detection_msg.rect.height = r.height;
+        detections_msg.detections.push_back(detection_msg);
       }
 
       //-- Show what you got
@@ -187,6 +204,7 @@ class PeopleDetectNodelet : public opencv_apps::Nodelet
           cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, frame).toImageMsg();
       img_pub_.publish(out_img);
       msg_pub_->publish(found_msg);
+      detections_pub_->publish(detections_msg);
     }
     catch (cv::Exception& e)
     {
@@ -251,7 +269,9 @@ public:
     hog_.setSVMDetector(cv::HOGDescriptor::getDefaultPeopleDetector());
 
     img_pub_ = advertiseImage("~/image", 1);
+    // ~/found has the top-left corners, ~/detections the centers as the other detection nodes
     msg_pub_ = advertise<opencv_apps::msg::RectArrayStamped>("~/found", 1);
+    detections_pub_ = advertise<opencv_apps::msg::DetectionArrayStamped>("~/detections", 1);
 
     onInitPostProcess();
   }
