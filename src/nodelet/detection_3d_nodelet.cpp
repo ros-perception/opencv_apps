@@ -33,11 +33,13 @@
 
 
 /**
- * 3D bounding boxes and TF frames of the 2D detections, faces or tracked targets, from a depth image registered to
- * the color image of the detections (e.g. of an RGB-D camera): the depth of each box is the median of the depths in
- * the box, and the box is the extent of the pixels within depth_threshold of the median, as yolo_ros
- * (https://github.com/mgonzs13/yolo_ros). The objects are tracked by the distance of their centers, so that each
- * object keeps its TF frame, <label>_<id>.
+ * 3D bounding boxes and TF frames of the 2D detections, faces or tracked targets, with the distances from a depth
+ * image registered to the color image of the detections (e.g. of an RGB-D camera, depth_source depth) or from a point
+ * cloud (e.g. of a LiDAR, depth_source points), as yolo_ros (https://github.com/mgonzs13/yolo_ros): the points of a
+ * 2D box are the pixels of the depth image in the box, or the points of the cloud projected into the box, the depth
+ * of the box is the median of the depths of its points, and the 3D box is the extent of the points within
+ * depth_threshold of the median. The objects are tracked by the distance of their centers, so that each object keeps
+ * its TF frame, <label>_<id>.
  */
 
 #include "opencv_apps/nodelet.h"
@@ -58,11 +60,17 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <image_transport/subscriber_filter.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <vision_msgs/msg/detection3_d_array.hpp>
 #if __has_include(<tf2_ros/transform_broadcaster.hpp>)
+#include <tf2_ros/buffer.hpp>
 #include <tf2_ros/transform_broadcaster.hpp>
+#include <tf2_ros/transform_listener.hpp>
 #else
+#include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf2_ros/transform_listener.h>
 #endif
 
 #include <opencv_apps/msg/detection_array_stamped.hpp>
@@ -91,27 +99,29 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     int lost;
   };
 
-  template <class T>
-  using SyncPolicy =
-      message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::Image, sensor_msgs::msg::CameraInfo, T>;
-  template <class T>
-  using Sync = message_filters::Synchronizer<SyncPolicy<T> >;
+  template <class D, class T>
+  using SyncPolicy = message_filters::sync_policies::ApproximateTime<D, sensor_msgs::msg::CameraInfo, T>;
+  template <class D, class T>
+  using Sync = message_filters::Synchronizer<SyncPolicy<D, T> >;
 
   image_transport::SubscriberFilter depth_sub_;
+  message_filters::Subscriber<sensor_msgs::msg::PointCloud2> points_sub_;
   message_filters::Subscriber<sensor_msgs::msg::CameraInfo> info_sub_;
   message_filters::Subscriber<opencv_apps::msg::DetectionArrayStamped> detections_sub_;
   message_filters::Subscriber<opencv_apps::msg::FaceArrayStamped> faces_sub_;
   message_filters::Subscriber<opencv_apps::msg::RectArrayStamped> rects_sub_;
-  std::shared_ptr<Sync<opencv_apps::msg::DetectionArrayStamped> > detections_sync_;
-  std::shared_ptr<Sync<opencv_apps::msg::FaceArrayStamped> > faces_sync_;
-  std::shared_ptr<Sync<opencv_apps::msg::RectArrayStamped> > rects_sync_;
+  // the synchronizer of the depth source and the input, one of them is used
+  std::shared_ptr<void> sync_;
   rclcpp::Publisher<vision_msgs::msg::Detection3DArray>::SharedPtr detections_pub_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::unique_ptr<tf2_ros::TransformListener> tf_listener_;
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
   int queue_size_;
   std::string input_type_;
+  std::string depth_source_;
   double roi_scale_;
   double depth_threshold_;
   double min_depth_;
@@ -150,36 +160,160 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     return result;
   }
 
-  void detectionsCallback(const sensor_msgs::msg::Image::ConstSharedPtr& depth_msg,
-                          const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg,
-                          const opencv_apps::msg::DetectionArrayStamped::ConstSharedPtr& msg)
+  // the 2D boxes of the inputs
+  static std::vector<Box2D> boxes(const opencv_apps::msg::DetectionArrayStamped& msg)
   {
     std::vector<Box2D> boxes;
-    for (const opencv_apps::msg::Detection& d : msg->detections)
+    for (const opencv_apps::msg::Detection& d : msg.detections)
       boxes.push_back(
           { d.rect.x, d.rect.y, d.rect.width, d.rect.height, d.label.empty() ? "object" : d.label, d.id, d.score });
-    doWork(depth_msg, info_msg, boxes);
+    return boxes;
   }
 
-  void facesCallback(const sensor_msgs::msg::Image::ConstSharedPtr& depth_msg,
-                     const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg,
-                     const opencv_apps::msg::FaceArrayStamped::ConstSharedPtr& msg)
+  static std::vector<Box2D> boxes(const opencv_apps::msg::FaceArrayStamped& msg)
   {
     std::vector<Box2D> boxes;
-    for (const opencv_apps::msg::Face& f : msg->faces)
+    for (const opencv_apps::msg::Face& f : msg.faces)
       boxes.push_back({ f.face.x, f.face.y, f.face.width, f.face.height, f.label.empty() ? "face" : f.label, -1,
                         f.confidence > 0.0 ? f.confidence : 1.0 });
-    doWork(depth_msg, info_msg, boxes);
+    return boxes;
   }
 
-  void rectsCallback(const sensor_msgs::msg::Image::ConstSharedPtr& depth_msg,
-                     const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg,
-                     const opencv_apps::msg::RectArrayStamped::ConstSharedPtr& msg)
+  static std::vector<Box2D> boxes(const opencv_apps::msg::RectArrayStamped& msg)
   {
     std::vector<Box2D> boxes;
-    for (const opencv_apps::msg::Rect& r : msg->rects)
+    for (const opencv_apps::msg::Rect& r : msg.rects)
       boxes.push_back({ r.x, r.y, r.width, r.height, "target", -1, 1.0 });
-    doWork(depth_msg, info_msg, boxes);
+    return boxes;
+  }
+
+  // the pixels of a 2D box whose depths are used (roi_scale of the box, as the edges of the boxes often have the
+  // background), within the image
+  cv::Rect roi(const Box2D& box, int width, int height) const
+  {
+    cv::Rect roi(cvRound(box.x - box.width * roi_scale_ / 2), cvRound(box.y - box.height * roi_scale_ / 2),
+                 cvRound(box.width * roi_scale_), cvRound(box.height * roi_scale_));
+    return roi & cv::Rect(0, 0, width, height);
+  }
+
+  template <class T>
+  void depthCallback(const sensor_msgs::msg::Image::ConstSharedPtr& depth_msg,
+                     const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg,
+                     const typename T::ConstSharedPtr& msg)
+  {
+    try
+    {
+      double fx, fy, cx, cy;
+      if (!intrinsics(*info_msg, fx, fy, cx, cy))
+        return;
+      cv::Mat depth = depthInMeters(depth_msg);
+      std::vector<Box2D> input = boxes(*msg);
+      // the 3D points of the pixels of each box
+      std::vector<std::vector<cv::Point3d> > points(input.size());
+      for (size_t i = 0; i < input.size(); i++)
+      {
+        cv::Rect r = roi(input[i], depth.cols, depth.rows);
+        for (int v = r.y; v < r.y + r.height; v++)
+          for (int u = r.x; u < r.x + r.width; u++)
+          {
+            float z = depth.at<float>(v, u);
+            if (std::isfinite(z) && z > 0.0f)
+              points[i].push_back(cv::Point3d((u - cx) * z / fx, (v - cy) * z / fy, z));
+          }
+      }
+      publish(depth_msg->header.stamp, frameId(*info_msg, depth_msg->header.frame_id), input, points);
+    }
+    catch (const std::exception& e)
+    {
+      RCLCPP_ERROR(get_logger(), "%s", e.what());
+    }
+  }
+
+  template <class T>
+  void pointsCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& cloud_msg,
+                      const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg,
+                      const typename T::ConstSharedPtr& msg)
+  {
+    try
+    {
+      double fx, fy, cx, cy;
+      if (!intrinsics(*info_msg, fx, fy, cx, cy))
+        return;
+      const std::string frame_id = frameId(*info_msg, cloud_msg->header.frame_id);
+      // the cloud in the camera frame, by the latest transform (e.g. the static transform of the extrinsics)
+      geometry_msgs::msg::TransformStamped transform;
+      try
+      {
+#ifdef ROS2
+        transform = tf_buffer_->lookupTransform(frame_id, cloud_msg->header.frame_id, tf2::TimePointZero);
+#else
+        transform = tf_buffer_->lookupTransform(frame_id, cloud_msg->header.frame_id, ros::Time(0));
+#endif
+      }
+      catch (const std::exception& e)
+      {
+        RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10000, "no transform from %s to %s: %s",
+                             cloud_msg->header.frame_id.c_str(), frame_id.c_str(), e.what());
+        return;
+      }
+      const auto& q = transform.transform.rotation;
+      const auto& t = transform.transform.translation;
+      cv::Matx33d rotation(1 - 2 * (q.y * q.y + q.z * q.z), 2 * (q.x * q.y - q.z * q.w), 2 * (q.x * q.z + q.y * q.w),
+                           2 * (q.x * q.y + q.z * q.w), 1 - 2 * (q.x * q.x + q.z * q.z), 2 * (q.y * q.z - q.x * q.w),
+                           2 * (q.x * q.z - q.y * q.w), 2 * (q.y * q.z + q.x * q.w), 1 - 2 * (q.x * q.x + q.y * q.y));
+      cv::Vec3d translation(t.x, t.y, t.z);
+
+      std::vector<Box2D> input = boxes(*msg);
+      std::vector<cv::Rect> rois;
+      for (const Box2D& box : input)
+        rois.push_back(roi(box, info_msg->width, info_msg->height));
+      // the points projected into each box
+      std::vector<std::vector<cv::Point3d> > points(input.size());
+      sensor_msgs::PointCloud2ConstIterator<float> x(*cloud_msg, "x"), y(*cloud_msg, "y"), z(*cloud_msg, "z");
+      for (; x != x.end(); ++x, ++y, ++z)
+      {
+        if (!std::isfinite(*x) || !std::isfinite(*y) || !std::isfinite(*z))
+          continue;
+        cv::Vec3d p = rotation * cv::Vec3d(*x, *y, *z) + translation;
+        if (p[2] <= 0.0)
+          continue;
+        cv::Point pixel(cvRound(fx * p[0] / p[2] + cx), cvRound(fy * p[1] / p[2] + cy));
+        for (size_t i = 0; i < rois.size(); i++)
+          if (rois[i].contains(pixel))
+            points[i].push_back(cv::Point3d(p[0], p[1], p[2]));
+      }
+      publish(cloud_msg->header.stamp, frame_id, input, points);
+    }
+    catch (const std::exception& e)
+    {
+      RCLCPP_ERROR(get_logger(), "%s", e.what());
+    }
+  }
+
+  // the focal lengths and the principal point of camera_info, false if it is not calibrated
+  bool intrinsics(const sensor_msgs::msg::CameraInfo& info, double& fx, double& fy, double& cx, double& cy)
+  {
+// the fields of sensor_msgs/CameraInfo are lower case on ROS2
+#ifdef ROS2
+    const double* k = info.k.data();
+#else
+    const double* k = info.K.data();
+#endif
+    if (k[0] == 0.0 || k[4] == 0.0)
+    {
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10000, "camera_info is not calibrated (K is 0)");
+      return false;
+    }
+    fx = k[0];
+    fy = k[4];
+    cx = k[2];
+    cy = k[5];
+    return true;
+  }
+
+  static std::string frameId(const sensor_msgs::msg::CameraInfo& info, const std::string& fallback)
+  {
+    return info.header.frame_id.empty() ? fallback : info.header.frame_id;
   }
 
   // the depth image in meters
@@ -196,44 +330,26 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     return meters;
   }
 
-  // the 3D box of a 2D box, false if the box has no valid depth
-  bool box3D(const cv::Mat& depth, double fx, double fy, double cx, double cy, const Box2D& box, cv::Point3d& center,
-             cv::Point3d& size) const
+  // the 3D box of the points of a 2D box, false if it has no point within min_depth and max_depth
+  bool box3D(const std::vector<cv::Point3d>& points, cv::Point3d& center, cv::Point3d& size) const
   {
-    // the pixels in the center of the box (roi_scale), as the edges of the boxes often have the background
-    cv::Rect roi(cvRound(box.x - box.width * roi_scale_ / 2), cvRound(box.y - box.height * roi_scale_ / 2),
-                 cvRound(box.width * roi_scale_), cvRound(box.height * roi_scale_));
-    roi &= cv::Rect(0, 0, depth.cols, depth.rows);
-    if (roi.area() <= 0)
-      return false;
-    std::vector<float> depths;
-    for (int v = roi.y; v < roi.y + roi.height; v++)
-      for (int u = roi.x; u < roi.x + roi.width; u++)
-      {
-        float z = depth.at<float>(v, u);
-        if (std::isfinite(z) && z >= min_depth_ && z <= max_depth_)
-          depths.push_back(z);
-      }
+    std::vector<double> depths;
+    for (const cv::Point3d& p : points)
+      if (p.z >= min_depth_ && p.z <= max_depth_)
+        depths.push_back(p.z);
     if (depths.empty())
       return false;
     std::nth_element(depths.begin(), depths.begin() + depths.size() / 2, depths.end());
     double median = depths[depths.size() / 2];
-    // the extent of the pixels near the median depth, which belong to the object
+    // the extent of the points near the median depth, which belong to the object
     cv::Point3d min_point(1e9, 1e9, 1e9), max_point(-1e9, -1e9, -1e9);
-    int count = 0;
-    for (int v = roi.y; v < roi.y + roi.height; v++)
-      for (int u = roi.x; u < roi.x + roi.width; u++)
-      {
-        float z = depth.at<float>(v, u);
-        if (!std::isfinite(z) || std::abs(z - median) > depth_threshold_)
-          continue;
-        cv::Point3d p((u - cx) * z / fx, (v - cy) * z / fy, z);
-        min_point = cv::Point3d(std::min(min_point.x, p.x), std::min(min_point.y, p.y), std::min(min_point.z, p.z));
-        max_point = cv::Point3d(std::max(max_point.x, p.x), std::max(max_point.y, p.y), std::max(max_point.z, p.z));
-        count++;
-      }
-    if (count == 0)
-      return false;
+    for (const cv::Point3d& p : points)
+    {
+      if (std::abs(p.z - median) > depth_threshold_)
+        continue;
+      min_point = cv::Point3d(std::min(min_point.x, p.x), std::min(min_point.y, p.y), std::min(min_point.z, p.z));
+      max_point = cv::Point3d(std::max(max_point.x, p.x), std::max(max_point.y, p.y), std::max(max_point.z, p.z));
+    }
     center = (min_point + max_point) * 0.5;
     size = max_point - min_point;
     return true;
@@ -267,137 +383,139 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     return tracks_[best].id;
   }
 
-  void doWork(const sensor_msgs::msg::Image::ConstSharedPtr& depth_msg,
-              const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg, const std::vector<Box2D>& boxes)
+  // publish the 3D boxes of the points of the 2D boxes, and their TF frames
+  template <class Stamp>
+  void publish(const Stamp& stamp, const std::string& frame_id, const std::vector<Box2D>& input,
+               const std::vector<std::vector<cv::Point3d> >& points)
   {
-    try
+    vision_msgs::msg::Detection3DArray detections_msg;
+    detections_msg.header.stamp = stamp;
+    detections_msg.header.frame_id = frame_id;
+    std::vector<geometry_msgs::msg::TransformStamped> transforms;
+    std::vector<bool> matched(tracks_.size(), false);
+    for (size_t i = 0; i < input.size(); i++)
     {
-      cv::Mat depth = depthInMeters(depth_msg);
-// the fields of sensor_msgs/CameraInfo are lower case on ROS2
+      const Box2D& box = input[i];
+      cv::Point3d center, size;
+      if (!box3D(points[i], center, size))
+        continue;
+      int id = trackId(box.label, center, matched);
+      std::string name = box.label + "_" + std::to_string(id);
+
+      vision_msgs::msg::Detection3D detection;
+      detection.header = detections_msg.header;
+      vision_msgs::msg::ObjectHypothesisWithPose hypothesis;
 #ifdef ROS2
-      const double* k = info_msg->k.data();
+      // vision_msgs 4 of ROS2 has the label (class_id) and the id of the object
+      hypothesis.hypothesis.class_id = box.label;
+      hypothesis.hypothesis.score = box.score;
+      detection.id = name;
 #else
-      const double* k = info_msg->K.data();
+      // vision_msgs 0.0.2 of ROS1 has only the class id (of the detections)
+      hypothesis.id = box.class_id;
+      hypothesis.score = box.score;
 #endif
-      if (k[0] == 0.0 || k[4] == 0.0)
-      {
-        RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10000, "camera_info is not calibrated (K is 0)");
-        return;
-      }
-      const std::string& frame_id =
-          info_msg->header.frame_id.empty() ? depth_msg->header.frame_id : info_msg->header.frame_id;
-      vision_msgs::msg::Detection3DArray detections_msg;
-      detections_msg.header = depth_msg->header;
-      detections_msg.header.frame_id = frame_id;
-      std::vector<geometry_msgs::msg::TransformStamped> transforms;
-      std::vector<bool> matched(tracks_.size(), false);
-      for (const Box2D& box : boxes)
-      {
-        cv::Point3d center, size;
-        if (!box3D(depth, k[0], k[4], k[2], k[5], box, center, size))
-          continue;
-        int id = trackId(box.label, center, matched);
-        std::string name = box.label + "_" + std::to_string(id);
+      hypothesis.pose.pose.position.x = center.x;
+      hypothesis.pose.pose.position.y = center.y;
+      hypothesis.pose.pose.position.z = center.z;
+      hypothesis.pose.pose.orientation.w = 1.0;
+      detection.results.push_back(hypothesis);
+      detection.bbox.center.position.x = center.x;
+      detection.bbox.center.position.y = center.y;
+      detection.bbox.center.position.z = center.z;
+      detection.bbox.center.orientation.w = 1.0;
+      detection.bbox.size.x = size.x;
+      detection.bbox.size.y = size.y;
+      detection.bbox.size.z = size.z;
+      detections_msg.detections.push_back(detection);
 
-        vision_msgs::msg::Detection3D detection;
-        detection.header = detections_msg.header;
-        vision_msgs::msg::ObjectHypothesisWithPose hypothesis;
-#ifdef ROS2
-        // vision_msgs 4 of ROS2 has the label (class_id) and the id of the object
-        hypothesis.hypothesis.class_id = box.label;
-        hypothesis.hypothesis.score = box.score;
-        detection.id = name;
+      geometry_msgs::msg::TransformStamped transform;
+      transform.header = detections_msg.header;
+      transform.child_frame_id = tf_prefix_ + name;
+      transform.transform.translation.x = center.x;
+      transform.transform.translation.y = center.y;
+      transform.transform.translation.z = center.z;
+      transform.transform.rotation.w = 1.0;
+      transforms.push_back(transform);
+    }
+    // forget the tracks lost for track_lost_frames images
+    for (size_t i = 0; i < matched.size(); i++)
+      if (!matched[i])
+        tracks_[i].lost++;
+    tracks_.erase(std::remove_if(tracks_.begin(), tracks_.end(),
+                                 [this](const Track& track) { return track.lost > track_lost_frames_; }),
+                  tracks_.end());
+
+    detections_pub_->publish(detections_msg);
+    if (publish_tf_ && !transforms.empty())
+      tf_broadcaster_->sendTransform(transforms);
+  }
+
+  template <class Filter>
+  void subscribeFilter(Filter& filter, const std::string& topic)
+  {
+#if RCLCPP_VERSION_GTE(29, 0, 0)
+    filter.subscribe(this, topic, subscriberQos(queue_size_));
 #else
-        // vision_msgs 0.0.2 of ROS1 has only the class id (of the detections)
-        hypothesis.id = box.class_id;
-        hypothesis.score = box.score;
+    filter.subscribe(this, topic, subscriberQos(queue_size_).get_rmw_qos_profile());
 #endif
-        hypothesis.pose.pose.position.x = center.x;
-        hypothesis.pose.pose.position.y = center.y;
-        hypothesis.pose.pose.position.z = center.z;
-        hypothesis.pose.pose.orientation.w = 1.0;
-        detection.results.push_back(hypothesis);
-        detection.bbox.center.position.x = center.x;
-        detection.bbox.center.position.y = center.y;
-        detection.bbox.center.position.z = center.z;
-        detection.bbox.center.orientation.w = 1.0;
-        detection.bbox.size.x = size.x;
-        detection.bbox.size.y = size.y;
-        detection.bbox.size.z = size.z;
-        detections_msg.detections.push_back(detection);
+  }
 
-        geometry_msgs::msg::TransformStamped transform;
-        transform.header = detections_msg.header;
-        transform.child_frame_id = tf_prefix_ + name;
-        transform.transform.translation.x = center.x;
-        transform.transform.translation.y = center.y;
-        transform.transform.translation.z = center.z;
-        transform.transform.rotation.w = 1.0;
-        transforms.push_back(transform);
-      }
-      // forget the tracks lost for track_lost_frames images
-      for (size_t i = 0; i < matched.size(); i++)
-        if (!matched[i])
-          tracks_[i].lost++;
-      tracks_.erase(std::remove_if(tracks_.begin(), tracks_.end(),
-                                   [this](const Track& track) { return track.lost > track_lost_frames_; }),
-                    tracks_.end());
+  // synchronize the depth source (depth_sub_ or points_sub_), camera_info and the input
+  template <class D, class T, class DepthFilter>
+  void connect(DepthFilter& depth_filter, message_filters::Subscriber<T>& input_sub,
+               void (Detection3DNodelet::*callback)(const typename D::ConstSharedPtr&,
+                                                    const sensor_msgs::msg::CameraInfo::ConstSharedPtr&,
+                                                    const typename T::ConstSharedPtr&))
+  {
+    subscribeFilter(input_sub, "input");
+    auto sync = std::make_shared<Sync<D, T> >(SyncPolicy<D, T>(queue_size_));
+    sync->connectInput(depth_filter, info_sub_, input_sub);
+    sync->registerCallback(
+        std::bind(callback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    sync_ = sync;
+  }
 
-      detections_pub_->publish(detections_msg);
-      if (publish_tf_ && !transforms.empty())
-        tf_broadcaster_->sendTransform(transforms);
-    }
-    catch (const std::exception& e)
-    {
-      RCLCPP_ERROR(get_logger(), "%s", e.what());
-    }
+  template <class T>
+  void connectInput(message_filters::Subscriber<T>& input_sub)
+  {
+    if (depth_source_ == "points")
+      connect<sensor_msgs::msg::PointCloud2, T>(points_sub_, input_sub, &Detection3DNodelet::pointsCallback<T>);
+    else
+      connect<sensor_msgs::msg::Image, T>(depth_sub_, input_sub, &Detection3DNodelet::depthCallback<T>);
   }
 
   void subscribe() override
   {
     RCLCPP_DEBUG(get_logger(), "subscribe");
-    // image_transport takes rclcpp::QoS since lyrical, message_filters since kilted
-#if __has_include(<image_transport/node_interfaces.hpp>)
-    depth_sub_.subscribe(*this, "depth", "raw", subscriberQos(queue_size_));
-#else
-    depth_sub_.subscribe(this, "depth", "raw", subscriberQos(queue_size_).get_rmw_qos_profile());
-#endif
-#if RCLCPP_VERSION_GTE(29, 0, 0)
-    info_sub_.subscribe(this, "camera_info", subscriberQos(queue_size_));
-#else
-    info_sub_.subscribe(this, "camera_info", subscriberQos(queue_size_).get_rmw_qos_profile());
-#endif
-    if (input_type_ == "faces")
-      faces_sync_ = connect(faces_sub_, &Detection3DNodelet::facesCallback);
-    else if (input_type_ == "rects")
-      rects_sync_ = connect(rects_sub_, &Detection3DNodelet::rectsCallback);
+    if (depth_source_ == "points")
+    {
+      subscribeFilter(points_sub_, "points");
+    }
     else
-      detections_sync_ = connect(detections_sub_, &Detection3DNodelet::detectionsCallback);
-  }
-
-  template <class T>
-  std::shared_ptr<Sync<T> >
-  connect(message_filters::Subscriber<T>& sub,
-          void (Detection3DNodelet::*callback)(const sensor_msgs::msg::Image::ConstSharedPtr&,
-                                               const sensor_msgs::msg::CameraInfo::ConstSharedPtr&,
-                                               const typename T::ConstSharedPtr&))
-  {
-#if RCLCPP_VERSION_GTE(29, 0, 0)
-    sub.subscribe(this, "input", subscriberQos(queue_size_));
+    {
+      // image_transport takes rclcpp::QoS since lyrical
+#if __has_include(<image_transport/node_interfaces.hpp>)
+      depth_sub_.subscribe(*this, "depth", "raw", subscriberQos(queue_size_));
 #else
-    sub.subscribe(this, "input", subscriberQos(queue_size_).get_rmw_qos_profile());
+      depth_sub_.subscribe(this, "depth", "raw", subscriberQos(queue_size_).get_rmw_qos_profile());
 #endif
-    auto sync = std::make_shared<Sync<T> >(SyncPolicy<T>(queue_size_));
-    sync->connectInput(depth_sub_, info_sub_, sub);
-    sync->registerCallback(
-        std::bind(callback, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
-    return sync;
+    }
+    subscribeFilter(info_sub_, "camera_info");
+    if (input_type_ == "faces")
+      connectInput(faces_sub_);
+    else if (input_type_ == "rects")
+      connectInput(rects_sub_);
+    else
+      connectInput(detections_sub_);
   }
 
   void unsubscribe() override
   {
     RCLCPP_DEBUG(get_logger(), "unsubscribe");
+    sync_.reset();
     depth_sub_.unsubscribe();
+    points_sub_.unsubscribe();
     info_sub_.unsubscribe();
     detections_sub_.unsubscribe();
     faces_sub_.unsubscribe();
@@ -419,6 +537,16 @@ public:
                    input_type_.c_str());
       input_type_ = "detections";
     }
+    depth_source_ = declare_parameter(
+        "depth_source", std::string("depth"),
+        paramDescriptor("Source of the distances: depth (the depth image registered to the color image, 16UC1 in mm "
+                        "or 32FC1 in m, e.g. of an RGB-D camera) or points (a point cloud, e.g. of a LiDAR, "
+                        "transformed to the frame of camera_info by TF)."));
+    if (depth_source_ != "depth" && depth_source_ != "points")
+    {
+      RCLCPP_ERROR(get_logger(), "depth_source %s is not depth nor points, use depth", depth_source_.c_str());
+      depth_source_ = "depth";
+    }
     roi_scale_ = declare_parameter(
         "roi_scale", 0.8,
         paramDescriptor("Scale of the 2D box whose depths are used, smaller to leave out the background at the "
@@ -426,7 +554,7 @@ public:
                         0.1, 1.0));
     depth_threshold_ = declare_parameter(
         "depth_threshold", 0.3,
-        paramDescriptor("The pixels within this distance (m) of the median depth of the box belong to the object.",
+        paramDescriptor("The points within this distance (m) of the median depth of the box belong to the object.",
                         0.01, 10.0));
     min_depth_ = declare_parameter("min_depth", 0.1, paramDescriptor("Minimum valid depth (m).", 0.0, 100.0));
     max_depth_ = declare_parameter("max_depth", 10.0, paramDescriptor("Maximum valid depth (m).", 0.0, 1000.0));
@@ -444,6 +572,15 @@ public:
         add_on_set_parameters_callback(std::bind(&Detection3DNodelet::parametersCallback, this, std::placeholders::_1));
 
     tf_broadcaster_.reset(new tf2_ros::TransformBroadcaster(*this));
+    if (depth_source_ == "points")
+    {
+#ifdef ROS2
+      tf_buffer_.reset(new tf2_ros::Buffer(get_clock()));
+#else
+      tf_buffer_.reset(new tf2_ros::Buffer());
+#endif
+      tf_listener_.reset(new tf2_ros::TransformListener(*tf_buffer_));
+    }
     detections_pub_ = advertise<vision_msgs::msg::Detection3DArray>("~/detections", 1);
 
     onInitPostProcess();

@@ -3,9 +3,11 @@
 
   <arg name="input" default="input" doc="The 2D results: ~/detections of the detection nodes, ~/faces of the face nodes or ~/output of the tracking nodes." />
   <arg name="depth" default="depth" doc="The depth image registered to the color image of the 2D results (16UC1 in mm or 32FC1 in m), e.g. aligned_depth_to_color/image_raw of realsense2_camera." />
-  <arg name="camera_info" default="camera_info" doc="The camera info of the depth image." />
+  <arg name="points" default="points" doc="The point cloud (e.g. of a LiDAR) of depth_source points, transformed to the frame of camera_info by TF." />
+  <arg name="camera_info" default="camera_info" doc="The camera info of the color image of the 2D results (and of the depth image)." />
 
   <arg name="input_type" default="detections" doc="Type of input: detections (DetectionArrayStamped), faces (FaceArrayStamped) or rects (RectArrayStamped)." />
+  <arg name="depth_source" default="depth" doc="Source of the distances: depth (the depth image) or points (the point cloud)." />
   <arg name="queue_size" default="10" doc="Queue size of the synchronized subscribers." />
   <arg name="roi_scale" default="0.8" doc="Scale of the 2D box whose depths are used, smaller to leave out the background at the edges of the box." />
   <arg name="depth_threshold" default="0.3" doc="The pixels within this distance (m) of the median depth of the box belong to the object." />
@@ -20,8 +22,10 @@
   <node name="$(arg node_name)" pkg="opencv_apps" type="detection_3d" >
     <remap from="input" to="$(arg input)" />
     <remap from="depth" to="$(arg depth)" />
+    <remap from="points" to="$(arg points)" />
     <remap from="camera_info" to="$(arg camera_info)" />
     <param name="input_type" value="$(arg input_type)" />
+    <param name="depth_source" value="$(arg depth_source)" />
     <param name="queue_size" value="$(arg queue_size)" />
     <param name="roi_scale" value="$(arg roi_scale)" />
     <param name="depth_threshold" value="$(arg depth_threshold)" />

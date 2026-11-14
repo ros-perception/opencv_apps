@@ -3,9 +3,11 @@
 
   <arg name="input" default="input" description="The 2D results: ~/detections of the detection nodes, ~/faces of the face nodes or ~/output of the tracking nodes." />
   <arg name="depth" default="depth" description="The depth image registered to the color image of the 2D results (16UC1 in mm or 32FC1 in m), e.g. aligned_depth_to_color/image_raw of realsense2_camera." />
-  <arg name="camera_info" default="camera_info" description="The camera info of the depth image." />
+  <arg name="points" default="points" description="The point cloud (e.g. of a LiDAR) of depth_source points, transformed to the frame of camera_info by TF." />
+  <arg name="camera_info" default="camera_info" description="The camera info of the color image of the 2D results (and of the depth image)." />
 
   <arg name="input_type" default="detections" description="Type of input: detections (DetectionArrayStamped), faces (FaceArrayStamped) or rects (RectArrayStamped)." />
+  <arg name="depth_source" default="depth" description="Source of the distances: depth (the depth image) or points (the point cloud)." />
   <arg name="queue_size" default="10" description="Queue size of the synchronized subscribers." />
   <arg name="roi_scale" default="0.8" description="Scale of the 2D box whose depths are used, smaller to leave out the background at the edges of the box." />
   <arg name="depth_threshold" default="0.3" description="The pixels within this distance (m) of the median depth of the box belong to the object." />
@@ -20,8 +22,10 @@
   <node name="$(var node_name)" pkg="opencv_apps" exec="detection_3d" >
     <remap from="input" to="$(var input)" />
     <remap from="depth" to="$(var depth)" />
+    <remap from="points" to="$(var points)" />
     <remap from="camera_info" to="$(var camera_info)" />
     <param name="input_type" value="$(var input_type)" />
+    <param name="depth_source" value="$(var depth_source)" />
     <param name="queue_size" value="$(var queue_size)" />
     <param name="roi_scale" value="$(var roi_scale)" />
     <param name="depth_threshold" value="$(var depth_threshold)" />
