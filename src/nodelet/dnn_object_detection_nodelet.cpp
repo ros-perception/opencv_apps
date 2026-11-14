@@ -375,16 +375,26 @@ class DNNObjectDetectionNodelet : public opencv_apps::Nodelet
           detection_msg.rect.height = box.height;
           detections_msg.detections.push_back(detection_msg);
 
-          cv::Scalar color =
-              cv::Scalar((class_ids[i] * 67) % 256, (class_ids[i] * 131 + 100) % 256, (class_ids[i] * 197 + 50) % 256);
-          cv::rectangle(frame, box, color, 2);
+          // a bright color of each class, the hue of the class id
+          cv::Mat hsv(1, 1, CV_8UC3, cv::Scalar((class_ids[i] * 47 + 60) % 180, 255, 255)), bgr;
+          cv::cvtColor(hsv, bgr, cv::COLOR_HSV2BGR);
+          cv::Vec3b c = bgr.at<cv::Vec3b>(0, 0);
+          cv::Scalar color(c[0], c[1], c[2]);
+          // the line and the text relative to the image, to be read on large images
+          double font_scale = std::max(0.6, frame.cols / 700.0);
+          int thickness = std::max(2, cvRound(frame.cols / 240.0));
+          cv::rectangle(frame, box, color, thickness);
           std::string text = cv::format("%s %.2f", detection_msg.label.c_str(), confidences[i]);
           int baseline;
-          cv::Size text_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseline);
-          cv::Point origin(box.x, std::max(box.y, text_size.height));
-          cv::rectangle(frame, cv::Rect(origin.x, origin.y - text_size.height, text_size.width, text_size.height),
+          int text_thickness = std::max(1, cvRound(font_scale * 1.5));
+          cv::Size text_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, font_scale, text_thickness, &baseline);
+          int margin = cvRound(4 * font_scale);
+          cv::Point origin(box.x + margin, std::max(box.y - margin, text_size.height + margin));
+          cv::rectangle(frame,
+                        cv::Rect(origin.x - margin, origin.y - text_size.height - margin, text_size.width + 2 * margin,
+                                 text_size.height + baseline + margin),
                         color, cv::FILLED);
-          cv::putText(frame, text, origin, cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0), 1);
+          cv::putText(frame, text, origin, cv::FONT_HERSHEY_SIMPLEX, font_scale, cv::Scalar(0, 0, 0), text_thickness);
         }
       }
 
