@@ -34,7 +34,8 @@
 // https://github.com/isl-org/MiDaS
 /**
  * Monocular depth estimation, by default with MiDaS v2.1 small, whose output is the relative inverse depth (larger
- * is nearer, without the scale and the shift), or with a model of the same input and output
+ * is nearer, without the scale and the shift), or with a model of the same input and output, or with a model of the
+ * depth in meters (metric_depth), e.g. Depth Anything V2 Metric, whose ~/depth is the depth image of detection_3d
  */
 
 #include "opencv_apps/nodelet.h"
@@ -80,6 +81,7 @@ class DNNDepthEstimationNodelet : public opencv_apps::Nodelet
   std::mutex mutex_;
   cv::dnn::Net net_;
   bool need_model_update_;
+  bool metric_depth_;
 
   rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
@@ -185,6 +187,15 @@ class DNNDepthEstimationNodelet : public opencv_apps::Nodelet
         cv::resize(depth, inverse_depth, frame.size(), 0, 0, cv::INTER_CUBIC);
       }
 
+      // the output of a metric model is the depth in meters, shown as the inverse depth as the others
+      cv::Mat depth_output = inverse_depth;
+      if (metric_depth_)
+      {
+        cv::Mat shown;  // not in depth_output, which shares the data of inverse_depth
+        cv::divide(1.0, cv::max(depth_output, 1e-3), shown);
+        inverse_depth = shown;
+      }
+
       // the relative inverse depth in color, normalized by the range of the image
       double min_value, max_value;
       cv::minMaxLoc(inverse_depth, &min_value, &max_value);
@@ -204,7 +215,7 @@ class DNNDepthEstimationNodelet : public opencv_apps::Nodelet
       // Publish the image.
       img_pub_.publish(cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, colored).toImageMsg());
       depth_pub_.publish(
-          cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::TYPE_32FC1, inverse_depth).toImageMsg());
+          cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::TYPE_32FC1, depth_output).toImageMsg());
     }
     catch (cv_bridge::Exception& e)
     {
@@ -260,11 +271,16 @@ public:
                                      paramDescriptor("Width of the network input, 256 for MiDaS v2.1 small", 1, 4096));
     input_height_ = declare_parameter(
         "input_height", 256, paramDescriptor("Height of the network input, 256 for MiDaS v2.1 small", 1, 4096));
+    metric_depth_ = declare_parameter(
+        "metric_depth", false,
+        paramDescriptor("The output of the model is the depth in meters (e.g. Depth Anything V2 Metric), published "
+                        "on ~/depth (32FC1), e.g. for the depth input of detection_3d, instead of the relative inverse "
+                        "depth on ~/inverse_depth (MiDaS)"));
     on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
         std::bind(&DNNDepthEstimationNodelet::parametersCallback, this, std::placeholders::_1));
 
     img_pub_ = advertiseImage("~/image", 1);
-    depth_pub_ = advertiseImage("~/inverse_depth", 1);
+    depth_pub_ = advertiseImage(metric_depth_ ? "~/depth" : "~/inverse_depth", 1);
 
     onInitPostProcess();
   }

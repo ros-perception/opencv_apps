@@ -325,6 +325,10 @@ if(BUILD_TESTING)
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_pose_estimation.py test/ros2/test_dnn_pose_estimation_tracking.py
       test/ros2/test_dnn_hand_pose_estimation.py test/ros2/test_dnn_hand_pose_estimation_tracking.py)
   endif()
+  # Depth Anything V2 Metric (onnx of a vision transformer) needs OpenCV 4.10 or later
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.10")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_depth_estimation_metric.py)
+  endif()
   if(NOT OPENCV_HAVE_BARCODE)
     list(REMOVE_ITEM _launch_tests test/ros2/test_barcode_detection.py)
   endif()
