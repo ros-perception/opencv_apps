@@ -14,6 +14,8 @@ Face recognition with YuNet (cv::FaceDetectorYN) and SFace (cv::FaceRecognizerSF
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - OpenCV 4.5.4 or later
+   * - Group
+     - Faces, the nodes of which publish ``~/faces`` (FaceArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_face_recognition.gif
    :alt: demo of dnn_face_recognition
@@ -68,10 +70,16 @@ Published topics
 
    * - Topic
      - Type
+     - Note
+   * - ``~/faces`` **(recommended)**
+     - :ref:`opencv_apps/msg/FaceArrayStamped <msg-FaceArrayStamped>`
+     - Recommended, opencv_apps 3.0.1 and later. The same as ``~/output``, with the name of the other face nodes.
    * - ``~/image``
      - ``sensor_msgs/msg/Image``
-   * - ``~/output``
+     -  
+   * - ``~/output`` (compatibility)
      - :ref:`opencv_apps/msg/FaceArrayStamped <msg-FaceArrayStamped>`
+     - Kept for compatibility, use ``~/faces``.
 
 Services
 --------

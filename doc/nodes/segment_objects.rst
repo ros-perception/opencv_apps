@@ -12,6 +12,8 @@ Segments the moving objects by the background subtraction, and cleans up the for
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Contours, the nodes of which publish ``~/contours`` (ContourArrayStamped), ``~/hulls`` of convex_hull
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/segment_objects.gif
    :alt: demo of segment_objects

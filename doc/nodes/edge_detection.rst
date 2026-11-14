@@ -12,6 +12,8 @@ Detects the edges with the Sobel, Laplacian or Canny (``cv::Canny()``) edge dete
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Image filters, the nodes of which publish the processed image in ``~/image``
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/edge_detection.gif
    :alt: demo of edge_detection

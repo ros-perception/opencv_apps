@@ -1199,6 +1199,10 @@
   ],
   "publishers": [
    {
+    "name": "~/contours",
+    "type": "opencv_apps/msg/ContourArrayStamped"
+   },
+   {
     "name": "~/image",
     "type": "sensor_msgs/msg/Image"
    },
@@ -1352,6 +1356,10 @@
    }
   ],
   "publishers": [
+   {
+    "name": "~/corners",
+    "type": "opencv_apps/msg/Point2DArrayStamped"
+   },
    {
     "name": "~/image",
     "type": "sensor_msgs/msg/Image"
@@ -1750,6 +1758,10 @@
    }
   ],
   "publishers": [
+   {
+    "name": "~/faces",
+    "type": "opencv_apps/msg/FaceArrayStamped"
+   },
    {
     "name": "~/image",
     "type": "sensor_msgs/msg/Image"
@@ -3385,6 +3397,10 @@
     "type": "sensor_msgs/msg/Image"
    },
    {
+    "name": "~/faces",
+    "type": "opencv_apps/msg/FaceArrayStamped"
+   },
+   {
     "name": "~/output",
     "type": "opencv_apps/msg/FaceArrayStamped"
    }
@@ -3610,6 +3626,10 @@
    }
   ],
   "publishers": [
+   {
+    "name": "~/contours",
+    "type": "opencv_apps/msg/ContourArrayStamped"
+   },
    {
     "name": "~/ellipses",
     "type": "opencv_apps/msg/RotatedRectArrayStamped"
@@ -5033,6 +5053,10 @@
    }
   ],
   "publishers": [
+   {
+    "name": "~/detections",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
+   },
    {
     "name": "~/found",
     "type": "opencv_apps/msg/RectArrayStamped"

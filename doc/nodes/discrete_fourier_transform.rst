@@ -12,6 +12,8 @@ Shows the magnitude spectrum of the discrete Fourier transform (``cv::dft()``) o
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Image filters, the nodes of which publish the processed image in ``~/image``
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/discrete_fourier_transform.gif
    :alt: demo of discrete_fourier_transform

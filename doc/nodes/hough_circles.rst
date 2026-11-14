@@ -12,6 +12,8 @@ Detects the circles with the Hough transform (``cv::HoughCircles()``).
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Circles and blobs, the nodes of which publish ``~/circles`` (CircleArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/hough_circles.gif
    :alt: demo of hough_circles

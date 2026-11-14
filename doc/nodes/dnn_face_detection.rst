@@ -14,6 +14,8 @@ Face detection with YuNet (cv::FaceDetectorYN), https://github.com/opencv/opencv
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - OpenCV 4.5.4 or later
+   * - Group
+     - Faces, the nodes of which publish ``~/faces`` (FaceArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_face_detection.gif
    :alt: demo of dnn_face_detection

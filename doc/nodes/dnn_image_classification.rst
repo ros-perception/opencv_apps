@@ -14,6 +14,8 @@ Image classification, by default with PP-ResNet50 (ImageNet 1000 classes) of ope
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - OpenCV 4.5.4 or later
+   * - Group
+     - Detection, the nodes of which publish ``~/detections`` (DetectionArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_image_classification.gif
    :alt: demo of dnn_image_classification

@@ -12,6 +12,8 @@ Tracks the feature points with the sparse Lucas-Kanade optical flow (``cv::calcO
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Optical flow and motion, the nodes of which publish ``~/flows`` (FlowArrayStamped), ``~/shift`` (Point2DStamped) of phase_corr
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/lk_flow.gif
    :alt: demo of lk_flow

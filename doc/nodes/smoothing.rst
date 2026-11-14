@@ -12,6 +12,8 @@ Smooths the image with the homogeneous, Gaussian, median or bilateral filter.
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Image filters, the nodes of which publish the processed image in ``~/image``
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/smoothing.gif
    :alt: demo of smoothing

@@ -14,6 +14,8 @@ Text detection and recognition (OCR) with DB (cv::dnn::TextDetectionModel_DB) an
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - OpenCV 4.5.4 or later
+   * - Group
+     - Detection, the nodes of which publish ``~/detections`` (DetectionArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_text_detection.gif
    :alt: demo of dnn_text_detection

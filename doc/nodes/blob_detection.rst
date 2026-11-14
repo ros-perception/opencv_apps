@@ -12,6 +12,8 @@ Detects the blobs (regions of similar brightness or color) with ``cv::SimpleBlob
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Circles and blobs, the nodes of which publish ``~/circles`` (CircleArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/blob_detection.gif
    :alt: demo of blob_detection

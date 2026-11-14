@@ -12,6 +12,8 @@ Down-samples or up-samples the image with the Gaussian image pyramid (``cv::pyrD
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Image filters, the nodes of which publish the processed image in ``~/image``
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/pyramids.gif
    :alt: demo of pyramids

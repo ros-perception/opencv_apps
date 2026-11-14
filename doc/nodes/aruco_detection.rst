@@ -12,6 +12,8 @@ Detects the ArUco markers (``cv::aruco``), and their poses with the camera info 
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - OpenCV 4.7 or later, or the aruco module of opencv_contrib
+   * - Group
+     - Detection, the nodes of which publish ``~/detections`` (DetectionArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/aruco_detection.gif
    :alt: demo of aruco_detection

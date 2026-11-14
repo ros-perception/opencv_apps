@@ -12,6 +12,8 @@ Separates the foreground from the background with the background subtractors of 
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - the bgsegm module of opencv_contrib for MOG, GMG, CNT, GSOC and LSBP
+   * - Group
+     - Color and region masks, the nodes of which publish the mask or label image, ``~/image`` of the color filters and background_subtraction, ``~/label`` of dnn_semantic_segmentation
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/background_subtraction.gif
    :alt: demo of background_subtraction

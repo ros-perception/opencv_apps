@@ -12,6 +12,8 @@ Finds the contours and computes their moments (``cv::moments()``): the area, the
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Contours, the nodes of which publish ``~/contours`` (ContourArrayStamped), ``~/hulls`` of convex_hull
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/contour_moments.gif
    :alt: demo of contour_moments
@@ -71,10 +73,16 @@ Published topics
 
    * - Topic
      - Type
+     - Note
+   * - ``~/contours`` **(recommended)**
+     - :ref:`opencv_apps/msg/ContourArrayStamped <msg-ContourArrayStamped>`
+     - Recommended, opencv_apps 3.0.1 and later. The contours, in the order of ``~/moments`` (by the area).
    * - ``~/image``
      - ``sensor_msgs/msg/Image``
+     -  
    * - ``~/moments``
      - :ref:`opencv_apps/msg/MomentArrayStamped <msg-MomentArrayStamped>`
+     -  
 
 Parameters
 ----------

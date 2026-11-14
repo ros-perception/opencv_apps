@@ -12,7 +12,10 @@ functions of OpenCV just by running a launch file. The same source supports both
 What opencv_apps can do
 -----------------------
 
-Click a node to see its topics, parameters and usage.
+The nodes are grouped by their output: the nodes of a group publish the same type of message, on the same topic except
+a few noted in the group, so that one can replace another, e.g. ``face_detection`` by ``dnn_face_detection``. Each
+group lists the nodes by the distributions that they run on, and each tile shows the main output of the node. Click a
+node to see its topics, parameters and usage.
 
 .. include:: gallery.rst
 

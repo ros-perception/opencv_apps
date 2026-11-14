@@ -14,6 +14,8 @@ Monocular depth estimation, by default with MiDaS v2.1 small, whose output is th
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - OpenCV 4.5.4 or later
+   * - Group
+     - Image filters, the nodes of which publish the processed image in ``~/image``
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_depth_estimation.gif
    :alt: demo of dnn_depth_estimation

@@ -12,6 +12,8 @@ Computes the dense optical flow with the Gunnar Farneback method (``cv::calcOpti
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Optical flow and motion, the nodes of which publish ``~/flows`` (FlowArrayStamped), ``~/shift`` (Point2DStamped) of phase_corr
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/fback_flow.gif
    :alt: demo of fback_flow
