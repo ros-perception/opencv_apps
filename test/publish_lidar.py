@@ -68,15 +68,20 @@ def read_frames(video, points_npz):
 
 
 def quaternion(rotation):
-    """Return the quaternion (x, y, z, w) of a rotation matrix."""
-    w = math.sqrt(max(0.0, 1.0 + rotation[0, 0] + rotation[1, 1] + rotation[2, 2])) / 2.0
-    x = math.copysign(math.sqrt(max(0.0, 1.0 + rotation[0, 0] - rotation[1, 1] - rotation[2, 2])) / 2.0,
-                      rotation[2, 1] - rotation[1, 2])
-    y = math.copysign(math.sqrt(max(0.0, 1.0 - rotation[0, 0] + rotation[1, 1] - rotation[2, 2])) / 2.0,
-                      rotation[0, 2] - rotation[2, 0])
-    z = math.copysign(math.sqrt(max(0.0, 1.0 - rotation[0, 0] - rotation[1, 1] + rotation[2, 2])) / 2.0,
-                      rotation[1, 0] - rotation[0, 1])
-    return x, y, z, w
+    """Return the quaternion (x, y, z, w) of a rotation matrix, from its largest component (also of 180 degrees)."""
+    m = rotation
+    trace = m[0, 0] + m[1, 1] + m[2, 2]
+    if trace > 0.0:
+        s = 2.0 * math.sqrt(1.0 + trace)
+        return (m[2, 1] - m[1, 2]) / s, (m[0, 2] - m[2, 0]) / s, (m[1, 0] - m[0, 1]) / s, s / 4.0
+    if m[0, 0] > m[1, 1] and m[0, 0] > m[2, 2]:
+        s = 2.0 * math.sqrt(1.0 + m[0, 0] - m[1, 1] - m[2, 2])
+        return s / 4.0, (m[0, 1] + m[1, 0]) / s, (m[0, 2] + m[2, 0]) / s, (m[2, 1] - m[1, 2]) / s
+    if m[1, 1] > m[2, 2]:
+        s = 2.0 * math.sqrt(1.0 - m[0, 0] + m[1, 1] - m[2, 2])
+        return (m[0, 1] + m[1, 0]) / s, s / 4.0, (m[1, 2] + m[2, 1]) / s, (m[0, 2] - m[2, 0]) / s
+    s = 2.0 * math.sqrt(1.0 - m[0, 0] - m[1, 1] + m[2, 2])
+    return (m[0, 2] + m[2, 0]) / s, (m[1, 2] + m[2, 1]) / s, s / 4.0, (m[1, 0] - m[0, 1]) / s
 
 
 def image_msg(image_type, frame):
