@@ -55,7 +55,7 @@ def generate_test_description():
                                       output='screen'),
         include('dnn_object_detection', image='image'),
         include('detection_3d', input='dnn_object_detection/detections', points='points', camera_info='camera_info',
-                depth_source='points', max_depth='60.0', depth_threshold='1.0', track_distance='2.0'),
+                depth_source='points', max_depth='60.0', depth_threshold='1.0', track_distance='2.0', rectified='true'),
     )
 
 

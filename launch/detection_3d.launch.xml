@@ -8,6 +8,7 @@
 
   <arg name="input_type" default="detections" description="Type of input: detections (DetectionArrayStamped), faces (FaceArrayStamped), rects (RectArrayStamped) or skeletons (SkeletonArrayStamped)." />
   <arg name="depth_source" default="depth" description="Source of the distances: depth (the depth image) or points (the point cloud)." />
+  <arg name="rectified" default="false" description="The 2D results are of the rectified image (e.g. image_rect), whose camera matrix is P of camera_info, instead of the raw image with the distortion of K and D" />
   <arg name="queue_size" default="10" description="Queue size of the synchronized subscribers." />
   <arg name="roi_scale" default="0.8" description="Scale of the 2D box whose depths are used, smaller to leave out the background at the edges of the box." />
   <arg name="depth_threshold" default="0.3" description="The pixels within this distance (m) of the median depth of the box belong to the object." />
@@ -29,6 +30,7 @@
     <param name="input_type" value="$(var input_type)" />
     <param name="depth_source" value="$(var depth_source)" />
     <param name="queue_size" value="$(var queue_size)" />
+    <param name="rectified" value="$(var rectified)" />
     <param name="roi_scale" value="$(var roi_scale)" />
     <param name="depth_threshold" value="$(var depth_threshold)" />
     <param name="min_depth" value="$(var min_depth)" />

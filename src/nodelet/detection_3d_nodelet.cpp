@@ -136,7 +136,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
   struct CameraModel
   {
     cv::Matx33d k;
-    cv::Mat d;  // empty for the rectified image
+    cv::Mat d;  // empty without the distortion
     bool fisheye;
     int width, height;
 
@@ -211,6 +211,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
   double min_depth_;
   double max_depth_;
   bool publish_tf_;
+  bool rectified_;
   std::string tf_prefix_;
   double track_distance_;
   int track_lost_frames_;
@@ -238,6 +239,8 @@ class Detection3DNodelet : public opencv_apps::Nodelet
         max_depth_ = parameter.as_double();
       else if (parameter.get_name() == "publish_tf")
         publish_tf_ = parameter.as_bool();
+      else if (parameter.get_name() == "rectified")
+        rectified_ = parameter.as_bool();
       else if (parameter.get_name() == "tf_prefix")
         tf_prefix_ = parameter.as_string();
       else if (parameter.get_name() == "track_distance")
@@ -479,9 +482,9 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     }
   }
 
-  // the camera model of camera_info, false if it is not calibrated: K and D of the raw image with the distortion, or P
-  // of the rectified image (D is 0); K and P are of the full resolution image, adjusted to the image cropped by roi
-  // and binned (0 means 1), as aruco_detection
+  // the camera model of camera_info, false if it is not calibrated: K and D of the raw image (rectified false), or P
+  // of the rectified image (rectified true), whose camera_info is the same as the raw image; K and P are of the full
+  // resolution image, adjusted to the image cropped by roi and binned (0 means 1), as aruco_detection
   bool cameraModel(const sensor_msgs::msg::CameraInfo& info, CameraModel& camera)
   {
 // the fields of sensor_msgs/CameraInfo are lower case on ROS2
@@ -499,12 +502,18 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10000, "camera_info is not calibrated (K is 0)");
       return false;
     }
-    bool distorted = std::any_of(d.begin(), d.end(), [](double c) { return c != 0.0; });
-    camera.d = distorted ? cv::Mat(d, true) : cv::Mat();
-    camera.fisheye = info.distortion_model == "equidistant";
-    // the rectified image by P, if any (the translation of P, of the stereo cameras, is not used)
+    // the fisheye model (equidistant) is not the pinhole model even with the coefficients of 0
+    camera.fisheye = !rectified_ && info.distortion_model == "equidistant";
+    bool distorted = camera.fisheye || std::any_of(d.begin(), d.end(), [](double c) { return c != 0.0; });
+    camera.d = !rectified_ && distorted ? cv::Mat(d, true) : cv::Mat();
+    if (camera.fisheye && camera.d.total() != 4)
+    {
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10000, "D of equidistant has %zu coefficients, not 4", d.size());
+      return false;
+    }
+    // P of the rectified image (the translation of P, of the stereo cameras, is not used)
     double fx = k[0], fy = k[4], cx = k[2], cy = k[5];
-    if (!distorted && p[0] != 0.0 && p[5] != 0.0)
+    if (rectified_ && p[0] != 0.0 && p[5] != 0.0)
     {
       fx = p[0];
       fy = p[5];
@@ -892,6 +901,10 @@ public:
                         0.01, 10.0));
     min_depth_ = declare_parameter("min_depth", 0.1, paramDescriptor("Minimum valid depth (m).", 0.0, 100.0));
     max_depth_ = declare_parameter("max_depth", 10.0, paramDescriptor("Maximum valid depth (m).", 0.0, 1000.0));
+    rectified_ = declare_parameter(
+        "rectified", false,
+        paramDescriptor("The 2D results are of the rectified image (e.g. image_rect), whose camera matrix is P of "
+                        "camera_info, instead of the raw image with the distortion of K and D"));
     publish_tf_ = declare_parameter(
         "publish_tf", true,
         paramDescriptor("Publish the TF frame <tf_prefix><label>_<id> of each object; with it at the start, the node "

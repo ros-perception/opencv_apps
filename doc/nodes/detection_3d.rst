@@ -211,6 +211,11 @@ See also the :ref:`common parameters <common-parameters>`.
      - 10
      - no, restart the node
      - Queue size of the synchronized subscribers.
+   * - ``rectified``
+     - bool
+     - false
+     - yes
+     - The 2D results are of the rectified image (e.g. image_rect), whose camera matrix is P of camera_info, instead of the raw image with the distortion of K and D
    * - ``roi_scale``
      - double
      - 0.8 (0.1 - 1)
