@@ -292,7 +292,8 @@ if(BUILD_TESTING)
   # the tests of the dnn nodes download the models by libcurl
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_face_detection.py test/ros2/test_dnn_face_recognition.py
-      test/ros2/test_dnn_object_detection.py test/ros2/test_dnn_text_detection.py
+      test/ros2/test_dnn_object_detection.py test/ros2/test_dnn_object_detection_nanodet.py
+      test/ros2/test_dnn_text_detection.py
       test/ros2/test_dnn_semantic_segmentation.py test/ros2/test_dnn_depth_estimation.py
       test/ros2/test_dnn_image_classification.py test/ros2/test_dnn_facial_expression_recognition.py)
   endif()
