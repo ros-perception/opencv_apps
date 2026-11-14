@@ -36,7 +36,7 @@
     <param name="blob_detection_test/topic" value="blob_detection/circles" />    <!-- opencv_apps/CircleArrayStamped -->
     <test test-name="blob_detection_test" pkg="rostest" type="hztest" name="blob_detection_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
   </group>

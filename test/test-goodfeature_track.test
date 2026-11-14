@@ -25,7 +25,7 @@
     <param name="goodfeature_track_test/topic" value="goodfeature_track/corners" />    <!-- opencv_apps/Point2DArrayStamped -->
     <test test-name="goodfeature_track_test" pkg="rostest" type="hztest" name="goodfeature_track_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
   </group>

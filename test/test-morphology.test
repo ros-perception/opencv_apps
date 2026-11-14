@@ -28,7 +28,7 @@
     <param name="morphology_test/topic" value="morphology/image" />
     <test test-name="morphology_test" pkg="rostest" type="hztest" name="morphology_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
 

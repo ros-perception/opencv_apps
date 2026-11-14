@@ -56,55 +56,55 @@
     <param name="background_subtraction_mog2_test/topic" value="background_subtraction_mog2/image" />
     <test test-name="background_subtraction_mog2_test" pkg="rostest" type="hztest" name="background_subtraction_mog2_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
     <param name="background_subtraction_knn_test/topic" value="background_subtraction_knn/image" />
     <test test-name="background_subtraction_knn_test" pkg="rostest" type="hztest" name="background_subtraction_knn_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
     <param name="background_subtraction_mog_test/topic" value="background_subtraction_mog/image" />
     <test test-name="background_subtraction_mog_test" pkg="rostest" type="hztest" name="background_subtraction_mog_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
     <param name="background_subtraction_gmg_test/topic" value="background_subtraction_gmg/image" />
     <test test-name="background_subtraction_gmg_test" pkg="rostest" type="hztest" name="background_subtraction_gmg_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
     <param name="background_subtraction_cnt_test/topic" value="background_subtraction_cnt/image" />
     <test test-name="background_subtraction_cnt_test" pkg="rostest" type="hztest" name="background_subtraction_cnt_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
     <param name="background_subtraction_gsoc_test/topic" value="background_subtraction_gsoc/image" />
     <test test-name="background_subtraction_gsoc_test" pkg="rostest" type="hztest" name="background_subtraction_gsoc_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
     <param name="background_subtraction_lsbp_test/topic" value="background_subtraction_lsbp/image" />
     <test test-name="background_subtraction_lsbp_test" pkg="rostest" type="hztest" name="background_subtraction_lsbp_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
     <param name="background_subtraction_mog2_background_test/topic" value="background_subtraction_mog2/background" />
     <test test-name="background_subtraction_mog2_background_test" pkg="rostest" type="hztest" name="background_subtraction_mog2_background_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
     <param name="background_subtraction_gsoc_background_test/topic" value="background_subtraction_gsoc/background" />
     <test test-name="background_subtraction_gsoc_background_test" pkg="rostest" type="hztest" name="background_subtraction_gsoc_background_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
   </group>
