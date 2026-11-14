@@ -31,11 +31,11 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# Publish an RGB-D sequence in a loop: image (bgr8), depth (16UC1 in mm, registered to the image) and camera_info,
-# with the same stamps, and the static TF of the camera frame on camera_link, from the color video and the depths in
-# .npz (array "depth", uint16 mm), by default test/rgbd_walking.mp4 and test/rgbd_walking_depth.npz (20 images of the
-# TUM RGB-D freiburg3_walking_xyz sequence, CC BY 4.0, https://cvg.cit.tum.de/data/datasets/rgbd-dataset, every 6th of
-# its first 120 images).
+# Publish an RGB-D sequence in a loop: image (bgr8), depth (16UC1 in mm, registered to the image), camera_info and
+# points (the colored points of the depth, for rviz), with the same stamps, and the static TF of the camera frame on
+# camera_link, from the color video and the depths in .npz (array "depth", uint16 mm), by default
+# test/rgbd_walking.mp4 and test/rgbd_walking_depth.npz (20 images of the TUM RGB-D freiburg3_walking_xyz sequence, CC
+# BY 4.0, https://cvg.cit.tum.de/data/datasets/rgbd-dataset, every 6th of its first 120 images).
 #   publish_rgbd.py [VIDEO DEPTH_NPZ] [--rate 10]
 
 import argparse
@@ -63,6 +63,28 @@ def read_frames(video, depth_npz):
     if n == 0:
         raise RuntimeError('no frames in %s and %s' % (video, depth_npz))
     return list(zip(colors[:n], depths[:n]))
+
+
+def cloud_msg(cloud_type, field_type, color, depth, step=2):
+    """Return the colored points (x y z rgb, in the optical frame) of every step-th pixel of the depth image."""
+    z = depth[::step, ::step].astype(np.float32) / 1000.0
+    v, u = np.mgrid[0:depth.shape[0]:step, 0:depth.shape[1]:step]
+    valid = z > 0
+    x = (u[valid] - CX) * z[valid] / FX
+    y = (v[valid] - CY) * z[valid] / FY
+    bgr = color[::step, ::step][valid].astype(np.uint32)
+    rgb = ((bgr[:, 2] << 16) | (bgr[:, 1] << 8) | bgr[:, 0]).view(np.float32)
+    points = np.stack([x, y, z[valid], rgb], axis=1).astype(np.float32)
+    msg = cloud_type()
+    msg.height, msg.width = 1, len(points)
+    msg.fields = [field_type(name=name, offset=4 * i, datatype=field_type.FLOAT32, count=1)
+                  for i, name in enumerate(['x', 'y', 'z', 'rgb'])]
+    msg.is_bigendian = sys.byteorder == 'big'
+    msg.point_step = 16
+    msg.row_step = 16 * len(points)
+    msg.is_dense = True
+    msg.data = points.tobytes()
+    return msg
 
 
 def image_msg(image_type, frame, encoding):
@@ -93,24 +115,26 @@ def main():
     if os.environ.get('ROS_VERSION') == '1':
         from geometry_msgs.msg import TransformStamped
         import rospy
-        from sensor_msgs.msg import CameraInfo, Image
+        from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
         import tf2_ros
         rospy.init_node('publish_rgbd')
         static_broadcaster = tf2_ros.StaticTransformBroadcaster()
         publishers = [rospy.Publisher(name, msg_type, queue_size=10)
-                      for name, msg_type in [('image', Image), ('depth', Image), ('camera_info', CameraInfo)]]
+                      for name, msg_type in [('image', Image), ('depth', Image), ('camera_info', CameraInfo),
+                                             ('points', PointCloud2)]]
         info = CameraInfo(width=640, height=480, distortion_model='plumb_bob', D=[0.0] * 5, K=k, R=r, P=p)
         now = rospy.Time.now
     else:
         from geometry_msgs.msg import TransformStamped
         import rclpy
-        from sensor_msgs.msg import CameraInfo, Image
+        from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
         import tf2_ros
         rclpy.init()
         node = rclpy.create_node('publish_rgbd')
         static_broadcaster = tf2_ros.StaticTransformBroadcaster(node)
         publishers = [node.create_publisher(msg_type, name, 10)
-                      for name, msg_type in [('image', Image), ('depth', Image), ('camera_info', CameraInfo)]]
+                      for name, msg_type in [('image', Image), ('depth', Image), ('camera_info', CameraInfo),
+                                             ('points', PointCloud2)]]
         info = CameraInfo(width=640, height=480, distortion_model='plumb_bob', d=[0.0] * 5, k=k, r=r, p=p)
 
         def now():
@@ -129,7 +153,8 @@ def main():
 
     def publish(*_):
         color, depth = frames[state['index'] % len(frames)]
-        messages = [image_msg(Image, color, 'bgr8'), image_msg(Image, depth, '16UC1'), info]
+        messages = [image_msg(Image, color, 'bgr8'), image_msg(Image, depth, '16UC1'), info,
+                    cloud_msg(PointCloud2, PointField, color, depth)]
         stamp = now()
         for msg, publisher in zip(messages, publishers):
             msg.header.stamp = stamp
