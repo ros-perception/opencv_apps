@@ -13,7 +13,7 @@
   <arg name="depth_threshold" default="0.3" description="The pixels within this distance (m) of the median depth of the box belong to the object." />
   <arg name="min_depth" default="0.1" description="Minimum valid depth (m)." />
   <arg name="max_depth" default="10.0" description="Maximum valid depth (m)." />
-  <arg name="publish_tf" default="true" description="Publish the TF frame tf_prefix + label_id of each object." />
+  <arg name="publish_tf" default="true" description="Publish the TF frame tf_prefix + label_id of each object; with it, the node subscribes the inputs always." />
   <arg name="tf_prefix" default="" description="Prefix of the TF frames." />
   <arg name="track_distance" default="0.5" description="An object within this distance (m) of an object of the same label in the previous images is the same object, and keeps its id." />
   <arg name="track_lost_frames" default="10" description="Number of images that a lost object keeps its id for." />

@@ -44,10 +44,14 @@
 
 #include "opencv_apps/nodelet.h"
 
+#include <opencv2/imgproc/imgproc.hpp>
+
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -63,6 +67,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <vision_msgs/msg/detection3_d_array.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 #if __has_include(<tf2_ros/transform_broadcaster.hpp>)
 #include <tf2_ros/buffer.hpp>
 #include <tf2_ros/transform_broadcaster.hpp>
@@ -113,6 +118,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
   // the synchronizer of the depth source and the input, one of them is used
   std::shared_ptr<void> sync_;
   rclcpp::Publisher<vision_msgs::msg::Detection3DArray>::SharedPtr detections_pub_;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr markers_pub_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   std::unique_ptr<tf2_ros::TransformListener> tf_listener_;
@@ -131,11 +137,15 @@ class Detection3DNodelet : public opencv_apps::Nodelet
   double track_distance_;
   int track_lost_frames_;
 
+  // the parameters and the tracks, set by parametersCallback and read by the callbacks of the inputs, which may run
+  // in other threads (e.g. the multithreaded nodelet manager of ROS 1)
+  std::mutex mutex_;
   std::vector<Track> tracks_;
   std::map<std::string, int> next_ids_;
 
   rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
+    std::lock_guard<std::mutex> lock(mutex_);
     for (const rclcpp::Parameter& parameter : parameters)
     {
       if (parameter.get_name() == "roi_scale")
@@ -201,10 +211,12 @@ class Detection3DNodelet : public opencv_apps::Nodelet
                      const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg,
                      const typename T::ConstSharedPtr& msg)
   {
+    std::lock_guard<std::mutex> lock(mutex_);
     try
     {
       double fx, fy, cx, cy;
-      if (!intrinsics(*info_msg, fx, fy, cx, cy))
+      int width, height;
+      if (!intrinsics(*info_msg, fx, fy, cx, cy, width, height))
         return;
       cv::Mat depth = depthInMeters(depth_msg);
       std::vector<Box2D> input = boxes(*msg);
@@ -234,10 +246,12 @@ class Detection3DNodelet : public opencv_apps::Nodelet
                       const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg,
                       const typename T::ConstSharedPtr& msg)
   {
+    std::lock_guard<std::mutex> lock(mutex_);
     try
     {
       double fx, fy, cx, cy;
-      if (!intrinsics(*info_msg, fx, fy, cx, cy))
+      int width, height;
+      if (!intrinsics(*info_msg, fx, fy, cx, cy, width, height))
         return;
       const std::string frame_id = frameId(*info_msg, cloud_msg->header.frame_id);
       // the cloud in the camera frame, by the latest transform (e.g. the static transform of the extrinsics)
@@ -266,7 +280,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       std::vector<Box2D> input = boxes(*msg);
       std::vector<cv::Rect> rois;
       for (const Box2D& box : input)
-        rois.push_back(roi(box, info_msg->width, info_msg->height));
+        rois.push_back(roi(box, width, height));
       // the points projected into each box
       std::vector<std::vector<cv::Point3d> > points(input.size());
       sensor_msgs::PointCloud2ConstIterator<float> x(*cloud_msg, "x"), y(*cloud_msg, "y"), z(*cloud_msg, "z");
@@ -290,8 +304,10 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     }
   }
 
-  // the focal lengths and the principal point of camera_info, false if it is not calibrated
-  bool intrinsics(const sensor_msgs::msg::CameraInfo& info, double& fx, double& fy, double& cx, double& cy)
+  // the focal lengths, the principal point and the size of the image of camera_info, false if it is not calibrated;
+  // K is of the full resolution image, adjusted to the image cropped by roi and binned (0 means 1), as aruco_detection
+  bool intrinsics(const sensor_msgs::msg::CameraInfo& info, double& fx, double& fy, double& cx, double& cy, int& width,
+                  int& height)
   {
 // the fields of sensor_msgs/CameraInfo are lower case on ROS2
 #ifdef ROS2
@@ -304,10 +320,14 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10000, "camera_info is not calibrated (K is 0)");
       return false;
     }
-    fx = k[0];
-    fy = k[4];
-    cx = k[2];
-    cy = k[5];
+    double binning_x = std::max(1u, static_cast<unsigned int>(info.binning_x));
+    double binning_y = std::max(1u, static_cast<unsigned int>(info.binning_y));
+    fx = k[0] / binning_x;
+    fy = k[4] / binning_y;
+    cx = (k[2] - info.roi.x_offset) / binning_x;
+    cy = (k[5] - info.roi.y_offset) / binning_y;
+    width = static_cast<int>((info.roi.width > 0 ? info.roi.width : info.width) / binning_x);
+    height = static_cast<int>((info.roi.height > 0 ? info.roi.height : info.height) / binning_y);
     return true;
   }
 
@@ -345,7 +365,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     cv::Point3d min_point(1e9, 1e9, 1e9), max_point(-1e9, -1e9, -1e9);
     for (const cv::Point3d& p : points)
     {
-      if (std::abs(p.z - median) > depth_threshold_)
+      if (p.z < min_depth_ || p.z > max_depth_ || std::abs(p.z - median) > depth_threshold_)
         continue;
       min_point = cv::Point3d(std::min(min_point.x, p.x), std::min(min_point.y, p.y), std::min(min_point.z, p.z));
       max_point = cv::Point3d(std::max(max_point.x, p.x), std::max(max_point.y, p.y), std::max(max_point.z, p.z));
@@ -392,6 +412,12 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     detections_msg.header.stamp = stamp;
     detections_msg.header.frame_id = frame_id;
     std::vector<geometry_msgs::msg::TransformStamped> transforms;
+    // the markers of rviz: delete the markers of the previous image, then a box and a label of each object
+    visualization_msgs::msg::MarkerArray markers_msg;
+    visualization_msgs::msg::Marker delete_all;
+    delete_all.header = detections_msg.header;
+    delete_all.action = visualization_msgs::msg::Marker::DELETEALL;
+    markers_msg.markers.push_back(delete_all);
     std::vector<bool> matched(tracks_.size(), false);
     for (size_t i = 0; i < input.size(); i++)
     {
@@ -437,6 +463,36 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       transform.transform.translation.z = center.z;
       transform.transform.rotation.w = 1.0;
       transforms.push_back(transform);
+
+      // a color of each label
+      cv::Mat hsv(1, 1, CV_8UC3, cv::Scalar(std::hash<std::string>()(box.label) % 180, 255, 255)), bgr;
+      cv::cvtColor(hsv, bgr, cv::COLOR_HSV2BGR);
+      cv::Vec3b c = bgr.at<cv::Vec3b>(0, 0);
+      visualization_msgs::msg::Marker marker;
+      marker.header = detections_msg.header;
+      marker.ns = "boxes";
+      marker.id = static_cast<int>(markers_msg.markers.size());
+      marker.type = visualization_msgs::msg::Marker::CUBE;
+      marker.action = visualization_msgs::msg::Marker::ADD;
+      marker.pose = detection.bbox.center;
+      marker.scale.x = std::max(size.x, 0.01);
+      marker.scale.y = std::max(size.y, 0.01);
+      marker.scale.z = std::max(size.z, 0.01);
+      marker.color.r = c[2] / 255.0f;
+      marker.color.g = c[1] / 255.0f;
+      marker.color.b = c[0] / 255.0f;
+      marker.color.a = 0.4f;
+      markers_msg.markers.push_back(marker);
+      visualization_msgs::msg::Marker label = marker;
+      label.ns = "labels";
+      label.id = static_cast<int>(markers_msg.markers.size());
+      label.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+      label.pose.position.y -= size.y / 2 + 0.1;  // above the box, y of the camera frame is down
+      label.scale.x = label.scale.y = 0.0;
+      label.scale.z = std::max(0.1, center.z * 0.04);  // the height of the text, larger for the far objects
+      label.color.a = 1.0f;
+      label.text = cv::format("%s\n%.1fm", name.c_str(), cv::norm(center));
+      markers_msg.markers.push_back(label);
     }
     // forget the tracks lost for track_lost_frames images
     for (size_t i = 0; i < matched.size(); i++)
@@ -447,6 +503,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
                   tracks_.end());
 
     detections_pub_->publish(detections_msg);
+    markers_pub_->publish(markers_msg);
     if (publish_tf_ && !transforms.empty())
       tf_broadcaster_->sendTransform(transforms);
   }
@@ -558,8 +615,10 @@ public:
                         0.01, 10.0));
     min_depth_ = declare_parameter("min_depth", 0.1, paramDescriptor("Minimum valid depth (m).", 0.0, 100.0));
     max_depth_ = declare_parameter("max_depth", 10.0, paramDescriptor("Maximum valid depth (m).", 0.0, 1000.0));
-    publish_tf_ = declare_parameter("publish_tf", true,
-                                    paramDescriptor("Publish the TF frame <tf_prefix><label>_<id> of each object."));
+    publish_tf_ = declare_parameter(
+        "publish_tf", true,
+        paramDescriptor("Publish the TF frame <tf_prefix><label>_<id> of each object; with it at the start, the node "
+                        "subscribes the inputs always, for the subscribers of /tf."));
     tf_prefix_ = declare_parameter("tf_prefix", std::string(""), paramDescriptor("Prefix of the TF frames."));
     track_distance_ = declare_parameter(
         "track_distance", 0.5,
@@ -571,6 +630,10 @@ public:
     on_set_parameters_callback_handle_ =
         add_on_set_parameters_callback(std::bind(&Detection3DNodelet::parametersCallback, this, std::placeholders::_1));
 
+    // the TF frames are published only when the inputs are subscribed, and a subscriber of /tf (e.g. TF of rviz) does
+    // not subscribe the outputs of the node, so the node always subscribes the inputs with publish_tf at the start
+    if (publish_tf_)
+      always_subscribe_ = true;
     tf_broadcaster_.reset(new tf2_ros::TransformBroadcaster(*this));
     if (depth_source_ == "points")
     {
@@ -582,6 +645,8 @@ public:
       tf_listener_.reset(new tf2_ros::TransformListener(*tf_buffer_));
     }
     detections_pub_ = advertise<vision_msgs::msg::Detection3DArray>("~/detections", 1);
+    // the boxes and the labels of the objects for rviz, which shows them without vision_msgs_rviz_plugins
+    markers_pub_ = advertise<visualization_msgs::msg::MarkerArray>("~/markers", 1);
 
     onInitPostProcess();
   }
