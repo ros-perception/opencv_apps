@@ -417,6 +417,17 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       CameraModel camera;
       if (!cameraModel(*info_msg, camera))
         return;
+      // x, y and z of the points are float (FLOAT32), as most drivers of LiDARs and depth_image_proc
+      for (const char* name : { "x", "y", "z" })
+      {
+        auto field = std::find_if(cloud_msg->fields.begin(), cloud_msg->fields.end(),
+                                  [name](const sensor_msgs::msg::PointField& f) { return f.name == name; });
+        if (field == cloud_msg->fields.end() || field->datatype != sensor_msgs::msg::PointField::FLOAT32)
+        {
+          RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10000, "the field %s of the points is not FLOAT32", name);
+          return;
+        }
+      }
       const std::string frame_id = frameId(*info_msg, cloud_msg->header.frame_id);
       // the cloud in the camera frame, by the latest transform (e.g. the static transform of the extrinsics)
       geometry_msgs::msg::TransformStamped transform;
