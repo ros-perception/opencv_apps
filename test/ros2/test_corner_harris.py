@@ -35,7 +35,8 @@
 
 import unittest
 
-from opencv_apps_test import camera, description, FACE_VIDEO, image_view, include, TopicsTest
+from opencv_apps.msg import Point2DArrayStamped
+from opencv_apps_test import camera, description, FACE_VIDEO, image_view, include, MessagesTest
 import pytest
 
 
@@ -48,6 +49,9 @@ def generate_test_description():
     )
 
 
-class TestCornerHarris(TopicsTest, unittest.TestCase):
+class TestCornerHarris(MessagesTest, unittest.TestCase):
 
-    TOPICS = ['corner_harris/image']
+    TOPICS = ['corner_harris/image', 'corner_harris/corners']
+    # the corners are within the 640x480 image
+    CHECKS = {'corner_harris/corners': (Point2DArrayStamped, lambda msg: len(msg.points) > 0 and all(
+        0 <= p.x < 640 and 0 <= p.y < 480 for p in msg.points))}
