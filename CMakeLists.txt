@@ -309,7 +309,8 @@ if(BUILD_TESTING)
   endif()
   # the test of detection_3d detects the people with dnn_object_detection
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
-    list(REMOVE_ITEM _launch_tests test/ros2/test_detection_3d.py test/ros2/test_detection_3d_points.py)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_detection_3d.py test/ros2/test_detection_3d_points.py
+      test/ros2/test_detection_3d_distortion.py)
   endif()
   if(NOT OPENCV_HAVE_DNN)
     list(REMOVE_ITEM _launch_tests test/ros2/test_qrcode_detection.py)

@@ -36,7 +36,9 @@
 # camera_link, from the color video and the depths in .npz (array "depth", uint16 mm), by default
 # test/rgbd_walking.mp4 and test/rgbd_walking_depth.npz (20 images of the TUM RGB-D freiburg3_walking_xyz sequence, CC
 # BY 4.0, https://cvg.cit.tum.de/data/datasets/rgbd-dataset, every 6th of its first 120 images).
-#   publish_rgbd.py [VIDEO DEPTH_NPZ] [--rate 10]
+# With --distortion K1, the image and the depth are distorted by the radial distortion K1 (plumb_bob), as the raw image
+# of a camera, and camera_info has it; the points are of the depth before the distortion.
+#   publish_rgbd.py [VIDEO DEPTH_NPZ] [--rate 10] [--distortion K1]
 
 import argparse
 import os
@@ -87,6 +89,21 @@ def cloud_msg(cloud_type, field_type, color, depth, step=2):
     return msg
 
 
+def distort(frames, k1):
+    """Return the frames distorted by the radial distortion k1.
+
+    Each pixel of the distorted image is the pixel of the undistorted image at its undistorted point.
+    """
+    k = np.array([[FX, 0.0, CX], [0.0, FY, CY], [0.0, 0.0, 1.0]])
+    height, width = frames[0][1].shape
+    v, u = np.mgrid[0:height, 0:width].astype(np.float32)
+    pixels = np.stack([u.ravel(), v.ravel()], axis=1).reshape(-1, 1, 2)
+    undistorted = cv2.undistortPoints(pixels, k, np.array([k1, 0.0, 0.0, 0.0, 0.0]), P=k).reshape(height, width, 2)
+    map_x, map_y = undistorted[..., 0].astype(np.float32), undistorted[..., 1].astype(np.float32)
+    return [(cv2.remap(color, map_x, map_y, cv2.INTER_LINEAR), cv2.remap(depth, map_x, map_y, cv2.INTER_NEAREST))
+            for color, depth in frames]
+
+
 def image_msg(image_type, frame, encoding):
     msg = image_type()
     msg.height, msg.width = frame.shape[:2]
@@ -104,10 +121,13 @@ def main():
     parser.add_argument('--rate', type=float, default=10.0)
     parser.add_argument('--frame-id', default='camera_rgb_optical_frame')
     parser.add_argument('--base-frame', default='camera_link')
+    parser.add_argument('--distortion', type=float, default=0.0, help='k1 of the radial distortion')
     # without the arguments of ROS (__name:=..., __log:=... of roslaunch, --ros-args ... of ROS 2)
     argv = sys.argv[1:sys.argv.index('--ros-args')] if '--ros-args' in sys.argv else sys.argv[1:]
     args = parser.parse_args([a for a in argv if ':=' not in a])
     frames = read_frames(args.video, args.depth)
+    distorted = distort(frames, args.distortion) if args.distortion else frames
+    d = [args.distortion, 0.0, 0.0, 0.0, 0.0]
     k = [FX, 0.0, CX, 0.0, FY, CY, 0.0, 0.0, 1.0]
     r = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
     p = [FX, 0.0, CX, 0.0, 0.0, FY, CY, 0.0, 0.0, 0.0, 1.0, 0.0]
@@ -122,7 +142,7 @@ def main():
         publishers = [rospy.Publisher(name, msg_type, queue_size=10)
                       for name, msg_type in [('image', Image), ('depth', Image), ('camera_info', CameraInfo),
                                              ('points', PointCloud2)]]
-        info = CameraInfo(width=640, height=480, distortion_model='plumb_bob', D=[0.0] * 5, K=k, R=r, P=p)
+        info = CameraInfo(width=640, height=480, distortion_model='plumb_bob', D=d, K=k, R=r, P=p)
         now = rospy.Time.now
     else:
         from geometry_msgs.msg import TransformStamped
@@ -135,7 +155,7 @@ def main():
         publishers = [node.create_publisher(msg_type, name, 10)
                       for name, msg_type in [('image', Image), ('depth', Image), ('camera_info', CameraInfo),
                                              ('points', PointCloud2)]]
-        info = CameraInfo(width=640, height=480, distortion_model='plumb_bob', d=[0.0] * 5, k=k, r=r, p=p)
+        info = CameraInfo(width=640, height=480, distortion_model='plumb_bob', d=d, k=k, r=r, p=p)
 
         def now():
             return node.get_clock().now().to_msg()
@@ -153,7 +173,8 @@ def main():
 
     def publish(*_):
         color, depth = frames[state['index'] % len(frames)]
-        messages = [image_msg(Image, color, 'bgr8'), image_msg(Image, depth, '16UC1'), info,
+        distorted_color, distorted_depth = distorted[state['index'] % len(frames)]
+        messages = [image_msg(Image, distorted_color, 'bgr8'), image_msg(Image, distorted_depth, '16UC1'), info,
                     cloud_msg(PointCloud2, PointField, color, depth)]
         stamp = now()
         for msg, publisher in zip(messages, publishers):

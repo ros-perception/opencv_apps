@@ -44,6 +44,7 @@
 
 #include "opencv_apps/nodelet.h"
 
+#include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <algorithm>
@@ -128,6 +129,47 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     int index;
     std::string name;
     cv::Point3d position;
+  };
+
+  // the camera of camera_info: the raw image with the distortion (K and D), or the rectified image (P) without it,
+  // as image_geometry, adjusted to the image cropped by roi and binned
+  struct CameraModel
+  {
+    cv::Matx33d k;
+    cv::Mat d;  // empty for the rectified image
+    bool fisheye;
+    int width, height;
+
+    // the 3D points of the pixels at their depths
+    std::vector<cv::Point3d> backProject(const std::vector<cv::Point2d>& pixels, const std::vector<double>& depths) const
+    {
+      std::vector<cv::Point2d> rays;
+      if (d.empty())
+        for (const cv::Point2d& pixel : pixels)
+          rays.push_back(cv::Point2d((pixel.x - k(0, 2)) / k(0, 0), (pixel.y - k(1, 2)) / k(1, 1)));
+      else if (!pixels.empty() && fisheye)
+        cv::fisheye::undistortPoints(pixels, rays, k, d);
+      else if (!pixels.empty())
+        cv::undistortPoints(pixels, rays, k, d);
+      std::vector<cv::Point3d> points;
+      for (size_t i = 0; i < rays.size(); i++)
+        points.push_back(cv::Point3d(rays[i].x * depths[i], rays[i].y * depths[i], depths[i]));
+      return points;
+    }
+
+    // the pixels of the 3D points in front of the camera
+    std::vector<cv::Point2d> project(const std::vector<cv::Point3d>& points) const
+    {
+      std::vector<cv::Point2d> pixels;
+      if (d.empty())
+        for (const cv::Point3d& p : points)
+          pixels.push_back(cv::Point2d(k(0, 0) * p.x / p.z + k(0, 2), k(1, 1) * p.y / p.z + k(1, 2)));
+      else if (!points.empty() && fisheye)
+        cv::fisheye::projectPoints(points, pixels, cv::Vec3d(), cv::Vec3d(), k, d);
+      else if (!points.empty())
+        cv::projectPoints(points, cv::Vec3d(), cv::Vec3d(), k, d, pixels);
+      return pixels;
+    }
   };
 
   // a tracked object: its id, label and last position in the camera frame
@@ -298,9 +340,8 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     std::lock_guard<std::mutex> lock(mutex_);
     try
     {
-      double fx, fy, cx, cy;
-      int width, height;
-      if (!intrinsics(*info_msg, fx, fy, cx, cy, width, height))
+      CameraModel camera;
+      if (!cameraModel(*info_msg, camera))
         return;
       cv::Mat depth = depthInMeters(depth_msg);
       std::vector<Box2D> input = boxes(*msg);
@@ -309,13 +350,19 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       for (size_t i = 0; i < input.size(); i++)
       {
         cv::Rect r = roi(input[i], depth.cols, depth.rows);
+        std::vector<cv::Point2d> pixels;
+        std::vector<double> depths;
         for (int v = r.y; v < r.y + r.height; v++)
           for (int u = r.x; u < r.x + r.width; u++)
           {
             float z = depth.at<float>(v, u);
             if (std::isfinite(z) && z > 0.0f)
-              points[i].push_back(cv::Point3d((u - cx) * z / fx, (v - cy) * z / fy, z));
+            {
+              pixels.push_back(cv::Point2d(u, v));
+              depths.push_back(z);
+            }
           }
+        points[i] = camera.backProject(pixels, depths);
       }
       // the 3D keypoints: the median depth of the pixels within keypoint_radius of each keypoint
       std::vector<std::vector<Keypoint3D> > keypoints(input.size());
@@ -333,8 +380,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
           double z;
           if (medianDepth(depths, z))
             keypoints[i].push_back(
-                { keypoint.index, keypoint.name,
-                  cv::Point3d((keypoint.position.x - cx) * z / fx, (keypoint.position.y - cy) * z / fy, z) });
+                { keypoint.index, keypoint.name, camera.backProject({ keypoint.position }, { z })[0] });
         }
       publish(depth_msg->header.stamp, frameId(*info_msg, depth_msg->header.frame_id), input, points, keypoints);
     }
@@ -352,9 +398,8 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     std::lock_guard<std::mutex> lock(mutex_);
     try
     {
-      double fx, fy, cx, cy;
-      int width, height;
-      if (!intrinsics(*info_msg, fx, fy, cx, cy, width, height))
+      CameraModel camera;
+      if (!cameraModel(*info_msg, camera))
         return;
       const std::string frame_id = frameId(*info_msg, cloud_msg->header.frame_id);
       // the cloud in the camera frame, by the latest transform (e.g. the static transform of the extrinsics)
@@ -383,30 +428,36 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       std::vector<Box2D> input = boxes(*msg);
       std::vector<cv::Rect> rois;
       for (const Box2D& box : input)
-        rois.push_back(roi(box, width, height));
+        rois.push_back(roi(box, camera.width, camera.height));
       // the points projected into each box, and the depths of the points projected within keypoint_radius of each
       // keypoint
       std::vector<std::vector<cv::Point3d> > points(input.size());
       std::vector<std::vector<std::vector<double> > > keypoint_depths(input.size());
       for (size_t i = 0; i < input.size(); i++)
         keypoint_depths[i].resize(input[i].keypoints.size());
+      // the points in front of the camera, in the camera frame
+      std::vector<cv::Point3d> cloud;
       sensor_msgs::PointCloud2ConstIterator<float> x(*cloud_msg, "x"), y(*cloud_msg, "y"), z(*cloud_msg, "z");
       for (; x != x.end(); ++x, ++y, ++z)
       {
         if (!std::isfinite(*x) || !std::isfinite(*y) || !std::isfinite(*z))
           continue;
         cv::Vec3d p = rotation * cv::Vec3d(*x, *y, *z) + translation;
-        if (p[2] <= 0.0)
-          continue;
-        cv::Point pixel(cvRound(fx * p[0] / p[2] + cx), cvRound(fy * p[1] / p[2] + cy));
+        if (p[2] > 0.0)
+          cloud.push_back(cv::Point3d(p[0], p[1], p[2]));
+      }
+      std::vector<cv::Point2d> pixels = camera.project(cloud);
+      for (size_t j = 0; j < cloud.size(); j++)
+      {
+        cv::Point pixel(cvRound(pixels[j].x), cvRound(pixels[j].y));
         for (size_t i = 0; i < rois.size(); i++)
         {
           if (rois[i].contains(pixel))
-            points[i].push_back(cv::Point3d(p[0], p[1], p[2]));
+            points[i].push_back(cloud[j]);
           for (size_t k = 0; k < input[i].keypoints.size(); k++)
             if (std::abs(pixel.x - input[i].keypoints[k].position.x) <= keypoint_radius_ &&
                 std::abs(pixel.y - input[i].keypoints[k].position.y) <= keypoint_radius_)
-              keypoint_depths[i][k].push_back(p[2]);
+              keypoint_depths[i][k].push_back(cloud[j].z);
         }
       }
       std::vector<std::vector<Keypoint3D> > keypoints(input.size());
@@ -417,8 +468,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
           double z;
           if (medianDepth(keypoint_depths[i][k], z))
             keypoints[i].push_back(
-                { keypoint.index, keypoint.name,
-                  cv::Point3d((keypoint.position.x - cx) * z / fx, (keypoint.position.y - cy) * z / fy, z) });
+                { keypoint.index, keypoint.name, camera.backProject({ keypoint.position }, { z })[0] });
         }
       publish(cloud_msg->header.stamp, frame_id, input, points, keypoints);
     }
@@ -428,30 +478,44 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     }
   }
 
-  // the focal lengths, the principal point and the size of the image of camera_info, false if it is not calibrated;
-  // K is of the full resolution image, adjusted to the image cropped by roi and binned (0 means 1), as aruco_detection
-  bool intrinsics(const sensor_msgs::msg::CameraInfo& info, double& fx, double& fy, double& cx, double& cy, int& width,
-                  int& height)
+  // the camera model of camera_info, false if it is not calibrated: K and D of the raw image with the distortion, or P
+  // of the rectified image (D is 0); K and P are of the full resolution image, adjusted to the image cropped by roi
+  // and binned (0 means 1), as aruco_detection
+  bool cameraModel(const sensor_msgs::msg::CameraInfo& info, CameraModel& camera)
   {
 // the fields of sensor_msgs/CameraInfo are lower case on ROS2
 #ifdef ROS2
     const double* k = info.k.data();
+    const double* p = info.p.data();
+    const std::vector<double>& d = info.d;
 #else
     const double* k = info.K.data();
+    const double* p = info.P.data();
+    const std::vector<double>& d = info.D;
 #endif
     if (k[0] == 0.0 || k[4] == 0.0)
     {
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10000, "camera_info is not calibrated (K is 0)");
       return false;
     }
+    bool distorted = std::any_of(d.begin(), d.end(), [](double c) { return c != 0.0; });
+    camera.d = distorted ? cv::Mat(d, true) : cv::Mat();
+    camera.fisheye = info.distortion_model == "equidistant";
+    // the rectified image by P, if any (the translation of P, of the stereo cameras, is not used)
+    double fx = k[0], fy = k[4], cx = k[2], cy = k[5];
+    if (!distorted && p[0] != 0.0 && p[5] != 0.0)
+    {
+      fx = p[0];
+      fy = p[5];
+      cx = p[2];
+      cy = p[6];
+    }
     double binning_x = std::max(1u, static_cast<unsigned int>(info.binning_x));
     double binning_y = std::max(1u, static_cast<unsigned int>(info.binning_y));
-    fx = k[0] / binning_x;
-    fy = k[4] / binning_y;
-    cx = (k[2] - info.roi.x_offset) / binning_x;
-    cy = (k[5] - info.roi.y_offset) / binning_y;
-    width = static_cast<int>((info.roi.width > 0 ? info.roi.width : info.width) / binning_x);
-    height = static_cast<int>((info.roi.height > 0 ? info.roi.height : info.height) / binning_y);
+    camera.k = cv::Matx33d(fx / binning_x, 0.0, (cx - info.roi.x_offset) / binning_x, 0.0, fy / binning_y,
+                           (cy - info.roi.y_offset) / binning_y, 0.0, 0.0, 1.0);
+    camera.width = static_cast<int>((info.roi.width > 0 ? info.roi.width : info.width) / binning_x);
+    camera.height = static_cast<int>((info.roi.height > 0 ? info.roi.height : info.height) / binning_y);
     return true;
   }
 
