@@ -36,10 +36,11 @@
 // https://github.com/opencv/opencv/blob/4.x/samples/dnn/object_detection.cpp
 // https://github.com/opencv/opencv_zoo/tree/main/models/object_detection_yolox
 // https://github.com/opencv/opencv_zoo/tree/main/models/object_detection_nanodet
+// https://github.com/opencv/opencv/blob/4.x/samples/dnn/yolo_detector.cpp
 /**
- * Object detection with YOLOX (onnx), by default YOLOX-S trained on COCO of opencv_zoo, or NanoDet-Plus (onnx), or
- * with a model of cv::dnn::DetectionModel, e.g. YOLO (darknet), SSD (caffe, tensorflow), which OpenCV 5 cannot read
- * except onnx
+ * Object detection with YOLOX (onnx), by default YOLOX-S trained on COCO of opencv_zoo, NanoDet-Plus (onnx) or YOLOv8
+ * (onnx, the output of YOLOv8, YOLOv9 and YOLO11), or with a model of cv::dnn::DetectionModel, e.g. YOLO (darknet),
+ * SSD (caffe, tensorflow), which OpenCV 5 cannot read except onnx
  */
 
 #include "opencv_apps/nodelet.h"
@@ -118,7 +119,7 @@ class DNNObjectDetectionNodelet : public opencv_apps::Nodelet
   double nms_threshold_;
 
   std::mutex mutex_;
-  cv::dnn::Net net_;                                    // model_type yolox and nanodet
+  cv::dnn::Net net_;                                    // model_type yolox, nanodet and yolov8
   std::unique_ptr<cv::dnn::DetectionModel> model_ptr_;  // model_type detection_model
   std::vector<std::string> class_names_;
   bool need_model_update_;
@@ -173,12 +174,15 @@ class DNNObjectDetectionNodelet : public opencv_apps::Nodelet
     net_ = cv::dnn::Net();
     model_ptr_.reset();
     class_names_.clear();
-    if (model_type_ != "yolox" && model_type_ != "nanodet" && model_type_ != "detection_model")
+    if (model_type_ != "yolox" && model_type_ != "nanodet" && model_type_ != "yolov8" &&
+        model_type_ != "detection_model")
     {
-      RCLCPP_ERROR(get_logger(), "Unknown model_type %s, use yolox, nanodet or detection_model", model_type_.c_str());
+      RCLCPP_ERROR(get_logger(), "Unknown model_type %s, use yolox, nanodet, yolov8 or detection_model",
+                   model_type_.c_str());
       return false;
     }
-    if (model_type_ == "detection_model" && model_.empty())
+    // no default model of yolov8, as the models of Ultralytics are of AGPL-3.0
+    if ((model_type_ == "detection_model" || model_type_ == "yolov8") && model_.empty())
     {
       RCLCPP_ERROR(get_logger(), "model is required for model_type %s", model_type_.c_str());
       return false;
@@ -404,6 +408,45 @@ class DNNObjectDetectionNodelet : public opencv_apps::Nodelet
     nmsByClass(candidate_class_ids, candidate_confidences, candidate_boxes, class_ids, confidences, boxes);
   }
 
+  // detect the objects by YOLOv8 (and YOLOv9, YOLO11 of the same output), as yolo_detector.cpp of OpenCV, called
+  // with mutex_
+  void detectYOLOv8(const cv::Mat& frame, std::vector<int>& class_ids, std::vector<float>& confidences,
+                    std::vector<cv::Rect>& boxes)
+  {
+    // the image in RGB in [0, 1], resized keeping the aspect ratio into the top-left of the input, padded with 114
+    cv::Size input_size(input_width_, input_height_);
+    double ratio;
+    cv::Mat input = letterbox(frame, input_size, cv::Scalar(114, 114, 114), ratio);
+    net_.setInput(cv::dnn::blobFromImage(input, 1.0 / 255, cv::Size(), cv::Scalar(), true, false));
+    cv::Mat output = net_.forward();  // 1 x (4 box + classes) x N
+    if (output.dims != 3 || output.size[1] <= 4)
+    {
+      RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 10000, "The output of the model is not of YOLOv8");
+      return;
+    }
+    cv::Mat predictions = cv::Mat(output.size[1], output.size[2], CV_32F, output.ptr<float>()).t();  // N x (4 + C)
+    std::vector<int> candidate_class_ids;
+    std::vector<float> candidate_confidences;
+    std::vector<cv::Rect> candidate_boxes;
+    for (int row = 0; row < predictions.rows; row++)
+    {
+      const float* p = predictions.ptr<float>(row);
+      cv::Point class_id;
+      double confidence;
+      cv::minMaxLoc(cv::Mat(1, predictions.cols - 4, CV_32F, const_cast<float*>(p + 4)), nullptr, &confidence, nullptr,
+                    &class_id);
+      if (confidence < confidence_threshold_)
+        continue;
+      // the center and the size of the box in the input
+      double width = p[2] / ratio, height = p[3] / ratio;
+      candidate_class_ids.push_back(class_id.x);
+      candidate_confidences.push_back(static_cast<float>(confidence));
+      candidate_boxes.push_back(cv::Rect(cvRound(p[0] / ratio - width / 2), cvRound(p[1] / ratio - height / 2),
+                                         cvRound(width), cvRound(height)));
+    }
+    nmsByClass(candidate_class_ids, candidate_confidences, candidate_boxes, class_ids, confidences, boxes);
+  }
+
   std::string className(int class_id) const
   {
     if (class_id >= 0 && class_id < static_cast<int>(class_names_.size()))
@@ -462,6 +505,8 @@ class DNNObjectDetectionNodelet : public opencv_apps::Nodelet
                              static_cast<float>(nms_threshold_));
         else if (model_type_ == "nanodet")
           detectNanoDet(frame, class_ids, confidences, boxes);
+        else if (model_type_ == "yolov8")
+          detectYOLOv8(frame, class_ids, confidences, boxes);
         else
           detectYOLOX(frame, class_ids, confidences, boxes);
         for (size_t i = 0; i < boxes.size(); i++)
@@ -560,7 +605,8 @@ public:
                         "input_frame_id. Otherwise the frame from the image message will be used."));
     model_type_ = declare_parameter(
         "model_type", std::string("yolox"),
-        paramDescriptor("yolox for the YOLOX models (onnx), nanodet for NanoDet-Plus (onnx, input 416x416), or "
+        paramDescriptor("yolox for the YOLOX models (onnx), nanodet for NanoDet-Plus (onnx, input 416x416), yolov8 "
+                        "for the models of the output of YOLOv8, YOLOv9 and YOLO11 (onnx, OpenCV 4.9 or later), or "
                         "detection_model for the models of cv::dnn::DetectionModel, e.g. YOLO (darknet), SSD (caffe, "
                         "tensorflow), with config, input_width, input_height, scale and swap_rb"));
     model_ = declare_parameter(
@@ -573,14 +619,14 @@ public:
                                                 ".pbtxt) of the model, or empty"));
     classes_ = declare_parameter("classes", std::string(""),
                                  paramDescriptor("Path or URL of the class names of the model, one name per line, or "
-                                                 "empty for the classes of COCO for yolox and nanodet"));
+                                                 "empty for the classes of COCO for yolox, nanodet and yolov8"));
     backend_ = declare_parameter("backend", std::string("auto"), paramDescriptor(DNN_BACKEND_DESCRIPTION));
     input_width_ = declare_parameter(
         "input_width", 640,
-        paramDescriptor("Width of the network input, a multiple of 32 for yolox, 416 for nanodet", 1, 4096));
+        paramDescriptor("Width of the network input, a multiple of 32 for yolox and yolov8, 416 for nanodet", 1, 4096));
     input_height_ = declare_parameter(
         "input_height", 640,
-        paramDescriptor("Height of the network input, a multiple of 32 for yolox, 416 for nanodet", 1, 4096));
+        paramDescriptor("Height of the network input, a multiple of 32 for yolox and yolov8, 416 for nanodet", 1, 4096));
     scale_ = declare_parameter(
         "scale", 1.0 / 255,
         paramDescriptor("Multiplier of the pixel values for the network input, for detection_model", 0.0, 1.0));

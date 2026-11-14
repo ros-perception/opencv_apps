@@ -293,6 +293,7 @@ if(BUILD_TESTING)
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_face_detection.py test/ros2/test_dnn_face_recognition.py
       test/ros2/test_dnn_object_detection.py test/ros2/test_dnn_object_detection_nanodet.py
+      test/ros2/test_dnn_object_detection_yolov8.py
       test/ros2/test_dnn_text_detection.py
       test/ros2/test_dnn_semantic_segmentation.py test/ros2/test_dnn_depth_estimation.py
       test/ros2/test_dnn_image_classification.py test/ros2/test_dnn_facial_expression_recognition.py)
@@ -305,6 +306,10 @@ if(BUILD_TESTING)
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.7")
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_tracking.py test/ros2/test_dnn_tracking_nanotrack.py
       test/ros2/test_dnn_tracking_walk.py)
+  endif()
+  # YOLOv8 (onnx) needs OpenCV 4.9 or later
+  if(OpenCV_VERSION VERSION_LESS "4.9")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_object_detection_yolov8.py)
   endif()
   # the MediaPipe models of dnn_pose_estimation and dnn_hand_pose_estimation need OpenCV 4.9 or later
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.9")
