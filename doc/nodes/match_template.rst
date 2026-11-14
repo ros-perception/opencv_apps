@@ -12,6 +12,8 @@ Finds the template image in the image (``cv::matchTemplate()``), and publishes t
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - OpenCV 3.0 or later
+   * - Group
+     - Tracking, the nodes of which publish ``~/output`` (RectArrayStamped), ``~/track_box`` (RotatedRectStamped) of camshift
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/match_template.gif
    :alt: demo of match_template

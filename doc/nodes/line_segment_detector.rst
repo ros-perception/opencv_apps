@@ -12,6 +12,8 @@ Detects the line segments with the line segment detector (LSD, ``cv::LineSegment
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - OpenCV 3.0 - 3.4.5 or 4.5.4 or later, which have cv::createLineSegmentDetector()
+   * - Group
+     - Lines, the nodes of which publish ``~/lines`` (LineArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/line_segment_detector.gif
    :alt: demo of line_segment_detector

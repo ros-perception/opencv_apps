@@ -12,6 +12,8 @@ Recognizes the faces detected by :doc:`face_detection` with the face recognizers
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Faces, the nodes of which publish ``~/faces`` (FaceArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/face_recognition.gif
    :alt: demo of face_recognition
@@ -68,10 +70,16 @@ Published topics
 
    * - Topic
      - Type
+     - Note
    * - ``~/debug_image``
      - ``sensor_msgs/msg/Image``
-   * - ``~/output``
+     -  
+   * - ``~/faces`` **(recommended)**
      - :ref:`opencv_apps/msg/FaceArrayStamped <msg-FaceArrayStamped>`
+     - Recommended, opencv_apps 3.0.1 and later. The same as ``~/output``, with the name of the other face nodes.
+   * - ``~/output`` (compatibility)
+     - :ref:`opencv_apps/msg/FaceArrayStamped <msg-FaceArrayStamped>`
+     - Kept for compatibility, use ``~/faces``.
 
 Services
 --------

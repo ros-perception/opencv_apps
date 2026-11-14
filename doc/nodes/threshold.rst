@@ -12,6 +12,8 @@ Thresholds the image (``cv::threshold()``): binary, inverted binary, truncated, 
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Image filters, the nodes of which publish the processed image in ``~/image``
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/threshold.gif
    :alt: demo of threshold

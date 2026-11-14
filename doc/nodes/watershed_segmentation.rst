@@ -12,6 +12,8 @@ Segments the image with the watershed algorithm (``cv::watershed()``) from the s
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Contours, the nodes of which publish ``~/contours`` (ContourArrayStamped), ``~/hulls`` of convex_hull
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/watershed_segmentation.gif
    :alt: demo of watershed_segmentation

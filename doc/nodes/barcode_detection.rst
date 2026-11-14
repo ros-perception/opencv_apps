@@ -12,6 +12,8 @@ Detects and decodes the barcodes, e.g. EAN-13 (``cv::barcode::BarcodeDetector``)
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - OpenCV 4.8 or later, or the barcode module of opencv_contrib
+   * - Group
+     - Detection, the nodes of which publish ``~/detections`` (DetectionArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/barcode_detection.gif
    :alt: demo of barcode_detection

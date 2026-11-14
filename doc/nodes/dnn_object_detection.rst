@@ -14,6 +14,8 @@ Object detection with YOLOX (onnx), by default YOLOX-S trained on COCO of opencv
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - OpenCV 4.5.4 or later
+   * - Group
+     - Detection, the nodes of which publish ``~/detections`` (DetectionArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_object_detection.gif
    :alt: demo of dnn_object_detection

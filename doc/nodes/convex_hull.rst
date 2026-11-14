@@ -12,6 +12,8 @@ Finds the contours and their convex hulls (``cv::convexHull()``).
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Contours, the nodes of which publish ``~/contours`` (ContourArrayStamped), ``~/hulls`` of convex_hull
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/convex_hull.gif
    :alt: demo of convex_hull

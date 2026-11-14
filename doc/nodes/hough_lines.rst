@@ -12,6 +12,8 @@ Detects the lines with the standard or the probabilistic Hough transform (``cv::
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Lines, the nodes of which publish ``~/lines`` (LineArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/hough_lines.gif
    :alt: demo of hough_lines

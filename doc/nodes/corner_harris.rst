@@ -12,6 +12,8 @@ Detects the corners with the Harris corner detector (``cv::cornerHarris()``).
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Corners, the nodes of which publish ``~/corners`` (Point2DArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/corner_harris.gif
    :alt: demo of corner_harris
@@ -73,8 +75,13 @@ Published topics
 
    * - Topic
      - Type
+     - Note
+   * - ``~/corners`` **(recommended)**
+     - :ref:`opencv_apps/msg/Point2DArrayStamped <msg-Point2DArrayStamped>`
+     - Recommended, opencv_apps 3.0.1 and later. The corners, a local maximum of the pixels over ``threshold`` for each corner.
    * - ``~/image``
      - ``sensor_msgs/msg/Image``
+     -  
 
 Parameters
 ----------

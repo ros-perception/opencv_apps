@@ -12,6 +12,8 @@ Computes the dense optical flow with the SimpleFlow algorithm (``cv::optflow::ca
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - the optflow module of opencv_contrib
+   * - Group
+     - Optical flow and motion, the nodes of which publish ``~/flows`` (FlowArrayStamped), ``~/shift`` (Point2DStamped) of phase_corr
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/simple_flow.gif
    :alt: demo of simple_flow

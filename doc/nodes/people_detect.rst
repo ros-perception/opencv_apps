@@ -12,6 +12,8 @@ Detects the people with the HOG descriptor and the linear SVM (``cv::HOGDescript
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Detection, the nodes of which publish ``~/detections`` (DetectionArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/people_detect.gif
    :alt: demo of people_detect
@@ -73,10 +75,16 @@ Published topics
 
    * - Topic
      - Type
-   * - ``~/found``
+     - Note
+   * - ``~/detections`` **(recommended)**
+     - :ref:`opencv_apps/msg/DetectionArrayStamped <msg-DetectionArrayStamped>`
+     - Recommended, opencv_apps 3.0.1 and later. The people, as the other detection nodes: the centers of the rectangles, the label ``person`` and the score of the HOG detector.
+   * - ``~/found`` (compatibility)
      - :ref:`opencv_apps/msg/RectArrayStamped <msg-RectArrayStamped>`
+     - Kept for compatibility, use ``~/detections``. The top-left corners of the rectangles.
    * - ``~/image``
      - ``sensor_msgs/msg/Image``
+     -  
 
 Parameters
 ----------

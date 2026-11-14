@@ -12,6 +12,8 @@ Blends two images, ``image1`` and ``image2``, with ``cv::addWeighted()``: alpha 
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Image filters, the nodes of which publish the processed image in ``~/image``
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/adding_images.gif
    :alt: demo of adding_images

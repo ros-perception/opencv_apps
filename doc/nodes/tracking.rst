@@ -12,6 +12,8 @@ Tracks the target with the trackers of OpenCV: MIL, BOOSTING, MEDIANFLOW, TLD, K
      - ROS One, jazzy, kilted, lyrical and later; the trackers other than MIL need libopencv-contrib
    * - OpenCV
      - OpenCV 4.5.1 or later, and the tracking module of opencv_contrib for the trackers other than MIL
+   * - Group
+     - Tracking, the nodes of which publish ``~/output`` (RectArrayStamped), ``~/track_box`` (RotatedRectStamped) of camshift
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/tracking.gif
    :alt: demo of tracking

@@ -12,6 +12,8 @@ Computes the color histogram of the image (``cv::calcHist()``) and compares it w
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Histogram comparison, the nodes of which publish ``~/distance`` (Float64)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/compare_histogram.gif
    :alt: demo of compare_histogram

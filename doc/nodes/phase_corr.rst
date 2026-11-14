@@ -12,6 +12,8 @@ Estimates the translation between the consecutive images with the phase correlat
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Optical flow and motion, the nodes of which publish ``~/flows`` (FlowArrayStamped), ``~/shift`` (Point2DStamped) of phase_corr
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/phase_corr.gif
    :alt: demo of phase_corr

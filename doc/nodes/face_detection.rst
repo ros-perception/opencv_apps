@@ -12,6 +12,8 @@ Detects the faces and the eyes with the Haar cascade classifiers (``cv::CascadeC
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Faces, the nodes of which publish ``~/faces`` (FaceArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/face_detection.gif
    :alt: demo of face_detection

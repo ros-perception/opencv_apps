@@ -14,6 +14,8 @@ Hand pose estimation with MediaPipe Hands of opencv_zoo (Apache 2.0): the palms 
      - lyrical and later; not ROS One (OpenCV 4.6), jazzy (OpenCV 4.6), kilted (OpenCV 4.6)
    * - OpenCV
      - OpenCV 4.9 or later, which reads the MediaPipe hand pose model
+   * - Group
+     - Human and hand poses, the nodes of which publish ``~/skeletons`` (SkeletonArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_hand_pose_estimation.gif
    :alt: demo of dnn_hand_pose_estimation
