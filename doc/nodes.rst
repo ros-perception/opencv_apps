@@ -164,7 +164,7 @@ Compare the color histogram of the image with a reference. Output: ``~/distance`
 3D localization
 ---------------
 
-Localize the objects, the faces and the tracked targets of the nodes above in 3D, with a depth image, and publish their TF frames. Output: ``~/detections`` (vision_msgs/Detection3DArray) and the TF frames.
+Localize the objects, the faces and the tracked targets of the nodes above in 3D, with a depth image of an RGB-D camera or a point cloud of a LiDAR, and publish their TF frames. Output: ``~/detections`` (vision_msgs/Detection3DArray) and the TF frames.
 
 .. toctree::
    :maxdepth: 1

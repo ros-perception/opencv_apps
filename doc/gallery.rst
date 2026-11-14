@@ -174,7 +174,7 @@
    <a class="opencv-apps-tile" href="nodes/compare_histogram.html"><img src="https://ros-perception.github.io/opencv_apps/media/compare_histogram_thumb.gif" alt="compare_histogram" loading="lazy"><span>compare_histogram<br><small>~/distance</small></span></a>
    </div>
    <h3>3D localization</h3>
-   <p>Localize the objects, the faces and the tracked targets of the nodes above in 3D, with a depth image, and publish their TF frames.<br>Output: <code>~/detections</code> (vision_msgs/Detection3DArray) and the TF frames.</p>
+   <p>Localize the objects, the faces and the tracked targets of the nodes above in 3D, with a depth image of an RGB-D camera or a point cloud of a LiDAR, and publish their TF frames.<br>Output: <code>~/detections</code> (vision_msgs/Detection3DArray) and the TF frames.</p>
    <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/detection_3d.html"><img src="https://ros-perception.github.io/opencv_apps/media/detection_3d_thumb.gif" alt="detection_3d" loading="lazy"><span>detection_3d<br><small>~/detections</small></span></a>

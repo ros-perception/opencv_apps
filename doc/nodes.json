@@ -1384,8 +1384,14 @@
     "type": "bool"
    },
    {
+    "default": "depth",
+    "description": "Source of the distances: depth (the depth image registered to the color image, 16UC1 in mm or 32FC1 in m, e.g. of an RGB-D camera) or points (a point cloud, e.g. of a LiDAR, transformed to the frame of camera_info by TF).",
+    "name": "depth_source",
+    "type": "string"
+   },
+   {
     "default": 0.3,
-    "description": "The pixels within this distance (m) of the median depth of the box belong to the object.",
+    "description": "The points within this distance (m) of the median depth of the box belong to the object.",
     "name": "depth_threshold",
     "range": [
      0.01,

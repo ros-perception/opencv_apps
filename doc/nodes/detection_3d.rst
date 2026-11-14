@@ -1,7 +1,7 @@
 detection_3d
 ============
 
-Publishes the 3D boxes (``vision_msgs/Detection3DArray``) and the TF frames ``<label>_<id>`` of the 2D results of the other nodes, ``~/detections`` of the detection nodes (``input_type:=detections``), ``~/faces`` of the face nodes (``faces``) or ``~/output`` of the tracking nodes (``rects``), with a depth image registered to their color image, e.g. of an RGB-D camera. The depth of an object is the median of the depths in its 2D box, and its 3D box is the extent of the pixels within ``depth_threshold`` of the median, as `yolo_ros <https://github.com/mgonzs13/yolo_ros>`_. The objects are tracked by the distance of their centers, so that each object keeps its TF frame. On ROS 1, the results of vision_msgs (0.0.2) have only the class id of the detections, and the labels are in the TF frames.
+Publishes the 3D boxes (``vision_msgs/Detection3DArray``) and the TF frames ``<label>_<id>`` of the 2D results of the other nodes, ``~/detections`` of the detection nodes (``input_type:=detections``), ``~/faces`` of the face nodes (``faces``) or ``~/output`` of the tracking nodes (``rects``), with a depth image registered to their color image, e.g. of an RGB-D camera (``depth_source:=depth``), or a point cloud, e.g. of a LiDAR, transformed to the camera frame by TF (``depth_source:=points``). The points of a 2D box are the pixels of the depth image in the box or the points of the cloud projected into the box, the depth of the object is the median of their depths, and its 3D box is the extent of the points within ``depth_threshold`` of the median, as `yolo_ros <https://github.com/mgonzs13/yolo_ros>`_. The objects are tracked by the distance of their centers, so that each object keeps its TF frame. On ROS 1, the results of vision_msgs (0.0.2) have only the class id of the detections, and the labels are in the TF frames.
 
 .. list-table::
    :stub-columns: 1
@@ -51,6 +51,40 @@ The input is 20 RGB-D images of the TUM RGB-D freiburg3_walking_xyz sequence (im
 
 See :doc:`../credits` for the license of the video.
 
+Sources of the distances
+------------------------
+
+The demos draw the 3D boxes of ``~/detections`` on the image, and their top view.
+
+RGB-D camera (default)
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. image:: https://ros-perception.github.io/opencv_apps/media/detection_3d.gif
+   :alt: demo of detection_3d with rgbd
+
+.. code-block:: bash
+
+   ros2 launch opencv_apps detection_3d.launch.xml input:=/dnn_object_detection/detections depth:=depth camera_info:=camera_info
+
+The depth image of the TUM RGB-D dataset, as above.
+
+LiDAR
+^^^^^
+
+.. image:: https://ros-perception.github.io/opencv_apps/media/detection_3d_lidar.gif
+   :alt: demo of detection_3d with lidar
+
+.. code-block:: bash
+
+   wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/publish_lidar.py
+   wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/lidar_boreas.mp4
+   wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/lidar_boreas_points.npz
+   python3 publish_lidar.py lidar_boreas.mp4 lidar_boreas_points.npz &
+   ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image &
+   ros2 launch opencv_apps detection_3d.launch.xml input:=/dnn_object_detection/detections points:=points camera_info:=camera_info depth_source:=points depth_threshold:=1.0 max_depth:=60.0 track_distance:=2.0
+
+20 images and the points of the LiDAR (in the frame lidar, with the static TF of the extrinsics from the frame camera) of the Boreas dataset, by test/publish_lidar.py; the objects are farther and move faster than indoors, so max_depth, depth_threshold and track_distance are larger.
+
 Subscribed topics
 -----------------
 
@@ -92,11 +126,16 @@ See also the :ref:`common parameters <common-parameters>`.
      - Default (range)
      - Changed at run time
      - Description
+   * - ``depth_source``
+     - string
+     - "depth"
+     - no, restart the node
+     - Source of the distances: depth (the depth image registered to the color image, 16UC1 in mm or 32FC1 in m, e.g. of an RGB-D camera) or points (a point cloud, e.g. of a LiDAR, transformed to the frame of camera_info by TF).
    * - ``depth_threshold``
      - double
      - 0.3 (0.01 - 10)
      - yes
-     - The pixels within this distance (m) of the median depth of the box belong to the object.
+     - The points within this distance (m) of the median depth of the box belong to the object.
    * - ``input_type``
      - string
      - "detections"

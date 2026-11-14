@@ -53,3 +53,9 @@ and depth images (every 6th of the first 120 images) of the freiburg3_walking_xy
 Burgard and D. Cremers, "A Benchmark for the Evaluation of RGB-D SLAM Systems", IROS 2012), licensed under
 `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_; the depths are converted from 5000 per meter to
 millimeters.
+
+The LiDAR demo and test of detection_3d use ``test/lidar_boreas.mp4`` and ``test/lidar_boreas_points.npz``, 20 camera
+images (612x512, 1/4 of the camera) and the LiDAR points in the view of the camera (every third, in float16) of the
+sequence boreas-2021-09-02-11-42 of the `Boreas dataset <https://www.boreas.utias.utoronto.ca/>`_ (K. Burnett et al.,
+"Boreas: A Multi-Season Autonomous Driving Dataset", IJRR 2023), licensed under
+`CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_.

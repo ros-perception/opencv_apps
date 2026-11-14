@@ -93,6 +93,30 @@ detection_3d:
   note: 'The input is 20 RGB-D images of the TUM RGB-D freiburg3_walking_xyz sequence (image, depth in mm and
     camera_info, by test/publish_rgbd.py), and the people of dnn_object_detection. In rviz2, add TF to show the
     frames person_0, ..., or add Detection3DArray of vision_msgs_rviz_plugins to show the boxes.'
+  variants_title: Sources of the distances
+  variants_note: The demos draw the 3D boxes of ``~/detections`` on the image, and their top view.
+  variants:
+  - name: rgbd
+    title: RGB-D camera (default)
+    default: true
+    note: The depth image of the TUM RGB-D dataset, as above.
+  - name: lidar
+    title: LiDAR
+    image: input:=/dnn_object_detection/detections points:=points camera_info:=camera_info
+    launch_args:
+      depth_source: points
+      max_depth: 60.0
+      depth_threshold: 1.0
+      track_distance: 2.0
+    commands:
+    - wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/publish_lidar.py
+    - wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/lidar_boreas.mp4
+    - wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/lidar_boreas_points.npz
+    - python3 publish_lidar.py lidar_boreas.mp4 lidar_boreas_points.npz &
+    - ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image &
+    note: 20 images and the points of the LiDAR (in the frame lidar, with the static TF of the extrinsics from the
+      frame camera) of the Boreas dataset, by test/publish_lidar.py; the objects are farther and move faster than
+      indoors, so max_depth, depth_threshold and track_distance are larger.
 dnn_depth_estimation:
   clip: keybridge.mp4
 dnn_face_detection:
