@@ -32,9 +32,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # Publish an RGB-D sequence in a loop: image (bgr8), depth (16UC1 in mm, registered to the image) and camera_info,
-# with the same stamps, from the color video and the depths in .npz (array "depth", uint16 mm), by default
-# test/rgbd_walking.mp4 and test/rgbd_walking_depth.npz (20 images of the TUM RGB-D freiburg3_walking_xyz sequence,
-# CC BY 4.0, https://cvg.cit.tum.de/data/datasets/rgbd-dataset, every 6th of its first 120 images).
+# with the same stamps, and the static TF of the camera frame on camera_link, from the color video and the depths in
+# .npz (array "depth", uint16 mm), by default test/rgbd_walking.mp4 and test/rgbd_walking_depth.npz (20 images of the
+# TUM RGB-D freiburg3_walking_xyz sequence, CC BY 4.0, https://cvg.cit.tum.de/data/datasets/rgbd-dataset, every 6th of
+# its first 120 images).
 #   publish_rgbd.py [VIDEO DEPTH_NPZ] [--rate 10]
 
 import argparse
@@ -80,6 +81,7 @@ def main():
     parser.add_argument('depth', nargs='?', default=os.path.join(TEST_DIR, 'rgbd_walking_depth.npz'))
     parser.add_argument('--rate', type=float, default=10.0)
     parser.add_argument('--frame-id', default='camera_rgb_optical_frame')
+    parser.add_argument('--base-frame', default='camera_link')
     # without the arguments of ROS (__name:=..., __log:=... of roslaunch, --ros-args ... of ROS 2)
     argv = sys.argv[1:sys.argv.index('--ros-args')] if '--ros-args' in sys.argv else sys.argv[1:]
     args = parser.parse_args([a for a in argv if ':=' not in a])
@@ -89,24 +91,39 @@ def main():
     p = [FX, 0.0, CX, 0.0, 0.0, FY, CY, 0.0, 0.0, 0.0, 1.0, 0.0]
 
     if os.environ.get('ROS_VERSION') == '1':
+        from geometry_msgs.msg import TransformStamped
         import rospy
         from sensor_msgs.msg import CameraInfo, Image
+        import tf2_ros
         rospy.init_node('publish_rgbd')
+        static_broadcaster = tf2_ros.StaticTransformBroadcaster()
         publishers = [rospy.Publisher(name, msg_type, queue_size=10)
                       for name, msg_type in [('image', Image), ('depth', Image), ('camera_info', CameraInfo)]]
         info = CameraInfo(width=640, height=480, distortion_model='plumb_bob', D=[0.0] * 5, K=k, R=r, P=p)
         now = rospy.Time.now
     else:
+        from geometry_msgs.msg import TransformStamped
         import rclpy
         from sensor_msgs.msg import CameraInfo, Image
+        import tf2_ros
         rclpy.init()
         node = rclpy.create_node('publish_rgbd')
+        static_broadcaster = tf2_ros.StaticTransformBroadcaster(node)
         publishers = [node.create_publisher(msg_type, name, 10)
                       for name, msg_type in [('image', Image), ('depth', Image), ('camera_info', CameraInfo)]]
         info = CameraInfo(width=640, height=480, distortion_model='plumb_bob', d=[0.0] * 5, k=k, r=r, p=p)
 
         def now():
             return node.get_clock().now().to_msg()
+
+    # the optical frame of the camera (z forward, y down) on camera_link (x forward, z up), for rviz
+    optical = TransformStamped()
+    optical.header.stamp = now()
+    optical.header.frame_id = args.base_frame
+    optical.child_frame_id = args.frame_id
+    (optical.transform.rotation.x, optical.transform.rotation.y, optical.transform.rotation.z,
+     optical.transform.rotation.w) = (-0.5, 0.5, -0.5, 0.5)
+    static_broadcaster.sendTransform(optical)
 
     state = {'index': 0}
 

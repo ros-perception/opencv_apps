@@ -33,11 +33,11 @@
 
 # Publish a LiDAR-camera sequence in a loop: image (bgr8), camera_info, points (sensor_msgs/PointCloud2, x y z in the
 # LiDAR frame) with the stamp of the image, and the static TF of the extrinsics from the camera frame to the LiDAR
-# frame, from the color video and the points in .npz (points: all the points, counts: the number of points of each
-# image, K: the camera matrix, T_camera_lidar: the 4x4 transform of the points to the camera frame), by default
-# test/lidar_boreas.mp4 and test/lidar_boreas_points.npz: 20 images (every second of 40, 612x512, 1/4 of the camera)
-# and the points in the view of the camera (every third, float16) of the sequence boreas-2021-09-02-11-42 of the
-# Boreas dataset (CC BY 4.0, https://www.boreas.utias.utoronto.ca/).
+# frame and of the camera frame on camera_link, from the color video and the points in .npz (points: all the points,
+# counts: the number of points of each image, K: the camera matrix, T_camera_lidar: the 4x4 transform of the points to
+# the camera frame), by default test/lidar_boreas.mp4 and test/lidar_boreas_points.npz: 20 images (every second of 40,
+# 612x512, 1/4 of the camera) and the points in the view of the camera (every third, float16) of the sequence
+# boreas-2021-09-02-11-42 of the Boreas dataset (CC BY 4.0, https://www.boreas.utias.utoronto.ca/).
 #   publish_lidar.py [VIDEO POINTS_NPZ] [--rate 5]
 
 import argparse
@@ -108,6 +108,7 @@ def main():
     parser.add_argument('points', nargs='?', default=os.path.join(TEST_DIR, 'lidar_boreas_points.npz'))
     parser.add_argument('--rate', type=float, default=5.0)
     parser.add_argument('--camera-frame', default='camera')
+    parser.add_argument('--base-frame', default='camera_link')
     parser.add_argument('--lidar-frame', default='lidar')
     # without the arguments of ROS (__name:=..., __log:=... of roslaunch, --ros-args ... of ROS 2)
     argv = sys.argv[1:sys.argv.index('--ros-args')] if '--ros-args' in sys.argv else sys.argv[1:]
@@ -153,7 +154,14 @@ def main():
      transform.transform.translation.z) = [float(v) for v in t_camera_lidar[:3, 3]]
     (transform.transform.rotation.x, transform.transform.rotation.y, transform.transform.rotation.z,
      transform.transform.rotation.w) = quaternion(t_camera_lidar[:3, :3])
-    static_broadcaster.sendTransform(transform)
+    # the optical frame of the camera (z forward, y down) on camera_link (x forward, z up), for rviz
+    optical = TransformStamped()
+    optical.header.stamp = transform.header.stamp
+    optical.header.frame_id = args.base_frame
+    optical.child_frame_id = args.camera_frame
+    (optical.transform.rotation.x, optical.transform.rotation.y, optical.transform.rotation.z,
+     optical.transform.rotation.w) = (-0.5, 0.5, -0.5, 0.5)
+    static_broadcaster.sendTransform([optical, transform])
 
     state = {'index': 0}
 

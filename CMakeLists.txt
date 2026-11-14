@@ -277,6 +277,8 @@ install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
   FILES_MATCHING PATTERN "*.launch.xml"
 )
+# the configs of rviz2 of detection_3d
+install(FILES rviz/detection_3d.rviz rviz/detection_3d_lidar.rviz DESTINATION share/${PROJECT_NAME}/rviz)
 # with a python3 shebang (the scripts keep "python" for ROS1 melodic and older)
 foreach(_script face_recognition_trainer.py set_image.py)
   file(READ scripts/${_script} _script_content)
@@ -881,6 +883,9 @@ install(DIRECTORY launch test scripts
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         USE_SOURCE_PERMISSIONS)
 # rclpy on rospy for scripts/face_recognition_trainer.py, see ros1/python/rclpy/__init__.py
+# the configs of rviz of detection_3d
+install(FILES rviz/detection_3d_ros1.rviz rviz/detection_3d_lidar_ros1.rviz
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/rviz)
 install(DIRECTORY ros1/python
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/ros1
         PATTERN "__pycache__" EXCLUDE)
