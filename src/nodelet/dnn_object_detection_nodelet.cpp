@@ -348,29 +348,60 @@ class DNNObjectDetectionNodelet : public opencv_apps::Nodelet
 
     // the outputs are the scores of the classes and the distributions of the distances of each stride, of N rows of
     // the grid of the stride; the order of the outputs depends on the version of OpenCV, so they are paired by N
-    std::map<int, cv::Mat> scores, distances;
+    std::map<int, std::vector<cv::Mat> > grids;
     for (const cv::Mat& output : outputs)
-    {
-      if (output.dims != 3)
-        continue;
-      cv::Mat rows(output.size[1], output.size[2], CV_32F, const_cast<float*>(output.ptr<float>()));
-      (output.size[2] == 4 * (reg_max + 1) ? distances : scores)[output.size[1]] = rows;
-    }
+      if (output.dims == 3)
+        grids[output.size[1]].push_back(
+            cv::Mat(output.size[1], output.size[2], CV_32F, const_cast<float*>(output.ptr<float>())));
     std::vector<int> candidate_class_ids;
     std::vector<float> candidate_confidences;
     std::vector<cv::Rect> candidate_boxes;
-    for (const std::pair<const int, cv::Mat>& score : scores)
+    for (const std::pair<const int, std::vector<cv::Mat> >& grid : grids)
     {
-      int stride = cvRound(std::sqrt(static_cast<double>(input_size.area()) / score.first));
-      int grid_width = stride > 0 ? input_size.width / stride : 0;
-      if (distances.count(score.first) == 0 || grid_width * (input_size.height / std::max(stride, 1)) != score.first)
+      // the distances have 4 x (reg_max + 1) columns, and the scores are in [0, 1] (sigmoid), also when the number of
+      // the classes is the same as the columns of the distances
+      std::vector<bool> in_unit(grid.second.size());
+      for (size_t i = 0; i < grid.second.size(); i++)
+      {
+        double min_value, max_value;
+        cv::minMaxLoc(grid.second[i], &min_value, &max_value);
+        in_unit[i] = min_value >= 0.0 && max_value <= 1.0;
+      }
+      int score_index = -1;
+      if (grid.second.size() == 2)
+      {
+        bool regression0 = grid.second[0].cols == 4 * (reg_max + 1),
+             regression1 = grid.second[1].cols == 4 * (reg_max + 1);
+        if (regression0 != regression1)
+          score_index = regression0 ? 1 : 0;
+        else if (regression0 && in_unit[0] != in_unit[1])
+          score_index = in_unit[0] ? 0 : 1;
+      }
+      // the stride of the grid of the supported strides, of the feature map of floor or ceil of the input size
+      int stride = 0, grid_width = 0;
+      for (int s : { 8, 16, 32, 64 })
+      {
+        for (bool ceil : { false, true })
+        {
+          int width = ceil ? (input_size.width + s - 1) / s : input_size.width / s;
+          int height = ceil ? (input_size.height + s - 1) / s : input_size.height / s;
+          if (stride == 0 && width * height == grid.first)
+          {
+            stride = s;
+            grid_width = width;
+          }
+        }
+      }
+      if (score_index < 0 || stride == 0)
       {
         RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 10000,
-                              "The outputs of the model do not match NanoDet of the input size %dx%d", input_size.width,
-                              input_size.height);
+                              "The outputs of the model do not match NanoDet of the input size %dx%d (the scores and "
+                              "the distances of %d rows)",
+                              input_size.width, input_size.height, grid.first);
         return;
       }
-      const cv::Mat& distance = distances[score.first];
+      std::pair<int, cv::Mat> score(grid.first, grid.second[score_index]);
+      const cv::Mat& distance = grid.second[1 - score_index];
       for (int row = 0; row < score.first; row++)
       {
         cv::Point class_id;
