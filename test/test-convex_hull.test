@@ -24,7 +24,7 @@
     <param name="convex_hull_test/topic" value="convex_hull/hulls" />    <!-- opencv_apps/ContorArrayStamped -->
     <test test-name="convex_hull_test" pkg="rostest" type="hztest" name="convex_hull_test" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
   </group>

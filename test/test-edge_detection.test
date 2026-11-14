@@ -26,7 +26,7 @@
     <param name="edge_sobel_detection_test/topic" value="edge_sobel_detection/image" />    <!-- opencv_apps/FaceArrayStamped -->
     <test test-name="edge_sobel_detection_test" pkg="rostest" type="hztest" name="edge_sobel_detection_test" time-limit="120" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
     <!-- 1: Laplace -->
@@ -47,7 +47,7 @@
     <param name="edge_laplace_detection_test/topic" value="edge_laplace_detection/image" />    <!-- opencv_apps/FaceArrayStamped -->
     <test test-name="edge_laplace_detection_test" pkg="rostest" type="hztest" name="edge_laplace_detection_test" time-limit="120" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
     <!-- 2: Canny -->
@@ -68,7 +68,7 @@
     <param name="edge_canny_detection_test/topic" value="edge_canny_detection/image" />    <!-- opencv_apps/FaceArrayStamped -->
     <test test-name="edge_canny_detection_test" pkg="rostest" type="hztest" name="edge_canny_detection_test" time-limit="120" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
   </group>

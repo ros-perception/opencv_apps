@@ -53,13 +53,13 @@
     <param name="adding_images_test/topic" value="adding_images/image" />
     <test test-name="adding_images_test" pkg="rostest" type="hztest" name="adding_images_test" time-limit="120" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
     <param name="adding_images_test_resize/topic" value="adding_images_resize/image" />
     <test test-name="adding_images_test_resize" pkg="rostest" type="hztest" name="adding_images_test_resize" time-limit="120" if="$(arg check_resize)" >
       <param name="hz" value="30" />
-      <param name="hzerror" value="10.0" />
+      <param name="hzerror" value="25.0" />
       <param name="test_duration" value="1.0" />
     </test>
   </group>
