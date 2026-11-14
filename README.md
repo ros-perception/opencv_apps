@@ -47,14 +47,14 @@ Filter and transform the images: edges, histogram equalization, morphology, imag
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/adding_images.html"><img src="https://ros-perception.github.io/opencv_apps/media/adding_images_thumb.gif" width="200" alt="adding_images"><br><code>adding_images</code></a><br><sub>~/image</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/discrete_fourier_transform.html"><img src="https://ros-perception.github.io/opencv_apps/media/discrete_fourier_transform_thumb.gif" width="200" alt="discrete_fourier_transform"><br><code>discrete_fourier_transform</code></a><br><sub>~/image</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/edge_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/edge_detection_thumb.gif" width="200" alt="edge_detection"><br><code>edge_detection</code></a><br><sub>~/image</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/pyramids.html"><img src="https://ros-perception.github.io/opencv_apps/media/pyramids_thumb.gif" width="200" alt="pyramids"><br><code>pyramids</code></a><br><sub>~/image</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/adding_images.html"><img src="https://ros-perception.github.io/opencv_apps/media/adding_images_thumb.gif" width="200" alt="adding_images"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/adding_images.html"><code>adding_images</code></a><br><sub>~/image</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/discrete_fourier_transform.html"><img src="https://ros-perception.github.io/opencv_apps/media/discrete_fourier_transform_thumb.gif" width="200" alt="discrete_fourier_transform"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/discrete_fourier_transform.html"><code>discrete_fourier_transform</code></a><br><sub>~/image</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/edge_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/edge_detection_thumb.gif" width="200" alt="edge_detection"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/edge_detection.html"><code>edge_detection</code></a><br><sub>~/image</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/pyramids.html"><img src="https://ros-perception.github.io/opencv_apps/media/pyramids_thumb.gif" width="200" alt="pyramids"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/pyramids.html"><code>pyramids</code></a><br><sub>~/image</sub></td>
 </tr>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/smoothing.html"><img src="https://ros-perception.github.io/opencv_apps/media/smoothing_thumb.gif" width="200" alt="smoothing"><br><code>smoothing</code></a><br><sub>~/image</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/threshold.html"><img src="https://ros-perception.github.io/opencv_apps/media/threshold_thumb.gif" width="200" alt="threshold"><br><code>threshold</code></a><br><sub>~/image</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/smoothing.html"><img src="https://ros-perception.github.io/opencv_apps/media/smoothing_thumb.gif" width="200" alt="smoothing"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/smoothing.html"><code>smoothing</code></a><br><sub>~/image</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/threshold.html"><img src="https://ros-perception.github.io/opencv_apps/media/threshold_thumb.gif" width="200" alt="threshold"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/threshold.html"><code>threshold</code></a><br><sub>~/image</sub></td>
 </tr>
 </table>
 
@@ -62,9 +62,9 @@ Filter and transform the images: edges, histogram equalization, morphology, imag
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/equalize_histogram.html"><img src="https://ros-perception.github.io/opencv_apps/media/equalize_histogram_thumb.gif" width="200" alt="equalize_histogram"><br><code>equalize_histogram</code></a><br><sub>~/image</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/morphology.html"><img src="https://ros-perception.github.io/opencv_apps/media/morphology_thumb.gif" width="200" alt="morphology"><br><code>morphology</code></a><br><sub>~/image</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_depth_estimation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_depth_estimation_thumb.gif" width="200" alt="dnn_depth_estimation"><br><code>dnn_depth_estimation</code></a><br><sub>~/inverse_depth</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/equalize_histogram.html"><img src="https://ros-perception.github.io/opencv_apps/media/equalize_histogram_thumb.gif" width="200" alt="equalize_histogram"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/equalize_histogram.html"><code>equalize_histogram</code></a><br><sub>~/image</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/morphology.html"><img src="https://ros-perception.github.io/opencv_apps/media/morphology_thumb.gif" width="200" alt="morphology"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/morphology.html"><code>morphology</code></a><br><sub>~/image</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_depth_estimation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_depth_estimation_thumb.gif" width="200" alt="dnn_depth_estimation"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_depth_estimation.html"><code>dnn_depth_estimation</code></a><br><sub>~/inverse_depth</sub></td>
 </tr>
 </table>
 
@@ -76,16 +76,16 @@ Find the corners, the lines and the line segments, the circles and the blobs, an
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/corner_harris.html"><img src="https://ros-perception.github.io/opencv_apps/media/corner_harris_thumb.gif" width="200" alt="corner_harris"><br><code>corner_harris</code></a><br><sub>~/corners</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/goodfeature_track.html"><img src="https://ros-perception.github.io/opencv_apps/media/goodfeature_track_thumb.gif" width="200" alt="goodfeature_track"><br><code>goodfeature_track</code></a><br><sub>~/corners</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/hough_lines.html"><img src="https://ros-perception.github.io/opencv_apps/media/hough_lines_thumb.gif" width="200" alt="hough_lines"><br><code>hough_lines</code></a><br><sub>~/lines</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/hough_circles.html"><img src="https://ros-perception.github.io/opencv_apps/media/hough_circles_thumb.gif" width="200" alt="hough_circles"><br><code>hough_circles</code></a><br><sub>~/circles</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/corner_harris.html"><img src="https://ros-perception.github.io/opencv_apps/media/corner_harris_thumb.gif" width="200" alt="corner_harris"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/corner_harris.html"><code>corner_harris</code></a><br><sub>~/corners</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/goodfeature_track.html"><img src="https://ros-perception.github.io/opencv_apps/media/goodfeature_track_thumb.gif" width="200" alt="goodfeature_track"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/goodfeature_track.html"><code>goodfeature_track</code></a><br><sub>~/corners</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/hough_lines.html"><img src="https://ros-perception.github.io/opencv_apps/media/hough_lines_thumb.gif" width="200" alt="hough_lines"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/hough_lines.html"><code>hough_lines</code></a><br><sub>~/lines</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/hough_circles.html"><img src="https://ros-perception.github.io/opencv_apps/media/hough_circles_thumb.gif" width="200" alt="hough_circles"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/hough_circles.html"><code>hough_circles</code></a><br><sub>~/circles</sub></td>
 </tr>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/find_contours.html"><img src="https://ros-perception.github.io/opencv_apps/media/find_contours_thumb.gif" width="200" alt="find_contours"><br><code>find_contours</code></a><br><sub>~/contours</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/general_contours.html"><img src="https://ros-perception.github.io/opencv_apps/media/general_contours_thumb.gif" width="200" alt="general_contours"><br><code>general_contours</code></a><br><sub>~/contours</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/contour_moments.html"><img src="https://ros-perception.github.io/opencv_apps/media/contour_moments_thumb.gif" width="200" alt="contour_moments"><br><code>contour_moments</code></a><br><sub>~/contours</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/convex_hull.html"><img src="https://ros-perception.github.io/opencv_apps/media/convex_hull_thumb.gif" width="200" alt="convex_hull"><br><code>convex_hull</code></a><br><sub>~/hulls</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/find_contours.html"><img src="https://ros-perception.github.io/opencv_apps/media/find_contours_thumb.gif" width="200" alt="find_contours"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/find_contours.html"><code>find_contours</code></a><br><sub>~/contours</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/general_contours.html"><img src="https://ros-perception.github.io/opencv_apps/media/general_contours_thumb.gif" width="200" alt="general_contours"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/general_contours.html"><code>general_contours</code></a><br><sub>~/contours</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/contour_moments.html"><img src="https://ros-perception.github.io/opencv_apps/media/contour_moments_thumb.gif" width="200" alt="contour_moments"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/contour_moments.html"><code>contour_moments</code></a><br><sub>~/contours</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/convex_hull.html"><img src="https://ros-perception.github.io/opencv_apps/media/convex_hull_thumb.gif" width="200" alt="convex_hull"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/convex_hull.html"><code>convex_hull</code></a><br><sub>~/hulls</sub></td>
 </tr>
 </table>
 
@@ -93,8 +93,8 @@ Find the corners, the lines and the line segments, the circles and the blobs, an
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/line_segment_detector.html"><img src="https://ros-perception.github.io/opencv_apps/media/line_segment_detector_thumb.gif" width="200" alt="line_segment_detector"><br><code>line_segment_detector</code></a><br><sub>~/lines</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/blob_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/blob_detection_thumb.gif" width="200" alt="blob_detection"><br><code>blob_detection</code></a><br><sub>~/circles</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/line_segment_detector.html"><img src="https://ros-perception.github.io/opencv_apps/media/line_segment_detector_thumb.gif" width="200" alt="line_segment_detector"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/line_segment_detector.html"><code>line_segment_detector</code></a><br><sub>~/lines</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/blob_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/blob_detection_thumb.gif" width="200" alt="blob_detection"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/blob_detection.html"><code>blob_detection</code></a><br><sub>~/circles</sub></td>
 </tr>
 </table>
 
@@ -106,13 +106,13 @@ Divide the image into regions by the class of each pixel: the pixels in a range 
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/hsv_color_filter.html"><img src="https://ros-perception.github.io/opencv_apps/media/hsv_color_filter_thumb.gif" width="200" alt="hsv_color_filter"><br><code>hsv_color_filter</code></a><br><sub>~/image</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/hls_color_filter.html"><img src="https://ros-perception.github.io/opencv_apps/media/hls_color_filter_thumb.gif" width="200" alt="hls_color_filter"><br><code>hls_color_filter</code></a><br><sub>~/image</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/rgb_color_filter.html"><img src="https://ros-perception.github.io/opencv_apps/media/rgb_color_filter_thumb.gif" width="200" alt="rgb_color_filter"><br><code>rgb_color_filter</code></a><br><sub>~/image</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/segment_objects.html"><img src="https://ros-perception.github.io/opencv_apps/media/segment_objects_thumb.gif" width="200" alt="segment_objects"><br><code>segment_objects</code></a><br><sub>~/contours</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/hsv_color_filter.html"><img src="https://ros-perception.github.io/opencv_apps/media/hsv_color_filter_thumb.gif" width="200" alt="hsv_color_filter"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/hsv_color_filter.html"><code>hsv_color_filter</code></a><br><sub>~/image</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/hls_color_filter.html"><img src="https://ros-perception.github.io/opencv_apps/media/hls_color_filter_thumb.gif" width="200" alt="hls_color_filter"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/hls_color_filter.html"><code>hls_color_filter</code></a><br><sub>~/image</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/rgb_color_filter.html"><img src="https://ros-perception.github.io/opencv_apps/media/rgb_color_filter_thumb.gif" width="200" alt="rgb_color_filter"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/rgb_color_filter.html"><code>rgb_color_filter</code></a><br><sub>~/image</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/segment_objects.html"><img src="https://ros-perception.github.io/opencv_apps/media/segment_objects_thumb.gif" width="200" alt="segment_objects"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/segment_objects.html"><code>segment_objects</code></a><br><sub>~/contours</sub></td>
 </tr>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/watershed_segmentation.html"><img src="https://ros-perception.github.io/opencv_apps/media/watershed_segmentation_thumb.gif" width="200" alt="watershed_segmentation"><br><code>watershed_segmentation</code></a><br><sub>~/contours</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/watershed_segmentation.html"><img src="https://ros-perception.github.io/opencv_apps/media/watershed_segmentation_thumb.gif" width="200" alt="watershed_segmentation"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/watershed_segmentation.html"><code>watershed_segmentation</code></a><br><sub>~/contours</sub></td>
 </tr>
 </table>
 
@@ -120,9 +120,9 @@ Divide the image into regions by the class of each pixel: the pixels in a range 
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/lab_color_filter.html"><img src="https://ros-perception.github.io/opencv_apps/media/lab_color_filter_thumb.gif" width="200" alt="lab_color_filter"><br><code>lab_color_filter</code></a><br><sub>~/image</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/background_subtraction.html"><img src="https://ros-perception.github.io/opencv_apps/media/background_subtraction_thumb.gif" width="200" alt="background_subtraction"><br><code>background_subtraction</code></a><br><sub>~/image</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_semantic_segmentation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_semantic_segmentation_thumb.gif" width="200" alt="dnn_semantic_segmentation"><br><code>dnn_semantic_segmentation</code></a><br><sub>~/label</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/lab_color_filter.html"><img src="https://ros-perception.github.io/opencv_apps/media/lab_color_filter_thumb.gif" width="200" alt="lab_color_filter"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/lab_color_filter.html"><code>lab_color_filter</code></a><br><sub>~/image</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/background_subtraction.html"><img src="https://ros-perception.github.io/opencv_apps/media/background_subtraction_thumb.gif" width="200" alt="background_subtraction"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/background_subtraction.html"><code>background_subtraction</code></a><br><sub>~/image</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_semantic_segmentation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_semantic_segmentation_thumb.gif" width="200" alt="dnn_semantic_segmentation"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_semantic_segmentation.html"><code>dnn_semantic_segmentation</code></a><br><sub>~/label</sub></td>
 </tr>
 </table>
 
@@ -134,7 +134,7 @@ Find what the whole image shows, the classes of ImageNet. Output: `~/detections`
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_image_classification.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_image_classification_thumb.gif" width="200" alt="dnn_image_classification"><br><code>dnn_image_classification</code></a><br><sub>~/detections</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_image_classification.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_image_classification_thumb.gif" width="200" alt="dnn_image_classification"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_image_classification.html"><code>dnn_image_classification</code></a><br><sub>~/detections</sub></td>
 </tr>
 </table>
 
@@ -146,7 +146,7 @@ Find the bounding boxes of the people (HOG of people_detect) and the objects (YO
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/people_detect.html"><img src="https://ros-perception.github.io/opencv_apps/media/people_detect_thumb.gif" width="200" alt="people_detect"><br><code>people_detect</code></a><br><sub>~/detections</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/people_detect.html"><img src="https://ros-perception.github.io/opencv_apps/media/people_detect_thumb.gif" width="200" alt="people_detect"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/people_detect.html"><code>people_detect</code></a><br><sub>~/detections</sub></td>
 </tr>
 </table>
 
@@ -154,7 +154,7 @@ Find the bounding boxes of the people (HOG of people_detect) and the objects (YO
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_object_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_object_detection_thumb.gif" width="200" alt="dnn_object_detection"><br><code>dnn_object_detection</code></a><br><sub>~/detections</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_object_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_object_detection_thumb.gif" width="200" alt="dnn_object_detection"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_object_detection.html"><code>dnn_object_detection</code></a><br><sub>~/detections</sub></td>
 </tr>
 </table>
 
@@ -166,9 +166,9 @@ Find and decode QR codes, barcodes and ArUco markers. Output: `~/detections` (De
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/qrcode_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/qrcode_detection_thumb.gif" width="200" alt="qrcode_detection"><br><code>qrcode_detection</code></a><br><sub>~/detections</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/barcode_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/barcode_detection_thumb.gif" width="200" alt="barcode_detection"><br><code>barcode_detection</code></a><br><sub>~/detections</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/aruco_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/aruco_detection_thumb.gif" width="200" alt="aruco_detection"><br><code>aruco_detection</code></a><br><sub>~/detections</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/qrcode_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/qrcode_detection_thumb.gif" width="200" alt="qrcode_detection"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/qrcode_detection.html"><code>qrcode_detection</code></a><br><sub>~/detections</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/barcode_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/barcode_detection_thumb.gif" width="200" alt="barcode_detection"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/barcode_detection.html"><code>barcode_detection</code></a><br><sub>~/detections</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/aruco_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/aruco_detection_thumb.gif" width="200" alt="aruco_detection"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/aruco_detection.html"><code>aruco_detection</code></a><br><sub>~/detections</sub></td>
 </tr>
 </table>
 
@@ -180,7 +180,7 @@ Find the texts and read them (OCR). Output: `~/detections` (DetectionArrayStampe
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_text_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_text_detection_thumb.gif" width="200" alt="dnn_text_detection"><br><code>dnn_text_detection</code></a><br><sub>~/detections</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_text_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_text_detection_thumb.gif" width="200" alt="dnn_text_detection"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_text_detection.html"><code>dnn_text_detection</code></a><br><sub>~/detections</sub></td>
 </tr>
 </table>
 
@@ -192,8 +192,8 @@ Detect and recognize the faces and their expressions. Output: `~/faces` (FaceArr
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/face_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/face_detection_thumb.gif" width="200" alt="face_detection"><br><code>face_detection</code></a><br><sub>~/faces</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/face_recognition.html"><img src="https://ros-perception.github.io/opencv_apps/media/face_recognition_thumb.gif" width="200" alt="face_recognition"><br><code>face_recognition</code></a><br><sub>~/faces</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/face_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/face_detection_thumb.gif" width="200" alt="face_detection"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/face_detection.html"><code>face_detection</code></a><br><sub>~/faces</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/face_recognition.html"><img src="https://ros-perception.github.io/opencv_apps/media/face_recognition_thumb.gif" width="200" alt="face_recognition"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/face_recognition.html"><code>face_recognition</code></a><br><sub>~/faces</sub></td>
 </tr>
 </table>
 
@@ -201,9 +201,9 @@ Detect and recognize the faces and their expressions. Output: `~/faces` (FaceArr
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_face_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_face_detection_thumb.gif" width="200" alt="dnn_face_detection"><br><code>dnn_face_detection</code></a><br><sub>~/faces</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_face_recognition.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_face_recognition_thumb.gif" width="200" alt="dnn_face_recognition"><br><code>dnn_face_recognition</code></a><br><sub>~/faces</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_facial_expression_recognition.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_facial_expression_recognition_thumb.gif" width="200" alt="dnn_facial_expression_recognition"><br><code>dnn_facial_expression_recognition</code></a><br><sub>~/faces</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_face_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_face_detection_thumb.gif" width="200" alt="dnn_face_detection"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_face_detection.html"><code>dnn_face_detection</code></a><br><sub>~/faces</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_face_recognition.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_face_recognition_thumb.gif" width="200" alt="dnn_face_recognition"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_face_recognition.html"><code>dnn_face_recognition</code></a><br><sub>~/faces</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_facial_expression_recognition.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_facial_expression_recognition_thumb.gif" width="200" alt="dnn_facial_expression_recognition"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_facial_expression_recognition.html"><code>dnn_facial_expression_recognition</code></a><br><sub>~/faces</sub></td>
 </tr>
 </table>
 
@@ -215,8 +215,8 @@ Estimate the poses of the people and the hands. Output: `~/skeletons` (SkeletonA
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_pose_estimation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_pose_estimation_thumb.gif" width="200" alt="dnn_pose_estimation"><br><code>dnn_pose_estimation</code></a><br><sub>~/skeletons</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_hand_pose_estimation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_hand_pose_estimation_thumb.gif" width="200" alt="dnn_hand_pose_estimation"><br><code>dnn_hand_pose_estimation</code></a><br><sub>~/skeletons</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_pose_estimation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_pose_estimation_thumb.gif" width="200" alt="dnn_pose_estimation"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_pose_estimation.html"><code>dnn_pose_estimation</code></a><br><sub>~/skeletons</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_hand_pose_estimation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_hand_pose_estimation_thumb.gif" width="200" alt="dnn_hand_pose_estimation"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_hand_pose_estimation.html"><code>dnn_hand_pose_estimation</code></a><br><sub>~/skeletons</sub></td>
 </tr>
 </table>
 
@@ -228,7 +228,7 @@ Track a target given by `set_roi` or the mouse. Output: `~/output` (RectArraySta
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/camshift.html"><img src="https://ros-perception.github.io/opencv_apps/media/camshift_thumb.gif" width="200" alt="camshift"><br><code>camshift</code></a><br><sub>~/track_box</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/camshift.html"><img src="https://ros-perception.github.io/opencv_apps/media/camshift_thumb.gif" width="200" alt="camshift"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/camshift.html"><code>camshift</code></a><br><sub>~/track_box</sub></td>
 </tr>
 </table>
 
@@ -236,9 +236,9 @@ Track a target given by `set_roi` or the mouse. Output: `~/output` (RectArraySta
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/tracking.html"><img src="https://ros-perception.github.io/opencv_apps/media/tracking_thumb.gif" width="200" alt="tracking"><br><code>tracking</code></a><br><sub>~/output</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/match_template.html"><img src="https://ros-perception.github.io/opencv_apps/media/match_template_thumb.gif" width="200" alt="match_template"><br><code>match_template</code></a><br><sub>~/output</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_tracking.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_tracking_thumb.gif" width="200" alt="dnn_tracking"><br><code>dnn_tracking</code></a><br><sub>~/output</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/tracking.html"><img src="https://ros-perception.github.io/opencv_apps/media/tracking_thumb.gif" width="200" alt="tracking"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/tracking.html"><code>tracking</code></a><br><sub>~/output</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/match_template.html"><img src="https://ros-perception.github.io/opencv_apps/media/match_template_thumb.gif" width="200" alt="match_template"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/match_template.html"><code>match_template</code></a><br><sub>~/output</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_tracking.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_tracking_thumb.gif" width="200" alt="dnn_tracking"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_tracking.html"><code>dnn_tracking</code></a><br><sub>~/output</sub></td>
 </tr>
 </table>
 
@@ -250,10 +250,10 @@ Estimate the motion of the image. Output: `~/flows` (FlowArrayStamped), `~/shift
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/fback_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/fback_flow_thumb.gif" width="200" alt="fback_flow"><br><code>fback_flow</code></a><br><sub>~/flows</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/lk_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/lk_flow_thumb.gif" width="200" alt="lk_flow"><br><code>lk_flow</code></a><br><sub>~/flows</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/simple_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/simple_flow_thumb.gif" width="200" alt="simple_flow"><br><code>simple_flow</code></a><br><sub>~/flows</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/phase_corr.html"><img src="https://ros-perception.github.io/opencv_apps/media/phase_corr_thumb.gif" width="200" alt="phase_corr"><br><code>phase_corr</code></a><br><sub>~/shift</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/fback_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/fback_flow_thumb.gif" width="200" alt="fback_flow"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/fback_flow.html"><code>fback_flow</code></a><br><sub>~/flows</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/lk_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/lk_flow_thumb.gif" width="200" alt="lk_flow"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/lk_flow.html"><code>lk_flow</code></a><br><sub>~/flows</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/simple_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/simple_flow_thumb.gif" width="200" alt="simple_flow"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/simple_flow.html"><code>simple_flow</code></a><br><sub>~/flows</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/phase_corr.html"><img src="https://ros-perception.github.io/opencv_apps/media/phase_corr_thumb.gif" width="200" alt="phase_corr"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/phase_corr.html"><code>phase_corr</code></a><br><sub>~/shift</sub></td>
 </tr>
 </table>
 
@@ -265,7 +265,7 @@ Compare the color histogram of the image with a reference. Output: `~/distance` 
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/compare_histogram.html"><img src="https://ros-perception.github.io/opencv_apps/media/compare_histogram_thumb.gif" width="200" alt="compare_histogram"><br><code>compare_histogram</code></a><br><sub>~/distance</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/compare_histogram.html"><img src="https://ros-perception.github.io/opencv_apps/media/compare_histogram_thumb.gif" width="200" alt="compare_histogram"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/compare_histogram.html"><code>compare_histogram</code></a><br><sub>~/distance</sub></td>
 </tr>
 </table>
 <!-- gallery end -->
