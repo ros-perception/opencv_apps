@@ -19,8 +19,8 @@
     <arg name="camera_info" value="camera_info" />
   </include>
 
-  <param name="detection_3d_detections_test/topic" value="detection_3d/detections" />
-  <test test-name="detection_3d_detections_test" pkg="rostest" type="hztest" name="detection_3d_detections_test" time-limit="300" >
+  <param name="detection_3d_skeletons_test/topic" value="detection_3d/detections" />
+  <test test-name="detection_3d_skeletons_test" pkg="rostest" type="hztest" name="detection_3d_skeletons_test" time-limit="300" >
     <param name="hz" value="9.0" />
     <param name="hzerror" value="8.9" />
     <param name="test_duration" value="2.0" />
