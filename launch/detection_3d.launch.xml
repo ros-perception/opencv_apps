@@ -34,7 +34,7 @@
     <param name="min_depth" value="$(var min_depth)" />
     <param name="max_depth" value="$(var max_depth)" />
     <param name="publish_tf" value="$(var publish_tf)" />
-    <param name="tf_prefix" value="$(var tf_prefix)" />
+    <param name="tf_prefix" type="str" value="$(var tf_prefix)" />
     <param name="track_distance" value="$(var track_distance)" />
     <param name="track_lost_frames" value="$(var track_lost_frames)" />
     <param name="keypoint_radius" value="$(var keypoint_radius)" />
