@@ -141,11 +141,12 @@ function run_test {
     travis_time_start run_test.script
     source /opt/ros/$ROS_DISTRO/setup.bash
     cd ~/catkin_ws
-    # catkin run_tests runs the rostests one by one even with -j, so run them in parallel with make; the
-    # catkin_tools of kinetic and melodic skip opencv_apps (build type ament_cmake), then there is no test
+    # catkin run_tests runs the rostests one by one even with -j, so run them in parallel with the build tool
+    # (make or ninja, both take -j); the catkin_tools of kinetic and melodic skip opencv_apps (build type
+    # ament_cmake), then there is no test
     if [ -d build/opencv_apps ]; then
         source devel/setup.bash
-        make -C build/opencv_apps -j$_JOBS run_tests
+        cmake --build build/opencv_apps --target run_tests -- -j$_JOBS
     fi
     catkin_test_results --verbose build || catkin_test_results --all build
     travis_time_end
