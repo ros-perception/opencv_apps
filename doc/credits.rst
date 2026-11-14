@@ -46,3 +46,10 @@ The demos of face_recognition, dnn_face_recognition and people_detect use
 people for HOG), and the demos of qrcode_detection, barcode_detection, aruco_detection and
 dnn_text_detection use ``test/codes.mp4`` and ``test/text.mp4`` of opencv_apps, made by ``test/make_codes_video.py``
 and ``test/make_text_video.py``. The tests of the nodes use the videos in ``test/``.
+
+The demo and the tests of detection_3d use ``test/rgbd_walking.mp4`` and ``test/rgbd_walking_depth.npz``, 20 color
+and depth images (every 6th of the first 120 images) of the freiburg3_walking_xyz sequence of the
+`TUM RGB-D dataset <https://cvg.cit.tum.de/data/datasets/rgbd-dataset>`_ (J. Sturm, N. Engelhard, F. Endres, W.
+Burgard and D. Cremers, "A Benchmark for the Evaluation of RGB-D SLAM Systems", IROS 2012), licensed under
+`CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_; the depths are converted from 5000 per meter to
+millimeters.

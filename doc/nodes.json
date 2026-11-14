@@ -1373,6 +1373,139 @@
    }
   ]
  },
+ "detection_3d": {
+  "description": "Nodelet to publish the 3D boxes and the TF frames of the 2D detections, faces or tracked targets, with a depth image",
+  "node": "detection_3d",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": 0.3,
+    "description": "The pixels within this distance (m) of the median depth of the box belong to the object.",
+    "name": "depth_threshold",
+    "range": [
+     0.01,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "detections",
+    "description": "Type of input: detections (opencv_apps/DetectionArrayStamped, e.g. ~/detections of dnn_object_detection), faces (FaceArrayStamped, ~/faces of the face nodes) or rects (RectArrayStamped, ~/output of the tracking nodes).",
+    "name": "input_type",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 10.0,
+    "description": "Maximum valid depth (m).",
+    "name": "max_depth",
+    "range": [
+     0.0,
+     1000.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.1,
+    "description": "Minimum valid depth (m).",
+    "name": "min_depth",
+    "range": [
+     0.0,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": true,
+    "description": "Publish the TF frame <tf_prefix><label>_<id> of each object.",
+    "name": "publish_tf",
+    "type": "bool"
+   },
+   {
+    "default": 10,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 0.8,
+    "description": "Scale of the 2D box whose depths are used, smaller to leave out the background at the edges of the box.",
+    "name": "roi_scale",
+    "range": [
+     0.1,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "",
+    "description": "Prefix of the TF frames.",
+    "name": "tf_prefix",
+    "type": "string"
+   },
+   {
+    "default": 0.5,
+    "description": "An object within this distance (m) of an object of the same label in the previous images is the same object, and keeps its id.",
+    "name": "track_distance",
+    "range": [
+     0.0,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 10,
+    "description": "Number of images that a lost object keeps its id for.",
+    "name": "track_lost_frames",
+    "range": [
+     0,
+     1000
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/detections",
+    "type": "vision_msgs/msg/Detection3DArray"
+   },
+   {
+    "name": "/tf",
+    "type": "tf2_msgs/msg/TFMessage"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/camera_info",
+    "type": "sensor_msgs/msg/CameraInfo"
+   },
+   {
+    "name": "/depth",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "/input",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
+   }
+  ]
+ },
  "discrete_fourier_transform": {
   "description": "Nodelet to fourier transform",
   "node": "discrete_fourier_transform",

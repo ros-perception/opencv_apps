@@ -74,10 +74,20 @@ CATEGORIES = [
     ('Tracking', ['tracking', 'match_template', 'dnn_tracking', 'camshift']),
     ('Optical flow and motion', ['fback_flow', 'lk_flow', 'simple_flow', 'phase_corr']),
     ('Histogram comparison', ['compare_histogram']),
+    ('3D localization', ['detection_3d']),
 ]
 # the descriptions of the nodes, instead of the documentation comments of their sources, which are the comments of
 # the samples of OpenCV for the most of the nodes other than the dnn nodes
 DESCRIPTIONS = {
+    'detection_3d': 'Publishes the 3D boxes (``vision_msgs/Detection3DArray``) and the TF frames ``<label>_<id>`` '
+                    'of the 2D results of the other nodes, ``~/detections`` of the detection nodes '
+                    '(``input_type:=detections``), ``~/faces`` of the face nodes (``faces``) or ``~/output`` of the '
+                    'tracking nodes (``rects``), with a depth image registered to their color image, e.g. of an RGB-D '
+                    'camera. The depth of an object is the median of the depths in its 2D box, and its 3D box is the '
+                    'extent of the pixels within ``depth_threshold`` of the median, as '
+                    '`yolo_ros <https://github.com/mgonzs13/yolo_ros>`_. The objects are tracked by the distance of '
+                    'their centers, so that each object keeps its TF frame. On ROS 1, the results of vision_msgs '
+                    '(0.0.2) have only the class id of the detections, and the labels are in the TF frames.',
     'adding_images': 'Blends two images, ``image1`` and ``image2``, with ``cv::addWeighted()``: alpha * image1 + '
                      'beta * image2 + gamma. The two images are synchronized by their time stamps.',
     'discrete_fourier_transform': 'Shows the magnitude spectrum of the discrete Fourier transform '
@@ -186,6 +196,9 @@ CATEGORY_DESCRIPTIONS = {
                                 '``~/flows`` (FlowArrayStamped), ``~/shift`` (Point2DStamped) of phase_corr'),
     'Histogram comparison': ('Compare the color histogram of the image with a reference.',
                              '``~/distance`` (Float64)'),
+    '3D localization': ('Localize the objects, the faces and the tracked targets of the nodes above in 3D, with a '
+                        'depth image, and publish their TF frames.',
+                        '``~/detections`` (vision_msgs/Detection3DArray) and the TF frames'),
 }
 # the main output of each node, under its tile, when it is not ~/image
 NODE_OUTPUTS = {
@@ -193,6 +206,7 @@ NODE_OUTPUTS = {
     'corner_harris': '~/corners', 'goodfeature_track': '~/corners', 'hough_lines': '~/lines',
     'line_segment_detector': '~/lines', 'hough_circles': '~/circles', 'blob_detection': '~/circles',
     'convex_hull': '~/hulls', 'camshift': '~/track_box', 'phase_corr': '~/shift', 'compare_histogram': '~/distance',
+    'detection_3d': '~/detections',
 }
 for _node in ['find_contours', 'general_contours', 'contour_moments', 'segment_objects', 'watershed_segmentation']:
     NODE_OUTPUTS[_node] = '~/contours'
@@ -239,6 +253,7 @@ for _node in ['aruco_detection', 'background_subtraction', 'barcode_detection', 
               'dnn_hand_pose_estimation', 'dnn_image_classification', 'dnn_object_detection', 'dnn_pose_estimation',
               'dnn_semantic_segmentation', 'dnn_text_detection', 'dnn_tracking']:
     SINCE[_node] = '3.0.0'
+SINCE['detection_3d'] = '3.1.0'
 # the requirements of OpenCV of the nodes (see CMakeLists.txt): the minimum version, and the description
 OPENCV_REQUIREMENTS = {
     'simple_flow': (None, 'the optflow module of opencv_contrib'),
@@ -296,8 +311,8 @@ def availability(node):
         ros += '; not %s' % ', '.join(old_opencv)
     if node in ROS_NOTES:
         ros += '; ' + ROS_NOTES[node]
-    if since == '3.0.0':
-        apps = '3.0.0 and later'
+    if version_tuple(since) >= version_tuple('3.0.0'):
+        apps = '%s and later' % since
     else:
         apps = '%s and later (ROS 1), 3.0.0 and later (ROS 2)' % since
     return [['opencv_apps', apps], ['ROS', ros], ['OpenCV', opencv]]
@@ -423,20 +438,26 @@ def demo_section(node, demo):
     # the shell variables of prepare (e.g. H=...) are set in the terminal of the node
     prepare = [c for c in demo.get('prepare', []) if not re.match(r'^[A-Z_]+=', c)]
     variables = [c for c in demo.get('prepare', []) if re.match(r'^[A-Z_]+=', c)]
-    terminals = [('publish the video as image in a loop',
-                  ['ros2 run image_publisher image_publisher_node %s --ros-args -p publish_rate:=10.0 '
-                   '-r image_raw:=image' % video]),
+    # the files to download and the publisher of the input, the video and image_publisher by default
+    downloads = [(TEST_VIDEOS_URL + d) if d.startswith('test/') else d for d in demo.get('downloads', [])] or [url]
+    publisher = demo.get('publisher', 'ros2 run image_publisher image_publisher_node %s --ros-args '
+                                      '-p publish_rate:=10.0 -r image_raw:=image' % video)
+    terminals = [('publish the video as image in a loop' if 'publisher' not in demo else
+                  'publish the input in a loop', [publisher]),
                  ('run the node' + (' with the parameters of the demo' if arguments else ''),
                   variables + [('ros2 launch opencv_apps %s.launch.xml %s %s'
                                 % (launch_file, image, arguments)).rstrip()])]
     for step in demo.get('steps', []):
         title = 'run, keep it running' if step.endswith('&') else 'then run once'
         terminals.append((title, [step.rstrip('&').rstrip()]))
-    view = 'ros2 run rqt_image_view rqt_image_view /%s/%s' % (node_name, demo.get('view', 'image'))
+    view = demo.get('view_command',
+                    'ros2 run rqt_image_view rqt_image_view /%s/%s' % (node_name, demo.get('view', 'image')))
     terminals.append(('view the result', [view]))
-    lines = ['Try it with the demo video', '--------------------------', '',
-             'Download the input video of the demo above, publish it as ``image`` with ``image_publisher``, and run '
-             'the node on it, in the terminals:', '', '.. code-block:: bash', '', '   wget %s' % url]
+    intro = ('Download the input video of the demo above, publish it as ``image`` with ``image_publisher``, and run '
+             'the node on it, in the terminals:' if 'publisher' not in demo else
+             'Download the input of the demo above, publish it, and run the node on it, in the terminals:')
+    lines = ['Try it with the demo video', '--------------------------', '', intro, '', '.. code-block:: bash', '']
+    lines += ['   wget %s' % download for download in downloads]
     lines += ['   ' + command for command in prepare]
     for number, (title, commands) in enumerate(terminals, 1):
         lines.append('   # terminal %d: %s' % (number, title))
@@ -444,7 +465,7 @@ def demo_section(node, demo):
     lines.append('')
     if demo.get('note'):
         lines += [demo['note'], '']
-    if not demo.get('steps') and not demo.get('prepare') and image == 'image:=image':
+    if not demo.get('steps') and not demo.get('prepare') and image == 'image:=image' and 'publisher' not in demo:
         lines += ['In ROS 1:', '', '.. code-block:: bash', '',
                   '   # terminal 1',
                   '   rosrun image_publisher image_publisher %s _publish_rate:=10 __name:=camera' % video,

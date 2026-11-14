@@ -32,7 +32,7 @@
 
 
 # Dump the interface of each node of opencv_apps (ROS2) to doc/nodes.json, from which doc/conf.py generates the
-# pages of the nodes: run each node, subscribe its image outputs (the nodes subscribe their inputs only when their
+# pages of the nodes: run each node, subscribe its outputs (the nodes subscribe their inputs only when their
 # outputs are subscribed), and get its publishers, subscriptions, services and parameters.
 #   source install/setup.bash; python3 doc/tools/dump_nodes.py
 
@@ -101,10 +101,11 @@ def dump(node, executable):
         full_name = (namespace.rstrip('/') + '/' + node_name)
         time.sleep(1.0)
         publishers = node.get_publisher_names_and_types_by_node(node_name, namespace)
-        # subscribe the image outputs, so that the node subscribes its inputs
+        # subscribe the image outputs and the outputs of the node (e.g. ~/detections of detection_3d, which has no
+        # image output), so that the node subscribes its inputs
         subscriptions = []
         for topic, types in publishers:
-            if types[0] == 'sensor_msgs/msg/Image':
+            if types[0] == 'sensor_msgs/msg/Image' or topic.startswith(full_name + '/'):
                 subscriptions.append(node.create_subscription(get_message(types[0]), topic, lambda msg: None, 1))
         end_time = time.time() + 5
         while time.time() < end_time:

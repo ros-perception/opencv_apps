@@ -268,6 +268,18 @@ Compare the color histogram of the image with a reference. Output: `~/distance` 
 <td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/compare_histogram.html"><img src="https://ros-perception.github.io/opencv_apps/media/compare_histogram_thumb.gif" width="200" alt="compare_histogram"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/compare_histogram.html"><code>compare_histogram</code></a><br><sub>~/distance</sub></td>
 </tr>
 </table>
+
+### 3D localization
+
+Localize the objects, the faces and the tracked targets of the nodes above in 3D, with a depth image, and publish their TF frames. Output: `~/detections` (vision_msgs/Detection3DArray) and the TF frames.
+
+**ROS 1: ROS One and later, ROS 2: jazzy and later**
+
+<table>
+<tr>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/detection_3d.html"><img src="https://ros-perception.github.io/opencv_apps/media/detection_3d_thumb.gif" width="200" alt="detection_3d"><br><code>detection_3d</code></a><br><sub>~/detections</sub></td>
+</tr>
+</table>
 <!-- gallery end -->
 
 The demo videos are made of [Tears of Steel](https://mango.blender.org/) (CC BY 3.0, Blender Foundation) and the

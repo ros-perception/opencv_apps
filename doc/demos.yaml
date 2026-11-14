@@ -6,6 +6,8 @@
 #   launch_args: the arguments of the launch file (launch_file, or the node)
 #   prepare: the commands before publishing the clip, steps: the commands after running the node
 #   view: the image topic of the node to view, instead of image
+#   downloads, publisher, view_command: the files to download, the command to publish them and to view the result,
+#     instead of the clip, image_publisher and rqt_image_view
 adding_images:
   clip: tos_bridge.mp4
   image: image1:=image image2:=image2
@@ -76,6 +78,21 @@ corner_harris:
   note: The threshold is lowered from 200 to show more corners.
 discrete_fourier_transform:
   clip: street.mp4
+detection_3d:
+  clip: test/rgbd_walking.mp4
+  downloads:
+  - test/publish_rgbd.py
+  - test/rgbd_walking.mp4
+  - test/rgbd_walking_depth.npz
+  publisher: python3 publish_rgbd.py rgbd_walking.mp4 rgbd_walking_depth.npz
+  image: input:=/dnn_object_detection/detections depth:=depth camera_info:=camera_info
+  launch_args: {}
+  steps:
+  - ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image &
+  view_command: ros2 run rviz2 rviz2 -f camera_rgb_optical_frame
+  note: 'The input is 20 RGB-D images of the TUM RGB-D freiburg3_walking_xyz sequence (image, depth in mm and
+    camera_info, by test/publish_rgbd.py), and the people of dnn_object_detection. In rviz2, add TF to show the
+    frames person_0, ..., or add Detection3DArray of vision_msgs_rviz_plugins to show the boxes.'
 dnn_depth_estimation:
   clip: keybridge.mp4
 dnn_face_detection:
