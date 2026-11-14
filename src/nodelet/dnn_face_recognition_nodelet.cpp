@@ -74,6 +74,7 @@ class DNNFaceRecognitionNodelet : public opencv_apps::Nodelet
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
   rclcpp::Publisher<opencv_apps::msg::FaceArrayStamped>::SharedPtr msg_pub_;
+  rclcpp::Publisher<opencv_apps::msg::FaceArrayStamped>::SharedPtr faces_pub_;
   rclcpp::Service<opencv_apps::srv::FaceRecognitionTrain>::SharedPtr train_srv_;
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
@@ -334,6 +335,7 @@ class DNNFaceRecognitionNodelet : public opencv_apps::Nodelet
           cv_bridge::CvImage(msg->header, sensor_msgs::image_encodings::BGR8, frame).toImageMsg();
       img_pub_.publish(out_img);
       msg_pub_->publish(faces_msg);
+      faces_pub_->publish(faces_msg);
     }
     catch (cv_bridge::Exception& e)
     {
@@ -509,7 +511,9 @@ public:
         std::bind(&DNNFaceRecognitionNodelet::parametersCallback, this, std::placeholders::_1));
 
     img_pub_ = advertiseImage("~/image", 1);
+    // ~/faces is the same as ~/output, with the name of the topic of the other face nodes
     msg_pub_ = advertise<opencv_apps::msg::FaceArrayStamped>("~/output", 1);
+    faces_pub_ = advertise<opencv_apps::msg::FaceArrayStamped>("~/faces", 1);
     train_srv_ = create_service<opencv_apps::srv::FaceRecognitionTrain>(
         "~/train",
         std::bind(&DNNFaceRecognitionNodelet::trainCallback, this, std::placeholders::_1, std::placeholders::_2));

@@ -14,6 +14,8 @@ Semantic segmentation, by default of the persons with PP-HumanSeg of opencv_zoo,
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - OpenCV 4.5.4 or later
+   * - Group
+     - Segmentation, the nodes of which publish the mask or label image, ``~/image`` of the color filters and background_subtraction, ``~/label`` of dnn_semantic_segmentation, and ``~/contours`` (ContourArrayStamped) of the regions of segment_objects and watershed_segmentation
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_semantic_segmentation.gif
    :alt: demo of dnn_semantic_segmentation

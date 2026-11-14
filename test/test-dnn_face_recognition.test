@@ -20,6 +20,13 @@
     <param name="test_duration" value="2.0" />
     <param name="wait_time" value="240.0" />
   </test>
+  <param name="dnn_face_recognition_faces_test/topic" value="dnn_face_recognition/faces" />    <!-- opencv_apps/FaceArrayStamped -->
+  <test test-name="dnn_face_recognition_faces_test" pkg="rostest" type="hztest" name="dnn_face_recognition_faces_test" time-limit="300" >
+    <param name="hz" value="10" />
+    <param name="hzerror" value="8" />
+    <param name="test_duration" value="2.0" />
+    <param name="wait_time" value="240.0" />
+  </test>
   <param name="dnn_face_recognition_image_test/topic" value="dnn_face_recognition/image" />
   <test test-name="dnn_face_recognition_image_test" pkg="rostest" type="hztest" name="dnn_face_recognition_image_test" time-limit="300" >
     <param name="hz" value="9.0" />

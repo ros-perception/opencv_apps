@@ -12,6 +12,8 @@ Finds the contours of the thresholded image, and their bounding rotated rectangl
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Features and shapes, the nodes of which publish ``~/corners`` (Point2DArrayStamped), ``~/lines`` (LineArrayStamped), ``~/circles`` (CircleArrayStamped) and ``~/contours`` (ContourArrayStamped, ``~/hulls`` of convex_hull), by the kind of the features
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/general_contours.gif
    :alt: demo of general_contours
@@ -71,12 +73,19 @@ Published topics
 
    * - Topic
      - Type
+     - Note
+   * - ``~/contours`` **(recommended)**
+     - :ref:`opencv_apps/msg/ContourArrayStamped <msg-ContourArrayStamped>`
+     - Recommended, opencv_apps 3.0.1 and later. The contours, in the order of ``~/rectangles`` and ``~/ellipses``.
    * - ``~/ellipses``
      - :ref:`opencv_apps/msg/RotatedRectArrayStamped <msg-RotatedRectArrayStamped>`
+     -  
    * - ``~/image``
      - ``sensor_msgs/msg/Image``
+     -  
    * - ``~/rectangles``
      - :ref:`opencv_apps/msg/RotatedRectArrayStamped <msg-RotatedRectArrayStamped>`
+     -  
 
 Parameters
 ----------

@@ -12,6 +12,8 @@ Tracks a colored object with the CamShift algorithm (``cv::CamShift()``), by the
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Tracking, the nodes of which publish ``~/output`` (RectArrayStamped), ``~/track_box`` (RotatedRectStamped) of camshift
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/camshift.gif
    :alt: demo of camshift

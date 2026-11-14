@@ -12,6 +12,8 @@ Segments the image with the watershed algorithm (``cv::watershed()``) from the s
      - noetic, ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - any version of the distributions
+   * - Group
+     - Segmentation, the nodes of which publish the mask or label image, ``~/image`` of the color filters and background_subtraction, ``~/label`` of dnn_semantic_segmentation, and ``~/contours`` (ContourArrayStamped) of the regions of segment_objects and watershed_segmentation
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/watershed_segmentation.gif
    :alt: demo of watershed_segmentation

@@ -35,7 +35,8 @@
 
 import unittest
 
-from opencv_apps_test import camera, description, FACE_VIDEO, image_view, include, TopicsTest
+from opencv_apps.msg import ContourArrayStamped
+from opencv_apps_test import camera, description, FACE_VIDEO, image_view, include, MessagesTest
 import pytest
 
 
@@ -48,6 +49,8 @@ def generate_test_description():
     )
 
 
-class TestContourMoments(TopicsTest, unittest.TestCase):
+class TestContourMoments(MessagesTest, unittest.TestCase):
 
-    TOPICS = ['contour_moments/moments']
+    TOPICS = ['contour_moments/moments', 'contour_moments/contours']
+    CHECKS = {'contour_moments/contours': (ContourArrayStamped, lambda msg: len(msg.contours) > 0 and all(
+        len(c.points) > 0 for c in msg.contours))}

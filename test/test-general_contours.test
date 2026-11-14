@@ -27,6 +27,12 @@
       <param name="hzerror" value="10.0" />
       <param name="test_duration" value="1.0" />
     </test>
+    <param name="general_contours_contours_test/topic" value="general_contours/contours" />    <!-- opencv_apps/ContourArrayStamped -->
+    <test test-name="general_contours_contours_test" pkg="rostest" type="hztest" name="general_contours_contours_test" >
+      <param name="hz" value="30" />
+      <param name="hzerror" value="10.0" />
+      <param name="test_duration" value="1.0" />
+    </test>
     <param name="general_contours_test_ellipses/topic" value="general_contours/ellipses" />    <!-- opencv_apps/RotatedRectArrayStamped -->
     <test test-name="general_contours_ellipses_test" pkg="rostest" type="hztest" name="general_contours_test_ellipses" time-limit="120" >
       <param name="hz" value="30" />

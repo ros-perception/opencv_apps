@@ -14,6 +14,8 @@ This is a demo of the DNN based trackers of OpenCV: DaSiamRPN, NanoTrack and Vit
      - ROS One, jazzy, kilted, lyrical and later; DaSiamRPN on ROS One, jazzy and kilted (OpenCV 4.6), and also NanoTrack and VitTrack on lyrical (OpenCV 4.10)
    * - OpenCV
      - OpenCV 4.5.4 or later for DaSiamRPN, 4.7 or later for NanoTrack and 4.9 or later for VitTrack
+   * - Group
+     - Tracking, the nodes of which publish ``~/output`` (RectArrayStamped), ``~/track_box`` (RotatedRectStamped) of camshift
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_tracking.gif
    :alt: demo of dnn_tracking

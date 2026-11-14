@@ -14,6 +14,8 @@ Object detection with YOLOX (onnx), by default YOLOX-S trained on COCO of opencv
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - OpenCV 4.5.4 or later
+   * - Group
+     - Object detection, the nodes of which publish ``~/detections`` (DetectionArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_object_detection.gif
    :alt: demo of dnn_object_detection
@@ -53,6 +55,45 @@ In ROS 1:
    roslaunch opencv_apps dnn_object_detection.launch image:=camera/image_raw
 
 See :doc:`../credits` for the license of the video.
+
+Models
+------
+
+The node runs YOLOX (``model_type:=yolox``, onnx), by default YOLOX-S trained on COCO of opencv_zoo, or a model of ``cv::dnn::DetectionModel`` (``model_type:=detection_model``), e.g. YOLO of darknet and SSD, with ``config``, ``classes``, ``input_width``, ``input_height``, ``scale`` and ``swap_rb``.
+
+YOLOX-S (default)
+^^^^^^^^^^^^^^^^^
+
+.. image:: https://ros-perception.github.io/opencv_apps/media/dnn_object_detection.gif
+   :alt: demo of dnn_object_detection with yolox
+
+.. code-block:: bash
+
+   ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image
+
+YOLOX-S int8
+^^^^^^^^^^^^
+
+.. image:: https://ros-perception.github.io/opencv_apps/media/dnn_object_detection_yoloxint8.gif
+   :alt: demo of dnn_object_detection with yoloxint8
+
+.. code-block:: bash
+
+   ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image model:=https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/object_detection_yolox/object_detection_yolox_2022nov_int8.onnx
+
+YOLOX-S quantized to int8 of opencv_zoo, smaller (9 MB) and faster on the CPU.
+
+YOLOv4-tiny (darknet)
+^^^^^^^^^^^^^^^^^^^^^
+
+.. image:: https://ros-perception.github.io/opencv_apps/media/dnn_object_detection_yolov4tiny.gif
+   :alt: demo of dnn_object_detection with yolov4tiny
+
+.. code-block:: bash
+
+   ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image classes:=https://raw.githubusercontent.com/AlexeyAB/darknet/59596d7880f6504768df41d6daa586f5cb2b932f/data/coco.names config:=https://raw.githubusercontent.com/AlexeyAB/darknet/59596d7880f6504768df41d6daa586f5cb2b932f/cfg/yolov4-tiny.cfg input_height:=416 input_width:=416 model:=https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v4_pre/yolov4-tiny.weights model_type:=detection_model
+
+YOLOv4-tiny of darknet (OpenCV 4; OpenCV 5 reads only onnx), trained on COCO.
 
 Subscribed topics
 -----------------

@@ -44,6 +44,9 @@
  * @author OpenCV team
  */
 
+#include <opencv_apps/msg/point2_d.hpp>
+#include <opencv_apps/msg/point2_d_array_stamped.hpp>
+
 namespace opencv_apps
 {
 class CornerHarrisNodelet : public opencv_apps::Nodelet
@@ -51,6 +54,7 @@ class CornerHarrisNodelet : public opencv_apps::Nodelet
   image_transport::Publisher img_pub_;
   image_transport::Subscriber img_sub_;
   image_transport::CameraSubscriber cam_sub_;
+  rclcpp::Publisher<opencv_apps::msg::Point2DArrayStamped>::SharedPtr msg_pub_;
 
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
@@ -136,6 +140,13 @@ class CornerHarrisNodelet : public opencv_apps::Nodelet
       cv::normalize(dst, dst_norm, 0, 255, cv::NORM_MINMAX, CV_32FC1, cv::Mat());
       cv::convertScaleAbs(dst_norm, dst_norm_scaled);
 
+      // the corners of the message are the local maxima (3x3) of the pixels over the threshold with a positive
+      // response, one for each corner
+      cv::Mat dst_max;
+      cv::dilate(dst_norm, dst_max, cv::Mat());
+      opencv_apps::msg::Point2DArrayStamped corners_msg;
+      corners_msg.header = image_msg->header;
+
       /// Drawing a circle around corners
       for (int j = 0; j < dst_norm.rows; j++)
       {
@@ -144,6 +155,15 @@ class CornerHarrisNodelet : public opencv_apps::Nodelet
           if ((int)dst_norm.at<float>(j, i) > threshold_)
           {
             cv::circle(frame, cv::Point(i, j), 5, cv::Scalar(0), 2, 8, 0);
+            // a corner has a positive Harris response (an edge is negative, a flat area 0); the normalization
+            // can put a flat area over threshold, e.g. 255 when the image has only edges
+            if (dst.at<float>(j, i) > 0.0f && dst_norm.at<float>(j, i) >= dst_max.at<float>(j, i))
+            {
+              opencv_apps::msg::Point2D corner;
+              corner.x = i;
+              corner.y = j;
+              corners_msg.points.push_back(corner);
+            }
           }
         }
       }
@@ -171,6 +191,7 @@ class CornerHarrisNodelet : public opencv_apps::Nodelet
       sensor_msgs::msg::Image::SharedPtr out_img =
           cv_bridge::CvImage(image_msg->header, sensor_msgs::image_encodings::BGR8, frame).toImageMsg();
       img_pub_.publish(out_img);
+      msg_pub_->publish(corners_msg);
     }
     catch (cv::Exception& e)
     {
@@ -217,6 +238,7 @@ public:
         std::bind(&CornerHarrisNodelet::parametersCallback, this, std::placeholders::_1));
 
     img_pub_ = advertiseImage("~/image", 1);
+    msg_pub_ = advertise<opencv_apps::msg::Point2DArrayStamped>("~/corners", 1);
 
     onInitPostProcess();
   }

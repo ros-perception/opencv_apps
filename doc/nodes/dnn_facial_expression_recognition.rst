@@ -14,6 +14,8 @@ Facial expression recognition: the faces are detected by YuNet (cv::FaceDetector
      - ROS One, jazzy, kilted, lyrical and later
    * - OpenCV
      - OpenCV 4.5.4 or later
+   * - Group
+     - Faces, the nodes of which publish ``~/faces`` (FaceArrayStamped)
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_facial_expression_recognition.gif
    :alt: demo of dnn_facial_expression_recognition
