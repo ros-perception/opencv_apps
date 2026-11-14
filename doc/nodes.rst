@@ -70,7 +70,7 @@ Find what the whole image shows, the classes of ImageNet. Output: ``~/detections
 Object detection
 ----------------
 
-Find the bounding boxes of the people and the objects. Output: ``~/detections`` (DetectionArrayStamped).
+Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn). Output: ``~/detections`` (DetectionArrayStamped).
 
 .. toctree::
    :maxdepth: 1

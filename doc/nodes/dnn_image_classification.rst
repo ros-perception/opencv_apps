@@ -71,6 +71,8 @@ PP-ResNet50 (default)
 
    ros2 launch opencv_apps dnn_image_classification.launch.xml image:=image
 
+The most accurate (top-1 82.3 % on ImageNet, 98 MB): use it unless the computer is slow, e.g. with a GPU or a desktop CPU.
+
 MobileNetV1
 ^^^^^^^^^^^
 
@@ -81,7 +83,7 @@ MobileNetV1
 
    ros2 launch opencv_apps dnn_image_classification.launch.xml image:=image model:=https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/image_classification_mobilenet/image_classification_mobilenetv1_2022apr.onnx
 
-MobileNetV1 of opencv_zoo, needs OpenCV 4.9 or later.
+MobileNetV1 of opencv_zoo (top-1 67.6 %, 16 MB, OpenCV 4.9 or later): much faster and smaller than PP-ResNet50, for a small computer without a GPU, e.g. a Raspberry Pi; MobileNetV2 is a little more accurate.
 
 MobileNetV2
 ^^^^^^^^^^^
@@ -93,7 +95,7 @@ MobileNetV2
 
    ros2 launch opencv_apps dnn_image_classification.launch.xml image:=image model:=https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/image_classification_mobilenet/image_classification_mobilenetv2_2022apr.onnx
 
-MobileNetV2 of opencv_zoo, needs OpenCV 4.9 or later.
+MobileNetV2 of opencv_zoo (top-1 69.4 %, 14 MB, OpenCV 4.9 or later): the more accurate of the two MobileNets at about the same speed, the first choice for a small computer.
 
 Subscribed topics
 -----------------

@@ -35,8 +35,14 @@ resized (960x540, 10 fps; Tears of Steel is cropped from 1920x800 to 16:9 at the
      - Charlotte Jackson
      - `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_
      - `Wikimedia Commons <https://commons.wikimedia.org/wiki/File:Crossing_the_Key_Bridge_(Baltimore).webm>`__
+   * - freiburg3_walking_xyz of the TUM RGB-D dataset (``tum_walking.mp4``, 640x480, every third image of the first
+       240)
+     - J. Sturm, N. Engelhard, F. Endres, W. Burgard and D. Cremers, Technical University of Munich
+     - `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_
+     - `TUM RGB-D dataset <https://cvg.cit.tum.de/data/datasets/rgbd-dataset>`__
 
-The demos of face_recognition and dnn_face_recognition use ``test/face_detector_withface_test_diamondback.mp4`` of
-opencv_apps (they need the trained faces), and the demos of qrcode_detection, barcode_detection, aruco_detection and
+The demos of face_recognition, dnn_face_recognition and people_detect use
+``test/face_detector_withface_test_diamondback.mp4`` of opencv_apps (the trained faces, and the whole bodies of the
+people for HOG), and the demos of qrcode_detection, barcode_detection, aruco_detection and
 dnn_text_detection use ``test/codes.mp4`` and ``test/text.mp4`` of opencv_apps, made by ``test/make_codes_video.py``
 and ``test/make_text_video.py``. The tests of the nodes use the videos in ``test/``.
