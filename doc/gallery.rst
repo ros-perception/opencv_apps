@@ -173,7 +173,7 @@
    <a class="opencv-apps-tile" href="nodes/compare_histogram.html"><img src="https://ros-perception.github.io/opencv_apps/media/compare_histogram_thumb.gif" alt="compare_histogram" loading="lazy"><span>compare_histogram<br><small>~/distance</small></span></a>
    </div>
    <h3>Depth and 3D localization</h3>
-   <p>Estimate the depth of a color image by a DNN, and localize the objects, the faces and the tracked targets of the nodes above in 3D, with a depth image of an RGB-D camera or a point cloud of a LiDAR, and publish their TF frames.<br>Output: <code>~/inverse_depth</code> (Image) of dnn_depth_estimation, and <code>~/detections</code> (vision_msgs/Detection3DArray), <code>~/markers</code> (for rviz) and the TF frames of detection_3d.</p>
+   <p>Estimate the depth of a color image by a DNN, and localize the objects, the faces, the tracked targets and the human and hand skeletons of the nodes above in 3D, with a depth image of an RGB-D camera or of the depth estimation, or a point cloud of a LiDAR, and publish their TF frames.<br>Output: <code>~/inverse_depth</code> or <code>~/depth</code> (Image) of dnn_depth_estimation, and <code>~/detections</code> (vision_msgs/Detection3DArray), <code>~/markers</code> (for rviz) and the TF frames of detection_3d.</p>
    <p><img src="https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/doc/images/detection_3d_pipeline.svg" alt="the pipeline of detection_3d" style="width: 100%; max-width: 900px"></p>
    <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">

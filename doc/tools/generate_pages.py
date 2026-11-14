@@ -81,9 +81,11 @@ CATEGORIES = [
 DESCRIPTIONS = {
     'detection_3d': 'Publishes the 3D boxes (``vision_msgs/Detection3DArray``) and the TF frames ``<label>_<id>`` '
                     'of the 2D results of the other nodes, ``~/detections`` of the detection nodes '
-                    '(``input_type:=detections``), ``~/faces`` of the face nodes (``faces``) or ``~/output`` of the '
-                    'tracking nodes (``rects``), with a depth image registered to their color image, e.g. of an RGB-D '
-                    'camera (``depth_source:=depth``), or a point cloud, e.g. of a LiDAR, transformed to the camera '
+                    '(``input_type:=detections``), ``~/faces`` of the face nodes (``faces``), ``~/output`` of the '
+                    'tracking nodes (``rects``) or ``~/skeletons`` of the pose nodes (``skeletons``, with the TF '
+                    'frames of the keypoints), with a depth image registered to their color image, e.g. of an RGB-D '
+                    'camera or ``~/depth`` of dnn_depth_estimation (``depth_source:=depth``), or a point cloud, e.g. '
+                    'of a LiDAR, transformed to the camera '
                     'frame by TF (``depth_source:=points``). The points of a 2D box are the pixels of the depth image '
                     'in the box or the points of the cloud projected into the box, the depth of the object is the '
                     'median of their depths, and its 3D box is the extent of the points within ``depth_threshold`` '
@@ -199,12 +201,13 @@ CATEGORY_DESCRIPTIONS = {
                                 '``~/flows`` (FlowArrayStamped), ``~/shift`` (Point2DStamped) of phase_corr'),
     'Histogram comparison': ('Compare the color histogram of the image with a reference.',
                              '``~/distance`` (Float64)'),
-    'Depth and 3D localization': ('Estimate the depth of a color image by a DNN, and localize the objects, the faces '
-                                  'and the tracked targets of the nodes above in 3D, with a depth image of an RGB-D '
-                                  'camera or a point cloud of a LiDAR, and publish their TF frames.',
-                                  '``~/inverse_depth`` (Image) of dnn_depth_estimation, and ``~/detections`` '
-                                  '(vision_msgs/Detection3DArray), ``~/markers`` (for rviz) and the TF frames of '
-                                  'detection_3d'),
+    'Depth and 3D localization': ('Estimate the depth of a color image by a DNN, and localize the objects, the faces, '
+                                  'the tracked targets and the human and hand skeletons of the nodes above in 3D, '
+                                  'with a depth image of an RGB-D camera or of the depth estimation, or a point cloud '
+                                  'of a LiDAR, and publish their TF frames.',
+                                  '``~/inverse_depth`` or ``~/depth`` (Image) of dnn_depth_estimation, and '
+                                  '``~/detections`` (vision_msgs/Detection3DArray), ``~/markers`` (for rviz) and the '
+                                  'TF frames of detection_3d'),
 }
 # the main output of each node, under its tile, when it is not ~/image
 NODE_OUTPUTS = {
@@ -517,7 +520,8 @@ def variants_section(node, demo):
         gif = node if variant.get('default') else '%s_%s' % (node, name)
         lines += [variant['title'], '^' * len(variant['title']), '',
                   '.. image:: %s%s.gif' % (MEDIA_URL, gif), '   :alt: demo of %s with %s' % (node, name), '']
-        arguments = ' '.join('%s:=%s' % (k, v) for k, v in sorted(variant.get('launch_args', {}).items()))
+        arguments = ' '.join('%s:=%s' % (k, str(v).lower() if isinstance(v, bool) else v)
+                             for k, v in sorted(variant.get('launch_args', {}).items()))
         command = 'ros2 launch opencv_apps %s.launch.xml %s %s' % (
             demo.get('launch_file', node), variant.get('image', demo.get('image', 'image:=image')), arguments)
         # the commands of the variant before the node, e.g. to publish its input

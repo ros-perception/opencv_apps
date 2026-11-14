@@ -1,7 +1,7 @@
 detection_3d
 ============
 
-Publishes the 3D boxes (``vision_msgs/Detection3DArray``) and the TF frames ``<label>_<id>`` of the 2D results of the other nodes, ``~/detections`` of the detection nodes (``input_type:=detections``), ``~/faces`` of the face nodes (``faces``) or ``~/output`` of the tracking nodes (``rects``), with a depth image registered to their color image, e.g. of an RGB-D camera (``depth_source:=depth``), or a point cloud, e.g. of a LiDAR, transformed to the camera frame by TF (``depth_source:=points``). The points of a 2D box are the pixels of the depth image in the box or the points of the cloud projected into the box, the depth of the object is the median of their depths, and its 3D box is the extent of the points within ``depth_threshold`` of the median, as `yolo_ros <https://github.com/mgonzs13/yolo_ros>`_. The objects are tracked by the distance of their centers, so that each object keeps its TF frame. On ROS 1, the results of vision_msgs (0.0.2) have only the class id of the detections, and the labels are in the TF frames.
+Publishes the 3D boxes (``vision_msgs/Detection3DArray``) and the TF frames ``<label>_<id>`` of the 2D results of the other nodes, ``~/detections`` of the detection nodes (``input_type:=detections``), ``~/faces`` of the face nodes (``faces``), ``~/output`` of the tracking nodes (``rects``) or ``~/skeletons`` of the pose nodes (``skeletons``, with the TF frames of the keypoints), with a depth image registered to their color image, e.g. of an RGB-D camera or ``~/depth`` of dnn_depth_estimation (``depth_source:=depth``), or a point cloud, e.g. of a LiDAR, transformed to the camera frame by TF (``depth_source:=points``). The points of a 2D box are the pixels of the depth image in the box or the points of the cloud projected into the box, the depth of the object is the median of their depths, and its 3D box is the extent of the points within ``depth_threshold`` of the median, as `yolo_ros <https://github.com/mgonzs13/yolo_ros>`_. The objects are tracked by the distance of their centers, so that each object keeps its TF frame. On ROS 1, the results of vision_msgs (0.0.2) have only the class id of the detections, and the labels are in the TF frames.
 
 .. list-table::
    :stub-columns: 1
@@ -13,7 +13,7 @@ Publishes the 3D boxes (``vision_msgs/Detection3DArray``) and the TF frames ``<l
    * - OpenCV
      - any version of the distributions
    * - Group
-     - Depth and 3D localization, the nodes of which publish ``~/inverse_depth`` (Image) of dnn_depth_estimation, and ``~/detections`` (vision_msgs/Detection3DArray), ``~/markers`` (for rviz) and the TF frames of detection_3d
+     - Depth and 3D localization, the nodes of which publish ``~/inverse_depth`` or ``~/depth`` (Image) of dnn_depth_estimation, and ``~/detections`` (vision_msgs/Detection3DArray), ``~/markers`` (for rviz) and the TF frames of detection_3d
 
 .. figure:: ../images/detection_3d_pipeline.svg
    :alt: The pipeline of detection_3d: the 2D results of the other nodes (replaceable by remapping input), the distances of an RGB-D camera or a LiDAR, and the 3D boxes, the markers and the TF frames of the objects.
@@ -52,17 +52,17 @@ Download the input of the demo above, publish it, and run the node on it, in the
    # terminal 4: view the result
    ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d.rviz
 
-The input is 20 RGB-D images of the TUM RGB-D freiburg3_walking_xyz sequence (image, depth in mm and camera_info, by test/publish_rgbd.py, with the static TF of the camera on camera_link), and the objects of dnn_object_detection. rviz/detection_3d.rviz shows ~/markers (the 3D boxes and the labels), the TF frames of the objects and the image of dnn_object_detection; for your camera, give its frame by -f, e.g. -f camera_link. rviz/detection_3d_ros1.rviz is the same for ROS 1.
+The input is 20 RGB-D images of the TUM RGB-D freiburg3_walking_xyz sequence (image, depth in mm, camera_info and the colored points, by test/publish_rgbd.py, with the static TF of the camera on camera_link), and the objects of dnn_object_detection. rviz/detection_3d.rviz shows the points, ~/markers (the 3D boxes, the labels with the distances and the axes of the TF frames of the objects), the image of dnn_object_detection and the depth image; for your camera, give its frame by -f, e.g. -f camera_link, and the topics of the images by remapping, e.g. --ros-args -r /depth:=/camera/camera/aligned_depth_to_color/image_raw. rviz/detection_3d_ros1.rviz is the same for ROS 1.
 
 See :doc:`../credits` for the license of the video.
 
-Sources of the distances
-------------------------
+Inputs and sources of the distances
+-----------------------------------
 
-The demos draw the 3D boxes of ``~/detections`` on the image, and their top view; rviz shows them with rviz/detection_3d.rviz and rviz/detection_3d_lidar.rviz (the view of the objects farther away, and the points).
+The 2D results of the other nodes and the distances of an RGB-D camera, a monocular depth estimation or a LiDAR, shown in rviz with rviz/detection_3d.rviz and rviz/detection_3d_lidar.rviz (the view of the objects farther away). The commands below are in their own terminals, as above.
 
-RGB-D camera (default)
-^^^^^^^^^^^^^^^^^^^^^^
+Objects and an RGB-D camera (default)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/detection_3d.gif
    :alt: demo of detection_3d with rgbd
@@ -72,6 +72,38 @@ RGB-D camera (default)
    ros2 launch opencv_apps detection_3d.launch.xml input:=/dnn_object_detection/detections depth:=depth camera_info:=camera_info
 
 The depth image of the TUM RGB-D dataset, as above.
+
+Human and hand skeletons
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. image:: https://ros-perception.github.io/opencv_apps/media/detection_3d_skeletons.gif
+   :alt: demo of detection_3d with skeletons
+
+.. code-block:: bash
+
+   python3 publish_rgbd.py rgbd_walking.mp4 rgbd_walking_depth.npz &
+   ros2 launch opencv_apps dnn_pose_estimation.launch.xml image:=image &
+   ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d.rviz --ros-args -r /dnn_object_detection/image:=/dnn_pose_estimation/image &
+   ros2 launch opencv_apps detection_3d.launch.xml input:=/dnn_pose_estimation/skeletons depth:=depth camera_info:=camera_info input_type:=skeletons
+
+``~/skeletons`` of dnn_pose_estimation (``person``) or dnn_hand_pose_estimation (``left_hand`` and ``right_hand``): the box and the TF frame of each skeleton as an object, the TF frame ``<label>_<id>_<keypoint>`` of each keypoint (e.g. ``person_0_left_wrist``) at the median depth within ``keypoint_radius`` of the keypoint, and the joints and the bones in ``~/markers``; the keypoints less visible than ``keypoint_visibility`` are left out. Needs OpenCV 4.9 or later, as the pose nodes.
+
+Monocular depth estimation
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. image:: https://ros-perception.github.io/opencv_apps/media/detection_3d_mono.gif
+   :alt: demo of detection_3d with mono
+
+.. code-block:: bash
+
+   python3 publish_rgbd.py rgbd_walking.mp4 rgbd_walking_depth.npz --ros-args -r depth:=unused_depth -r points:=unused_points &
+   ros2 launch opencv_apps dnn_depth_estimation.launch.xml image:=image metric_depth:=true input_width:=518 input_height:=518 model:=https://huggingface.co/k-okada/depth-anything-v2-metric-small-onnx/resolve/5494458701c7274fa82af484e2f2d226c948b54d/depth_anything_v2_metric_hypersim_vits_518.onnx &
+   ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image &
+   ros2 run depth_image_proc point_cloud_xyzrgb_node --ros-args -r rgb/image_rect_color:=image -r rgb/camera_info:=camera_info -r depth_registered/image_rect:=/dnn_depth_estimation/depth &
+   ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d.rviz --ros-args -r /depth:=/dnn_depth_estimation/depth &
+   ros2 launch opencv_apps detection_3d.launch.xml input:=/dnn_object_detection/detections depth:=/dnn_depth_estimation/depth camera_info:=camera_info
+
+Only the color image of a camera: ``~/depth`` (32FC1 in m) of dnn_depth_estimation with Depth Anything V2 Metric (indoors, see dnn_depth_estimation), instead of the depth of the RGB-D camera (not used, remapped to unused_depth), and its points by depth_image_proc for rviz. The distances are less accurate than those of an RGB-D camera (the relative error is about 0.15 on CUDA in this sequence), and the model needs OpenCV 4.10 or later, and a GPU to run it in real time.
 
 LiDAR
 ^^^^^
@@ -148,7 +180,17 @@ See also the :ref:`common parameters <common-parameters>`.
      - string
      - "detections"
      - no, restart the node
-     - Type of input: detections (opencv_apps/DetectionArrayStamped, e.g. ~/detections of dnn_object_detection), faces (FaceArrayStamped, ~/faces of the face nodes) or rects (RectArrayStamped, ~/output of the tracking nodes).
+     - Type of input: detections (opencv_apps/DetectionArrayStamped, e.g. ~/detections of dnn_object_detection), faces (FaceArrayStamped, ~/faces of the face nodes), rects (RectArrayStamped, ~/output of the tracking nodes) or skeletons (SkeletonArrayStamped, ~/skeletons of dnn_pose_estimation and dnn_hand_pose_estimation, with the TF frames of the keypoints).
+   * - ``keypoint_radius``
+     - int
+     - 3 (0 - 50)
+     - yes
+     - The depth of a keypoint of a skeleton is the median of the depths of the pixels (or the points projected) within this distance (pixels) of the keypoint.
+   * - ``keypoint_visibility``
+     - double
+     - 0.5 (0 - 1)
+     - yes
+     - Minimum visibility of a keypoint of a skeleton to be localized.
    * - ``max_depth``
      - double
      - 10.0 (0 - 1000)
@@ -163,7 +205,7 @@ See also the :ref:`common parameters <common-parameters>`.
      - bool
      - true
      - yes
-     - Publish the TF frame <tf_prefix><label>_<id> of each object.
+     - Publish the TF frame <tf_prefix><label>_<id> of each object; with it at the start, the node subscribes the inputs always, for the subscribers of /tf.
    * - ``queue_size``
      - int
      - 10

@@ -1401,9 +1401,29 @@
    },
    {
     "default": "detections",
-    "description": "Type of input: detections (opencv_apps/DetectionArrayStamped, e.g. ~/detections of dnn_object_detection), faces (FaceArrayStamped, ~/faces of the face nodes) or rects (RectArrayStamped, ~/output of the tracking nodes).",
+    "description": "Type of input: detections (opencv_apps/DetectionArrayStamped, e.g. ~/detections of dnn_object_detection), faces (FaceArrayStamped, ~/faces of the face nodes), rects (RectArrayStamped, ~/output of the tracking nodes) or skeletons (SkeletonArrayStamped, ~/skeletons of dnn_pose_estimation and dnn_hand_pose_estimation, with the TF frames of the keypoints).",
     "name": "input_type",
     "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "The depth of a keypoint of a skeleton is the median of the depths of the pixels (or the points projected) within this distance (pixels) of the keypoint.",
+    "name": "keypoint_radius",
+    "range": [
+     0,
+     50
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0.5,
+    "description": "Minimum visibility of a keypoint of a skeleton to be localized.",
+    "name": "keypoint_visibility",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
    },
    {
     "default": false,
@@ -1433,7 +1453,7 @@
    },
    {
     "default": true,
-    "description": "Publish the TF frame <tf_prefix><label>_<id> of each object.",
+    "description": "Publish the TF frame <tf_prefix><label>_<id> of each object; with it at the start, the node subscribes the inputs always, for the subscribers of /tf.",
     "name": "publish_tf",
     "type": "bool"
    },
@@ -1641,6 +1661,12 @@
     "default": false,
     "description": "",
     "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "The output of the model is the depth in meters (e.g. Depth Anything V2 Metric), published on ~/depth (32FC1), e.g. for the depth input of detection_3d, instead of the relative inverse depth on ~/inverse_depth (MiDaS)",
+    "name": "metric_depth",
     "type": "bool"
    },
    {

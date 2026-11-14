@@ -270,7 +270,7 @@ Compare the color histogram of the image with a reference. Output: `~/distance` 
 
 ### Depth and 3D localization
 
-Estimate the depth of a color image by a DNN, and localize the objects, the faces and the tracked targets of the nodes above in 3D, with a depth image of an RGB-D camera or a point cloud of a LiDAR, and publish their TF frames. Output: `~/inverse_depth` (Image) of dnn_depth_estimation, and `~/detections` (vision_msgs/Detection3DArray), `~/markers` (for rviz) and the TF frames of detection_3d.
+Estimate the depth of a color image by a DNN, and localize the objects, the faces, the tracked targets and the human and hand skeletons of the nodes above in 3D, with a depth image of an RGB-D camera or of the depth estimation, or a point cloud of a LiDAR, and publish their TF frames. Output: `~/inverse_depth` or `~/depth` (Image) of dnn_depth_estimation, and `~/detections` (vision_msgs/Detection3DArray), `~/markers` (for rviz) and the TF frames of detection_3d.
 
 <img src="https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/doc/images/detection_3d_pipeline.svg" alt="the pipeline of detection_3d" width="900">
 
