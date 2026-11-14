@@ -310,12 +310,13 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     return boxes;
   }
 
-  // the median of the depths within min_depth and max_depth, false if there is none
+  // the median of the depths within min_depth and max_depth (0 is no depth), false if there is none
   bool medianDepth(std::vector<double>& depths, double& median) const
   {
-    depths.erase(std::remove_if(depths.begin(), depths.end(),
-                                [this](double z) { return !std::isfinite(z) || z < min_depth_ || z > max_depth_; }),
-                 depths.end());
+    depths.erase(
+        std::remove_if(depths.begin(), depths.end(),
+                       [this](double z) { return !std::isfinite(z) || z <= 0.0 || z < min_depth_ || z > max_depth_; }),
+        depths.end());
     if (depths.empty())
       return false;
     std::nth_element(depths.begin(), depths.begin() + depths.size() / 2, depths.end());
