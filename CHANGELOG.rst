@@ -2,6 +2,15 @@
 Changelog for package opencv_apps
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+3.0.1 (2026-11-15)
+------------------
+* Publish the common outputs of the groups of the nodes: ~/detections of people_detect, ~/corners of corner_harris, ~/faces of face_recognition and dnn_face_recognition, ~/contours of general_contours and contour_moments; the former topics are kept (`#175 <https://github.com/ros-perception/opencv_apps/issues/175>`_)
+* Draw the results of dnn_image_classification (a panel with the bars of the scores) and dnn_object_detection (bright boxes and labels sized to the image) to be read on large images (`#175 <https://github.com/ros-perception/opencv_apps/issues/175>`_)
+* Documentation: group the nodes by what they find, by the distributions that they run on, and the demos of the models of the dnn nodes (`#175 <https://github.com/ros-perception/opencv_apps/issues/175>`_)
+* corner_harris: one point of ~/corners for the adjacent maxima of the same value (`#178 <https://github.com/ros-perception/opencv_apps/issues/178>`_)
+* CI: build and run the tests in parallel, about 50 minutes to 20 minutes (`#176 <https://github.com/ros-perception/opencv_apps/issues/176>`_)
+* Contributors: Kei Okada
+
 3.0.0 (2026-11-14)
 ------------------
 * Port to ROS2 (jazzy, kilted, lyrical), keeping ROS1 (noetic, ROS One) with the same source and compat headers (`#153 <https://github.com/ros-perception/opencv_apps/issues/153>`_)
