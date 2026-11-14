@@ -227,7 +227,7 @@ Estimate the poses of the people and the hands. Output: `~/skeletons` (SkeletonA
 
 ### Tracking
 
-Track a target given by ``set_roi`` or the mouse. Output: `~/output` (RectArrayStamped), `~/track_box` (RotatedRectStamped) of camshift.
+Track a target given by `set_roi` or the mouse. Output: `~/output` (RectArrayStamped), `~/track_box` (RotatedRectStamped) of camshift.
 
 **ROS 1: noetic and later, ROS 2: jazzy and later**
 
