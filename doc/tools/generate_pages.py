@@ -665,11 +665,13 @@ def readme_gallery():
             lines += ['**%s**' % tier_label(distributions), '', '<table>']
             for i in range(0, len(tier_nodes), 4):
                 lines.append('<tr>')
+                # the image and the name in their own links: GitHub hides a GIF in a link with other contents
+                # (it replaces the GIFs with its player of animated images, but not those)
                 for node in tier_nodes[i:i + 4]:
-                    lines.append('<td align="center" width="25%%"><a href="%snodes/%s.html"><img '
-                                 'src="%s%s_thumb.gif" width="200" alt="%s"><br><code>%s</code></a><br>'
-                                 '<sub>%s</sub></td>' % (DOCUMENTATION_URL, node, MEDIA_URL, node, node, node,
-                                                         NODE_OUTPUTS.get(node, '~/image')))
+                    url = '%snodes/%s.html' % (DOCUMENTATION_URL, node)
+                    lines.append('<td align="center" width="25%%"><a href="%s"><img src="%s%s_thumb.gif" width="200" '
+                                 'alt="%s"></a><br><a href="%s"><code>%s</code></a><br><sub>%s</sub></td>'
+                                 % (url, MEDIA_URL, node, node, url, node, NODE_OUTPUTS.get(node, '~/image')))
                 lines.append('</tr>')
             lines += ['</table>', '']
     return '\n'.join(lines)
