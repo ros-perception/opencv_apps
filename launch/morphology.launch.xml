@@ -9,7 +9,7 @@
 
   <arg name="morph_operator" default="0" description="Morphology Operation Methods  0: Opening, 1: Closing, 2: Gradient, 3: Top Hat, 4: Black Hat" />
   <arg name="morph_element" default="0" description="Type of the kernel 0: Rect, 1: Cross, 2: Ellipse" />
-  <arg name="morph_size" default="0" description="Size of the kernel" />
+  <arg name="morph_size" default="0" description="Radius of the kernel, whose size is 2 * morph_size + 1." />
 
   <!-- morphology.cpp  -->
   <node name="$(var node_name)" pkg="opencv_apps" exec="morphology" >

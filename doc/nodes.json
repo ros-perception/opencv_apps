@@ -1,0 +1,5895 @@
+{
+ "adding_images": {
+  "description": "Nodelet to combine two images",
+  "node": "adding_images",
+  "parameters": [
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "adding_images.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 0.5,
+    "description": "weight of the first array elements.",
+    "name": "alpha",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": true,
+    "description": "",
+    "name": "approximate_sync",
+    "type": "bool"
+   },
+   {
+    "default": true,
+    "description": "True: Automatically set beta weight as 1 - alpha, False: Use user defined beta weight",
+    "name": "auto_beta",
+    "type": "bool"
+   },
+   {
+    "default": 0.5,
+    "description": "weight of the second array elements.",
+    "name": "beta",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": 0.0,
+    "description": "scalar added to each sum.",
+    "name": "gamma",
+    "range": [
+     0.0,
+     255.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 100,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/camera_info",
+    "type": "sensor_msgs/msg/CameraInfo"
+   },
+   {
+    "name": "/image1",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "/image2",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "aruco_detection": {
+  "description": "Nodelet to detect ArUco markers, and their poses with the camera info (cv::aruco)",
+  "node": "aruco_detection",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "aruco_detection.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": "DICT_4X4_50",
+    "description": "Predefined dictionary of the markers, e.g. DICT_4X4_50, DICT_6X6_250, DICT_ARUCO_ORIGINAL, DICT_APRILTAG_36h11",
+    "name": "dictionary",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 0.0,
+    "description": "Length of the side of the markers in meters, to publish their poses with the camera info, 0 not to publish",
+    "name": "marker_length",
+    "range": [
+     0.0,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "The image is rectified (e.g. image_rect of image_proc), then the poses are estimated with the intrinsics of P of the camera info without distortion, instead of K and D",
+    "name": "rectified",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to, to get the camera model for the poses of the markers. Otherwise the poses are not published.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/detections",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/poses",
+    "type": "geometry_msgs/msg/PoseArray"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "background_subtraction": {
+  "description": "Nodelet to segment the foreground from the background with background subtraction methods",
+  "node": "background_subtraction",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "background_subtraction.background.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "background_subtraction.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 900,
+    "description": "CNT: Maximum allowed credit for a pixel in history",
+    "name": "cnt_max_pixel_stability",
+    "range": [
+     1,
+     10000
+    ],
+    "type": "int"
+   },
+   {
+    "default": 15,
+    "description": "CNT: Number of frames with same pixel color to consider stable",
+    "name": "cnt_min_pixel_stability",
+    "range": [
+     1,
+     1000
+    ],
+    "type": "int"
+   },
+   {
+    "default": true,
+    "description": "CNT: Give a pixel credit for being stable for a long time",
+    "name": "cnt_use_history",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": 0.8,
+    "description": "GMG: Prior probability that any given pixel is a background pixel",
+    "name": "gmg_background_prior",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.8,
+    "description": "GMG: Threshold of the probability above which a pixel is foreground",
+    "name": "gmg_decision_threshold",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 120,
+    "description": "GMG: Number of frames used to initialize the background models",
+    "name": "gmg_initialization_frames",
+    "range": [
+     1,
+     1000
+    ],
+    "type": "int"
+   },
+   {
+    "default": 64,
+    "description": "GMG: Total number of distinct colors to maintain in histogram (recreates the model)",
+    "name": "gmg_max_features",
+    "range": [
+     1,
+     512
+    ],
+    "type": "int"
+   },
+   {
+    "default": 16,
+    "description": "GMG: Number of discrete levels in each channel to be used in histograms (recreates the model)",
+    "name": "gmg_quantization_levels",
+    "range": [
+     1,
+     128
+    ],
+    "type": "int"
+   },
+   {
+    "default": 7,
+    "description": "GMG: Kernel size of the median filter to clean up the foreground mask, 0 (no filter) or odd",
+    "name": "gmg_smoothing_radius",
+    "range": [
+     0,
+     31
+    ],
+    "type": "int"
+   },
+   {
+    "default": 32,
+    "description": "GSOC: How many positives the sample must get before it will be considered as a possible replacement (recreates the model)",
+    "name": "gsoc_hits_threshold",
+    "range": [
+     1,
+     1000
+    ],
+    "type": "int"
+   },
+   {
+    "default": 20,
+    "description": "GSOC: Number of samples to maintain at each point of the frame (recreates the model)",
+    "name": "gsoc_n_samples",
+    "range": [
+     2,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0.01,
+    "description": "GSOC: Probability of propagating to neighbors (recreates the model)",
+    "name": "gsoc_propagation_rate",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.003,
+    "description": "GSOC: Probability of replacing the old sample (recreates the model)",
+    "name": "gsoc_replace_rate",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": true,
+    "description": "KNN: Detect shadows and mark them (127) in the foreground mask",
+    "name": "knn_detect_shadows",
+    "type": "bool"
+   },
+   {
+    "default": 400.0,
+    "description": "KNN: Threshold on the squared distance between the pixel and the sample to decide whether a pixel is close to that sample",
+    "name": "knn_dist2_threshold",
+    "range": [
+     1.0,
+     5000.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 500,
+    "description": "KNN: Length of the history",
+    "name": "knn_history",
+    "range": [
+     1,
+     5000
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": -1.0,
+    "description": "Learning rate of the background model, negative: automatically chosen, 0: not updated, 1: reinitialized from the last frame (CNT, GSOC and LSBP may still update the model at 0, and GMG, GSOC and LSBP do not reinitialize it at 1)",
+    "name": "learning_rate",
+    "range": [
+     -1.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 2,
+    "description": "LSBP: Minimal number of matches for a pixel to be background (recreates the model)",
+    "name": "lsbp_min_count",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 20,
+    "description": "LSBP: Number of samples to maintain at each point of the frame (recreates the model)",
+    "name": "lsbp_n_samples",
+    "range": [
+     2,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 16,
+    "description": "LSBP: Radius of the LSBP descriptor (recreates the model)",
+    "name": "lsbp_radius",
+    "range": [
+     1,
+     64
+    ],
+    "type": "int"
+   },
+   {
+    "default": 8,
+    "description": "LSBP: Threshold of the LSBP descriptor distance (recreates the model)",
+    "name": "lsbp_threshold",
+    "range": [
+     0,
+     32
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "Background subtraction method, 0: MOG2, 1: KNN, 2: MOG, 3: GMG, 4: CNT, 5: GSOC, 6: LSBP (MOG, GMG, CNT, GSOC and LSBP need the bgsegm module of opencv_contrib, otherwise MOG2 is used)",
+    "name": "method",
+    "range": [
+     0,
+     6
+    ],
+    "type": "int"
+   },
+   {
+    "default": true,
+    "description": "MOG2: Detect shadows and mark them (127) in the foreground mask",
+    "name": "mog2_detect_shadows",
+    "type": "bool"
+   },
+   {
+    "default": 500,
+    "description": "MOG2: Length of the history",
+    "name": "mog2_history",
+    "range": [
+     1,
+     5000
+    ],
+    "type": "int"
+   },
+   {
+    "default": 5,
+    "description": "MOG2: Number of Gaussian components in the background model (recreates the model)",
+    "name": "mog2_nmixtures",
+    "range": [
+     1,
+     10
+    ],
+    "type": "int"
+   },
+   {
+    "default": 16.0,
+    "description": "MOG2: Threshold on the squared Mahalanobis distance between the pixel and the model to decide whether a pixel is well described by the background model",
+    "name": "mog2_var_threshold",
+    "range": [
+     1.0,
+     256.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.7,
+    "description": "MOG: Background ratio",
+    "name": "mog_background_ratio",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 200,
+    "description": "MOG: Length of the history",
+    "name": "mog_history",
+    "range": [
+     1,
+     5000
+    ],
+    "type": "int"
+   },
+   {
+    "default": 5,
+    "description": "MOG: Number of Gaussian mixtures, at most 8 by OpenCV (recreates the model)",
+    "name": "mog_nmixtures",
+    "range": [
+     1,
+     8
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0.0,
+    "description": "MOG: Noise strength, 0: automatic",
+    "name": "mog_noise_sigma",
+    "range": [
+     0.0,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/background",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "barcode_detection": {
+  "description": "Nodelet to detect and decode barcodes (cv::barcode::BarcodeDetector)",
+  "node": "barcode_detection",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "barcode_detection.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/detections",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "blob_detection": {
+  "description": "Nodelet to detect blobs using the SimpleBlobDetector",
+  "node": "blob_detection",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": 255,
+    "description": "0 to extract dark blobs and 255 to extract light blobs",
+    "name": "blob_color",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "blob_detection.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": true,
+    "description": "Filter the blobs by the area",
+    "name": "filter_by_area",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "Filter the blobs by the circularity (4*pi*area/perimeter^2)",
+    "name": "filter_by_circularity",
+    "type": "bool"
+   },
+   {
+    "default": true,
+    "description": "Filter the blobs by the color of the center",
+    "name": "filter_by_color",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "Filter the blobs by the convexity (area / area of convex hull)",
+    "name": "filter_by_convexity",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "Filter the blobs by the inertia ratio (the minimum / maximum second central moment, the square of minor axis / major axis for an ellipse, 0: line, 1: circle)",
+    "name": "filter_by_inertia",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 100000.0,
+    "description": "The maximum area (exclusive) of the blobs [pixel]",
+    "name": "max_area",
+    "range": [
+     0.0,
+     1000000.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 1.0,
+    "description": "The maximum circularity (exclusive) of the blobs, 1.0 means no limit",
+    "name": "max_circularity",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 1.0,
+    "description": "The maximum convexity (exclusive) of the blobs, 1.0 means no limit",
+    "name": "max_convexity",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 1.0,
+    "description": "The maximum inertia ratio (exclusive) of the blobs, 1.0 means no limit",
+    "name": "max_inertia_ratio",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 220.0,
+    "description": "The maximum threshold (exclusive) to binarize the image",
+    "name": "max_threshold",
+    "range": [
+     0.0,
+     255.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 25.0,
+    "description": "The minimum area (inclusive) of the blobs [pixel]",
+    "name": "min_area",
+    "range": [
+     0.0,
+     1000000.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.8,
+    "description": "The minimum circularity (inclusive) of the blobs",
+    "name": "min_circularity",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.95,
+    "description": "The minimum convexity (inclusive) of the blobs",
+    "name": "min_convexity",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 10.0,
+    "description": "The blobs located closer than min_dist_between_blobs are merged",
+    "name": "min_dist_between_blobs",
+    "range": [
+     0.0,
+     1000.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.1,
+    "description": "The minimum inertia ratio (inclusive) of the blobs",
+    "name": "min_inertia_ratio",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 2,
+    "description": "The minimum number of the binarized images in which a blob is detected",
+    "name": "min_repeatability",
+    "range": [
+     1,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": 50.0,
+    "description": "The minimum threshold to binarize the image",
+    "name": "min_threshold",
+    "range": [
+     0.0,
+     255.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 10.0,
+    "description": "Step of the thresholds from min_threshold to max_threshold",
+    "name": "threshold_step",
+    "range": [
+     1.0,
+     255.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/circles",
+    "type": "opencv_apps/msg/CircleArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "camshift": {
+  "description": "Nodelet to show mean-shift based tracking",
+  "node": "camshift",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "camshift.back_project.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "camshift.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": 0,
+    "description": "Height of the rectangle to track, 0 for none (setting it to 0 stops tracking)",
+    "name": "height",
+    "range": [
+     0,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": [],
+    "description": "",
+    "name": "histogram",
+    "type": "double[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 30,
+    "description": "Smin",
+    "name": "smin",
+    "range": [
+     1,
+     256
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   },
+   {
+    "default": 256,
+    "description": "Vmax",
+    "name": "vmax",
+    "range": [
+     1,
+     256
+    ],
+    "type": "int"
+   },
+   {
+    "default": 10,
+    "description": "Vmin",
+    "name": "vmin",
+    "range": [
+     1,
+     256
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "Width of the rectangle to track, 0 for none (setting it to 0 stops tracking)",
+    "name": "width",
+    "range": [
+     0,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "Center x of the rectangle to track",
+    "name": "x",
+    "range": [
+     0,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "Center y of the rectangle to track",
+    "name": "y",
+    "range": [
+     0,
+     4096
+    ],
+    "type": "int"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/back_project",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/confidence",
+    "type": "std_msgs/msg/Float64"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/track_box",
+    "type": "opencv_apps/msg/RotatedRectStamped"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "compare_histogram": {
+  "description": "Nodelet to compute the histogram of an image and compare it with a reference histogram: calcHist(), compareHist()",
+  "node": "compare_histogram",
+  "parameters": [
+   {
+    "default": false,
+    "description": "Accumulation flag. If it is set, the histogram is not cleared between images",
+    "name": "accumulate",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "compare_histogram.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": 0,
+    "description": "Histogram Comparison method, 0: Correlation, 1: Chi_Square, 2: Intersection, 3: Bhattacharyya",
+    "name": "histogram_comparison_type",
+    "range": [
+     0,
+     3
+    ],
+    "type": "int"
+   },
+   {
+    "default": 256,
+    "description": "Number of bins of the histogram of each channel",
+    "name": "histogram_size",
+    "range": [
+     1,
+     1024
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": [],
+    "description": "Reference of the histogram comparison, channels x histogram_size values in the layout of ~/histogram",
+    "name": "reference_histogram",
+    "type": "double[]"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/channel_distances",
+    "type": "std_msgs/msg/Float64MultiArray"
+   },
+   {
+    "name": "~/distance",
+    "type": "std_msgs/msg/Float64"
+   },
+   {
+    "name": "~/histogram",
+    "type": "std_msgs/msg/Float64MultiArray"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "contour_moments": {
+  "description": "Nodelet to find image moments",
+  "node": "contour_moments",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": 100,
+    "description": "Canny Edge low Threshold",
+    "name": "canny_low_threshold",
+    "range": [
+     1,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "contour_moments.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/moments",
+    "type": "opencv_apps/msg/MomentArrayStamped"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "convex_hull": {
+  "description": "Nodelet to find convex hulls",
+  "node": "convex_hull",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "convex_hull.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 100,
+    "description": "Detect edges using Threshold",
+    "name": "threshold",
+    "range": [
+     1,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/hulls",
+    "type": "opencv_apps/msg/ContourArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "corner_harris": {
+  "description": "Nodelet for detecting corners using Harris method",
+  "node": "corner_harris",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "corner_harris.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 200,
+    "description": "Threshold of corner.",
+    "name": "threshold",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "discrete_fourier_transform": {
+  "description": "Nodelet to fourier transform",
+  "node": "discrete_fourier_transform",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "discrete_fourier_transform.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 1,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_depth_estimation": {
+  "description": "Nodelet of monocular depth estimation with a DNN model, e.g. MiDaS",
+  "node": "dnn_depth_estimation",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_depth_estimation.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_depth_estimation.inverse_depth.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 256,
+    "description": "Height of the network input, 256 for MiDaS v2.1 small",
+    "name": "input_height",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": 256,
+    "description": "Width of the network input, 256 for MiDaS v2.1 small",
+    "name": "input_width",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the model (onnx) of the same input and output as MiDaS, empty for MiDaS v2.1 small. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/inverse_depth",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_face_detection": {
+  "description": "Nodelet to detect faces with YuNet (cv::FaceDetectorYN)",
+  "node": "dnn_face_detection",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_face_detection.face_image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_face_detection.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the YuNet model (onnx), empty for the default for this OpenCV version. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 0.3,
+    "description": "Threshold of the overlap of the faces to suppress, by non maximum suppression",
+    "name": "nms_threshold",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 0.9,
+    "description": "Threshold of the score to detect the faces",
+    "name": "score_threshold",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 5000,
+    "description": "Number of the candidates to keep before non maximum suppression",
+    "name": "top_k",
+    "range": [
+     1,
+     100000
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/face_image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/faces",
+    "type": "opencv_apps/msg/FaceArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_face_recognition": {
+  "description": "Nodelet to recognize faces with YuNet and SFace (cv::FaceRecognizerSF)",
+  "node": "dnn_face_recognition",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": "~/.ros/opencv_apps/dnn_face_data",
+    "description": "Directory to save and load the trained faces",
+    "name": "data_dir",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the YuNet face detection model (onnx), empty for the default for this OpenCV version. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "detection_model",
+    "type": "string"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_face_recognition.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 0.363,
+    "description": "Threshold of the cosine similarity to recognize the face as the trained one, 0.363 is suggested by SFace",
+    "name": "match_threshold",
+    "range": [
+     -1.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the SFace face recognition model (onnx), empty for the default. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "recognition_model",
+    "type": "string"
+   },
+   {
+    "default": 0.9,
+    "description": "Threshold of the score to detect the faces",
+    "name": "score_threshold",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/output",
+    "type": "opencv_apps/msg/FaceArrayStamped"
+   }
+  ],
+  "services": [
+   {
+    "name": "~/train",
+    "type": "opencv_apps/srv/FaceRecognitionTrain"
+   }
+  ],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_facial_expression_recognition": {
+  "description": "Nodelet to recognize the facial expressions with YuNet and MobileFaceNet",
+  "node": "dnn_facial_expression_recognition",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the YuNet model (onnx), empty for the default for this OpenCV version. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "detection_model",
+    "type": "string"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_facial_expression_recognition.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 0.3,
+    "description": "Threshold of the overlap of the faces to suppress, by non maximum suppression",
+    "name": "nms_threshold",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the facial expression recognition model (onnx), empty for MobileFaceNet of opencv_zoo",
+    "name": "recognition_model",
+    "type": "string"
+   },
+   {
+    "default": 0.9,
+    "description": "Threshold of the score to detect the faces",
+    "name": "score_threshold",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 5000,
+    "description": "Number of the candidates to keep before non maximum suppression",
+    "name": "top_k",
+    "range": [
+     1,
+     100000
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/faces",
+    "type": "opencv_apps/msg/FaceArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_hand_pose_estimation": {
+  "description": "Nodelet to estimate the hand poses with MediaPipe palm detection and hand pose estimation",
+  "node": "dnn_hand_pose_estimation",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": 0.5,
+    "description": "Threshold of the confidence to detect the palms and to estimate the hands",
+    "name": "confidence_threshold",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": 10,
+    "description": "Interval of the palm detection to find the new hands while tracking",
+    "name": "detection_interval",
+    "range": [
+     1,
+     1000
+    ],
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_hand_pose_estimation.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the MediaPipe hand pose estimation model (onnx), empty for handpose_estimation_mediapipe_2023feb.onnx of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "hand_pose_estimation_model",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 0.3,
+    "description": "Threshold of the overlap of the hands to suppress, by non maximum suppression",
+    "name": "nms_threshold",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the MediaPipe palm detection model (onnx), empty for palm_detection_mediapipe_2023feb.onnx of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "palm_detection_model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": true,
+    "description": "Smooth the landmarks of the tracked hands by One Euro filter",
+    "name": "smoothing",
+    "type": "bool"
+   },
+   {
+    "default": 80.0,
+    "description": "Speed coefficient of One Euro filter, larger follows the fast motion with less lag",
+    "name": "smoothing_beta",
+    "range": [
+     0.0,
+     10000.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 1.0,
+    "description": "Cutoff frequency (Hz) of the velocity of One Euro filter",
+    "name": "smoothing_derivative_cutoff",
+    "range": [
+     0.001,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.05,
+    "description": "Minimum cutoff frequency (Hz) of One Euro filter, smaller is smoother when still",
+    "name": "smoothing_min_cutoff",
+    "range": [
+     0.001,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": true,
+    "description": "Track the hands by their poses in the previous image, as MediaPipe, and run the palm detection every detection_interval images, otherwise every image",
+    "name": "tracking",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/skeletons",
+    "type": "opencv_apps/msg/SkeletonArrayStamped"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_image_classification": {
+  "description": "Nodelet to classify the images with a DNN model, e.g. PP-ResNet50 (ImageNet)",
+  "node": "dnn_image_classification",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the class names of the model, one class per line, or empty for the 1000 classes of ImageNet",
+    "name": "classes",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_image_classification.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 224,
+    "description": "Height of the network input",
+    "name": "input_height",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": 224,
+    "description": "Width of the network input",
+    "name": "input_width",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the model (onnx), empty for PP-ResNet50 of opencv_zoo, e.g. MobileNet of opencv_zoo (OpenCV 4.9 or later). The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": true,
+    "description": "Apply softmax to the output of the model to get the probabilities, true for the models whose output is the logits (e.g. PP-ResNet50 and MobileNet of opencv_zoo), false for the models whose output is the probabilities",
+    "name": "softmax",
+    "type": "bool"
+   },
+   {
+    "default": 5,
+    "description": "Number of the classes to publish",
+    "name": "top_k",
+    "range": [
+     1,
+     1000
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/detections",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_object_detection": {
+  "description": "Nodelet to detect objects with a DNN model (cv::dnn::DetectionModel), e.g. YOLO",
+  "node": "dnn_object_detection",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the class names of the model, one name per line, or empty for the classes of COCO for yolox",
+    "name": "classes",
+    "type": "string"
+   },
+   {
+    "default": 0.5,
+    "description": "Threshold of the confidence to detect the objects",
+    "name": "confidence_threshold",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the network configuration (e.g. .cfg, .prototxt, .pbtxt) of the model, or empty",
+    "name": "config",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_object_detection.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 640,
+    "description": "Height of the network input, a multiple of 32 for yolox",
+    "name": "input_height",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": 640,
+    "description": "Width of the network input, a multiple of 32 for yolox",
+    "name": "input_width",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the model (e.g. .onnx, .weights, .caffemodel, .pb), empty for YOLOX-S trained on COCO of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": "yolox",
+    "description": "yolox for the YOLOX models (onnx), or detection_model for the models of cv::dnn::DetectionModel, e.g. YOLO (darknet), SSD (caffe, tensorflow), with config, input_width, input_height, scale and swap_rb",
+    "name": "model_type",
+    "type": "string"
+   },
+   {
+    "default": 0.4,
+    "description": "Threshold of the overlap of the objects to suppress, by non maximum suppression",
+    "name": "nms_threshold",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 0.00392156862745098,
+    "description": "Multiplier of the pixel values for the network input, for detection_model",
+    "name": "scale",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": true,
+    "description": "Swap the red and blue channels, true for the models trained in RGB, for detection_model",
+    "name": "swap_rb",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/detections",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_pose_estimation": {
+  "description": "Nodelet to estimate the human poses with MediaPipe person detection and pose estimation",
+  "node": "dnn_pose_estimation",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": 0.5,
+    "description": "Threshold of the confidence to detect the persons and to estimate their poses",
+    "name": "confidence_threshold",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": 10,
+    "description": "Interval of the person detection to find the new persons while tracking",
+    "name": "detection_interval",
+    "range": [
+     1,
+     1000
+    ],
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_pose_estimation.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 0.3,
+    "description": "Threshold of the overlap of the persons to suppress, by non maximum suppression",
+    "name": "nms_threshold",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the MediaPipe person detection model (onnx), empty for person_detection_mediapipe_2023mar.onnx of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "person_detection_model",
+    "type": "string"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the MediaPipe pose estimation model (onnx), empty for pose_estimation_mediapipe_2023mar.onnx of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "pose_estimation_model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": true,
+    "description": "Smooth the landmarks of the tracked persons by One Euro filter",
+    "name": "smoothing",
+    "type": "bool"
+   },
+   {
+    "default": 80.0,
+    "description": "Speed coefficient of One Euro filter, larger follows the fast motion with less lag",
+    "name": "smoothing_beta",
+    "range": [
+     0.0,
+     10000.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 1.0,
+    "description": "Cutoff frequency (Hz) of the velocity of One Euro filter",
+    "name": "smoothing_derivative_cutoff",
+    "range": [
+     0.001,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.05,
+    "description": "Minimum cutoff frequency (Hz) of One Euro filter, smaller is smoother when still",
+    "name": "smoothing_min_cutoff",
+    "range": [
+     0.001,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": true,
+    "description": "Track the persons by their poses in the previous image, as MediaPipe, and run the person detection every detection_interval images, otherwise every image",
+    "name": "tracking",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/skeletons",
+    "type": "opencv_apps/msg/SkeletonArrayStamped"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_semantic_segmentation": {
+  "description": "Nodelet of semantic segmentation with a DNN model, e.g. PP-HumanSeg",
+  "node": "dnn_semantic_segmentation",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the class names of the model, one name per line, the first one is the background, or empty for background and person of PP-HumanSeg",
+    "name": "classes",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_semantic_segmentation.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_semantic_segmentation.label.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 192,
+    "description": "Height of the network input",
+    "name": "input_height",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": 192,
+    "description": "Width of the network input",
+    "name": "input_width",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 127.5,
+    "description": "Mean subtracted from the pixel values before the scale",
+    "name": "mean",
+    "range": [
+     0.0,
+     255.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the model whose output is the scores of the classes for each pixel, empty for PP-HumanSeg of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 0.00784313725490196,
+    "description": "Multiplier of the pixel values for the network input",
+    "name": "scale",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": true,
+    "description": "Swap the red and blue channels, true for the models trained in RGB",
+    "name": "swap_rb",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/label",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_text_detection": {
+  "description": "Nodelet to detect and recognize texts with DB (cv::dnn::TextDetectionModel_DB) and CRNN (cv::dnn::TextRecognitionModel)",
+  "node": "dnn_text_detection",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": 0.3,
+    "description": "Threshold of the text probability of the pixels",
+    "name": "binary_threshold",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the text detection model of DB (onnx), empty for DB (ResNet-18, IC15) of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "detection_model",
+    "type": "string"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_text_detection.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 736,
+    "description": "Height of the input of the detection model, a multiple of 32",
+    "name": "input_height",
+    "range": [
+     32,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": 736,
+    "description": "Width of the input of the detection model, a multiple of 32",
+    "name": "input_width",
+    "range": [
+     32,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 200,
+    "description": "Maximum number of the text regions",
+    "name": "max_candidates",
+    "range": [
+     1,
+     10000
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0.5,
+    "description": "Threshold of the score of the text regions",
+    "name": "polygon_threshold",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the text recognition model of CRNN (onnx), empty for CRNN (English) of opencv_zoo, or none to detect the text only",
+    "name": "recognition_model",
+    "type": "string"
+   },
+   {
+    "default": 2.0,
+    "description": "Ratio to expand the detected text regions",
+    "name": "unclip_ratio",
+    "range": [
+     0.0,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the vocabulary of the recognition model, one character per line, or empty for 0-9 and a-z of CRNN (English)",
+    "name": "vocabulary",
+    "type": "string"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/detections",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_tracking": {
+  "description": "Nodelet to track the target with the DNN based trackers of OpenCV (DaSiamRPN, NanoTrack, VitTrack)",
+  "node": "dnn_tracking",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": "",
+    "description": "dasiamrpn_kernel_cls1.onnx of DaSiamRPN, a path or URL (downloaded to ~/.ros/opencv_apps/models/ at the first time), empty for the default https://www.dropbox.com/s/qvmtszx5h339a0w/dasiamrpn_kernel_cls1.onnx?dl=1",
+    "name": "dasiamrpn_kernel_cls1",
+    "type": "string"
+   },
+   {
+    "default": "",
+    "description": "dasiamrpn_kernel_r1.onnx of DaSiamRPN, a path or URL (downloaded to ~/.ros/opencv_apps/models/ at the first time), empty for the default https://www.dropbox.com/s/999cqx5zrfi7w4p/dasiamrpn_kernel_r1.onnx?dl=1",
+    "name": "dasiamrpn_kernel_r1",
+    "type": "string"
+   },
+   {
+    "default": "",
+    "description": "dasiamrpn_model.onnx of DaSiamRPN, a path or URL (downloaded to ~/.ros/opencv_apps/models/ at the first time), empty for the default https://www.dropbox.com/s/rr1lk9355vzolqv/dasiamrpn_model.onnx?dl=1",
+    "name": "dasiamrpn_model",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_tracking.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Backbone model of NanoTrack, a path or URL (downloaded to ~/.ros/opencv_apps/models/ at the first time), empty for the default https://raw.githubusercontent.com/HonglinChu/SiamTrackers/8fe6791fecf13b95e6f19770af8963a9fc98759b/NanoTrack/models/nanotrackv2/nanotrack_backbone_sim.onnx",
+    "name": "nanotrack_backbone",
+    "type": "string"
+   },
+   {
+    "default": "",
+    "description": "Neck and head model of NanoTrack, a path or URL (downloaded to ~/.ros/opencv_apps/models/ at the first time), empty for the default https://raw.githubusercontent.com/HonglinChu/SiamTrackers/8fe6791fecf13b95e6f19770af8963a9fc98759b/NanoTrack/models/nanotrackv2/nanotrack_head_sim.onnx",
+    "name": "nanotrack_neckhead",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": -1,
+    "description": "Tracking Algorithm, -1: the newest one of this OpenCV (VitTrack, NanoTrack or DaSiamRPN), 0: DaSiamRPN, 1: NanoTrack (OpenCV 4.7 or later), 2: VitTrack (OpenCV 4.9 or later)",
+    "name": "tracking_algorithm",
+    "range": [
+     -1,
+     2
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Model of VitTrack, a path or URL (downloaded to ~/.ros/opencv_apps/models/ at the first time), empty for the default https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/object_tracking_vittrack/object_tracking_vittrack_2023sep.onnx",
+    "name": "vittrack_model",
+    "type": "string"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/output",
+    "type": "opencv_apps/msg/RectArrayStamped"
+   }
+  ],
+  "services": [
+   {
+    "name": "~/set_roi",
+    "type": "opencv_apps/srv/SetROI"
+   }
+  ],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "edge_detection": {
+  "description": "Nodelet to find edges",
+  "node": "edge_detection",
+  "parameters": [
+   {
+    "default": false,
+    "description": "Flag, indicating whether a more accurate  L_2 norm should be used to calculate the image gradient magnitude ( L2gradient=true ), or whether the default  L_1 norm is enough ( L2gradient=false ).",
+    "name": "L2gradient",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "Aperture size for the Sobel() operator.",
+    "name": "apertureSize",
+    "range": [
+     1,
+     10
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Flag, applying GaussianBlur() to output(edge) image",
+    "name": "apply_blur_post",
+    "type": "bool"
+   },
+   {
+    "default": true,
+    "description": "Flag, applying Blur() to input image",
+    "name": "apply_blur_pre",
+    "type": "bool"
+   },
+   {
+    "default": 100,
+    "description": "First threshold for the hysteresis procedure.",
+    "name": "canny_threshold1",
+    "range": [
+     0,
+     500
+    ],
+    "type": "int"
+   },
+   {
+    "default": 200,
+    "description": "Second threshold for the hysteresis procedure.",
+    "name": "canny_threshold2",
+    "range": [
+     0,
+     500
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "edge_detection.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 0,
+    "description": "Edge Detection Methods, 0: Sobel, 1: Laplace, 2: Canny",
+    "name": "edge_type",
+    "range": [
+     0,
+     2
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3.2,
+    "description": "Sigma for the GaussianBlur() operator.",
+    "name": "postBlurSigma",
+    "range": [
+     0.0,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 13,
+    "description": "Aperture size for the Blur() operator.",
+    "name": "postBlurSize",
+    "range": [
+     3,
+     31
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "equalize_histogram": {
+  "description": "Nodelet for histogram equalization",
+  "node": "equalize_histogram",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": 20.0,
+    "description": "Clip Limit for Clahe filter",
+    "name": "clahe_clip_limit",
+    "range": [
+     0.0,
+     255.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 32,
+    "description": "X Tile Size for Clahe filter",
+    "name": "clahe_tile_size_x",
+    "range": [
+     0,
+     300
+    ],
+    "type": "int"
+   },
+   {
+    "default": 32,
+    "description": "Y Tile Size for Clahe filter",
+    "name": "clahe_tile_size_y",
+    "range": [
+     0,
+     300
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "equalize_histogram.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 0,
+    "description": "Histogram Equalization Methods, 0: EqualizeHist, 1: Clahe",
+    "name": "histogram_equalization_type",
+    "range": [
+     0,
+     1
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": true,
+    "description": "",
+    "name": "use_opencl",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "face_detection": {
+  "description": "Nodelet to find faces",
+  "node": "face_detection",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": "/usr/share/opencv4/haarcascades/haarcascade_eye_tree_eyeglasses.xml",
+    "description": "",
+    "name": "eyes_cascade_name",
+    "type": "string"
+   },
+   {
+    "default": "/usr/share/opencv4/haarcascades/haarcascade_frontalface_alt.xml",
+    "description": "",
+    "name": "face_cascade_name",
+    "type": "string"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "face_detection.face_image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "face_detection.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/face_image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/faces",
+    "type": "opencv_apps/msg/FaceArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "face_recognition": {
+  "description": "Nodelet to identify faces",
+  "node": "face_recognition",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "approximate_sync",
+    "type": "bool"
+   },
+   {
+    "default": "~/.ros/opencv_apps/face_data",
+    "description": "Save directory for train data",
+    "name": "data_dir",
+    "type": "string"
+   },
+   {
+    "default": 90,
+    "description": "Height of training face image",
+    "name": "face_model_height",
+    "range": [
+     30,
+     500
+    ],
+    "type": "int"
+   },
+   {
+    "default": 190,
+    "description": "Width of training face image",
+    "name": "face_model_width",
+    "range": [
+     30,
+     500
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0.1,
+    "description": "Padding ratio of each face",
+    "name": "face_padding",
+    "range": [
+     0.0,
+     2.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 8,
+    "description": "grid_x parameter used only for LBPH model",
+    "name": "lbph_grid_x",
+    "range": [
+     1,
+     30
+    ],
+    "type": "int"
+   },
+   {
+    "default": 8,
+    "description": "grid_y parameter used only for LBPH model",
+    "name": "lbph_grid_y",
+    "range": [
+     1,
+     30
+    ],
+    "type": "int"
+   },
+   {
+    "default": 8,
+    "description": "Neighbors parameter used only for LBPH model",
+    "name": "lbph_neighbors",
+    "range": [
+     1,
+     30
+    ],
+    "type": "int"
+   },
+   {
+    "default": 1,
+    "description": "Radius parameter used only for LBPH model",
+    "name": "lbph_radius",
+    "range": [
+     1,
+     10
+    ],
+    "type": "int"
+   },
+   {
+    "default": "eigen",
+    "description": "Method to recognize faces, \"eigen\": eigen, \"fisher\": fisher, \"LBPH\": LBPH",
+    "name": "model_method",
+    "type": "string"
+   },
+   {
+    "default": 0,
+    "description": "Number of components for face recognizer model",
+    "name": "model_num_components",
+    "range": [
+     0,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 8000.0,
+    "description": "Threshold for face recognizer model",
+    "name": "model_threshold",
+    "range": [
+     0.0,
+     10000.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 100,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": true,
+    "description": "Save train data",
+    "name": "save_train_data",
+    "type": "bool"
+   },
+   {
+    "default": true,
+    "description": "Use saved data",
+    "name": "use_saved_data",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/debug_image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/output",
+    "type": "opencv_apps/msg/FaceArrayStamped"
+   }
+  ],
+  "services": [
+   {
+    "name": "~/train",
+    "type": "opencv_apps/srv/FaceRecognitionTrain"
+   }
+  ],
+  "subscriptions": [
+   {
+    "name": "/faces",
+    "type": "opencv_apps/msg/FaceArrayStamped"
+   },
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "fback_flow": {
+  "description": "Nodelet to demonstrates dense optical flow algorithm by Gunnar Farneback",
+  "node": "fback_flow",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "fback_flow.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/flows",
+    "type": "opencv_apps/msg/FlowArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "find_contours": {
+  "description": "Nodelet to find contours",
+  "node": "find_contours",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": 10,
+    "description": "Canny Edge low Threshold",
+    "name": "canny_low_threshold",
+    "range": [
+     1,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "find_contours.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/contours",
+    "type": "opencv_apps/msg/ContourArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "general_contours": {
+  "description": "Nodelet to creating bounding boxes and circles for contours",
+  "node": "general_contours",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "general_contours.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 100,
+    "description": "Detect edges using Threshold",
+    "name": "threshold",
+    "range": [
+     1,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/ellipses",
+    "type": "opencv_apps/msg/RotatedRectArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/rectangles",
+    "type": "opencv_apps/msg/RotatedRectArrayStamped"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "goodfeature_track": {
+  "description": "Nodelet for detecting corners using Shi-Tomasi method",
+  "node": "goodfeature_track",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "goodfeature_track.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 23,
+    "description": "Max Number of Corners",
+    "name": "max_corners",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/corners",
+    "type": "opencv_apps/msg/Point2DArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "hls_color_filter": {
+  "description": "Nodelet of hls color filter",
+  "node": "hls_color_filter",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": 4,
+    "description": "Publish every color_space_step-th pixel in x and y of the image to ~color_space",
+    "name": "color_space_step",
+    "range": [
+     1,
+     64
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": 360,
+    "description": "The maximum allowed field value Hue",
+    "name": "h_limit_max",
+    "range": [
+     0,
+     360
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "The minimum allowed field value Hue",
+    "name": "h_limit_min",
+    "range": [
+     0,
+     360
+    ],
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "hls_color_filter.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 256,
+    "description": "The maximum allowed field value Lightness",
+    "name": "l_limit_max",
+    "range": [
+     0,
+     256
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "The minimum allowed field value Lightness",
+    "name": "l_limit_min",
+    "range": [
+     0,
+     256
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 256,
+    "description": "The maximum allowed field value Saturation",
+    "name": "s_limit_max",
+    "range": [
+     0,
+     256
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "The minimum allowed field value Saturation",
+    "name": "s_limit_min",
+    "range": [
+     0,
+     256
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/color_space",
+    "type": "sensor_msgs/msg/PointCloud2"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "hough_circles": {
+  "description": "Nodelet to find circles",
+  "node": "hough_circles",
+  "parameters": [
+   {
+    "default": 50.0,
+    "description": "Accumulator threshold",
+    "name": "accumulator_threshold",
+    "range": [
+     1.0,
+     200.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": 200.0,
+    "description": "Canny threshold",
+    "name": "canny_threshold",
+    "range": [
+     1.0,
+     255.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0,
+    "description": "Select image type for debug output, 0: Input, 1: Blur, 2: Canny",
+    "name": "debug_image_type",
+    "range": [
+     0,
+     2
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": 2.0,
+    "description": "dp",
+    "name": "dp",
+    "range": [
+     0.0,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 9,
+    "description": "the size of gaussian blur (should be odd number)",
+    "name": "gaussian_blur_size",
+    "range": [
+     1,
+     30
+    ],
+    "type": "int"
+   },
+   {
+    "default": 2.0,
+    "description": "sigma x of gaussian kernel",
+    "name": "gaussian_sigma_x",
+    "range": [
+     1.0,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 2.0,
+    "description": "sigma y of gaussian kernel",
+    "name": "gaussian_sigma_y",
+    "range": [
+     1.0,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "hough_circles.debug_image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "hough_circles.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 0,
+    "description": "the maximum size of the circle",
+    "name": "max_circle_radius",
+    "range": [
+     0,
+     2000
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "the minimum size of the circle",
+    "name": "min_circle_radius",
+    "range": [
+     0,
+     500
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0.0,
+    "description": "mnimum distance between the centers of the detected circles",
+    "name": "min_distance_between_circles",
+    "range": [
+     0.0,
+     1024.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/circles",
+    "type": "opencv_apps/msg/CircleArrayStamped"
+   },
+   {
+    "name": "~/debug_image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "hough_lines": {
+  "description": "Nodelet to find lines",
+  "node": "hough_lines",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "hough_lines.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 0,
+    "description": "Hough Line Methods, 0: Standard_Hough_Transform, 1: Probabilistic_Hough_Transform",
+    "name": "hough_type",
+    "range": [
+     0,
+     1
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 10.0,
+    "description": "The maximum gap between two points to be considered in the same line.",
+    "name": "maxLineGap",
+    "range": [
+     0.0,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 30.0,
+    "description": "The minimum number of points that can form a line. Lines with less than this number of points are disregarded.",
+    "name": "minLineLength",
+    "range": [
+     0.0,
+     500.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 1.0,
+    "description": "The resolution of the parameter r in pixels. We use 1 pixel.",
+    "name": "rho",
+    "range": [
+     1.0,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 1.0,
+    "description": "The resolution of the parameter theta in degrees.",
+    "name": "theta",
+    "range": [
+     1.0,
+     90.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 150,
+    "description": "Hough Line Threshold",
+    "name": "threshold",
+    "range": [
+     50,
+     150
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/lines",
+    "type": "opencv_apps/msg/LineArrayStamped"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "hsv_color_filter": {
+  "description": "Nodelet of hsv color filter",
+  "node": "hsv_color_filter",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": 4,
+    "description": "Publish every color_space_step-th pixel in x and y of the image to ~color_space",
+    "name": "color_space_step",
+    "range": [
+     1,
+     64
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": 360,
+    "description": "The maximum allowed field value Hue",
+    "name": "h_limit_max",
+    "range": [
+     0,
+     360
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "The minimum allowed field value Hue",
+    "name": "h_limit_min",
+    "range": [
+     0,
+     360
+    ],
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "hsv_color_filter.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 256,
+    "description": "The maximum allowed field value Saturation",
+    "name": "s_limit_max",
+    "range": [
+     0,
+     256
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "The minimum allowed field value Saturation",
+    "name": "s_limit_min",
+    "range": [
+     0,
+     256
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": 256,
+    "description": "The maximum allowed field value Value",
+    "name": "v_limit_max",
+    "range": [
+     0,
+     256
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "The minimum allowed field value Value",
+    "name": "v_limit_min",
+    "range": [
+     0,
+     256
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/color_space",
+    "type": "sensor_msgs/msg/PointCloud2"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "lab_color_filter": {
+  "description": "Nodelet of lab color filter",
+  "node": "lab_color_filter",
+  "parameters": [
+   {
+    "default": 255,
+    "description": "The maximum allowed field value a*",
+    "name": "a_limit_max",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "The minimum allowed field value a*",
+    "name": "a_limit_min",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": 255,
+    "description": "The maximum allowed field value b*",
+    "name": "b_limit_max",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "The minimum allowed field value b*",
+    "name": "b_limit_min",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": 4,
+    "description": "Publish every color_space_step-th pixel in x and y of the image to ~color_space",
+    "name": "color_space_step",
+    "range": [
+     1,
+     64
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": 255,
+    "description": "The maximum allowed field value L*",
+    "name": "l_limit_max",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "The minimum allowed field value L*",
+    "name": "l_limit_min",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "lab_color_filter.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/color_space",
+    "type": "sensor_msgs/msg/PointCloud2"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "line_segment_detector": {
+  "description": "Nodelet to detect line segments using the LineSegmentDetector",
+  "node": "line_segment_detector",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "line_segment_detector.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 22.5,
+    "description": "Gradient angle tolerance in degrees",
+    "name": "lsd_angle_threshold",
+    "range": [
+     0.1,
+     179.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.7,
+    "description": "Minimal density of aligned region points in the enclosing rectangle",
+    "name": "lsd_density_threshold",
+    "range": [
+     0.0,
+     0.9
+    ],
+    "type": "double"
+   },
+   {
+    "default": 100.0,
+    "description": "Threshold of line length. Shorter lines are not published nor drawn.",
+    "name": "lsd_line_length_threshold",
+    "range": [
+     0.0,
+     1000.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.0,
+    "description": "Detection threshold: -log10(NFA) > log_eps. Used only when advanced refinement is chosen",
+    "name": "lsd_log_eps",
+    "range": [
+     0.0,
+     360.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 1024,
+    "description": "Number of bins in pseudo-ordering of gradient modulus",
+    "name": "lsd_n_bins",
+    "range": [
+     1,
+     10000
+    ],
+    "type": "int"
+   },
+   {
+    "default": 2.0,
+    "description": "Bound to the quantization error on the gradient norm",
+    "name": "lsd_quant",
+    "range": [
+     0.0,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0,
+    "description": "Line Segment Detector Modes, 0: REFINE_NONE, 1: REFINE_STD, 2: REFINE_ADV",
+    "name": "lsd_refine_type",
+    "range": [
+     0,
+     2
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0.8,
+    "description": "The scale of the image that will be used to find the lines. Range [0.1..1]",
+    "name": "lsd_scale",
+    "range": [
+     0.1,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.6,
+    "description": "Sigma for Gaussian filter. It is computed as sigma = _sigma_scale/_scale",
+    "name": "lsd_sigma_scale",
+    "range": [
+     0.1,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/lines",
+    "type": "opencv_apps/msg/LineArrayStamped"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "lk_flow": {
+  "description": "Nodelet to calculate Lukas-Kanade optical flow",
+  "node": "lk_flow",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "Size of an average block for computing a derivative covariation matrix over each pixel neighborhood.",
+    "name": "block_size",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": 0.04,
+    "description": "Free parameter of the Harris detector",
+    "name": "harris_k",
+    "range": [
+     0.001,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "lk_flow.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 10,
+    "description": "Minimum possible Euclidean distance between the returned corners.",
+    "name": "min_distance",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0.01,
+    "description": "Parameter characterizing the minimal acceptance quality of image corners.",
+    "name": "quality_level",
+    "range": [
+     0.001,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/flows",
+    "type": "opencv_apps/msg/FlowArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [
+   {
+    "name": "~/delete_points",
+    "type": "std_srvs/srv/Empty"
+   },
+   {
+    "name": "~/initialize_points",
+    "type": "std_srvs/srv/Empty"
+   },
+   {
+    "name": "~/toggle_night_mode",
+    "type": "std_srvs/srv/Empty"
+   }
+  ],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "match_template": {
+  "description": "Nodelet to find a template image in the image: matchTemplate()",
+  "node": "match_template",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "File name of the mask image of the template, non-zero pixels are used",
+    "name": "mask_file",
+    "type": "string"
+   },
+   {
+    "default": 5,
+    "description": "Matching Method, 0: TM_SQDIFF, 1: TM_SQDIFF_NORMED, 2: TM_CCORR, 3: TM_CCORR_NORMED, 4: TM_CCOEFF, 5: TM_CCOEFF_NORMED",
+    "name": "match_method",
+    "range": [
+     0,
+     5
+    ],
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "match_template.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "match_template.matched_image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 0.0,
+    "description": "Minimum similarity of a match, the score of TM_CCORR_NORMED and TM_CCOEFF_NORMED, 1 - score of TM_SQDIFF_NORMED; not used by the methods which are not normalized",
+    "name": "match_threshold",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 1,
+    "description": "Maximum number of the matches. 1: the best match only, more than 1: the matches above match_threshold, after a non-maximum suppression",
+    "name": "max_matches",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": "",
+    "description": "File name of the template image",
+    "name": "template_file",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/matched_image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/output",
+    "type": "opencv_apps/msg/RectArrayStamped"
+   },
+   {
+    "name": "~/score",
+    "type": "std_msgs/msg/Float64"
+   }
+  ],
+  "services": [
+   {
+    "name": "~/set_roi",
+    "type": "opencv_apps/srv/SetROI"
+   }
+  ],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/mask",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/template",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "morphology": {
+  "description": "Nodelet to apply morphological transformations",
+  "node": "morphology",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 0,
+    "description": "Type of the kernel 0: Rect, 1: Cross, 2: Ellipse",
+    "name": "morph_element",
+    "range": [
+     0,
+     2
+    ],
+    "type": "int"
+   },
+   {
+    "default": 1,
+    "description": "Morphology Operation Methods, 0: Opening, 1: Closing, 2: Gradient, 3: Top_Hat, 4: Black_Hat",
+    "name": "morph_operator",
+    "range": [
+     0,
+     4
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "Radius of the kernel, whose size is 2 * morph_size + 1.",
+    "name": "morph_size",
+    "range": [
+     0,
+     101
+    ],
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "morphology.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "people_detect": {
+  "description": "Nodelet to demonstrate the use of the HoG descriptor",
+  "node": "people_detect",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": 2,
+    "description": "Coefficient to regulate the similarity threshold. When detected, some objects can be covered by many rectangles. 0 means not to perform grouping.",
+    "name": "group_threshold",
+    "range": [
+     0,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0.0,
+    "description": "Threshold for the distance between features and SVM classifying plane.",
+    "name": "hit_threshold",
+    "range": [
+     0.0,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 32,
+    "description": "Padding of the detection window in pixels, of cv::HOGDescriptor::detectMultiScale().",
+    "name": "padding",
+    "range": [
+     0,
+     128
+    ],
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "people_detect.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 1.05,
+    "description": "Coefficient of the detection window increase.",
+    "name": "scale0",
+    "range": [
+     1.0,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   },
+   {
+    "default": 8,
+    "description": "Window stride. It must be a multiple of block stride.",
+    "name": "win_stride",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/found",
+    "type": "opencv_apps/msg/RectArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "phase_corr": {
+  "description": "Nodelet to demonstrate the use of phaseCorrelate",
+  "node": "phase_corr",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "phase_corr.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/shift",
+    "type": "opencv_apps/msg/Point2DStamped"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "pyramids": {
+  "description": "Nodelet to process image pyramids",
+  "node": "pyramids",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 1,
+    "description": "Number of pyramids",
+    "name": "num_of_pyramids",
+    "range": [
+     1,
+     10
+    ],
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "pyramids.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 0,
+    "description": "Pyramids Type, 0: Up, 1: Down",
+    "name": "pyramids_type",
+    "range": [
+     0,
+     2
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "qrcode_detection": {
+  "description": "Nodelet to detect and decode QR codes (cv::QRCodeDetector)",
+  "node": "qrcode_detection",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "qrcode_detection.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/detections",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "rgb_color_filter": {
+  "description": "Nodelet of rgb color filter",
+  "node": "rgb_color_filter",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": 255,
+    "description": "The maximum allowed field value Blue",
+    "name": "b_limit_max",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "The minimum allowed field value Blue",
+    "name": "b_limit_min",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": 4,
+    "description": "Publish every color_space_step-th pixel in x and y of the image to ~color_space",
+    "name": "color_space_step",
+    "range": [
+     1,
+     64
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": 255,
+    "description": "The maximum allowed field value Green",
+    "name": "g_limit_max",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "The minimum allowed field value Green",
+    "name": "g_limit_min",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 255,
+    "description": "The maximum allowed field value Red",
+    "name": "r_limit_max",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": 0,
+    "description": "The minimum allowed field value Red",
+    "name": "r_limit_min",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "rgb_color_filter.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/color_space",
+    "type": "sensor_msgs/msg/PointCloud2"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "segment_objects": {
+  "description": "Nodelet to demonstrate a simple method of connected components clean up of background subtraction",
+  "node": "segment_objects",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "segment_objects.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/area",
+    "type": "std_msgs/msg/Float64"
+   },
+   {
+    "name": "~/contours",
+    "type": "opencv_apps/msg/ContourArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [
+   {
+    "name": "~/update_bg_model",
+    "type": "std_srvs/srv/Empty"
+   }
+  ],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "simple_flow": {
+  "description": "Nodelet of SimpleFlow optical flow algorithm",
+  "node": "simple_flow",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 4,
+    "description": "Scale",
+    "name": "scale",
+    "range": [
+     1,
+     24
+    ],
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "simple_flow.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/flows",
+    "type": "opencv_apps/msg/FlowArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "smoothing": {
+  "description": "Nodelet to smoothing by homogeneous filter, bilateral filter, gaussian filter, median filter",
+  "node": "smoothing",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": 1,
+    "description": "Smoothing Filter Methods, 0: Homogeneous_Blur, 1: Gaussian_Blur, 2: Median_Blur, 3: Bilateral_Filter",
+    "name": "filter_type",
+    "range": [
+     0,
+     3
+    ],
+    "type": "int"
+   },
+   {
+    "default": 7,
+    "description": "Size of the kernel (only one because we use a square window). Must be odd.",
+    "name": "kernel_size",
+    "range": [
+     1,
+     31
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "smoothing.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "threshold": {
+  "description": "Nodelet of threshold",
+  "node": "threshold",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "Apply otsu threshold",
+    "name": "apply_otsu",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 255,
+    "description": "Max Binary value",
+    "name": "max_binary",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 150,
+    "description": "Threshold value",
+    "name": "threshold",
+    "range": [
+     0,
+     255
+    ],
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "threshold.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 0,
+    "description": "Threshold Type, 0: Binary, 1: Binary_Inverted, 2: Threshold_Truncated, 3: Threshold_To_Zero, 4: Threshold_To_Zero_Inverted",
+    "name": "threshold_type",
+    "range": [
+     0,
+     4
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "tracking": {
+  "description": "Nodelet to track the target with OpenCV trackers",
+  "node": "tracking",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "tracking.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 4,
+    "description": "Tracking Algorithm, 0: MIL, 1: BOOSTING, 2: MEDIANFLOW, 3: TLD, 4: KCF, 6: MOSSE, 7: CSRT",
+    "name": "tracking_algorithm",
+    "range": [
+     0,
+     7
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/output",
+    "type": "opencv_apps/msg/RectArrayStamped"
+   }
+  ],
+  "services": [
+   {
+    "name": "~/set_roi",
+    "type": "opencv_apps/srv/SetROI"
+   }
+  ],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "watershed_segmentation": {
+  "description": "Nodelet to demonstrate the famous watershed segmentation algorithm in OpenCV: watershed()",
+  "node": "watershed_segmentation",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "watershed_segmentation.image.enable_pub_plugins",
+    "type": "string[]"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/contours",
+    "type": "opencv_apps/msg/ContourArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/add_seed_points",
+    "type": "opencv_apps/msg/Point2DArray"
+   }
+  ]
+ }
+}

@@ -237,7 +237,7 @@ public:
                                     paramDescriptor("Window stride. It must be a multiple of block stride.", 1, 100));
     padding_ = declare_parameter(
         "padding", 32,
-        paramDescriptor("Mock parameter to keep the CPU interface compatibility. It must be (0,0).", 0, 128));
+        paramDescriptor("Padding of the detection window in pixels, of cv::HOGDescriptor::detectMultiScale().", 0, 128));
     scale0_ =
         declare_parameter("scale0", 1.05, paramDescriptor("Coefficient of the detection window increase.", 1.0, 100.0));
     group_threshold_ = declare_parameter(

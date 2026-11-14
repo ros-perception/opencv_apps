@@ -1,0 +1,62 @@
+# Build the documentation (doc/) with Sphinx, and publish it to GitHub Pages
+# (https://ros-perception.github.io/opencv_apps/) on the push to indigo. The demo videos of the nodes are on the
+# docs-media branch, which are published under media/ (and their input videos under media/clips/).
+name: doc
+
+on:
+  push:
+    branches: [indigo]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: doc-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: docs-media
+          path: docs-media
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check that the generated pages are up to date
+        run: |
+          pip install sphinx sphinx_rtd_theme pyyaml
+          python3 doc/tools/generate_pages.py
+          python3 doc/tools/generate_pages.py --readme
+          git status --porcelain doc README.md
+          test -z "$(git status --porcelain doc README.md)" || \
+            (echo "run doc/tools/generate_pages.py (and --readme), and commit the pages"; git diff --stat; exit 1)
+      - name: Build the documentation
+        run: sphinx-build -W -b html doc doc/_build/html
+      - name: Copy the demo videos
+        run: |
+          mkdir -p doc/_build/html/media
+          cp docs-media/*.gif doc/_build/html/media/
+          cp -r docs-media/clips doc/_build/html/media/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: doc/_build/html
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/indigo'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -20,7 +20,7 @@
   <arg name="filter_by_circularity" default="false" doc="Filter the blobs by the circularity (4*pi*area/perimeter^2)" />
   <arg name="min_circularity" default="0.8" doc="The minimum circularity (inclusive) of the blobs" />
   <arg name="max_circularity" default="1.0" doc="The maximum circularity (exclusive) of the blobs, 1.0 means no limit" />
-  <arg name="filter_by_inertia" default="false" doc="Filter the blobs by the inertia ratio (minor axis / major axis, 0: line, 1: circle)" />
+  <arg name="filter_by_inertia" default="false" doc="Filter the blobs by the inertia ratio (the minimum / maximum second central moment, the square of minor axis / major axis for an ellipse, 0: line, 1: circle)" />
   <arg name="min_inertia_ratio" default="0.1" doc="The minimum inertia ratio (inclusive) of the blobs" />
   <arg name="max_inertia_ratio" default="1.0" doc="The maximum inertia ratio (exclusive) of the blobs, 1.0 means no limit" />
   <arg name="filter_by_convexity" default="false" doc="Filter the blobs by the convexity (area / area of convex hull)" />

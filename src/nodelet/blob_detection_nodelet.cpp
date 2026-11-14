@@ -329,7 +329,8 @@ public:
         paramDescriptor("The maximum circularity (exclusive) of the blobs, 1.0 means no limit", 0.0, 1.0)));
     params_.filterByInertia = declare_parameter(
         "filter_by_inertia", false,
-        paramDescriptor("Filter the blobs by the inertia ratio (minor axis / major axis, 0: line, 1: circle)"));
+        paramDescriptor("Filter the blobs by the inertia ratio (the minimum / maximum second central moment, "
+                        "the square of minor axis / major axis for an ellipse, 0: line, 1: circle)"));
     params_.minInertiaRatio = declare_parameter(
         "min_inertia_ratio", 0.1, paramDescriptor("The minimum inertia ratio (inclusive) of the blobs", 0.0, 1.0));
     params_.maxInertiaRatio = upperLimit(declare_parameter(

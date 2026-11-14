@@ -6,7 +6,7 @@
     <p>opencv_apps provides various nodes that run internally OpenCV's functionalities and publish the result as ROS topics. With opencv_apps, you can skip writing OpenCV application codes for a lot of its functionalities by simply running a launch file that corresponds to OpenCV's functionality you want.</p>
     <ul>
       <li>You can have a look at all launch files provided here (be sure to choose the correct branch. As of Sept. 2016 indigo branch is used for ROS Indigo, Jade, and Kinetic distros).</li>
-      <li>Some of the features covered by opencv_apps are explained in <a href = "http://wiki.ros.org/opencv_apps">the wiki</a>.</li>
+      <li>The nodes are documented in <a href = "https://ros-perception.github.io/opencv_apps/">the documentation</a> (and <a href = "http://wiki.ros.org/opencv_apps">the wiki</a> for ROS 1).</li>
     </ul>
     <p>The most of code is originally taken from https://github.com/Itseez/opencv/tree/master/samples/cpp</p>
   </description>
@@ -15,6 +15,10 @@
   <author email="kei.okada@gmail.com">Kei Okada</author>
 
   <license>BSD</license>
+
+  <url type="website">https://ros-perception.github.io/opencv_apps/</url>
+  <url type="repository">https://github.com/ros-perception/opencv_apps</url>
+  <url type="bugtracker">https://github.com/ros-perception/opencv_apps/issues</url>
 
   <buildtool_depend condition="$ROS_VERSION==1">catkin</buildtool_depend>
   <buildtool_depend condition="$ROS_VERSION==2">ament_cmake</buildtool_depend>

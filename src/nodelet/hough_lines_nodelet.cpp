@@ -321,9 +321,8 @@ public:
     threshold_ = declare_parameter("threshold", 150, paramDescriptor("Hough Line Threshold", 50, 150));
     rho_ = declare_parameter(
         "rho", 1.0, paramDescriptor("The resolution of the parameter r in pixels. We use 1 pixel.", 1.0, 100.0));
-    theta_ = declare_parameter(
-        "theta", 1.0,
-        paramDescriptor("The resolution of the parameter \\theta in radians. We use 1 degree (CV_PI/180)", 1.0, 90.0));
+    theta_ = declare_parameter("theta", 1.0,
+                               paramDescriptor("The resolution of the parameter theta in degrees.", 1.0, 90.0));
     minLineLength_ = declare_parameter("minLineLength", 30.0,
                                        paramDescriptor("The minimum number of points that can form a line. Lines with "
                                                        "less than this number of points are disregarded.",

@@ -1,0 +1,299 @@
+# How the demo of each node of the documentation is made, for "Try it with the demo video" of the pages of the nodes
+# (doc/tools/generate_pages.py). The clip is published as image at 10 Hz by image_publisher, and the node is run by
+# its launch file with launch_args.
+#   clip: the input video, a clip on the docs-media branch (media/clips/ of the documentation, 960x540), or test/*.mp4
+#   image: the remapping of the input, instead of image:=image
+#   launch_args: the arguments of the launch file (launch_file, or the node)
+#   prepare: the commands before publishing the clip, steps: the commands after running the node
+#   view: the image topic of the node to view, instead of image
+adding_images:
+  clip: tos_bridge.mp4
+  image: image1:=image image2:=image2
+  launch_args:
+    alpha: 0.5
+    approximate_sync: true
+    gamma: 0.0
+  note: image1 is tos_bridge.mp4 and image2 is pool.mp4, both 960x540.
+  prepare:
+  - 'wget https://ros-perception.github.io/opencv_apps/media/clips/pool.mp4  # image2'
+  steps:
+  - ros2 run image_publisher image_publisher_node pool.mp4 --ros-args -p publish_rate:=10.0 -r image_raw:=image2 -r camera_info:=camera_info2
+    &
+aruco_detection:
+  clip: test/codes.mp4
+  launch_args:
+    marker_length: 0.05
+    use_camera_info: true
+background_subtraction:
+  clip: pool.mp4
+  launch_args:
+    method: 0
+    node_name: background_subtraction_mog2
+  note: MOG2; the camera is fixed and the balls move.
+barcode_detection:
+  clip: test/codes.mp4
+blob_detection:
+  clip: ballpit.mp4
+  image: image:=hsv_color_filter/image
+  launch_args:
+    min_area: 200.0
+  note: The input is the mask of the yellow balls of hsv_color_filter.
+  steps:
+  - ros2 launch opencv_apps hsv_color_filter.launch.xml h_limit_min:=40 h_limit_max:=70 s_limit_min:=150 s_limit_max:=255
+    v_limit_min:=120 v_limit_max:=255 &
+camshift:
+  clip: sign.mp4
+  launch_args:
+    height: 170
+    node_name: camshift_roi
+    width: 140
+    x: 410
+    y: 90
+  note: The ROI is the face, and the ellipse also takes the red shirt of the same hue; back_project and image are shown.
+compare_histogram:
+  clip: street.mp4
+  launch_args:
+    histogram_comparison_type: 3
+    histogram_size: 32
+    node_name: compare_histogram_color
+    reference_histogram: '"$H"'
+  note: The reference histogram is that of the first frame of the clip, as test/ros2/test_compare_histogram.py.
+  prepare:
+  - 'H=$(python3 -c "import cv2; img = cv2.VideoCapture(''street.mp4'').read()[1]; print([round(float(v), 6) for c in range(3)
+    for v in cv2.normalize(cv2.calcHist([img], [c], None, [32], [0, 256]), None, 0, 1, cv2.NORM_MINMAX).flatten()])")  # the
+    reference histogram of the first frame'
+contour_moments:
+  clip: pool_zoom.mp4
+convex_hull:
+  clip: pool_zoom.mp4
+  launch_args:
+    threshold: 20
+corner_harris:
+  clip: tos_bridge.mp4
+  launch_args:
+    threshold: 120
+  note: The threshold is lowered from 200 to show more corners.
+discrete_fourier_transform:
+  clip: street.mp4
+dnn_depth_estimation:
+  clip: keybridge.mp4
+dnn_face_detection:
+  clip: tos_faces.mp4
+dnn_face_recognition:
+  clip: test/face_detector_withface_test_diamondback.mp4
+  launch_args:
+    data_dir: /tmp/dnn_face_data
+  note: Train a face with the trainer, which asks for the name, then the node recognizes it.
+  steps:
+  - ros2 run opencv_apps face_recognition_trainer.py --ros-args -r faces:=/dnn_face_recognition/output -r train:=/dnn_face_recognition/train
+dnn_facial_expression_recognition:
+  clip: tos_faces.mp4
+dnn_hand_pose_estimation:
+  clip: sign.mp4
+  note: Needs OpenCV 4.9 or later; recorded with OpenCV 4.12 on CUDA.
+dnn_image_classification:
+  clip: pool.mp4
+dnn_object_detection:
+  clip: tos_indoor.mp4
+dnn_pose_estimation:
+  clip: tos_bridge.mp4
+  note: Needs OpenCV 4.9 or later; recorded with OpenCV 4.12 on CUDA.
+dnn_semantic_segmentation:
+  clip: tos_bridge.mp4
+dnn_text_detection:
+  clip: test/text.mp4
+dnn_tracking:
+  clip: tos_canal.mp4
+  note: Set the man on the first frame with set_image.py just after the video starts (the demo publishes the frames one by
+    one and sets it at the start of each loop).
+  prepare:
+  - 'ffmpeg -i tos_canal.mp4 -frames:v 1 frame0.png  # the first frame'
+  steps:
+  - ros2 run opencv_apps set_image.py 300 160 160 220 frame0.png --ros-args -r set_roi:=/dnn_tracking/set_roi
+edge_detection:
+  clip: street.mp4
+  launch_args:
+    edge_type: 2
+    node_name: edge_canny_detection
+  note: Canny.
+equalize_histogram:
+  clip: street.mp4
+  launch_args:
+    clahe_clip_limit: 20.0
+    clahe_tile_size_x: 32
+    clahe_tile_size_y: 32
+    histogram_equalization_type: 1
+    node_name: equalize_histogram_clahe
+    use_opencl: false
+  note: CLAHE.
+face_detection:
+  clip: tos_faces.mp4
+face_recognition:
+  clip: test/face_detector_withface_test_diamondback.mp4
+  launch_args:
+    data_dir: $PWD/face_data
+    launch_face_detection: true
+    launch_trainer: false
+  note: The faces trained in test/face_data.tar.gz; ~debug_image is shown.
+  prepare:
+  - wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/face_data.tar.gz
+  - tar xzf face_data.tar.gz
+  view: debug_image
+fback_flow:
+  clip: keybridge.mp4
+  launch_args:
+    use_camera_info: false
+find_contours:
+  clip: pool_zoom.mp4
+  launch_args:
+    canny_low_threshold: 100
+general_contours:
+  clip: pool_zoom.mp4
+  launch_args:
+    threshold: 30
+goodfeature_track:
+  clip: street.mp4
+  launch_args:
+    max_corners: 50
+hls_color_filter:
+  clip: ballpit.mp4
+  launch_args:
+    h_limit_max: 70
+    h_limit_min: 40
+    l_limit_max: 230
+    l_limit_min: 60
+    s_limit_max: 255
+    s_limit_min: 150
+  note: The yellow balls.
+hough_circles:
+  clip: pool_zoom.mp4
+  launch_args:
+    accumulator_threshold: 40.0
+    canny_threshold: 200.0
+    max_circle_radius: 60
+    min_circle_radius: 15
+  note: The radius range is tuned for the balls.
+hough_lines:
+  clip: street.mp4
+  launch_args:
+    hough_type: 1
+    node_name: probabilistic_hough_lines
+    threshold: 100
+  note: Probabilistic Hough transform.
+hsv_color_filter:
+  clip: ballpit.mp4
+  launch_args:
+    h_limit_max: 70
+    h_limit_min: 40
+    s_limit_max: 255
+    s_limit_min: 150
+    v_limit_max: 255
+    v_limit_min: 120
+  note: The yellow balls.
+lab_color_filter:
+  clip: ballpit.mp4
+  launch_args:
+    a_limit_max: 255
+    a_limit_min: 0
+    b_limit_max: 255
+    b_limit_min: 185
+    l_limit_max: 255
+    l_limit_min: 80
+  note: The yellow balls.
+line_segment_detector:
+  clip: street.mp4
+  launch_args:
+    lsd_density_threshold: 0.3
+    lsd_line_length_threshold: 10.0
+    lsd_refine_type: 2
+    lsd_scale: 0.4
+lk_flow:
+  clip: keybridge.mp4
+  image: image:=image_rect_throttle
+  launch_args:
+    use_camera_info: false
+  note: The input is throttled to 5 Hz, and the points to track are initialized by the service.
+  steps:
+  - ros2 run topic_tools throttle messages image 5 image_rect_throttle &
+  - ros2 service call /lk_flow/initialize_points std_srvs/srv/Empty
+match_template:
+  clip: tos_canal.mp4
+  note: Set the face of the man on the first frame with set_image.py just after the video starts (the demo publishes the frames
+    one by one and sets it at the start of each loop).
+  prepare:
+  - 'ffmpeg -i tos_canal.mp4 -frames:v 1 frame0.png  # the first frame'
+  steps:
+  - ros2 run opencv_apps set_image.py 305 90 70 90 frame0.png --ros-args -r set_roi:=/match_template/set_roi
+morphology:
+  clip: street.mp4
+  launch_args:
+    morph_element: 0
+    morph_operator: 0
+    morph_size: 10
+people_detect:
+  clip: tos_bridge.mp4
+  note: HOG needs full-body people of about 64x128 pixels, which this clip does not have, so most boxes are false.
+phase_corr:
+  clip: keybridge.mp4
+  launch_args:
+    use_camera_info: false
+pyramids:
+  clip: street.mp4
+  launch_args:
+    node_name: pyramids_zoomout_2
+    num_of_pyramids: 2
+    pyramids_type: 1
+  note: Zoom out twice.
+qrcode_detection:
+  clip: test/codes.mp4
+rgb_color_filter:
+  clip: ballpit.mp4
+  launch_args:
+    b_limit_max: 110
+    b_limit_min: 0
+    g_limit_max: 255
+    g_limit_min: 150
+    r_limit_max: 255
+    r_limit_min: 170
+  note: The yellow balls.
+segment_objects:
+  clip: pool.mp4
+  launch_args:
+    use_camera_info: false
+simple_flow:
+  clip: keybridge.mp4
+  launch_args:
+    scale: 8
+    use_camera_info: false
+smoothing:
+  clip: street.mp4
+  launch_args:
+    filter_type: 1
+    node_name: smooth_gaussian_filter
+  note: Gaussian filter.
+threshold:
+  clip: street.mp4
+  launch_args:
+    apply_otsu: true
+    max_binary: 255
+    threshold: 127
+    threshold_type: 0
+tracking:
+  clip: tos_canal.mp4
+  launch_args:
+    tracking_algorithm: 7
+  note: Set the man on the first frame with set_image.py just after the video starts (the demo publishes the frames one by
+    one and sets it at the start of each loop).
+  prepare:
+  - 'ffmpeg -i tos_canal.mp4 -frames:v 1 frame0.png  # the first frame'
+  steps:
+  - ros2 run opencv_apps set_image.py 300 160 160 220 frame0.png --ros-args -r set_roi:=/tracking/set_roi
+watershed_segmentation:
+  clip: ballpit.mp4
+  launch_args:
+    use_camera_info: false
+  steps:
+  - 'ros2 topic pub -r 1.5 /watershed_segmentation/add_seed_points opencv_apps/msg/Point2DArray "{points: [{x: 100.0, y: 100.0},
+    {x: 200.0, y: 100.0}, {x: 300.0, y: 100.0}, {x: 400.0, y: 100.0}, {x: 500.0, y: 100.0}, {x: 100.0, y: 200.0}, {x: 200.0,
+    y: 200.0}, {x: 300.0, y: 200.0}, {x: 400.0, y: 200.0}, {x: 500.0, y: 200.0}, {x: 100.0, y: 300.0}, {x: 200.0, y: 300.0},
+    {x: 300.0, y: 300.0}, {x: 400.0, y: 300.0}, {x: 500.0, y: 300.0}]}" &'

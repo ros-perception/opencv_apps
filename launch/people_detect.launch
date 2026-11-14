@@ -9,7 +9,7 @@
 
   <arg name="hit_threshold" default="0" doc="Threshold for the distance between features and SVM classifying plane" />
   <arg name="win_stride" default="8" doc="Window stride. It must be a multiple of block stride." />
-  <arg name="padding" default="32" doc="Mock parameter to keep the CPU interface compatibility. It must be (0,0)." />
+  <arg name="padding" default="32" doc="Padding of the detection window in pixels, of cv::HOGDescriptor::detectMultiScale()." />
   <arg name="scale0" default="1.05" doc="Coefficient of the detection window increase." />
   <arg name="group_threshold" default="2" doc="Coefficient to regulate the similarity threshold. When detected, some objects can be covered by many rectangles. 0 means not to perform grouping." />
 

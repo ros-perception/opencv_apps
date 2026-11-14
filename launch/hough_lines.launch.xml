@@ -10,7 +10,7 @@
   <arg name="hough_type" default="0" description="Apecify Hough transform type, 0 for Standard Hough Detection and 1 for Probabilistic Hough Detection" />
   <arg name="threshold" default="150" description="Threshould value for hough line detection" />
   <arg name="rho" default="1.0" description="The resolution of the parameter r in pixels." />
-  <arg name="theta" default="1.0" description="The resolution of the parameter theta in radians." />
+  <arg name="theta" default="1.0" description="The resolution of the parameter theta in degrees." />
   <arg name="minLineLength" default="30.0" description="The minimum number of points that can form a line." />
   <arg name="maxLineGrap" default="10.0" description="The maximum gap between two points to be considered in the same line." />
 
