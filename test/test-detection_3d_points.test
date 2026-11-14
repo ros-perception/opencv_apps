@@ -1,0 +1,32 @@
+<launch>
+  <arg name="gui" default="true" />
+
+  <!-- the images of test/lidar_boreas.mp4 and the points of test/lidar_boreas_points.npz (Boreas) in a loop, on
+       image, camera_info and points, with the static TF of the extrinsics -->
+  <node name="publish_lidar" pkg="opencv_apps" type="publish_lidar.py" />
+
+  <!-- the people and the vehicles by dnn_object_detection_nodelet.cpp, which downloads the models at the first time -->
+  <include file="$(find opencv_apps)/launch/dnn_object_detection.launch" >
+    <arg name="debug_view" value="$(arg gui)" />
+    <arg name="image" value="image" />
+  </include>
+
+  <!-- detection_3d_nodelet.cpp -->
+  <include file="$(find opencv_apps)/launch/detection_3d.launch" >
+    <arg name="input" value="dnn_object_detection/detections" />
+    <arg name="points" value="points" />
+    <arg name="depth_source" value="points" />
+    <arg name="max_depth" value="60.0" />
+    <arg name="depth_threshold" value="1.0" />
+    <arg name="track_distance" value="2.0" />
+    <arg name="camera_info" value="camera_info" />
+  </include>
+
+  <param name="detection_3d_detections_test/topic" value="detection_3d/detections" />
+  <test test-name="detection_3d_detections_test" pkg="rostest" type="hztest" name="detection_3d_detections_test" time-limit="300" >
+    <param name="hz" value="9.0" />
+    <param name="hzerror" value="8.9" />
+    <param name="test_duration" value="2.0" />
+    <param name="wait_time" value="240.0" />
+  </test>
+</launch>
