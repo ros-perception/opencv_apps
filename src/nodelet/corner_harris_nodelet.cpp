@@ -140,7 +140,8 @@ class CornerHarrisNodelet : public opencv_apps::Nodelet
       cv::normalize(dst, dst_norm, 0, 255, cv::NORM_MINMAX, CV_32FC1, cv::Mat());
       cv::convertScaleAbs(dst_norm, dst_norm_scaled);
 
-      // the corners of the message are the local maxima (3x3) of the pixels over the threshold, one for each corner
+      // the corners of the message are the local maxima (3x3) of the pixels over the threshold with a positive
+      // response, one for each corner
       cv::Mat dst_max;
       cv::dilate(dst_norm, dst_max, cv::Mat());
       opencv_apps::msg::Point2DArrayStamped corners_msg;
@@ -154,7 +155,9 @@ class CornerHarrisNodelet : public opencv_apps::Nodelet
           if ((int)dst_norm.at<float>(j, i) > threshold_)
           {
             cv::circle(frame, cv::Point(i, j), 5, cv::Scalar(0), 2, 8, 0);
-            if (dst_norm.at<float>(j, i) >= dst_max.at<float>(j, i))
+            // a corner has a positive Harris response (an edge is negative, a flat area 0); the normalization
+            // can put a flat area over threshold, e.g. 255 when the image has only edges
+            if (dst.at<float>(j, i) > 0.0f && dst_norm.at<float>(j, i) >= dst_max.at<float>(j, i))
             {
               opencv_apps::msg::Point2D corner;
               corner.x = i;
