@@ -61,6 +61,7 @@
 #include <message_filters/sync_policies/approximate_time.hpp>
 #include <message_filters/synchronizer.hpp>
 
+#include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <image_transport/subscriber_filter.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
@@ -81,18 +82,52 @@
 #include <opencv_apps/msg/detection_array_stamped.hpp>
 #include <opencv_apps/msg/face_array_stamped.hpp>
 #include <opencv_apps/msg/rect_array_stamped.hpp>
+#include <opencv_apps/msg/skeleton_array_stamped.hpp>
 
 namespace opencv_apps
 {
+namespace
+{
+// the bones of the skeletons of MediaPipe: the 33 landmarks of a person (dnn_pose_estimation) and the 21 landmarks
+// of a hand (dnn_hand_pose_estimation)
+const int POSE_BONES[][2] = { { 0, 1 },   { 1, 2 },   { 2, 3 },   { 3, 7 },   { 0, 4 },   { 4, 5 },   { 5, 6 },
+                              { 6, 8 },   { 9, 10 },  { 11, 12 }, { 11, 13 }, { 13, 15 }, { 15, 17 }, { 15, 19 },
+                              { 15, 21 }, { 17, 19 }, { 12, 14 }, { 14, 16 }, { 16, 18 }, { 16, 20 }, { 16, 22 },
+                              { 18, 20 }, { 11, 23 }, { 12, 24 }, { 23, 24 }, { 23, 25 }, { 24, 26 }, { 25, 27 },
+                              { 26, 28 }, { 27, 29 }, { 28, 30 }, { 29, 31 }, { 30, 32 }, { 27, 31 }, { 28, 32 } };
+const int HAND_BONES[][2] = { { 0, 1 },   { 1, 2 },   { 2, 3 },   { 3, 4 },   { 0, 5 },   { 5, 6 },   { 6, 7 },
+                              { 7, 8 },   { 5, 9 },   { 9, 10 },  { 10, 11 }, { 11, 12 }, { 9, 13 },  { 13, 14 },
+                              { 14, 15 }, { 15, 16 }, { 13, 17 }, { 0, 17 },  { 17, 18 }, { 18, 19 }, { 19, 20 } };
+}  // namespace
+
 class Detection3DNodelet : public opencv_apps::Nodelet
 {
   // a 2D box (center, size) with its label and score
+  // a keypoint of a skeleton: its index in the skeleton, name and position in the image
+  struct Keypoint2D
+  {
+    int index;
+    std::string name;
+    cv::Point2d position;
+  };
+
+  // a 2D box (center, size) with its label and score, and the keypoints of a skeleton
   struct Box2D
   {
     double x, y, width, height;
     std::string label;
     int class_id;
     double score;
+    int num_keypoints;  // the number of the keypoints of the skeleton, 0 for the other inputs
+    std::vector<Keypoint2D> keypoints;
+  };
+
+  // a keypoint in 3D, in the camera frame
+  struct Keypoint3D
+  {
+    int index;
+    std::string name;
+    cv::Point3d position;
   };
 
   // a tracked object: its id, label and last position in the camera frame
@@ -115,6 +150,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
   message_filters::Subscriber<opencv_apps::msg::DetectionArrayStamped> detections_sub_;
   message_filters::Subscriber<opencv_apps::msg::FaceArrayStamped> faces_sub_;
   message_filters::Subscriber<opencv_apps::msg::RectArrayStamped> rects_sub_;
+  message_filters::Subscriber<opencv_apps::msg::SkeletonArrayStamped> skeletons_sub_;
   // the synchronizer of the depth source and the input, one of them is used
   std::shared_ptr<void> sync_;
   rclcpp::Publisher<vision_msgs::msg::Detection3DArray>::SharedPtr detections_pub_;
@@ -136,6 +172,8 @@ class Detection3DNodelet : public opencv_apps::Nodelet
   std::string tf_prefix_;
   double track_distance_;
   int track_lost_frames_;
+  int keypoint_radius_;
+  double keypoint_visibility_;
 
   // the parameters and the tracks, set by parametersCallback and read by the callbacks of the inputs, which may run
   // in other threads (e.g. the multithreaded nodelet manager of ROS 1)
@@ -164,6 +202,10 @@ class Detection3DNodelet : public opencv_apps::Nodelet
         track_distance_ = parameter.as_double();
       else if (parameter.get_name() == "track_lost_frames")
         track_lost_frames_ = parameter.as_int();
+      else if (parameter.get_name() == "keypoint_radius")
+        keypoint_radius_ = parameter.as_int();
+      else if (parameter.get_name() == "keypoint_visibility")
+        keypoint_visibility_ = parameter.as_double();
     }
     rcl_interfaces::msg::SetParametersResult result;
     result.successful = true;
@@ -195,6 +237,48 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     for (const opencv_apps::msg::Rect& r : msg.rects)
       boxes.push_back({ r.x, r.y, r.width, r.height, "target", -1, 1.0 });
     return boxes;
+  }
+
+  std::vector<Box2D> boxes(const opencv_apps::msg::SkeletonArrayStamped& msg) const
+  {
+    std::vector<Box2D> boxes;
+    for (const opencv_apps::msg::Skeleton& skeleton : msg.skeletons)
+    {
+      // the hands of dnn_hand_pose_estimation are left or right
+      std::string label = skeleton.label.empty() ? "skeleton" : skeleton.label;
+      if (label == "left" || label == "right")
+        label += "_hand";
+      Box2D box = { skeleton.rect.x,
+                    skeleton.rect.y,
+                    skeleton.rect.width,
+                    skeleton.rect.height,
+                    label,
+                    -1,
+                    skeleton.score,
+                    static_cast<int>(skeleton.keypoints.size()),
+                    {} };
+      for (size_t k = 0; k < skeleton.keypoints.size(); k++)
+      {
+        const opencv_apps::msg::Keypoint& keypoint = skeleton.keypoints[k];
+        if (keypoint.visibility >= keypoint_visibility_)
+          box.keypoints.push_back({ static_cast<int>(k), keypoint.name, cv::Point2d(keypoint.x, keypoint.y) });
+      }
+      boxes.push_back(box);
+    }
+    return boxes;
+  }
+
+  // the median of the depths within min_depth and max_depth, false if there is none
+  bool medianDepth(std::vector<double>& depths, double& median) const
+  {
+    depths.erase(std::remove_if(depths.begin(), depths.end(),
+                                [this](double z) { return !std::isfinite(z) || z < min_depth_ || z > max_depth_; }),
+                 depths.end());
+    if (depths.empty())
+      return false;
+    std::nth_element(depths.begin(), depths.begin() + depths.size() / 2, depths.end());
+    median = depths[depths.size() / 2];
+    return true;
   }
 
   // the pixels of a 2D box whose depths are used (roi_scale of the box, as the edges of the boxes often have the
@@ -233,7 +317,26 @@ class Detection3DNodelet : public opencv_apps::Nodelet
               points[i].push_back(cv::Point3d((u - cx) * z / fx, (v - cy) * z / fy, z));
           }
       }
-      publish(depth_msg->header.stamp, frameId(*info_msg, depth_msg->header.frame_id), input, points);
+      // the 3D keypoints: the median depth of the pixels within keypoint_radius of each keypoint
+      std::vector<std::vector<Keypoint3D> > keypoints(input.size());
+      for (size_t i = 0; i < input.size(); i++)
+        for (const Keypoint2D& keypoint : input[i].keypoints)
+        {
+          cv::Rect window(cvRound(keypoint.position.x) - keypoint_radius_,
+                          cvRound(keypoint.position.y) - keypoint_radius_, 2 * keypoint_radius_ + 1,
+                          2 * keypoint_radius_ + 1);
+          window &= cv::Rect(0, 0, depth.cols, depth.rows);
+          std::vector<double> depths;
+          for (int v = window.y; v < window.y + window.height; v++)
+            for (int u = window.x; u < window.x + window.width; u++)
+              depths.push_back(depth.at<float>(v, u));
+          double z;
+          if (medianDepth(depths, z))
+            keypoints[i].push_back(
+                { keypoint.index, keypoint.name,
+                  cv::Point3d((keypoint.position.x - cx) * z / fx, (keypoint.position.y - cy) * z / fy, z) });
+        }
+      publish(depth_msg->header.stamp, frameId(*info_msg, depth_msg->header.frame_id), input, points, keypoints);
     }
     catch (const std::exception& e)
     {
@@ -281,8 +384,12 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       std::vector<cv::Rect> rois;
       for (const Box2D& box : input)
         rois.push_back(roi(box, width, height));
-      // the points projected into each box
+      // the points projected into each box, and the depths of the points projected within keypoint_radius of each
+      // keypoint
       std::vector<std::vector<cv::Point3d> > points(input.size());
+      std::vector<std::vector<std::vector<double> > > keypoint_depths(input.size());
+      for (size_t i = 0; i < input.size(); i++)
+        keypoint_depths[i].resize(input[i].keypoints.size());
       sensor_msgs::PointCloud2ConstIterator<float> x(*cloud_msg, "x"), y(*cloud_msg, "y"), z(*cloud_msg, "z");
       for (; x != x.end(); ++x, ++y, ++z)
       {
@@ -293,10 +400,27 @@ class Detection3DNodelet : public opencv_apps::Nodelet
           continue;
         cv::Point pixel(cvRound(fx * p[0] / p[2] + cx), cvRound(fy * p[1] / p[2] + cy));
         for (size_t i = 0; i < rois.size(); i++)
+        {
           if (rois[i].contains(pixel))
             points[i].push_back(cv::Point3d(p[0], p[1], p[2]));
+          for (size_t k = 0; k < input[i].keypoints.size(); k++)
+            if (std::abs(pixel.x - input[i].keypoints[k].position.x) <= keypoint_radius_ &&
+                std::abs(pixel.y - input[i].keypoints[k].position.y) <= keypoint_radius_)
+              keypoint_depths[i][k].push_back(p[2]);
+        }
       }
-      publish(cloud_msg->header.stamp, frame_id, input, points);
+      std::vector<std::vector<Keypoint3D> > keypoints(input.size());
+      for (size_t i = 0; i < input.size(); i++)
+        for (size_t k = 0; k < input[i].keypoints.size(); k++)
+        {
+          const Keypoint2D& keypoint = input[i].keypoints[k];
+          double z;
+          if (medianDepth(keypoint_depths[i][k], z))
+            keypoints[i].push_back(
+                { keypoint.index, keypoint.name,
+                  cv::Point3d((keypoint.position.x - cx) * z / fx, (keypoint.position.y - cy) * z / fy, z) });
+        }
+      publish(cloud_msg->header.stamp, frame_id, input, points, keypoints);
     }
     catch (const std::exception& e)
     {
@@ -406,7 +530,8 @@ class Detection3DNodelet : public opencv_apps::Nodelet
   // publish the 3D boxes of the points of the 2D boxes, and their TF frames
   template <class Stamp>
   void publish(const Stamp& stamp, const std::string& frame_id, const std::vector<Box2D>& input,
-               const std::vector<std::vector<cv::Point3d> >& points)
+               const std::vector<std::vector<cv::Point3d> >& points,
+               const std::vector<std::vector<Keypoint3D> >& keypoints)
   {
     vision_msgs::msg::Detection3DArray detections_msg;
     detections_msg.header.stamp = stamp;
@@ -489,10 +614,92 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       label.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
       label.pose.position.y -= size.y / 2 + 0.1;  // above the box, y of the camera frame is down
       label.scale.x = label.scale.y = 0.0;
-      label.scale.z = std::max(0.1, center.z * 0.04);  // the height of the text, larger for the far objects
+      label.scale.z = std::max(0.15, center.z * 0.06);  // the height of the text, larger for the far objects
       label.color.a = 1.0f;
       label.text = cv::format("%s\n%.1fm", name.c_str(), cv::norm(center));
       markers_msg.markers.push_back(label);
+
+      // the axes of the TF frame of the object (x red, y green, z blue), to show the frames of the objects only, not
+      // the other frames and the lines between the frames of the TF display of rviz
+      double axis_length = std::max(0.15, std::min(size.x, size.y) * 0.5);
+      for (int axis = 0; axis < 3; axis++)
+      {
+        visualization_msgs::msg::Marker arrow;
+        arrow.header = detections_msg.header;
+        arrow.ns = "frames";
+        arrow.id = static_cast<int>(markers_msg.markers.size());
+        arrow.type = visualization_msgs::msg::Marker::ARROW;
+        arrow.action = visualization_msgs::msg::Marker::ADD;
+        arrow.pose.orientation.w = 1.0;
+        geometry_msgs::msg::Point start, end;
+        start.x = end.x = center.x;
+        start.y = end.y = center.y;
+        start.z = end.z = center.z;
+        (axis == 0 ? end.x : axis == 1 ? end.y : end.z) += axis_length;
+        arrow.points.push_back(start);
+        arrow.points.push_back(end);
+        arrow.scale.x = axis_length * 0.1;  // the diameter of the shaft
+        arrow.scale.y = axis_length * 0.2;  // the diameter of the head
+        arrow.color.r = axis == 0 ? 1.0f : 0.0f;
+        arrow.color.g = axis == 1 ? 1.0f : 0.0f;
+        arrow.color.b = axis == 2 ? 1.0f : 0.0f;
+        arrow.color.a = 1.0f;
+        markers_msg.markers.push_back(arrow);
+      }
+
+      // the keypoints of a skeleton: the TF frame <name>_<keypoint> of each, and the joints and the bones
+      if (keypoints[i].empty())
+        continue;
+      visualization_msgs::msg::Marker joints = marker;
+      joints.ns = "joints";
+      joints.id = static_cast<int>(markers_msg.markers.size());
+      joints.type = visualization_msgs::msg::Marker::SPHERE_LIST;
+      joints.pose = geometry_msgs::msg::Pose();
+      joints.pose.orientation.w = 1.0;
+      joints.scale.x = joints.scale.y = joints.scale.z = box.num_keypoints == 21 ? 0.01 : 0.04;
+      joints.color.a = 1.0f;
+      std::map<int, cv::Point3d> positions;
+      for (const Keypoint3D& keypoint : keypoints[i])
+      {
+        positions[keypoint.index] = keypoint.position;
+        geometry_msgs::msg::Point point;
+        point.x = keypoint.position.x;
+        point.y = keypoint.position.y;
+        point.z = keypoint.position.z;
+        joints.points.push_back(point);
+        geometry_msgs::msg::TransformStamped joint_transform = transform;
+        joint_transform.child_frame_id = tf_prefix_ + name + "_" + keypoint.name;
+        joint_transform.transform.translation.x = keypoint.position.x;
+        joint_transform.transform.translation.y = keypoint.position.y;
+        joint_transform.transform.translation.z = keypoint.position.z;
+        transforms.push_back(joint_transform);
+      }
+      markers_msg.markers.push_back(joints);
+      visualization_msgs::msg::Marker bones = joints;
+      bones.ns = "bones";
+      bones.id = static_cast<int>(markers_msg.markers.size());
+      bones.type = visualization_msgs::msg::Marker::LINE_LIST;
+      bones.scale.x = joints.scale.x / 2;
+      bones.points.clear();
+      size_t num_bones = box.num_keypoints == 33 ? sizeof(POSE_BONES) / sizeof(POSE_BONES[0]) :
+                         box.num_keypoints == 21 ? sizeof(HAND_BONES) / sizeof(HAND_BONES[0]) :
+                                                   0;
+      for (size_t b = 0; b < num_bones; b++)
+      {
+        const int* bone = box.num_keypoints == 33 ? POSE_BONES[b] : HAND_BONES[b];
+        if (positions.count(bone[0]) == 0 || positions.count(bone[1]) == 0)
+          continue;
+        for (int end = 0; end < 2; end++)
+        {
+          geometry_msgs::msg::Point point;
+          point.x = positions[bone[end]].x;
+          point.y = positions[bone[end]].y;
+          point.z = positions[bone[end]].z;
+          bones.points.push_back(point);
+        }
+      }
+      if (!bones.points.empty())
+        markers_msg.markers.push_back(bones);
     }
     // forget the tracks lost for track_lost_frames images
     for (size_t i = 0; i < matched.size(); i++)
@@ -563,6 +770,8 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       connectInput(faces_sub_);
     else if (input_type_ == "rects")
       connectInput(rects_sub_);
+    else if (input_type_ == "skeletons")
+      connectInput(skeletons_sub_);
     else
       connectInput(detections_sub_);
   }
@@ -577,6 +786,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     detections_sub_.unsubscribe();
     faces_sub_.unsubscribe();
     rects_sub_.unsubscribe();
+    skeletons_sub_.unsubscribe();
   }
 
 public:
@@ -586,11 +796,13 @@ public:
     input_type_ = declare_parameter(
         "input_type", std::string("detections"),
         paramDescriptor("Type of input: detections (opencv_apps/DetectionArrayStamped, e.g. ~/detections of "
-                        "dnn_object_detection), faces (FaceArrayStamped, ~/faces of the face nodes) or rects "
-                        "(RectArrayStamped, ~/output of the tracking nodes)."));
-    if (input_type_ != "detections" && input_type_ != "faces" && input_type_ != "rects")
+                        "dnn_object_detection), faces (FaceArrayStamped, ~/faces of the face nodes), rects "
+                        "(RectArrayStamped, ~/output of the tracking nodes) or skeletons (SkeletonArrayStamped, "
+                        "~/skeletons of dnn_pose_estimation and dnn_hand_pose_estimation, with the TF frames of the "
+                        "keypoints)."));
+    if (input_type_ != "detections" && input_type_ != "faces" && input_type_ != "rects" && input_type_ != "skeletons")
     {
-      RCLCPP_ERROR(get_logger(), "input_type %s is not detections, faces nor rects, use detections",
+      RCLCPP_ERROR(get_logger(), "input_type %s is not detections, faces, rects nor skeletons, use detections",
                    input_type_.c_str());
       input_type_ = "detections";
     }
@@ -627,6 +839,14 @@ public:
                         0.0, 10.0));
     track_lost_frames_ = declare_parameter(
         "track_lost_frames", 10, paramDescriptor("Number of images that a lost object keeps its id for.", 0, 1000));
+    keypoint_radius_ = declare_parameter(
+        "keypoint_radius", 3,
+        paramDescriptor("The depth of a keypoint of a skeleton is the median of the depths of the pixels (or the "
+                        "points projected) within this distance (pixels) of the keypoint.",
+                        0, 50));
+    keypoint_visibility_ =
+        declare_parameter("keypoint_visibility", 0.5,
+                          paramDescriptor("Minimum visibility of a keypoint of a skeleton to be localized.", 0.0, 1.0));
     on_set_parameters_callback_handle_ =
         add_on_set_parameters_callback(std::bind(&Detection3DNodelet::parametersCallback, this, std::placeholders::_1));
 

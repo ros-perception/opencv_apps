@@ -323,7 +323,8 @@ if(BUILD_TESTING)
   # the MediaPipe models of dnn_pose_estimation and dnn_hand_pose_estimation need OpenCV 4.9 or later
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.9")
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_pose_estimation.py test/ros2/test_dnn_pose_estimation_tracking.py
-      test/ros2/test_dnn_hand_pose_estimation.py test/ros2/test_dnn_hand_pose_estimation_tracking.py)
+      test/ros2/test_dnn_hand_pose_estimation.py test/ros2/test_dnn_hand_pose_estimation_tracking.py
+      test/ros2/test_detection_3d_skeletons.py)
   endif()
   # Depth Anything V2 Metric (onnx of a vision transformer) needs OpenCV 4.10 or later
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.10")

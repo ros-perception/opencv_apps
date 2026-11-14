@@ -1,12 +1,12 @@
 <launch>
   <arg name="node_name" default="detection_3d" />
 
-  <arg name="input" default="input" description="The 2D results: ~/detections of the detection nodes, ~/faces of the face nodes or ~/output of the tracking nodes." />
+  <arg name="input" default="input" description="The 2D results: ~/detections of the detection nodes, ~/faces of the face nodes or ~/output of the tracking nodes, or ~/skeletons of dnn_pose_estimation and dnn_hand_pose_estimation." />
   <arg name="depth" default="depth" description="The depth image registered to the color image of the 2D results (16UC1 in mm or 32FC1 in m), e.g. aligned_depth_to_color/image_raw of realsense2_camera." />
   <arg name="points" default="points" description="The point cloud (e.g. of a LiDAR) of depth_source points, transformed to the frame of camera_info by TF." />
   <arg name="camera_info" default="camera_info" description="The camera info of the color image of the 2D results (and of the depth image)." />
 
-  <arg name="input_type" default="detections" description="Type of input: detections (DetectionArrayStamped), faces (FaceArrayStamped) or rects (RectArrayStamped)." />
+  <arg name="input_type" default="detections" description="Type of input: detections (DetectionArrayStamped), faces (FaceArrayStamped), rects (RectArrayStamped) or skeletons (SkeletonArrayStamped)." />
   <arg name="depth_source" default="depth" description="Source of the distances: depth (the depth image) or points (the point cloud)." />
   <arg name="queue_size" default="10" description="Queue size of the synchronized subscribers." />
   <arg name="roi_scale" default="0.8" description="Scale of the 2D box whose depths are used, smaller to leave out the background at the edges of the box." />
@@ -17,6 +17,8 @@
   <arg name="tf_prefix" default="" description="Prefix of the TF frames." />
   <arg name="track_distance" default="0.5" description="An object within this distance (m) of an object of the same label in the previous images is the same object, and keeps its id." />
   <arg name="track_lost_frames" default="10" description="Number of images that a lost object keeps its id for." />
+  <arg name="keypoint_radius" default="3" description="The depth of a keypoint of a skeleton is the median of the depths of the pixels (or the points projected) within this distance (pixels) of the keypoint." />
+  <arg name="keypoint_visibility" default="0.5" description="Minimum visibility of a keypoint of a skeleton to be localized." />
 
   <!-- detection_3d_nodelet.cpp -->
   <node name="$(var node_name)" pkg="opencv_apps" exec="detection_3d" >
@@ -35,5 +37,7 @@
     <param name="tf_prefix" value="$(var tf_prefix)" />
     <param name="track_distance" value="$(var track_distance)" />
     <param name="track_lost_frames" value="$(var track_lost_frames)" />
+    <param name="keypoint_radius" value="$(var keypoint_radius)" />
+    <param name="keypoint_visibility" value="$(var keypoint_visibility)" />
   </node>
 </launch>
