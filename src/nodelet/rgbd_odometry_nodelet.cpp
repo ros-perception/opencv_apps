@@ -269,7 +269,9 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
         cv::Mat rt, init(keyframe_pose_.inv() * guess);
         init = init.inv();
         cv::Matx44d pose = guess;
-        if (odometry_->compute(keyframe_, frame, rt, init))
+        // the result of compute(), as rt may be left even when it fails
+        bool registered = odometry_->compute(keyframe_, frame, rt, init);
+        if (registered)
           pose = keyframe_pose_ * cv::Matx44d(rt).inv();
         else
           RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10000,
@@ -279,7 +281,7 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
         cv::Matx44d from_keyframe = keyframe_pose_.inv() * pose;
         cv::Vec3d axis_angle;
         cv::Rodrigues(cv::Matx33d(from_keyframe.get_minor<3, 3>(0, 0)), axis_angle);
-        if (rt.empty() ||
+        if (!registered ||
             cv::norm(cv::Vec3d(from_keyframe(0, 3), from_keyframe(1, 3), from_keyframe(2, 3))) > keyframe_distance_ ||
             cv::norm(axis_angle) > keyframe_angle_)
         {
