@@ -313,6 +313,10 @@ if(BUILD_TESTING)
     set(_have_optflow 0)
     list(REMOVE_ITEM _launch_tests test/ros2/test_simple_flow.py)
   endif()
+  # rgbd_odometry needs the rgbd module of opencv_contrib
+  if(NOT OPENCV_HAVE_RGBD)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_rgbd_odometry.py)
+  endif()
   # the tests of the dnn nodes download the models by libcurl
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_face_detection.py test/ros2/test_dnn_face_recognition.py
