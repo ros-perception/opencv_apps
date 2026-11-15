@@ -20,6 +20,7 @@
   <arg name="track_lost_frames" default="10" doc="Number of images that a lost object keeps its id for." />
   <arg name="keypoint_radius" default="3" doc="The depth of a keypoint of a skeleton is the median of the depths of the pixels (or the points projected) within this distance (pixels) of the keypoint." />
   <arg name="keypoint_visibility" default="0.5" doc="Minimum visibility of a keypoint of a skeleton to be localized." />
+  <arg name="face_confidence" default="probability" doc="The confidence of the faces (input_type faces): probability (e.g. dnn_face_detection, dnn_face_recognition), the score in [0, 1], or distance (face_recognition, smaller is better), whose score is 1 / (1 + distance)" />
 
   <!-- detection_3d_nodelet.cpp -->
   <node name="$(arg node_name)" pkg="opencv_apps" type="detection_3d" >
@@ -41,5 +42,6 @@
     <param name="track_lost_frames" value="$(arg track_lost_frames)" />
     <param name="keypoint_radius" value="$(arg keypoint_radius)" />
     <param name="keypoint_visibility" value="$(arg keypoint_visibility)" />
+    <param name="face_confidence" type="str" value="$(arg face_confidence)" />
   </node>
 </launch>

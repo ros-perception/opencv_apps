@@ -230,6 +230,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
   int track_lost_frames_;
   int keypoint_radius_;
   double keypoint_visibility_;
+  std::string face_confidence_;
 
   // the parameters and the tracks, set by parametersCallback and read by the callbacks of the inputs, which may run
   // in other threads (e.g. the multithreaded nodelet manager of ROS 1)
@@ -264,6 +265,8 @@ class Detection3DNodelet : public opencv_apps::Nodelet
         keypoint_radius_ = parameter.as_int();
       else if (parameter.get_name() == "keypoint_visibility")
         keypoint_visibility_ = parameter.as_double();
+      else if (parameter.get_name() == "face_confidence")
+        face_confidence_ = parameter.as_string();
     }
     rcl_interfaces::msg::SetParametersResult result;
     result.successful = true;
@@ -280,12 +283,21 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     return boxes;
   }
 
-  static std::vector<Box2D> boxes(const opencv_apps::msg::FaceArrayStamped& msg)
+  // the score in [0, 1] (higher is better) of the confidence of a face, a probability (e.g. dnn_face_detection) or
+  // a distance (face_recognition, smaller is better) by face_confidence; 1 without the confidence (0, face_detection)
+  double faceScore(double confidence) const
+  {
+    if (face_confidence_ == "distance")
+      return 1.0 / (1.0 + std::max(0.0, confidence));
+    return confidence > 0.0 ? std::min(1.0, confidence) : 1.0;
+  }
+
+  std::vector<Box2D> boxes(const opencv_apps::msg::FaceArrayStamped& msg) const
   {
     std::vector<Box2D> boxes;
     for (const opencv_apps::msg::Face& f : msg.faces)
       boxes.push_back({ f.face.x, f.face.y, f.face.width, f.face.height, f.label.empty() ? "face" : f.label, -1,
-                        f.confidence > 0.0 ? f.confidence : 1.0 });
+                        faceScore(f.confidence) });
     return boxes;
   }
 
@@ -971,6 +983,11 @@ public:
     keypoint_visibility_ =
         declare_parameter("keypoint_visibility", 0.5,
                           paramDescriptor("Minimum visibility of a keypoint of a skeleton to be localized.", 0.0, 1.0));
+    face_confidence_ = declare_parameter(
+        "face_confidence", std::string("probability"),
+        paramDescriptor("The confidence of the faces (input_type faces): probability (e.g. dnn_face_detection, "
+                        "dnn_face_recognition), the score in [0, 1], or distance (face_recognition, smaller is "
+                        "better), whose score is 1 / (1 + distance)"));
     on_set_parameters_callback_handle_ =
         add_on_set_parameters_callback(std::bind(&Detection3DNodelet::parametersCallback, this, std::placeholders::_1));
 

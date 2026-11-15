@@ -176,6 +176,11 @@ See also the :ref:`common parameters <common-parameters>`.
      - 0.3 (0.01 - 10)
      - yes
      - The points within this distance (m) of the median depth of the box belong to the object.
+   * - ``face_confidence``
+     - string
+     - "probability"
+     - yes
+     - The confidence of the faces (input_type faces): probability (e.g. dnn_face_detection, dnn_face_recognition), the score in [0, 1], or distance (face_recognition, smaller is better), whose score is 1 / (1 + distance)
    * - ``input_type``
      - string
      - "detections"

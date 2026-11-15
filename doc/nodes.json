@@ -1400,6 +1400,12 @@
     "type": "double"
    },
    {
+    "default": "probability",
+    "description": "The confidence of the faces (input_type faces): probability (e.g. dnn_face_detection, dnn_face_recognition), the score in [0, 1], or distance (face_recognition, smaller is better), whose score is 1 / (1 + distance)",
+    "name": "face_confidence",
+    "type": "string"
+   },
+   {
     "default": "detections",
     "description": "Type of input: detections (opencv_apps/DetectionArrayStamped, e.g. ~/detections of dnn_object_detection), faces (FaceArrayStamped, ~/faces of the face nodes), rects (RectArrayStamped, ~/output of the tracking nodes) or skeletons (SkeletonArrayStamped, ~/skeletons of dnn_pose_estimation and dnn_hand_pose_estimation, with the TF frames of the keypoints).",
     "name": "input_type",
