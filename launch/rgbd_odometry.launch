@@ -6,6 +6,7 @@
   <arg name="camera_info" default="camera_info" doc="The camera info of the image." />
 
   <arg name="method" default="rgbd_icp" doc="Method of the odometry: rgbd (the photometric error of the image), icp (the geometric error of the depth) or rgbd_icp (both)." />
+  <arg name="use_image" default="true" doc="Subscribe the image; false for a depth camera without the image, of method icp." />
   <arg name="min_depth" default="0.3" doc="Minimum valid depth (m)." />
   <arg name="max_depth" default="4.0" doc="Maximum valid depth (m)." />
   <arg name="max_depth_diff" default="0.07" doc="Maximum difference (m) of the depths of the corresponding points of the images." />
@@ -21,6 +22,7 @@
     <remap from="depth" to="$(arg depth)" />
     <remap from="camera_info" to="$(arg camera_info)" />
     <param name="method" type="str" value="$(arg method)" />
+    <param name="use_image" value="$(arg use_image)" />
     <param name="min_depth" value="$(arg min_depth)" />
     <param name="max_depth" value="$(arg max_depth)" />
     <param name="max_depth_diff" value="$(arg max_depth_diff)" />

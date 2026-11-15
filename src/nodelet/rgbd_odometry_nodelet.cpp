@@ -71,15 +71,21 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
   using SyncPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::Image, sensor_msgs::msg::Image,
                                                                      sensor_msgs::msg::CameraInfo>;
   using Sync = message_filters::Synchronizer<SyncPolicy>;
+  // the depth image and camera_info, without the image (use_image false)
+  using DepthSyncPolicy =
+      message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::Image, sensor_msgs::msg::CameraInfo>;
+  using DepthSync = message_filters::Synchronizer<DepthSyncPolicy>;
 
   image_transport::SubscriberFilter image_sub_;
   image_transport::SubscriberFilter depth_sub_;
   message_filters::Subscriber<sensor_msgs::msg::CameraInfo> info_sub_;
   std::shared_ptr<Sync> sync_;
+  std::shared_ptr<DepthSync> depth_sync_;
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
   int queue_size_;
   std::string method_;
+  bool use_image_;
   double min_depth_;
   double max_depth_;
   double max_depth_diff_;
@@ -190,7 +196,7 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
     std::lock_guard<std::mutex> lock(mutex_);
     try
     {
-      std_msgs::msg::Header header = image_msg->header;
+      std_msgs::msg::Header header = depth_msg->header;
       if (!info_msg->header.frame_id.empty())
         header.frame_id = info_msg->header.frame_id;
       if (!sensorOnBase(header.frame_id))
@@ -198,8 +204,11 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
       cv::Mat camera_matrix = cameraMatrix(*info_msg);
       if (camera_matrix.at<double>(0, 0) == 0.0 || !updateOdometry(camera_matrix))
         return;
+      cv::Mat depth = depthInMeters(depth_msg);
+      // a black image without the image (use_image false), for icp, which uses the depth only
       cv::Mat gray;
-      cv::Mat image = cv_bridge::toCvShare(image_msg)->image;
+      cv::Mat image =
+          image_msg ? cv_bridge::toCvShare(image_msg)->image : cv::Mat(depth.size(), CV_8UC1, cv::Scalar(0));
       if (image.channels() == 3)
         cv::cvtColor(image, gray,
                      image_msg->encoding == sensor_msgs::image_encodings::RGB8 ? cv::COLOR_RGB2GRAY :
@@ -208,7 +217,6 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
         cv::cvtColor(image, gray, cv::COLOR_BGRA2GRAY);
       else
         gray = image.clone();
-      cv::Mat depth = depthInMeters(depth_msg);
       if (gray.size() != depth.size() || gray.depth() != CV_8U)
       {
         RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 10000,
@@ -273,7 +281,9 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
           if (!std::isfinite(z) || z < min_depth_ || z > max_depth_)
             continue;
           points.push_back(cv::Point3d((u - cx) * z / fx, (v - cy) * z / fy, z));
-          if (image.channels() == 1)
+          if (!image_msg)
+            colors.push_back(cv::Vec3b::all(255));
+          else if (image.channels() == 1)
             colors.push_back(cv::Vec3b::all(image.at<uint8_t>(v, u)));
           else if (image_msg->encoding == sensor_msgs::image_encodings::RGB8)
           {
@@ -303,20 +313,36 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
 #endif
   }
 
+  void depthCallback(const sensor_msgs::msg::Image::ConstSharedPtr& depth_msg,
+                     const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg)
+  {
+    callback(sensor_msgs::msg::Image::ConstSharedPtr(), depth_msg, info_msg);
+  }
+
   void subscribe() override
   {
     RCLCPP_DEBUG(get_logger(), "subscribe");
     // image_transport takes rclcpp::QoS since lyrical
 #if __has_include(<image_transport/node_interfaces.hpp>)
-    image_sub_.subscribe(*this, "image", image_transport::TransportHints(*this).getTransport(),
-                         subscriberQos(queue_size_));
+    if (use_image_)
+      image_sub_.subscribe(*this, "image", image_transport::TransportHints(*this).getTransport(),
+                           subscriberQos(queue_size_));
     depth_sub_.subscribe(*this, "depth", "raw", subscriberQos(queue_size_));
 #else
-    image_sub_.subscribe(this, "image", image_transport::TransportHints(this).getTransport(),
-                         subscriberQos(queue_size_).get_rmw_qos_profile());
+    if (use_image_)
+      image_sub_.subscribe(this, "image", image_transport::TransportHints(this).getTransport(),
+                           subscriberQos(queue_size_).get_rmw_qos_profile());
     depth_sub_.subscribe(this, "depth", "raw", subscriberQos(queue_size_).get_rmw_qos_profile());
 #endif
     subscribeFilter(info_sub_, "camera_info");
+    if (!use_image_)
+    {
+      depth_sync_ = std::make_shared<DepthSync>(DepthSyncPolicy(queue_size_));
+      depth_sync_->connectInput(depth_sub_, info_sub_);
+      depth_sync_->registerCallback(
+          std::bind(&RGBDOdometryNodelet::depthCallback, this, std::placeholders::_1, std::placeholders::_2));
+      return;
+    }
     sync_ = std::make_shared<Sync>(SyncPolicy(queue_size_));
     sync_->connectInput(image_sub_, depth_sub_, info_sub_);
     sync_->registerCallback(std::bind(&RGBDOdometryNodelet::callback, this, std::placeholders::_1,
@@ -327,6 +353,7 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
   {
     RCLCPP_DEBUG(get_logger(), "unsubscribe");
     sync_.reset();
+    depth_sync_.reset();
     image_sub_.unsubscribe();
     depth_sub_.unsubscribe();
     info_sub_.unsubscribe();
@@ -346,6 +373,15 @@ public:
         paramDescriptor("Method of the odometry: rgbd (the photometric error of the image, cv::rgbd::RgbdOdometry), "
                         "icp (the geometric error of the depth, cv::rgbd::ICPOdometry) or rgbd_icp (both, "
                         "cv::rgbd::RgbdICPOdometry)"));
+    use_image_ = declare_parameter(
+        "use_image", true,
+        paramDescriptor("Subscribe the image; false for a depth camera without the image, of method icp"));
+    if (!use_image_ && method_ != "icp")
+    {
+      RCLCPP_WARN(get_logger(), "method %s needs the image, use icp without the image (use_image false)",
+                  method_.c_str());
+      method_ = "icp";
+    }
     min_depth_ = declare_parameter("min_depth", 0.3, paramDescriptor("Minimum valid depth (m).", 0.0, 100.0));
     max_depth_ = declare_parameter("max_depth", 4.0, paramDescriptor("Maximum valid depth (m).", 0.0, 1000.0));
     keyframe_distance_ = declare_parameter(
