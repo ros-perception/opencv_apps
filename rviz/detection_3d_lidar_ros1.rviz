@@ -1,0 +1,75 @@
+# rviz (ROS 1) of detection_3d with a LiDAR (the view of the objects 5 - 30 m away): the 3D boxes and the labels of
+# ~/markers, the TF frames of the objects (the axes of ~/markers; the TF display, off, shows all the frames), the
+# points of a LiDAR, and the 2D detections, in camera_link (x forward, z up) of test/publish_rgbd.py and
+# test/publish_lidar.py;
+#   rviz -d $(rospack find opencv_apps)/rviz/detection_3d_lidar_ros1.rviz
+# give -f <frame> for the frame of your camera.
+Panels: []
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz/Grid
+      Enabled: true
+      Name: Grid
+      Cell Size: 1
+      Plane: XY
+      Plane Cell Count: 40
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Class: rviz/TF
+      Enabled: false
+      Name: TF
+      Marker Scale: 0.5
+      Show Arrows: false
+      Show Axes: true
+      Show Names: false
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Name: detection_3d/markers
+      Marker Topic: /detection_3d/markers
+      Queue Size: 5
+      Namespaces: {}
+      Value: true
+    - Class: rviz/PointCloud2
+      Enabled: true
+      Name: points
+      Color Transformer: AxisColor
+      Axis: Z
+      Size (Pixels): 2
+      Style: Points
+      Topic: /points
+      Value: true
+    - Class: rviz/Image
+      Enabled: true
+      Name: dnn_object_detection/image
+      Image Topic: /dnn_object_detection/image
+      Transport Hint: raw
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: camera_link
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz/MoveCamera
+    - Class: rviz/Select
+  Value: true
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Distance: 22
+      Focal Point:
+        X: 14
+        Y: 0
+        Z: 0
+      Name: Current View
+      Pitch: 0.3
+      Target Frame: <Fixed Frame>
+      Value: Orbit (rviz)
+      Yaw: 3.14
+    Saved: ~
+Window Geometry:
+  Height: 800
+  Width: 1280

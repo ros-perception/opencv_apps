@@ -1,0 +1,47 @@
+<launch>
+  <arg name="node_name" default="detection_3d" />
+
+  <arg name="input" default="input" doc="The 2D results: ~/detections of the detection nodes, ~/faces of the face nodes or ~/output of the tracking nodes, or ~/skeletons of dnn_pose_estimation and dnn_hand_pose_estimation." />
+  <arg name="depth" default="depth" doc="The depth image registered to the color image of the 2D results (16UC1 in mm or 32FC1 in m), e.g. aligned_depth_to_color/image_raw of realsense2_camera." />
+  <arg name="points" default="points" doc="The point cloud (e.g. of a LiDAR) of depth_source points, transformed to the frame of camera_info by TF." />
+  <arg name="camera_info" default="camera_info" doc="The camera info of the color image of the 2D results (and of the depth image)." />
+
+  <arg name="input_type" default="detections" doc="Type of input: detections (DetectionArrayStamped), faces (FaceArrayStamped), rects (RectArrayStamped) or skeletons (SkeletonArrayStamped)." />
+  <arg name="depth_source" default="depth" doc="Source of the distances: depth (the depth image) or points (the point cloud)." />
+  <arg name="rectified" default="false" doc="The 2D results are of the rectified image (e.g. image_rect), of P and R (the rotation from the optical frame) of camera_info, instead of the raw image with the distortion of K and D" />
+  <arg name="queue_size" default="10" doc="Queue size of the synchronized subscribers." />
+  <arg name="roi_scale" default="0.8" doc="Scale of the 2D box whose depths are used, smaller to leave out the background at the edges of the box." />
+  <arg name="depth_threshold" default="0.3" doc="The pixels within this distance (m) of the median depth of the box belong to the object." />
+  <arg name="min_depth" default="0.1" doc="Minimum valid depth (m)." />
+  <arg name="max_depth" default="10.0" doc="Maximum valid depth (m)." />
+  <arg name="publish_tf" default="true" doc="Publish the TF frame tf_prefix + label_id of each object; with it, the node subscribes the inputs always." />
+  <arg name="tf_prefix" default="" doc="Prefix of the TF frames." />
+  <arg name="track_distance" default="0.5" doc="An object within this distance (m) of an object of the same label in the previous images is the same object, and keeps its id." />
+  <arg name="track_lost_frames" default="10" doc="Number of images that a lost object keeps its id for." />
+  <arg name="keypoint_radius" default="3" doc="The depth of a keypoint of a skeleton is the median of the depths of the pixels (or the points projected) within this distance (pixels) of the keypoint." />
+  <arg name="keypoint_visibility" default="0.5" doc="Minimum visibility of a keypoint of a skeleton to be localized." />
+  <arg name="face_confidence" default="probability" doc="The confidence of the faces (input_type faces): probability (e.g. dnn_face_detection, dnn_face_recognition), the score in [0, 1], or distance (face_recognition, smaller is better), whose score is 1 / (1 + distance)" />
+
+  <!-- detection_3d_nodelet.cpp -->
+  <node name="$(arg node_name)" pkg="opencv_apps" type="detection_3d" >
+    <remap from="input" to="$(arg input)" />
+    <remap from="depth" to="$(arg depth)" />
+    <remap from="points" to="$(arg points)" />
+    <remap from="camera_info" to="$(arg camera_info)" />
+    <param name="input_type" value="$(arg input_type)" />
+    <param name="depth_source" value="$(arg depth_source)" />
+    <param name="queue_size" value="$(arg queue_size)" />
+    <param name="rectified" value="$(arg rectified)" />
+    <param name="roi_scale" value="$(arg roi_scale)" />
+    <param name="depth_threshold" value="$(arg depth_threshold)" />
+    <param name="min_depth" value="$(arg min_depth)" />
+    <param name="max_depth" value="$(arg max_depth)" />
+    <param name="publish_tf" value="$(arg publish_tf)" />
+    <param name="tf_prefix" type="str" value="$(arg tf_prefix)" />
+    <param name="track_distance" value="$(arg track_distance)" />
+    <param name="track_lost_frames" value="$(arg track_lost_frames)" />
+    <param name="keypoint_radius" value="$(arg keypoint_radius)" />
+    <param name="keypoint_visibility" value="$(arg keypoint_visibility)" />
+    <param name="face_confidence" type="str" value="$(arg face_confidence)" />
+  </node>
+</launch>

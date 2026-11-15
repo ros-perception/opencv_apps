@@ -10,6 +10,7 @@
   <arg name="backend" default="auto" doc="Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise." />
   <arg name="input_width" default="256" doc="Width of the network input, 256 for MiDaS v2.1 small" />
   <arg name="input_height" default="256" doc="Height of the network input, 256 for MiDaS v2.1 small" />
+  <arg name="metric_depth" default="false" doc="The output of the model is the depth in meters (e.g. Depth Anything V2 Metric), published on ~/depth instead of ~/inverse_depth" />
 
   <!-- dnn_depth_estimation_nodelet.cpp, DNN monocular depth estimation, MiDaS v2.1 small by default -->
   <node name="$(arg node_name)" pkg="opencv_apps" type="dnn_depth_estimation" >
@@ -21,5 +22,6 @@
     <param name="backend" type="str" value="$(arg backend)" />
     <param name="input_width" value="$(arg input_width)" />
     <param name="input_height" value="$(arg input_height)" />
+    <param name="metric_depth" value="$(arg metric_depth)" />
   </node>
 </launch>

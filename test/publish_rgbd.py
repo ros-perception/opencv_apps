@@ -1,0 +1,198 @@
+#!/usr/bin/env python3
+# Software License Agreement (BSD License)
+#
+# Copyright (c) 2026, Kei Okada.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#  * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following
+#    disclaimer in the documentation and/or other materials provided
+#    with the distribution.
+#  * Neither the name of Kei Okada nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+# Publish an RGB-D sequence in a loop: image (bgr8), depth (16UC1 in mm, registered to the image), camera_info and
+# points (the colored points of the depth, for rviz), with the same stamps, and the static TF of the camera frame on
+# camera_link, from the color video and the depths in .npz (array "depth", uint16 mm), by default
+# test/rgbd_walking.mp4 and test/rgbd_walking_depth.npz (20 images of the TUM RGB-D freiburg3_walking_xyz sequence, CC
+# BY 4.0, https://cvg.cit.tum.de/data/datasets/rgbd-dataset, every 6th of its first 120 images).
+# With --distortion K1, the image and the depth are distorted by the radial distortion K1 (plumb_bob), as the raw image
+# of a camera, and camera_info has it; the points are of the depth before the distortion.
+#   publish_rgbd.py [VIDEO DEPTH_NPZ] [--rate 10] [--distortion K1]
+
+import argparse
+import os
+import sys
+
+import cv2
+import numpy as np
+
+TEST_DIR = os.path.dirname(os.path.abspath(__file__))
+# the intrinsics of the freiburg3 sequences, whose images are undistorted
+FX, FY, CX, CY = 535.4, 539.2, 320.1, 247.6
+
+
+def read_frames(video, depth_npz):
+    cap = cv2.VideoCapture(video)
+    colors = []
+    while True:
+        ok, frame = cap.read()
+        if not ok:
+            break
+        colors.append(frame)
+    depths = np.load(depth_npz)['depth']
+    n = min(len(colors), len(depths))
+    if n == 0:
+        raise RuntimeError('no frames in %s and %s' % (video, depth_npz))
+    return list(zip(colors[:n], depths[:n]))
+
+
+def cloud_msg(cloud_type, field_type, color, depth, step=2):
+    """Return the colored points (x y z rgb, in the optical frame) of every step-th pixel of the depth image."""
+    z = depth[::step, ::step].astype(np.float32) / 1000.0
+    v, u = np.mgrid[0:depth.shape[0]:step, 0:depth.shape[1]:step]
+    valid = z > 0
+    x = (u[valid] - CX) * z[valid] / FX
+    y = (v[valid] - CY) * z[valid] / FY
+    bgr = color[::step, ::step][valid].astype(np.uint32)
+    rgb = ((bgr[:, 2] << 16) | (bgr[:, 1] << 8) | bgr[:, 0]).view(np.float32)
+    points = np.stack([x, y, z[valid], rgb], axis=1).astype(np.float32)
+    msg = cloud_type()
+    msg.height, msg.width = 1, len(points)
+    msg.fields = [field_type(name=name, offset=4 * i, datatype=field_type.FLOAT32, count=1)
+                  for i, name in enumerate(['x', 'y', 'z', 'rgb'])]
+    msg.is_bigendian = sys.byteorder == 'big'
+    msg.point_step = 16
+    msg.row_step = 16 * len(points)
+    msg.is_dense = True
+    msg.data = points.tobytes()
+    return msg
+
+
+def distort(frames, k1):
+    """Return the frames distorted by the radial distortion k1.
+
+    Each pixel of the distorted image is the pixel of the undistorted image at its undistorted point.
+    """
+    k = np.array([[FX, 0.0, CX], [0.0, FY, CY], [0.0, 0.0, 1.0]])
+    height, width = frames[0][1].shape
+    v, u = np.mgrid[0:height, 0:width].astype(np.float32)
+    pixels = np.stack([u.ravel(), v.ravel()], axis=1).reshape(-1, 1, 2)
+    undistorted = cv2.undistortPoints(pixels, k, np.array([k1, 0.0, 0.0, 0.0, 0.0]), P=k).reshape(height, width, 2)
+    map_x, map_y = undistorted[..., 0].astype(np.float32), undistorted[..., 1].astype(np.float32)
+    return [(cv2.remap(color, map_x, map_y, cv2.INTER_LINEAR), cv2.remap(depth, map_x, map_y, cv2.INTER_NEAREST))
+            for color, depth in frames]
+
+
+def image_msg(image_type, frame, encoding):
+    msg = image_type()
+    msg.height, msg.width = frame.shape[:2]
+    msg.encoding = encoding
+    msg.is_bigendian = 0
+    msg.step = frame.strides[0]
+    msg.data = frame.tobytes()
+    return msg
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('video', nargs='?', default=os.path.join(TEST_DIR, 'rgbd_walking.mp4'))
+    parser.add_argument('depth', nargs='?', default=os.path.join(TEST_DIR, 'rgbd_walking_depth.npz'))
+    parser.add_argument('--rate', type=float, default=10.0)
+    parser.add_argument('--frame-id', default='camera_rgb_optical_frame')
+    parser.add_argument('--base-frame', default='camera_link')
+    parser.add_argument('--distortion', type=float, default=0.0, help='k1 of the radial distortion')
+    # without the arguments of ROS (__name:=..., __log:=... of roslaunch, --ros-args ... of ROS 2)
+    argv = sys.argv[1:sys.argv.index('--ros-args')] if '--ros-args' in sys.argv else sys.argv[1:]
+    args = parser.parse_args([a for a in argv if ':=' not in a])
+    frames = read_frames(args.video, args.depth)
+    distorted = distort(frames, args.distortion) if args.distortion else frames
+    d = [args.distortion, 0.0, 0.0, 0.0, 0.0]
+    k = [FX, 0.0, CX, 0.0, FY, CY, 0.0, 0.0, 1.0]
+    r = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0]
+    p = [FX, 0.0, CX, 0.0, 0.0, FY, CY, 0.0, 0.0, 0.0, 1.0, 0.0]
+
+    if os.environ.get('ROS_VERSION') == '1':
+        from geometry_msgs.msg import TransformStamped
+        import rospy
+        from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
+        import tf2_ros
+        rospy.init_node('publish_rgbd')
+        static_broadcaster = tf2_ros.StaticTransformBroadcaster()
+        publishers = [rospy.Publisher(name, msg_type, queue_size=10)
+                      for name, msg_type in [('image', Image), ('depth', Image), ('camera_info', CameraInfo),
+                                             ('points', PointCloud2)]]
+        info = CameraInfo(width=640, height=480, distortion_model='plumb_bob', D=d, K=k, R=r, P=p)
+        now = rospy.Time.now
+    else:
+        from geometry_msgs.msg import TransformStamped
+        import rclpy
+        from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
+        import tf2_ros
+        rclpy.init()
+        node = rclpy.create_node('publish_rgbd')
+        static_broadcaster = tf2_ros.StaticTransformBroadcaster(node)
+        publishers = [node.create_publisher(msg_type, name, 10)
+                      for name, msg_type in [('image', Image), ('depth', Image), ('camera_info', CameraInfo),
+                                             ('points', PointCloud2)]]
+        info = CameraInfo(width=640, height=480, distortion_model='plumb_bob', d=d, k=k, r=r, p=p)
+
+        def now():
+            return node.get_clock().now().to_msg()
+
+    # the optical frame of the camera (z forward, y down) on camera_link (x forward, z up), for rviz
+    optical = TransformStamped()
+    optical.header.stamp = now()
+    optical.header.frame_id = args.base_frame
+    optical.child_frame_id = args.frame_id
+    (optical.transform.rotation.x, optical.transform.rotation.y, optical.transform.rotation.z,
+     optical.transform.rotation.w) = (-0.5, 0.5, -0.5, 0.5)
+    static_broadcaster.sendTransform(optical)
+
+    state = {'index': 0}
+
+    def publish(*_):
+        color, depth = frames[state['index'] % len(frames)]
+        distorted_color, distorted_depth = distorted[state['index'] % len(frames)]
+        messages = [image_msg(Image, distorted_color, 'bgr8'), image_msg(Image, distorted_depth, '16UC1'), info,
+                    cloud_msg(PointCloud2, PointField, color, depth)]
+        stamp = now()
+        for msg, publisher in zip(messages, publishers):
+            msg.header.stamp = stamp
+            msg.header.frame_id = args.frame_id
+            publisher.publish(msg)
+        state['index'] += 1
+
+    if os.environ.get('ROS_VERSION') == '1':
+        rospy.Timer(rospy.Duration(1.0 / args.rate), publish)
+        rospy.spin()
+    else:
+        node.create_timer(1.0 / args.rate, publish)
+        try:
+            rclpy.spin(node)
+        except KeyboardInterrupt:
+            pass
+
+
+if __name__ == '__main__':
+    main()

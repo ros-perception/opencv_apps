@@ -6,6 +6,8 @@
 #   launch_args: the arguments of the launch file (launch_file, or the node)
 #   prepare: the commands before publishing the clip, steps: the commands after running the node
 #   view: the image topic of the node to view, instead of image
+#   downloads, publisher, view_command: the files to download, the command to publish them and to view the result,
+#     instead of the clip, image_publisher and rqt_image_view
 adding_images:
   clip: tos_bridge.mp4
   image: image1:=image image2:=image2
@@ -76,8 +78,118 @@ corner_harris:
   note: The threshold is lowered from 200 to show more corners.
 discrete_fourier_transform:
   clip: street.mp4
+detection_3d:
+  clip: test/rgbd_walking.mp4
+  downloads:
+  - test/publish_rgbd.py
+  - test/rgbd_walking.mp4
+  - test/rgbd_walking_depth.npz
+  publisher: python3 publish_rgbd.py rgbd_walking.mp4 rgbd_walking_depth.npz
+  image: input:=/dnn_object_detection/detections depth:=depth camera_info:=camera_info
+  launch_args: {}
+  steps:
+  - ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image &
+  view_command: ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d.rviz
+  figure:
+    path: images/detection_3d_pipeline.svg
+    caption: 'The pipeline of detection_3d: the 2D results of the other nodes (replaceable by remapping input),
+      the distances of an RGB-D camera or a LiDAR, and the 3D boxes, the markers and the TF frames of the objects.'
+  note: 'The input is 20 RGB-D images of the TUM RGB-D freiburg3_walking_xyz sequence (image, depth in mm,
+    camera_info and the colored points, by test/publish_rgbd.py, with the static TF of the camera on camera_link), and
+    the objects of dnn_object_detection. rviz/detection_3d.rviz shows the points, ~/markers (the 3D boxes, the labels
+    with the distances and the axes of the TF frames of the objects), the image of dnn_object_detection and the depth
+    image; for your camera, give its frame by -f, e.g. -f camera_link, and the topics of the images by remapping, e.g.
+    --ros-args -r /depth:=/camera/camera/aligned_depth_to_color/image_raw. rviz/detection_3d_ros1.rviz is the same
+    for ROS 1.'
+  variants_title: Inputs and sources of the distances
+  variants_note: The 2D results of the other nodes and the distances of an RGB-D camera, a monocular depth estimation
+    or a LiDAR, shown in rviz with rviz/detection_3d.rviz and rviz/detection_3d_lidar.rviz (the view of the objects
+    farther away). The commands below are in their own terminals, as above.
+  variants:
+  - name: rgbd
+    title: Objects and an RGB-D camera (default)
+    default: true
+    note: The depth image of the TUM RGB-D dataset, as above.
+  - name: skeletons
+    title: Human and hand skeletons
+    image: input:=/dnn_pose_estimation/skeletons depth:=depth camera_info:=camera_info
+    launch_args:
+      input_type: skeletons
+    commands:
+    - python3 publish_rgbd.py rgbd_walking.mp4 rgbd_walking_depth.npz &
+    - ros2 launch opencv_apps dnn_pose_estimation.launch.xml image:=image &
+    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d.rviz --ros-args -r /dnn_object_detection/image:=/dnn_pose_estimation/image &
+    note: '``~/skeletons`` of dnn_pose_estimation (``person``) or dnn_hand_pose_estimation (``left_hand`` and
+      ``right_hand``): the box and the TF frame of each skeleton as an object, the TF frame ``<label>_<id>_<keypoint>``
+      of each keypoint (e.g. ``person_0_left_wrist``) at the median depth within ``keypoint_radius`` of the keypoint,
+      and the joints and the bones in ``~/markers``; the keypoints less visible than ``keypoint_visibility`` are left
+      out. Needs OpenCV 4.9 or later, as the pose nodes.'
+  - name: mono
+    title: Monocular depth estimation
+    image: input:=/dnn_object_detection/detections depth:=/dnn_depth_estimation/depth camera_info:=camera_info
+    commands:
+    - python3 publish_rgbd.py rgbd_walking.mp4 rgbd_walking_depth.npz --ros-args -r depth:=unused_depth -r points:=unused_points &
+    - ros2 launch opencv_apps dnn_depth_estimation.launch.xml image:=image metric_depth:=true input_width:=518 input_height:=518 model:=https://huggingface.co/k-okada/depth-anything-v2-metric-small-onnx/resolve/5494458701c7274fa82af484e2f2d226c948b54d/depth_anything_v2_metric_hypersim_vits_518.onnx &
+    - ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image &
+    - ros2 run depth_image_proc point_cloud_xyzrgb_node --ros-args -r rgb/image_rect_color:=image -r rgb/camera_info:=camera_info -r depth_registered/image_rect:=/dnn_depth_estimation/depth &
+    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d.rviz --ros-args -r /depth:=/dnn_depth_estimation/depth &
+    note: 'Only the color image of a camera: ``~/depth`` (32FC1 in m) of dnn_depth_estimation with Depth Anything V2
+      Metric (indoors, see dnn_depth_estimation), instead of the depth of the RGB-D camera (not used, remapped to
+      unused_depth), and its points by depth_image_proc for rviz. The distances are less accurate than those of an
+      RGB-D camera (the relative error is about 0.15 on CUDA in this sequence), and the model needs OpenCV 4.10 or
+      later, and a GPU to run it in real time.'
+  - name: lidar
+    title: LiDAR
+    image: input:=/dnn_object_detection/detections points:=points camera_info:=camera_info
+    launch_args:
+      depth_source: points
+      max_depth: 60.0
+      depth_threshold: 1.0
+      track_distance: 2.0
+    commands:
+    - wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/publish_lidar.py
+    - wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/lidar_boreas.mp4
+    - wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/test/lidar_boreas_points.npz
+    - python3 publish_lidar.py lidar_boreas.mp4 lidar_boreas_points.npz &
+    - ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image &
+    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d_lidar.rviz &
+    note: 20 images and the points of the LiDAR (in the frame lidar, with the static TF of the extrinsics from the
+      frame camera) of the Boreas dataset, by test/publish_lidar.py; the objects are farther and move faster than
+      indoors, so max_depth, depth_threshold and track_distance are larger.
 dnn_depth_estimation:
   clip: keybridge.mp4
+  variants_title: Models
+  variants_note: The node runs MiDaS v2.1 small by default, whose output is the relative inverse depth
+    (``~/inverse_depth``), or a model of the depth in meters (``metric_depth:=true``, ``~/depth``), e.g. Depth Anything
+    V2 Metric, for detection_3d with a monocular camera. Depth Anything V2 Metric Small is converted to onnx readable by
+    OpenCV 4.10 and later (by tools/export_depth_anything_metric.py) in
+    `k-okada/depth-anything-v2-metric-small-onnx <https://huggingface.co/k-okada/depth-anything-v2-metric-small-onnx>`_
+    (Apache-2.0).
+  variants:
+  - name: midas
+    title: MiDaS v2.1 small (default)
+    default: true
+    note: 'MiDaS v2.1 small (256x256): fast on a CPU, and read by OpenCV 4 and 5; the relative inverse depth,
+      larger nearer, without the scale in meters.'
+  - name: hypersim
+    title: Depth Anything V2 Metric Small, indoors (Hypersim)
+    launch_args:
+      model: https://huggingface.co/k-okada/depth-anything-v2-metric-small-onnx/resolve/5494458701c7274fa82af484e2f2d226c948b54d/depth_anything_v2_metric_hypersim_vits_518.onnx
+      input_width: 518
+      input_height: 518
+      metric_depth: true
+    note: 'Depth Anything V2 Metric Small trained on Hypersim (518x518, 99 MB): the depth in meters indoors, up to
+      about 20 m, e.g. for detection_3d in a room; needs OpenCV 4.10 or later, and a GPU to run it in real time. The
+      demo is the RGB-D sequence of TUM (its color images only).'
+  - name: vkitti
+    title: Depth Anything V2 Metric Small, outdoors (Virtual KITTI)
+    launch_args:
+      model: https://huggingface.co/k-okada/depth-anything-v2-metric-small-onnx/resolve/5494458701c7274fa82af484e2f2d226c948b54d/depth_anything_v2_metric_vkitti_vits_518.onnx
+      input_width: 518
+      input_height: 518
+      metric_depth: true
+    note: 'Depth Anything V2 Metric Small trained on Virtual KITTI (518x518, 99 MB): the depth in meters outdoors, up
+      to about 80 m, e.g. on the road; needs OpenCV 4.10 or later.'
 dnn_face_detection:
   clip: tos_faces.mp4
 dnn_face_recognition:

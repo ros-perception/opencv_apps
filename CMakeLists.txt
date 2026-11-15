@@ -221,6 +221,13 @@ if(OpenCV_VERSION VERSION_GREATER_EQUAL "4.5.1")
     set_source_files_properties(src/nodelet/tracking_nodelet.cpp PROPERTIES COMPILE_DEFINITIONS OPENCV_APPS_HAVE_TRACKING)
   endif()
 endif()
+# detection_3d: the 3D boxes (vision_msgs) and the TF frames of the 2D detections, with a depth image
+find_package(geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(vision_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
+list(APPEND _nodelets detection_3d:Detection3DNodelet)
+list(APPEND _nodelet_cppfiles src/nodelet/detection_3d_nodelet.cpp)
 
 add_library(${PROJECT_NAME}_nodelet SHARED
   src/nodelet/nodelet.cpp
@@ -248,6 +255,8 @@ if(OPENCV_HAVE_DNN)
     target_link_libraries(${PROJECT_NAME}_nodelet CURL::libcurl)
   endif()
 endif()
+target_link_libraries(${PROJECT_NAME}_nodelet ${geometry_msgs_TARGETS} tf2_ros::tf2_ros ${vision_msgs_TARGETS}
+  ${visualization_msgs_TARGETS})
 foreach(_nodelet ${_nodelets})
   string(REPLACE ":" ";" _nodelet ${_nodelet})
   list(GET _nodelet 0 _name)
@@ -268,6 +277,8 @@ install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
   FILES_MATCHING PATTERN "*.launch.xml"
 )
+# the configs of rviz2 of detection_3d
+install(FILES rviz/detection_3d.rviz rviz/detection_3d_lidar.rviz DESTINATION share/${PROJECT_NAME}/rviz)
 # with a python3 shebang (the scripts keep "python" for ROS1 melodic and older)
 foreach(_script face_recognition_trainer.py set_image.py)
   file(READ scripts/${_script} _script_content)
@@ -296,6 +307,11 @@ if(BUILD_TESTING)
       test/ros2/test_dnn_semantic_segmentation.py test/ros2/test_dnn_depth_estimation.py
       test/ros2/test_dnn_image_classification.py test/ros2/test_dnn_facial_expression_recognition.py)
   endif()
+  # the test of detection_3d detects the people with dnn_object_detection
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_detection_3d.py test/ros2/test_detection_3d_points.py
+      test/ros2/test_detection_3d_distortion.py)
+  endif()
   if(NOT OPENCV_HAVE_DNN)
     list(REMOVE_ITEM _launch_tests test/ros2/test_qrcode_detection.py)
   endif()
@@ -308,7 +324,12 @@ if(BUILD_TESTING)
   # the MediaPipe models of dnn_pose_estimation and dnn_hand_pose_estimation need OpenCV 4.9 or later
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.9")
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_pose_estimation.py test/ros2/test_dnn_pose_estimation_tracking.py
-      test/ros2/test_dnn_hand_pose_estimation.py test/ros2/test_dnn_hand_pose_estimation_tracking.py)
+      test/ros2/test_dnn_hand_pose_estimation.py test/ros2/test_dnn_hand_pose_estimation_tracking.py
+      test/ros2/test_detection_3d_skeletons.py)
+  endif()
+  # Depth Anything V2 Metric (onnx of a vision transformer) needs OpenCV 4.10 or later
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.10")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_depth_estimation_metric.py)
   endif()
   if(NOT OPENCV_HAVE_BARCODE)
     list(REMOVE_ITEM _launch_tests test/ros2/test_barcode_detection.py)
@@ -825,12 +846,28 @@ endif()
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/video_homography.cpp
 # https://github.com/opencv/opencv/blob/2.4/samples/cpp/videocapture_pvapi.cpp
 
+# detection_3d: the 3D boxes (vision_msgs) and the TF frames of the 2D detections, with a depth image; tf2_ros and
+# vision_msgs are found here, not in the components of catkin above, and the node is skipped without them
+find_package(tf2_ros QUIET)
+find_package(vision_msgs QUIET)
+find_package(visualization_msgs QUIET)
+if(tf2_ros_FOUND AND vision_msgs_FOUND AND visualization_msgs_FOUND)
+  include_directories(${tf2_ros_INCLUDE_DIRS} ${vision_msgs_INCLUDE_DIRS} ${visualization_msgs_INCLUDE_DIRS})
+  opencv_apps_add_nodelet(detection_3d src/nodelet/detection_3d_nodelet.cpp)
+  set(OPENCV_APPS_HAVE_DETECTION_3D TRUE)
+endif()
+
 add_library(${PROJECT_NAME} SHARED
   src/nodelet/nodelet.cpp
   ${_opencv_apps_nodelet_cppfiles}
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
+if(OPENCV_APPS_HAVE_DETECTION_3D)
+  target_link_libraries(${PROJECT_NAME} ${tf2_ros_LIBRARIES})
+  # the messages of vision_msgs and visualization_msgs built in the same workspace before detection_3d
+  add_dependencies(${PROJECT_NAME} ${vision_msgs_EXPORTED_TARGETS} ${visualization_msgs_EXPORTED_TARGETS})
+endif()
 if(OPENCV_HAVE_DNN AND CURL_FOUND)
   target_include_directories(${PROJECT_NAME} PRIVATE ${CURL_INCLUDE_DIRS})
   target_link_libraries(${PROJECT_NAME} ${CURL_LIBRARIES})
@@ -852,6 +889,9 @@ install(DIRECTORY launch test scripts
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
         USE_SOURCE_PERMISSIONS)
 # rclpy on rospy for scripts/face_recognition_trainer.py, see ros1/python/rclpy/__init__.py
+# the configs of rviz of detection_3d
+install(FILES rviz/detection_3d_ros1.rviz rviz/detection_3d_lidar_ros1.rviz
+        DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/rviz)
 install(DIRECTORY ros1/python
         DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/ros1
         PATTERN "__pycache__" EXCLUDE)
@@ -881,6 +921,9 @@ if(CATKIN_ENABLE_TESTING)
     endif()
     if(NOT OPENCV_HAVE_BARCODE)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/barcode_detection.launch)
+    endif()
+    if(NOT OPENCV_APPS_HAVE_DETECTION_3D)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/detection_3d.launch)
     endif()
     if(NOT OPENCV_HAVE_ARUCO)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/aruco_detection.launch)

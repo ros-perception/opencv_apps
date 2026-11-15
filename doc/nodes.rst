@@ -6,7 +6,7 @@ Each node subscribes ``image`` (``sensor_msgs/msg/Image``), and publishes its re
 Image filters
 -------------
 
-Filter and transform the images: edges, histogram equalization, morphology, image pyramids, smoothing, thresholds, the Fourier transform and the depth estimated by a DNN. Output: the processed image in ``~/image``.
+Filter and transform the images: edges, histogram equalization, morphology, image pyramids, smoothing, thresholds and the Fourier transform. Output: the processed image in ``~/image``.
 
 .. toctree::
    :maxdepth: 1
@@ -19,7 +19,6 @@ Filter and transform the images: edges, histogram equalization, morphology, imag
    nodes/pyramids
    nodes/smoothing
    nodes/threshold
-   nodes/dnn_depth_estimation
 
 Features and shapes
 -------------------
@@ -160,3 +159,14 @@ Compare the color histogram of the image with a reference. Output: ``~/distance`
    :maxdepth: 1
 
    nodes/compare_histogram
+
+Depth and 3D localization
+-------------------------
+
+Estimate the depth of a color image by a DNN, and localize the objects, the faces, the tracked targets and the human and hand skeletons of the nodes above in 3D, with a depth image of an RGB-D camera or of the depth estimation, or a point cloud of a LiDAR, and publish their TF frames. Output: ``~/inverse_depth`` or ``~/depth`` (Image) of dnn_depth_estimation, and ``~/detections`` (vision_msgs/Detection3DArray), ``~/markers`` (for rviz) and the TF frames of detection_3d.
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/dnn_depth_estimation
+   nodes/detection_3d

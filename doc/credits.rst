@@ -46,3 +46,16 @@ The demos of face_recognition, dnn_face_recognition and people_detect use
 people for HOG), and the demos of qrcode_detection, barcode_detection, aruco_detection and
 dnn_text_detection use ``test/codes.mp4`` and ``test/text.mp4`` of opencv_apps, made by ``test/make_codes_video.py``
 and ``test/make_text_video.py``. The tests of the nodes use the videos in ``test/``.
+
+The demo and the tests of detection_3d use ``test/rgbd_walking.mp4`` and ``test/rgbd_walking_depth.npz``, 20 color
+and depth images (every 6th of the first 120 images) of the freiburg3_walking_xyz sequence of the
+`TUM RGB-D dataset <https://cvg.cit.tum.de/data/datasets/rgbd-dataset>`_ (J. Sturm, N. Engelhard, F. Endres, W.
+Burgard and D. Cremers, "A Benchmark for the Evaluation of RGB-D SLAM Systems", IROS 2012), licensed under
+`CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_; the depths are converted from 5000 per meter to
+millimeters.
+
+The LiDAR demo and test of detection_3d use ``test/lidar_boreas.mp4`` and ``test/lidar_boreas_points.npz``, 20 camera
+images (612x512, 1/4 of the camera) and the LiDAR points in the view of the camera (every third, in float16) of the
+sequence boreas-2021-09-02-11-42 of the `Boreas dataset <https://www.boreas.utias.utoronto.ca/>`_ (K. Burnett et al.,
+"Boreas: A Multi-Season Autonomous Driving Dataset", IJRR 2023), licensed under
+`CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_.
