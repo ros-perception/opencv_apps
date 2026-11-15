@@ -282,6 +282,19 @@ Estimate the depth of a color image by a DNN, and localize the objects, the face
 <td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/detection_3d.html"><img src="https://ros-perception.github.io/opencv_apps/media/detection_3d_thumb.gif" width="200" alt="detection_3d"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/detection_3d.html"><code>detection_3d</code></a><br><sub>~/detections</sub></td>
 </tr>
 </table>
+
+### Odometry and maps
+
+Estimate the motion of the robot by an RGB-D camera or a LiDAR (e.g. Livox), as the odometry for slam_toolbox (the 2D map) and Nav2 instead of the odometry of the wheels, and build the 3D map and the 3D trajectory. Output: `~/odom` (nav_msgs/Odometry), the TF odom -> base_frame, `~/path` (nav_msgs/Path) and `~/map` (PointCloud2, the 3D map).
+
+**ROS 1: ROS One and later, ROS 2: jazzy and later**
+
+<table>
+<tr>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/rgbd_odometry.html"><img src="https://ros-perception.github.io/opencv_apps/media/rgbd_odometry_thumb.gif" width="200" alt="rgbd_odometry"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/rgbd_odometry.html"><code>rgbd_odometry</code></a><br><sub>~/odom, ~/map</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/laser_odometry.html"><img src="https://ros-perception.github.io/opencv_apps/media/laser_odometry_thumb.gif" width="200" alt="laser_odometry"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/laser_odometry.html"><code>laser_odometry</code></a><br><sub>~/odom, ~/map</sub></td>
+</tr>
+</table>
 <!-- gallery end -->
 
 The demo videos are made of [Tears of Steel](https://mango.blender.org/) (CC BY 3.0, Blender Foundation) and the

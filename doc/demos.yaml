@@ -495,3 +495,95 @@ watershed_segmentation:
     {x: 200.0, y: 100.0}, {x: 300.0, y: 100.0}, {x: 400.0, y: 100.0}, {x: 500.0, y: 100.0}, {x: 100.0, y: 200.0}, {x: 200.0,
     y: 200.0}, {x: 300.0, y: 200.0}, {x: 400.0, y: 200.0}, {x: 500.0, y: 200.0}, {x: 100.0, y: 300.0}, {x: 200.0, y: 300.0},
     {x: 300.0, y: 300.0}, {x: 400.0, y: 300.0}, {x: 500.0, y: 300.0}]}" &'
+laser_odometry:
+  clip: test/publish_livox_sim.py
+  downloads:
+  - test/publish_livox_sim.py
+  publisher: python3 publish_livox_sim.py
+  image: points:=points voxel_size:=0.2 max_range:=20.0
+  launch_args: {}
+  view_command: ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/laser_odometry.rviz
+  note: 'The input is the simulated scans of the non-repetitive scanning of Livox Mid-360 moving in a room, by
+    test/publish_livox_sim.py (its points are in the frame lidar; the demo above is of the real data below).
+    rviz/laser_odometry.rviz shows the 3D map (~/map), the points, the trajectory (~/path) and the pose (~/odom); for
+    your LiDAR, give its topic and the frame of the robot, e.g. points:=/livox/lidar base_frame:=base_link (with the
+    TF of the LiDAR on it), and voxel_size:=0.1 - 0.2 indoors.'
+  variants_title: 3D and 2D maps
+  variants_note: The odometry of a LiDAR gives the 3D trajectory and the 3D map (~/map) by itself, and the 2D map with
+    slam_toolbox (launch/laser_odometry_slam.launch.xml), e.g. for Nav2. The commands below are in their own terminals.
+  variants:
+  - name: g1
+    title: 3D map of Livox Mid-360 on Unitree G1 (default)
+    default: true
+    image: points:=points base_frame:=base_link voxel_size:=0.2 max_range:=30.0
+    commands:
+    - pip install laspy lazrs
+    - wget https://zenodo.org/records/21318128/files/flat-room.7z && 7z x flat-room.7z
+    - wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/tools/publish_hdmapping.py
+    - python3 publish_hdmapping.py flat-room/trial-1/hdmapping-raw &
+    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/laser_odometry.rviz &
+    note: 'The Livox Mid-360 on the head of a Unitree G1 walking 87.6 m in a room (flat-room of HUMANOID-LIO-DATASET,
+      CC BY 4.0), by tools/publish_hdmapping.py, which also publishes the TF of base_link by the gravity at the start
+      (the Mid-360 of G1 is upside down). The ATE to its ground truth (by a terrestrial laser scanner) is 3.6 cm, as
+      KISS-ICP (3.7 cm).'
+  - name: slam
+    title: 2D map with slam_toolbox of Livox Mid-360 on Unitree G1
+    launch_file: laser_odometry_slam
+    image: points:=points
+    commands:
+    - sudo apt install ros-$ROS_DISTRO-pointcloud-to-laserscan ros-$ROS_DISTRO-slam-toolbox
+    - python3 publish_hdmapping.py flat-room/trial-1/hdmapping-raw &
+    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/laser_odometry_slam.rviz &
+    note: 'launch/laser_odometry_slam.launch.xml: laser_odometry (odom -> base_link), the points on the floor plane of
+      base_link as a 2D scan (pointcloud_to_laserscan) and slam_toolbox (map -> odom, /map), of the same data.'
+  - name: nav2
+    title: 2D map and Nav2 with a 2D LiDAR in the simulation
+    command: ros2 launch opencv_apps odometry_tb3_simulation.launch.py odometry:=laser
+    commands:
+    - sudo apt install ros-$ROS_DISTRO-nav2-bringup ros-$ROS_DISTRO-nav2-minimal-tb3-sim ros-$ROS_DISTRO-slam-toolbox
+    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/odometry_tb3_simulation.rviz &
+    note: 'launch/odometry_tb3_simulation.launch.py: TurtleBot3 Waffle in Gazebo of Nav2 without the odometry of its
+      wheels; laser_odometry of its 2D LiDAR (input_type scan) gives odom -> base_footprint and /odom for
+      slam_toolbox and Nav2, which navigates to the goals of Nav2 Goal of rviz (the trajectory of laser_odometry in
+      yellow, of rgbd_odometry in cyan).'
+rgbd_odometry:
+  clip: test/rgbd_xyz.mp4
+  downloads:
+  - test/publish_rgbd.py
+  - test/rgbd_xyz.mp4
+  - test/rgbd_xyz_depth.npz
+  publisher: python3 publish_rgbd.py rgbd_xyz.mp4 rgbd_xyz_depth.npz
+  image: image:=image depth:=depth camera_info:=camera_info base_frame:=camera_link
+  launch_args: {}
+  view_command: ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/rgbd_odometry.rviz
+  note: 'The input is 30 RGB-D images of the TUM RGB-D freiburg1_xyz sequence (image, depth in mm and camera_info,
+    by test/publish_rgbd.py, with the static TF of the camera on camera_link), in a loop (the odometry restarts when
+    the time goes back); the demo above is of the whole sequence below. rviz/rgbd_odometry.rviz shows the colored 3D
+    map (~/map), the trajectory (~/path), the pose (~/odom) and the image; for your camera, give its frame on the
+    robot, e.g. base_frame:=base_link.'
+  variants_title: 3D and 2D maps
+  variants_note: The visual odometry of an RGB-D camera gives the 3D trajectory and the colored 3D map (~/map), and the
+    odometry for slam_toolbox and Nav2. The commands below are in their own terminals.
+  variants:
+  - name: tum
+    title: 3D map of TUM RGB-D (default)
+    default: true
+    image: image:=image depth:=depth camera_info:=camera_info base_frame:=base_link map_voxel_size:=0.01
+    commands:
+    - wget https://cvg.cit.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_xyz.tgz && tar xf rgbd_dataset_freiburg1_xyz.tgz
+    - wget https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/tools/publish_tum_rgbd.py
+    - python3 publish_tum_rgbd.py rgbd_dataset_freiburg1_xyz &
+    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/rgbd_odometry.rviz &
+    note: 'The handheld camera of freiburg1_xyz (CC BY 4.0), by tools/publish_tum_rgbd.py; the ATE to its ground truth
+      is 4.9 cm in 8 m (rgbd_icp). The odometry of a camera drifts more than of a LiDAR, e.g. 3.5 m in 41 m of
+      freiburg2_pioneer_slam of a robot in a large hall (icp).'
+  - name: simulation
+    title: 3D map and Nav2 with a depth camera in the simulation
+    command: ros2 launch opencv_apps odometry_tb3_simulation.launch.py odometry:=camera
+    commands:
+    - sudo apt install ros-$ROS_DISTRO-nav2-bringup ros-$ROS_DISTRO-nav2-minimal-tb3-sim ros-$ROS_DISTRO-slam-toolbox
+    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/odometry_tb3_simulation_3d.rviz &
+    note: 'launch/odometry_tb3_simulation.launch.py: the depth camera of TurtleBot3 Waffle in Gazebo (no image,
+      use_image:=false and method:=icp) gives the 3D map, and with odometry:=camera, odom -> base_footprint for
+      slam_toolbox and Nav2 (the 2D map of the 2D LiDAR corrects the drift of the odometry, 0.6 m in a few meters in
+      the world of few features).'

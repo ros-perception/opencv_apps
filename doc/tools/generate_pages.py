@@ -75,6 +75,7 @@ CATEGORIES = [
     ('Optical flow and motion', ['fback_flow', 'lk_flow', 'simple_flow', 'phase_corr']),
     ('Histogram comparison', ['compare_histogram']),
     ('Depth and 3D localization', ['dnn_depth_estimation', 'detection_3d']),
+    ('Odometry and maps', ['rgbd_odometry', 'laser_odometry']),
 ]
 # the descriptions of the nodes, instead of the documentation comments of their sources, which are the comments of
 # the samples of OpenCV for the most of the nodes other than the dnn nodes
@@ -208,6 +209,11 @@ CATEGORY_DESCRIPTIONS = {
                                   '``~/inverse_depth`` or ``~/depth`` (Image) of dnn_depth_estimation, and '
                                   '``~/detections`` (vision_msgs/Detection3DArray), ``~/markers`` (for rviz) and the '
                                   'TF frames of detection_3d'),
+    'Odometry and maps': ('Estimate the motion of the robot by an RGB-D camera or a LiDAR (e.g. Livox), as the '
+                          'odometry for slam_toolbox (the 2D map) and Nav2 instead of the odometry of the wheels, and '
+                          'build the 3D map and the 3D trajectory.',
+                          '``~/odom`` (nav_msgs/Odometry), the TF odom -> base_frame, ``~/path`` (nav_msgs/Path) and '
+                          '``~/map`` (PointCloud2, the 3D map)'),
 }
 # the main output of each node, under its tile, when it is not ~/image
 NODE_OUTPUTS = {
@@ -216,6 +222,7 @@ NODE_OUTPUTS = {
     'line_segment_detector': '~/lines', 'hough_circles': '~/circles', 'blob_detection': '~/circles',
     'convex_hull': '~/hulls', 'camshift': '~/track_box', 'phase_corr': '~/shift', 'compare_histogram': '~/distance',
     'detection_3d': '~/detections',
+    'rgbd_odometry': '~/odom, ~/map', 'laser_odometry': '~/odom, ~/map',
 }
 for _node in ['find_contours', 'general_contours', 'contour_moments', 'segment_objects', 'watershed_segmentation']:
     NODE_OUTPUTS[_node] = '~/contours'
@@ -262,7 +269,8 @@ for _node in ['aruco_detection', 'background_subtraction', 'barcode_detection', 
               'dnn_hand_pose_estimation', 'dnn_image_classification', 'dnn_object_detection', 'dnn_pose_estimation',
               'dnn_semantic_segmentation', 'dnn_text_detection', 'dnn_tracking']:
     SINCE[_node] = '3.0.0'
-SINCE['detection_3d'] = '3.1.0'
+for _node in ['detection_3d', 'rgbd_odometry', 'laser_odometry']:
+    SINCE[_node] = '3.1.0'
 # the requirements of OpenCV of the nodes (see CMakeLists.txt): the minimum version, and the description
 OPENCV_REQUIREMENTS = {
     'simple_flow': (None, 'the optflow module of opencv_contrib'),
@@ -279,6 +287,7 @@ OPENCV_REQUIREMENTS = {
     'dnn_hand_pose_estimation': ('4.9', 'OpenCV 4.9 or later, which reads the MediaPipe hand pose model'),
     'dnn_tracking': ('4.5.4', 'OpenCV 4.5.4 or later for DaSiamRPN, 4.7 or later for NanoTrack and 4.9 or later '
                               'for VitTrack'),
+    'rgbd_odometry': (None, 'the rgbd module of opencv_contrib (OpenCV 4)'),
 }
 for _node in ['dnn_face_detection', 'dnn_face_recognition', 'dnn_facial_expression_recognition', 'dnn_object_detection',
               'dnn_image_classification', 'dnn_semantic_segmentation', 'dnn_depth_estimation', 'dnn_text_detection']:
@@ -388,6 +397,11 @@ USAGE_INPUTS = {
                      'camera_info:=/camera/camera/color/camera_info',
                      'input:=/dnn_object_detection/detections depth:=/camera/aligned_depth_to_color/image_raw '
                      'camera_info:=/camera/color/camera_info'),
+    'rgbd_odometry': ('image:=/camera/camera/color/image_raw depth:=/camera/camera/aligned_depth_to_color/image_raw '
+                      'camera_info:=/camera/camera/color/camera_info base_frame:=camera_link',
+                      'image:=/camera/color/image_raw depth:=/camera/aligned_depth_to_color/image_raw '
+                      'camera_info:=/camera/color/camera_info base_frame:=camera_link'),
+    'laser_odometry': 'points:=/livox/lidar base_frame:=base_link',
 }
 
 
@@ -511,7 +525,8 @@ def demo_section(node, demo):
 def variants_section(node, demo):
     """Return the demos of the variants of the node (e.g. the models of a dnn node), from variants of doc/demos.yaml.
 
-    Each variant has its demo video, <node>_<name>.gif (<node>.gif for the default), and its launch arguments.
+    Each variant has its demo video, <node>_<name>.gif (<node>.gif for the default), and its launch arguments, or
+    its launch file (launch_file) or its command (command).
     """
     title = demo.get('variants_title', 'Variants')
     lines = [title, '-' * len(title), '', demo.get('variants_note', ''), '']
@@ -522,8 +537,10 @@ def variants_section(node, demo):
                   '.. image:: %s%s.gif' % (MEDIA_URL, gif), '   :alt: demo of %s with %s' % (node, name), '']
         arguments = ' '.join('%s:=%s' % (k, str(v).lower() if isinstance(v, bool) else v)
                              for k, v in sorted(variant.get('launch_args', {}).items()))
-        command = 'ros2 launch opencv_apps %s.launch.xml %s %s' % (
-            demo.get('launch_file', node), variant.get('image', demo.get('image', 'image:=image')), arguments)
+        # the launch file of the variant (e.g. an example of the node), or the command of the variant
+        command = variant.get('command', 'ros2 launch opencv_apps %s.launch.xml %s %s' % (
+            variant.get('launch_file', demo.get('launch_file', node)),
+            variant.get('image', demo.get('image', 'image:=image')), arguments))
         # the commands of the variant before the node, e.g. to publish its input
         lines += ['.. code-block:: bash', ''] + ['   ' + c for c in variant.get('commands', [])]
         lines += ['   ' + command.rstrip(), '']
