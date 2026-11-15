@@ -304,11 +304,15 @@ protected:
     odom_msg.pose.pose = toPose(base);
     if (dt > 0.0)
     {
+      // the velocity in the current base frame (child_frame_id): the displacement in the previous base frame rotated
+      // into the current one; the axis of the rotation is the same in both
+      cv::Matx33d rotation = base_motion.get_minor<3, 3>(0, 0);
       cv::Vec3d axis_angle;
-      cv::Rodrigues(cv::Matx33d(base_motion.get_minor<3, 3>(0, 0)), axis_angle);
-      odom_msg.twist.twist.linear.x = base_motion(0, 3) / dt;
-      odom_msg.twist.twist.linear.y = base_motion(1, 3) / dt;
-      odom_msg.twist.twist.linear.z = base_motion(2, 3) / dt;
+      cv::Rodrigues(rotation, axis_angle);
+      cv::Vec3d velocity = rotation.t() * cv::Vec3d(base_motion(0, 3), base_motion(1, 3), base_motion(2, 3)) / dt;
+      odom_msg.twist.twist.linear.x = velocity[0];
+      odom_msg.twist.twist.linear.y = velocity[1];
+      odom_msg.twist.twist.linear.z = velocity[2];
       odom_msg.twist.twist.angular.x = axis_angle[0] / dt;
       odom_msg.twist.twist.angular.y = axis_angle[1] / dt;
       odom_msg.twist.twist.angular.z = axis_angle[2] / dt;
