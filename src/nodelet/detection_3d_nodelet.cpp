@@ -70,7 +70,8 @@
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <vision_msgs/msg/detection3_d_array.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
-#if __has_include(<tf2_ros/transform_broadcaster.hpp>)
+// the .hpp of tf2_ros of ROS 2 (jazzy and later), or of the compat headers of ROS 1 (ros1/include)
+#if !defined(ROS2) || __has_include(<tf2_ros/transform_broadcaster.hpp>)
 #include <tf2_ros/buffer.hpp>
 #include <tf2_ros/transform_broadcaster.hpp>
 #include <tf2_ros/transform_listener.hpp>
