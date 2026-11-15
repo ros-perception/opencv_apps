@@ -149,8 +149,10 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
 #endif
     double binning_x = std::max(1u, static_cast<unsigned int>(info.binning_x));
     double binning_y = std::max(1u, static_cast<unsigned int>(info.binning_y));
-    return (cv::Mat_<double>(3, 3) << k[0] / binning_x, 0.0, (k[2] - info.roi.x_offset) / binning_x, 0.0,
-            k[4] / binning_y, (k[5] - info.roi.y_offset) / binning_y, 0.0, 0.0, 1.0);
+    // cv::Mat of cv::Matx, as OpenCV 5.1 has no comma initializer of cv::Mat_
+    return cv::Mat(cv::Matx33d(k[0] / binning_x, 0.0, (k[2] - info.roi.x_offset) / binning_x, 0.0, k[4] / binning_y,
+                               (k[5] - info.roi.y_offset) / binning_y, 0.0, 0.0, 1.0),
+                   true);
   }
 
   // the depth image in meters
