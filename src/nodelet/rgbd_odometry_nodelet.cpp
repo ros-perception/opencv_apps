@@ -46,6 +46,7 @@
 #include <opencv2/rgbd.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <functional>
 #include <limits>
 #include <memory>
@@ -259,6 +260,32 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
         previous_motion_ = motion;
       }
       publishOdometry(header, motion);
+
+      // the colored points of every 4th pixel to the 3D map
+      std::vector<cv::Point3d> points;
+      std::vector<cv::Vec3b> colors;
+      const double fx = camera_matrix.at<double>(0, 0), fy = camera_matrix.at<double>(1, 1);
+      const double cx = camera_matrix.at<double>(0, 2), cy = camera_matrix.at<double>(1, 2);
+      for (int v = 0; v < depth.rows; v += 4)
+        for (int u = 0; u < depth.cols; u += 4)
+        {
+          float z = depth.at<float>(v, u);
+          if (!std::isfinite(z) || z < min_depth_ || z > max_depth_)
+            continue;
+          points.push_back(cv::Point3d((u - cx) * z / fx, (v - cy) * z / fy, z));
+          if (image.channels() == 1)
+            colors.push_back(cv::Vec3b::all(image.at<uint8_t>(v, u)));
+          else if (image_msg->encoding == sensor_msgs::image_encodings::RGB8)
+          {
+            const cv::Vec3b& rgb = image.at<cv::Vec3b>(v, u);
+            colors.push_back(cv::Vec3b(rgb[2], rgb[1], rgb[0]));
+          }
+          else
+            colors.push_back(cv::Vec3b(image.ptr<uint8_t>(v)[u * image.channels()],
+                                       image.ptr<uint8_t>(v)[u * image.channels() + 1],
+                                       image.ptr<uint8_t>(v)[u * image.channels() + 2]));
+        }
+      addToMap(header, points, colors);
     }
     catch (const std::exception& e)
     {

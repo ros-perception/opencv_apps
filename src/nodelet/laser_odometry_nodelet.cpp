@@ -396,6 +396,7 @@ class LaserOdometryNodelet : public opencv_apps::OdometryNodelet
       map_.add(frame_in_odom);
       map_.removeFar(cv::Point3d(pose_(0, 3), pose_(1, 3), pose_(2, 3)), max_range_);
       publishOdometry(header, motion);
+      addToMap(header, frame, std::vector<cv::Vec3b>());
     }
     catch (const std::exception& e)
     {

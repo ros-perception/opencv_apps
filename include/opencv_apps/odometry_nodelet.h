@@ -37,7 +37,8 @@
  * sensor between the consecutive inputs, and this class accumulates it into the pose of the robot (base_frame, by the
  * TF of the sensor on it at the first input) in odom_frame, the robot at the first input, and publishes it as
  * nav_msgs/Odometry (~/odom), the trajectory (~/path, nav_msgs/Path for rviz) and the TF odom_frame -> base_frame,
- * e.g. for slam_toolbox and Nav2.
+ * e.g. for slam_toolbox and Nav2, and the 3D map (~/map, sensor_msgs/PointCloud2 of a point of each voxel of
+ * map_voxel_size in odom_frame, with the colors of the RGB-D camera) of the points given by the derived class.
  */
 
 #ifndef OPENCV_APPS_ODOMETRY_NODELET_H_
@@ -48,13 +49,18 @@
 #include <opencv2/calib3d/calib3d.hpp>
 
 #include <cmath>
+#include <cstdint>
+#include <cstring>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <nav_msgs/msg/path.hpp>
+#include <sensor_msgs/msg/point_cloud2.hpp>
 // the .hpp of tf2_ros of ROS 2 (jazzy and later), or of the compat headers of ROS 1 (ros1/include)
 #if !defined(ROS2) || __has_include(<tf2_ros/transform_broadcaster.hpp>)
 #include <tf2_ros/buffer.hpp>
@@ -72,6 +78,7 @@ class OdometryNodelet : public opencv_apps::Nodelet
 {
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_pub_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
   std::unique_ptr<tf2_ros::TransformListener> tf_listener_;
@@ -80,6 +87,8 @@ class OdometryNodelet : public opencv_apps::Nodelet
   std::string base_frame_;
   bool publish_tf_;
   int path_length_;
+  double map_voxel_size_;
+  double map_period_;
 
   cv::Matx44d pose_;         // the sensor in the frame of the sensor at the first input
   cv::Matx44d base_sensor_;  // the sensor on base_frame, by TF at the first input
@@ -87,6 +96,9 @@ class OdometryNodelet : public opencv_apps::Nodelet
   rclcpp::Time previous_stamp_;
   bool has_previous_;
   nav_msgs::msg::Path path_;
+  // the 3D map: a point (x, y, z and the color in BGR) of each voxel, in odom_frame of the robot
+  std::unordered_map<int64_t, cv::Vec4f> map_;
+  double map_stamp_ = 0.0;
 
 protected:
   OdometryNodelet(const std::string& node_name, const rclcpp::NodeOptions& options)
@@ -114,6 +126,12 @@ protected:
     path_length_ = declare_parameter(
         "path_length", 10000,
         paramDescriptor("Number of the poses of ~/path, the trajectory for rviz, 0 for all of them.", 0, 1000000));
+    map_voxel_size_ = declare_parameter(
+        "map_voxel_size", 0.05,
+        paramDescriptor("Size (m) of the voxels of the 3D map (~/map, a point of each voxel), 0 for no map.", 0.0,
+                        10.0));
+    map_period_ =
+        declare_parameter("map_period", 1.0, paramDescriptor("Period (s) to publish the 3D map (~/map).", 0.0, 3600.0));
     // the TF is published only when the inputs are subscribed, and a subscriber of /tf (e.g. slam_toolbox) does not
     // subscribe the outputs of the node, so the node always subscribes the inputs with publish_tf at the start
     if (publish_tf_)
@@ -127,6 +145,7 @@ protected:
     tf_listener_.reset(new tf2_ros::TransformListener(*tf_buffer_));
     odom_pub_ = advertise<nav_msgs::msg::Odometry>("~/odom", 1);
     path_pub_ = advertise<nav_msgs::msg::Path>("~/path", 1);
+    map_pub_ = advertise<sensor_msgs::msg::PointCloud2>("~/map", 1);
   }
 
   static geometry_msgs::msg::Pose toPose(const cv::Matx44d& transform)
@@ -199,8 +218,70 @@ protected:
       RCLCPP_WARN(get_logger(), "the time went back, restart the odometry");
     pose_ = cv::Matx44d::eye();
     path_.poses.clear();
+    map_.clear();
     has_previous_ = false;
     return true;
+  }
+
+  // add the points of the sensor (in the frame of the sensor, of the last publishOdometry()) to the 3D map, with
+  // their colors (BGR, 8 bit) or without them (empty), and publish the map every map_period
+  void addToMap(const std_msgs::msg::Header& header, const std::vector<cv::Point3d>& points,
+                const std::vector<cv::Vec3b>& colors)
+  {
+    if (map_voxel_size_ <= 0.0)
+      return;
+    // the points in odom_frame, which is base_frame at the first input
+    cv::Matx44d sensor = base_sensor_ * pose_;
+    const int64_t mask = (1 << 21) - 1;
+    for (size_t i = 0; i < points.size(); i++)
+    {
+      const cv::Point3d& p = points[i];
+      cv::Vec3d q(sensor(0, 0) * p.x + sensor(0, 1) * p.y + sensor(0, 2) * p.z + sensor(0, 3),
+                  sensor(1, 0) * p.x + sensor(1, 1) * p.y + sensor(1, 2) * p.z + sensor(1, 3),
+                  sensor(2, 0) * p.x + sensor(2, 1) * p.y + sensor(2, 2) * p.z + sensor(2, 3));
+      int64_t key = 0;
+      for (int k = 0; k < 3; k++)
+        key = (key << 21) | (static_cast<int64_t>(std::floor(q[k] / map_voxel_size_)) & mask);
+      // the color as the float of the packed rgb of PointCloud2
+      uint32_t rgb = 0xffffff;
+      if (!colors.empty())
+        rgb = (static_cast<uint32_t>(colors[i][2]) << 16) | (static_cast<uint32_t>(colors[i][1]) << 8) | colors[i][0];
+      float packed;
+      std::memcpy(&packed, &rgb, sizeof(float));
+      map_.emplace(key, cv::Vec4f(static_cast<float>(q[0]), static_cast<float>(q[1]), static_cast<float>(q[2]), packed));
+    }
+    // the seconds, as rclcpp::Time of the different clocks cannot be compared
+    double stamp = rclcpp::Time(header.stamp).seconds();
+    if (stamp - map_stamp_ < map_period_ && stamp >= map_stamp_)
+      return;
+    map_stamp_ = stamp;
+    sensor_msgs::msg::PointCloud2 map_msg;
+    map_msg.header.stamp = header.stamp;
+    map_msg.header.frame_id = odom_frame_;
+    map_msg.height = 1;
+    map_msg.width = static_cast<uint32_t>(map_.size());
+    const char* names[4] = { "x", "y", "z", "rgb" };
+    for (int k = 0; k < 4; k++)
+    {
+      sensor_msgs::msg::PointField field;
+      field.name = names[k];
+      field.offset = 4 * k;
+      field.datatype = sensor_msgs::msg::PointField::FLOAT32;
+      field.count = 1;
+      map_msg.fields.push_back(field);
+    }
+    map_msg.is_bigendian = false;
+    map_msg.point_step = 16;
+    map_msg.row_step = 16 * map_msg.width;
+    map_msg.is_dense = true;
+    map_msg.data.resize(map_msg.row_step);
+    size_t offset = 0;
+    for (const auto& voxel : map_)
+    {
+      std::memcpy(&map_msg.data[offset], voxel.second.val, 16);
+      offset += 16;
+    }
+    map_pub_->publish(map_msg);
   }
 
   // accumulate the motion of the sensor (the sensor of this input in the sensor of the previous input, the identity at
