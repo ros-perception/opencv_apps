@@ -1,0 +1,33 @@
+<launch>
+  <arg name="node_name" default="rgbd_odometry" />
+
+  <arg name="image" default="image" doc="The color (or mono) image of the RGB-D camera." />
+  <arg name="depth" default="depth" doc="The depth image registered to the image (16UC1 in mm or 32FC1 in m), e.g. aligned_depth_to_color/image_raw of realsense2_camera." />
+  <arg name="camera_info" default="camera_info" doc="The camera info of the image." />
+
+  <arg name="method" default="rgbd_icp" doc="Method of the odometry: rgbd (the photometric error of the image), icp (the geometric error of the depth) or rgbd_icp (both)." />
+  <arg name="min_depth" default="0.3" doc="Minimum valid depth (m)." />
+  <arg name="max_depth" default="4.0" doc="Maximum valid depth (m)." />
+  <arg name="max_depth_diff" default="0.07" doc="Maximum difference (m) of the depths of the corresponding points of the images." />
+  <arg name="queue_size" default="10" doc="Queue size of the synchronized subscribers." />
+  <arg name="odom_frame" default="odom" doc="Frame of the odometry, the robot (base_frame) at the start." />
+  <arg name="base_frame" default="" doc="Frame of the robot, whose TF to the sensor is given (e.g. base_link, base_footprint), or empty for the frame of the sensor." />
+  <arg name="publish_tf" default="true" doc="Publish the TF odom_frame -> base_frame; with it at the start, the node subscribes the inputs always, for the subscribers of /tf." />
+  <arg name="path_length" default="10000" doc="Number of the poses of ~/path, the trajectory for rviz, 0 for all of them." />
+
+  <!-- rgbd_odometry_nodelet.cpp, the visual odometry of an RGB-D camera (cv::rgbd) -->
+  <node name="$(arg node_name)" pkg="opencv_apps" type="rgbd_odometry" >
+    <remap from="image" to="$(arg image)" />
+    <remap from="depth" to="$(arg depth)" />
+    <remap from="camera_info" to="$(arg camera_info)" />
+    <param name="method" type="str" value="$(arg method)" />
+    <param name="min_depth" value="$(arg min_depth)" />
+    <param name="max_depth" value="$(arg max_depth)" />
+    <param name="max_depth_diff" value="$(arg max_depth_diff)" />
+    <param name="queue_size" value="$(arg queue_size)" />
+    <param name="odom_frame" type="str" value="$(arg odom_frame)" />
+    <param name="base_frame" type="str" value="$(arg base_frame)" />
+    <param name="publish_tf" value="$(arg publish_tf)" />
+    <param name="path_length" value="$(arg path_length)" />
+  </node>
+</launch>

@@ -1,0 +1,72 @@
+# Software License Agreement (BSD License)
+#
+# Copyright (c) 2026, Kei Okada.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#  * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above
+#    copyright notice, this list of conditions and the following
+#    disclaimer in the documentation and/or other materials provided
+#    with the distribution.
+#  * Neither the name of Kei Okada nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+# the visual odometry of rgbd_odometry (rgbd_icp) in the 30 RGB-D images of test/rgbd_xyz.mp4 and
+# test/rgbd_xyz_depth.npz (TUM RGB-D freiburg1_xyz, the camera moves 0.46 m), published by test/publish_rgbd.py in a
+# loop whose stamps start again (--rewind, which restarts the odometry): the pose of the camera at the last image is
+# within 6 cm of the ground truth of the dataset
+
+import os
+import sys
+import unittest
+
+import launch.actions
+from nav_msgs.msg import Odometry
+import numpy as np
+from opencv_apps_test import description, include, MessagesTest, TEST_DIR
+import pytest
+
+GROUNDTRUTH = np.load(os.path.join(TEST_DIR, 'rgbd_xyz_depth.npz'))['groundtruth']
+
+
+@pytest.mark.launch_test
+def generate_test_description():
+    return description(
+        launch.actions.ExecuteProcess(cmd=[sys.executable, os.path.join(TEST_DIR, 'publish_rgbd.py'),
+                                           os.path.join(TEST_DIR, 'rgbd_xyz.mp4'),
+                                           os.path.join(TEST_DIR, 'rgbd_xyz_depth.npz'), '--rate', '5', '--rewind'],
+                                      output='screen'),
+        include('rgbd_odometry', image='image', depth='depth', camera_info='camera_info'),
+    )
+
+
+def at_last_image(msg):
+    # the camera in the frame of the camera at the first image, at the last image of the loop
+    p = msg.pose.pose.position
+    return (msg.header.frame_id == 'odom' and msg.child_frame_id == 'camera_rgb_optical_frame' and
+            np.linalg.norm(np.array([p.x, p.y, p.z]) - GROUNDTRUTH[-1][:3, 3]) < 0.06)
+
+
+class TestRGBDOdometry(MessagesTest, unittest.TestCase):
+
+    TOPICS = ['rgbd_odometry/odom', 'rgbd_odometry/path']
+    CHECKS = {'rgbd_odometry/odom': (Odometry, at_last_image)}

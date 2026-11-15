@@ -193,6 +193,9 @@
   <class name="opencv_apps/detection_3d" type="opencv_apps::Detection3DNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to publish the 3D boxes and the TF frames of the 2D detections, faces or tracked targets, with a depth image</description>
   </class>
+  <class name="opencv_apps/rgbd_odometry" type="opencv_apps::RGBDOdometryNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of the visual odometry of an RGB-D camera (cv::rgbd::RgbdOdometry, ICPOdometry and RgbdICPOdometry)</description>
+  </class>
 
   <class name="opencv_apps/qrcode_detection" type="opencv_apps::QRCodeDetectionNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to detect and decode QR codes (cv::QRCodeDetector)</description>
