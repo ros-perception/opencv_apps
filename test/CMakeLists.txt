@@ -162,7 +162,12 @@ if(OPENCV_APPS_HAVE_DETECTION_3D AND OPENCV_HAVE_DNN AND CURL_FOUND AND NOT Open
 else()
   list(APPEND _skip_test_files test-detection_3d_skeletons.test)
 endif()
-# the visual odometry of an RGB-D camera by the rgbd module of opencv_contrib
+# the odometry of a LiDAR, and of an RGB-D camera by the rgbd module of opencv_contrib
+if(OPENCV_APPS_HAVE_ODOMETRY)
+  add_rostest(test-laser_odometry.test ARGS gui:=false)
+else()
+  list(APPEND _skip_test_files test-laser_odometry.test)
+endif()
 if(OPENCV_APPS_HAVE_ODOMETRY AND OPENCV_HAVE_RGBD)
   add_rostest(test-rgbd_odometry.test ARGS gui:=false)
 else()

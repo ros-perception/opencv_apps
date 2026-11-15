@@ -196,6 +196,9 @@
   <class name="opencv_apps/rgbd_odometry" type="opencv_apps::RGBDOdometryNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet of the visual odometry of an RGB-D camera (cv::rgbd::RgbdOdometry, ICPOdometry and RgbdICPOdometry)</description>
   </class>
+  <class name="opencv_apps/laser_odometry" type="opencv_apps::LaserOdometryNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of the odometry of a LiDAR (e.g. Livox), by ICP of the scans to the local map</description>
+  </class>
 
   <class name="opencv_apps/qrcode_detection" type="opencv_apps::QRCodeDetectionNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to detect and decode QR codes (cv::QRCodeDetector)</description>
