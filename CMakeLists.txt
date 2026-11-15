@@ -284,12 +284,13 @@ install(TARGETS ${PROJECT_NAME}_nodelet
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
-  FILES_MATCHING PATTERN "*.launch.xml"
+  FILES_MATCHING PATTERN "*.launch.xml" PATTERN "*.launch.py"
 )
 # the configs of rviz2 of detection_3d and the odometry
 install(FILES rviz/detection_3d.rviz rviz/detection_3d_lidar.rviz rviz/laser_odometry.rviz
-  rviz/laser_odometry_slam.rviz rviz/rgbd_odometry.rviz DESTINATION share/${PROJECT_NAME}/rviz)
-# the parameters of slam_toolbox of launch/laser_odometry_slam.launch.xml
+  rviz/laser_odometry_slam.rviz rviz/rgbd_odometry.rviz rviz/odometry_tb3_simulation.rviz
+  rviz/odometry_tb3_simulation_3d.rviz DESTINATION share/${PROJECT_NAME}/rviz)
+# the parameters of slam_toolbox and the bridge of Gazebo of the examples of the odometry
 install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 # with a python3 shebang (the scripts keep "python" for ROS1 melodic and older)
 foreach(_script face_recognition_trainer.py set_image.py)

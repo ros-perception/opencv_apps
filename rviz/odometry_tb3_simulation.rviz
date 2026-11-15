@@ -1,0 +1,122 @@
+# rviz2 of launch/odometry_tb3_simulation.launch.py, 2D: the map of slam_toolbox, the scan, the trajectories of
+# laser_odometry (yellow) and rgbd_odometry (cyan), the plan of Nav2 (green) and the robot, in map; Nav2 Goal sends
+# a goal (the 2D Goal Pose tool, /goal_pose);
+#   ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/odometry_tb3_simulation.rviz
+Panels: []
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Enabled: true
+      Name: Grid
+      Cell Size: 1
+      Plane: XY
+      Plane Cell Count: 20
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Class: rviz_default_plugins/Map
+      Enabled: true
+      Name: map
+      Alpha: 0.7
+      Color Scheme: map
+      Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /map
+      Value: true
+    - Class: rviz_default_plugins/LaserScan
+      Enabled: true
+      Name: scan
+      Color Transformer: FlatColor
+      Color: 255; 60; 60
+      Size (Pixels): 4
+      Style: Points
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /scan
+      Value: true
+    - Class: rviz_default_plugins/Path
+      Enabled: true
+      Name: laser_odometry/path
+      Color: 255; 220; 0
+      Line Style: Billboards
+      Line Width: 0.04
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /laser_odometry/path
+      Value: true
+    - Class: rviz_default_plugins/Path
+      Enabled: true
+      Name: rgbd_odometry/path
+      Color: 0; 220; 255
+      Line Style: Billboards
+      Line Width: 0.04
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /rgbd_odometry/path
+      Value: true
+    - Class: rviz_default_plugins/Path
+      Enabled: true
+      Name: plan
+      Color: 0; 255; 0
+      Line Style: Billboards
+      Line Width: 0.03
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /plan
+      Value: true
+    - Class: rviz_default_plugins/RobotModel
+      Enabled: true
+      Name: RobotModel
+      Description Source: Topic
+      Description Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /robot_description
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: map
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/SetGoal
+      Topic:
+        Value: /goal_pose
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 9
+      Focal Point:
+        X: 0.5
+        Y: 0.5
+        Z: 0
+      Name: Current View
+      Pitch: 1.4
+      Target Frame: <Fixed Frame>
+      Value: Orbit (rviz)
+      Yaw: 3.14
+    Saved: ~
+Window Geometry:
+  Height: 800
+  Width: 1280

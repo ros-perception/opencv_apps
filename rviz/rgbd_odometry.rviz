@@ -34,7 +34,7 @@ Visualization Manager:
       Name: rgbd_odometry/path
       Color: 255; 220; 0
       Line Style: Billboards
-      Line Width: 0.05
+      Line Width: 0.005
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -48,8 +48,8 @@ Visualization Manager:
       Keep: 1
       Shape:
         Value: Axes
-        Axes Length: 0.5
-        Axes Radius: 0.05
+        Axes Length: 0.15
+        Axes Radius: 0.01
       Covariance:
         Value: false
       Topic:
@@ -82,13 +82,13 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 3.0
+      Distance: 2.0
       Focal Point:
-        X: 1.0
+        X: 0.8
         Y: 0
-        Z: 0
+        Z: -0.6
       Name: Current View
-      Pitch: 0.4
+      Pitch: 0.7
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
       Yaw: 3.14
