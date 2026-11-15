@@ -156,15 +156,37 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
     return true;
   }
 
-  // the camera matrix of camera_info, adjusted to the image cropped by roi and binned (0 means 1), as aruco_detection
-  static cv::Mat cameraMatrix(const sensor_msgs::msg::CameraInfo& info)
+  // the camera matrix of camera_info of the rectified image and depth (P, or K without P), adjusted to the image
+  // cropped by roi and binned (0 means 1), as aruco_detection; the images are rectified (e.g. image_rect and
+  // aligned_depth_to_color of realsense2_camera, whose distortion is 0), as the odometry is of the pinhole model
+  cv::Mat cameraMatrix(const sensor_msgs::msg::CameraInfo& info)
   {
 // the fields of sensor_msgs/CameraInfo are lower case on ROS2
 #ifdef ROS2
-    const double* k = info.k.data();
+    const double* p = info.p.data();
+    const std::vector<double>& d = info.d;
 #else
-    const double* k = info.K.data();
+    const double* p = info.P.data();
+    const std::vector<double>& d = info.D;
 #endif
+    if (std::any_of(d.begin(), d.end(), [](double c) { return c != 0.0; }))
+      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 60000,
+                           "camera_info has the distortion; give the rectified image and depth, of P of camera_info");
+    // fx, fy, cx and cy of P, or of K if P is 0
+    double fx = p[0], fy = p[5], cx = p[2], cy = p[6];
+    if (fx == 0.0 || fy == 0.0)
+    {
+#ifdef ROS2
+      const double* k = info.k.data();
+#else
+      const double* k = info.K.data();
+#endif
+      fx = k[0];
+      fy = k[4];
+      cx = k[2];
+      cy = k[5];
+    }
+    const double k[9] = { fx, 0.0, cx, 0.0, fy, cy, 0.0, 0.0, 1.0 };
     double binning_x = std::max(1u, static_cast<unsigned int>(info.binning_x));
     double binning_y = std::max(1u, static_cast<unsigned int>(info.binning_y));
     // cv::Mat of cv::Matx, as OpenCV 5.1 has no comma initializer of cv::Mat_
