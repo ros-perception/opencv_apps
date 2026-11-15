@@ -38,7 +38,7 @@ the weights of Gemm are transposed to transB=1, as cv::dnn of OpenCV 4 reads nei
 functions of the newer exporter. The onnx of https://huggingface.co/k-okada/depth-anything-v2-metric-small-onnx are
 made by this script. In a virtualenv:
 
-  pip install torch torchvision onnx onnxsim
+  pip install torch torchvision onnx onnxsim opencv-python
   git clone https://github.com/DepthAnything/Depth-Anything-V2.git
   python3 export_depth_anything_metric.py Depth-Anything-V2 hypersim   # indoors, max 20 m
   python3 export_depth_anything_metric.py Depth-Anything-V2 vkitti     # outdoors, max 80 m
