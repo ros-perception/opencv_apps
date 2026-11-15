@@ -89,7 +89,14 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
   bool need_odometry_update_;
   cv::Ptr<cv::rgbd::Odometry> odometry_;
   cv::Mat camera_matrix_;
-  cv::Ptr<cv::rgbd::OdometryFrame> previous_frame_;
+  // the keyframe, to which the images are registered until the camera moves keyframe_distance or keyframe_angle,
+  // and the poses of the keyframe and of the previous image, in the frame of the camera at the first image
+  cv::Ptr<cv::rgbd::OdometryFrame> keyframe_;
+  cv::Matx44d keyframe_pose_;
+  cv::Matx44d previous_pose_;
+  cv::Matx44d previous_motion_;  // for the initial guess of the constant velocity
+  double keyframe_distance_;
+  double keyframe_angle_;
 
   rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
@@ -104,6 +111,10 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
         max_depth_ = parameter.as_double();
       else if (parameter.get_name() == "max_depth_diff")
         max_depth_diff_ = parameter.as_double();
+      else if (parameter.get_name() == "keyframe_distance")
+        keyframe_distance_ = parameter.as_double();
+      else if (parameter.get_name() == "keyframe_angle")
+        keyframe_angle_ = parameter.as_double();
       else
         continue;
       need_odometry_update_ = true;
@@ -120,7 +131,7 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
       return true;
     need_odometry_update_ = false;
     camera_matrix_ = camera_matrix.clone();
-    previous_frame_.release();  // the cache of the frame depends on the odometry
+    keyframe_.release();  // the cache of the frame depends on the odometry
     float min_depth = static_cast<float>(min_depth_), max_depth = static_cast<float>(max_depth_);
     float max_depth_diff = static_cast<float>(max_depth_diff_);
     if (method_ == "icp")
@@ -205,20 +216,48 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
       }
       // restart the odometry at the first image, or when the time goes back, e.g. a bag played in a loop
       if (restartOdometry(rclcpp::Time(header.stamp)))
-        previous_frame_.release();
+      {
+        keyframe_.release();
+        previous_pose_ = previous_motion_ = cv::Matx44d::eye();
+      }
       cv::Ptr<cv::rgbd::OdometryFrame> frame = cv::rgbd::OdometryFrame::create(gray, depth);
       odometry_->prepareFrameCache(frame, cv::rgbd::OdometryFrame::CACHE_ALL);
       cv::Matx44d motion = cv::Matx44d::eye();  // of the camera from the previous image to this image
-      if (previous_frame_)
+      // the first image, or the first image after the odometry is recreated (its frames have the caches of it)
+      if (!keyframe_)
       {
-        // Rt transforms the points of the previous frame into this frame, the inverse of the motion of the camera
-        cv::Mat rt;
-        if (odometry_->compute(previous_frame_, frame, rt))
-          motion = cv::Matx44d(rt).inv();
-        else
-          RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10000, "the odometry failed, as if the camera stopped");
+        keyframe_ = frame;
+        keyframe_pose_ = previous_pose_;
+        previous_motion_ = cv::Matx44d::eye();
       }
-      previous_frame_ = frame;
+      else
+      {
+        // Rt transforms the points of the keyframe into this image, the inverse of the camera in the keyframe; the
+        // initial guess of the constant velocity
+        cv::Matx44d guess = previous_pose_ * previous_motion_;
+        cv::Mat rt, init(keyframe_pose_.inv() * guess);
+        init = init.inv();
+        cv::Matx44d pose = guess;
+        if (odometry_->compute(keyframe_, frame, rt, init))
+          pose = keyframe_pose_ * cv::Matx44d(rt).inv();
+        else
+          RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10000,
+                               "the odometry failed, as the constant velocity, and a new keyframe");
+        motion = previous_pose_.inv() * pose;
+        // a new keyframe when the camera moves enough from the keyframe, or when the odometry fails
+        cv::Matx44d from_keyframe = keyframe_pose_.inv() * pose;
+        cv::Vec3d axis_angle;
+        cv::Rodrigues(cv::Matx33d(from_keyframe.get_minor<3, 3>(0, 0)), axis_angle);
+        if (rt.empty() ||
+            cv::norm(cv::Vec3d(from_keyframe(0, 3), from_keyframe(1, 3), from_keyframe(2, 3))) > keyframe_distance_ ||
+            cv::norm(axis_angle) > keyframe_angle_)
+        {
+          keyframe_ = frame;
+          keyframe_pose_ = pose;
+        }
+        previous_pose_ = pose;
+        previous_motion_ = motion;
+      }
       publishOdometry(header, motion);
     }
     catch (const std::exception& e)
@@ -268,7 +307,11 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
 
 public:
   explicit RGBDOdometryNodelet(const rclcpp::NodeOptions& options)
-    : OdometryNodelet("rgbd_odometry", options), need_odometry_update_(true)
+    : OdometryNodelet("rgbd_odometry", options)
+    , need_odometry_update_(true)
+    , keyframe_pose_(cv::Matx44d::eye())
+    , previous_pose_(cv::Matx44d::eye())
+    , previous_motion_(cv::Matx44d::eye())
   {
     queue_size_ = declare_parameter("queue_size", 10);
     method_ = declare_parameter(
@@ -278,6 +321,14 @@ public:
                         "cv::rgbd::RgbdICPOdometry)"));
     min_depth_ = declare_parameter("min_depth", 0.3, paramDescriptor("Minimum valid depth (m).", 0.0, 100.0));
     max_depth_ = declare_parameter("max_depth", 4.0, paramDescriptor("Maximum valid depth (m).", 0.0, 1000.0));
+    keyframe_distance_ = declare_parameter(
+        "keyframe_distance", 0.1,
+        paramDescriptor("The images are registered to the keyframe until the camera moves this distance (m) from it.",
+                        0.0, 10.0));
+    keyframe_angle_ = declare_parameter(
+        "keyframe_angle", 0.1,
+        paramDescriptor("The images are registered to the keyframe until the camera turns this angle (rad) from it.",
+                        0.0, 3.2));
     max_depth_diff_ = declare_parameter(
         "max_depth_diff", 0.07,
         paramDescriptor("Maximum difference (m) of the depths of the corresponding points of the images.", 0.0, 10.0));
