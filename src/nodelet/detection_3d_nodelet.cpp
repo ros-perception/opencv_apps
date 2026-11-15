@@ -49,6 +49,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <functional>
 #include <map>
 #include <memory>
@@ -67,7 +68,6 @@
 #include <image_transport/subscriber_filter.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <vision_msgs/msg/detection3_d_array.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 // the .hpp of tf2_ros of ROS 2 (jazzy and later), or of the compat headers of ROS 1 (ros1/include)
@@ -418,16 +418,29 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       CameraModel camera;
       if (!cameraModel(*info_msg, camera))
         return;
-      // x, y and z of the points are float (FLOAT32), as most drivers of LiDARs and depth_image_proc
-      for (const char* name : { "x", "y", "z" })
+      // x, y and z of the points are float (FLOAT32), as most drivers of LiDARs and depth_image_proc, in the points
+      // of point_step in the rows of row_step, which may have padding at their ends
+      size_t offsets[3];
+      const char* names[3] = { "x", "y", "z" };
+      for (int i = 0; i < 3; i++)
       {
+        const char* name = names[i];
         auto field = std::find_if(cloud_msg->fields.begin(), cloud_msg->fields.end(),
                                   [name](const sensor_msgs::msg::PointField& f) { return f.name == name; });
-        if (field == cloud_msg->fields.end() || field->datatype != sensor_msgs::msg::PointField::FLOAT32)
+        if (field == cloud_msg->fields.end() || field->datatype != sensor_msgs::msg::PointField::FLOAT32 ||
+            field->offset + sizeof(float) > cloud_msg->point_step)
         {
           RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10000, "the field %s of the points is not FLOAT32", name);
           return;
         }
+        offsets[i] = field->offset;
+      }
+      if (static_cast<size_t>(cloud_msg->width) * cloud_msg->point_step > cloud_msg->row_step ||
+          static_cast<size_t>(cloud_msg->height) * cloud_msg->row_step > cloud_msg->data.size())
+      {
+        RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10000, "the size of the points (%u x %u) is not of their data",
+                             cloud_msg->width, cloud_msg->height);
+        return;
       }
       const std::string frame_id = frameId(*info_msg, cloud_msg->header.frame_id);
       // the cloud in the camera frame, by the latest transform (e.g. the static transform of the extrinsics)
@@ -465,15 +478,19 @@ class Detection3DNodelet : public opencv_apps::Nodelet
         keypoint_depths[i].resize(input[i].keypoints.size());
       // the points in front of the camera, in the camera frame
       std::vector<cv::Point3d> cloud;
-      sensor_msgs::PointCloud2ConstIterator<float> x(*cloud_msg, "x"), y(*cloud_msg, "y"), z(*cloud_msg, "z");
-      for (; x != x.end(); ++x, ++y, ++z)
-      {
-        if (!std::isfinite(*x) || !std::isfinite(*y) || !std::isfinite(*z))
-          continue;
-        cv::Vec3d p = rotation * cv::Vec3d(*x, *y, *z) + translation;
-        if (p[2] > 0.0)
-          cloud.push_back(cv::Point3d(p[0], p[1], p[2]));
-      }
+      for (size_t row = 0; row < cloud_msg->height; row++)
+        for (size_t column = 0; column < cloud_msg->width; column++)
+        {
+          const uint8_t* point = cloud_msg->data.data() + row * cloud_msg->row_step + column * cloud_msg->point_step;
+          float xyz[3];
+          for (int i = 0; i < 3; i++)
+            std::memcpy(&xyz[i], point + offsets[i], sizeof(float));
+          if (!std::isfinite(xyz[0]) || !std::isfinite(xyz[1]) || !std::isfinite(xyz[2]))
+            continue;
+          cv::Vec3d p = rotation * cv::Vec3d(xyz[0], xyz[1], xyz[2]) + translation;
+          if (p[2] > 0.0)
+            cloud.push_back(cv::Point3d(p[0], p[1], p[2]));
+        }
       std::vector<cv::Point2d> pixels = camera.project(cloud);
       for (size_t j = 0; j < cloud.size(); j++)
       {
@@ -507,8 +524,8 @@ class Detection3DNodelet : public opencv_apps::Nodelet
   }
 
   // the camera model of camera_info, false if it is not calibrated: K and D of the raw image (rectified false), or P
-  // and R of the rectified image (rectified true), whose camera_info is the same as the raw image; K and P are of the full
-  // resolution image, adjusted to the image cropped by roi and binned (0 means 1), as aruco_detection
+  // and R of the rectified image (rectified true), whose camera_info is the same as the raw image; K and P are of the
+  // full resolution image, adjusted to the image cropped by roi and binned (0 means 1), as aruco_detection
   bool cameraModel(const sensor_msgs::msg::CameraInfo& info, CameraModel& camera)
   {
 // the fields of sensor_msgs/CameraInfo are lower case on ROS2
