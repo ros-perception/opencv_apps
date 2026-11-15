@@ -357,7 +357,10 @@ class LaserOdometryNodelet : public opencv_apps::OdometryNodelet
         break;
       cv::Matx44d update = rigidTransform(source, target, weights, planar);
       pose = update * pose;
-      if (cv::norm(cv::Vec3d(update(0, 3), update(1, 3), update(2, 3))) < 1e-4)
+      // converged when both the translation and the rotation of the update are small
+      cv::Vec3d axis_angle;
+      cv::Rodrigues(cv::Matx33d(update.get_minor<3, 3>(0, 0)), axis_angle);
+      if (cv::norm(cv::Vec3d(update(0, 3), update(1, 3), update(2, 3))) < 1e-4 && cv::norm(axis_angle) < 1e-4)
         break;
     }
     return pose;
