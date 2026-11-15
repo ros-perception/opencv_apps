@@ -1,0 +1,100 @@
+# rviz2 of rgbd_odometry: the colored 3D map (~/map), the trajectory (~/path) and the pose (~/odom) of the camera,
+# and the image, in odom (z up with base_frame, e.g. camera_link of test/publish_rgbd.py);
+#   ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/rgbd_odometry.rviz
+# give the topic of the image of your camera by remapping, e.g. --ros-args -r /image:=/camera/camera/color/image_raw.
+Panels: []
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Enabled: true
+      Name: Grid
+      Cell Size: 1
+      Plane: XY
+      Plane Cell Count: 40
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: true
+      Name: rgbd_odometry/map
+      Color Transformer: RGB8
+      Axis: Z
+      Decay Time: 0
+      Size (Pixels): 3
+      Style: Points
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /rgbd_odometry/map
+      Value: true
+    - Class: rviz_default_plugins/Path
+      Enabled: true
+      Name: rgbd_odometry/path
+      Color: 255; 220; 0
+      Line Style: Billboards
+      Line Width: 0.05
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /rgbd_odometry/path
+      Value: true
+    - Class: rviz_default_plugins/Odometry
+      Enabled: true
+      Name: rgbd_odometry/odom
+      Keep: 1
+      Shape:
+        Value: Axes
+        Axes Length: 0.5
+        Axes Radius: 0.05
+      Covariance:
+        Value: false
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /rgbd_odometry/odom
+      Value: true
+    - Class: rviz_default_plugins/Image
+      Enabled: true
+      Name: image
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /image
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: odom
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 3.0
+      Focal Point:
+        X: 1.0
+        Y: 0
+        Z: 0
+      Name: Current View
+      Pitch: 0.4
+      Target Frame: <Fixed Frame>
+      Value: Orbit (rviz)
+      Yaw: 3.14
+    Saved: ~
+Window Geometry:
+  Height: 800
+  Width: 1280
+  image:
+    collapsed: false

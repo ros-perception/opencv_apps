@@ -1,0 +1,114 @@
+# rviz2 of launch/laser_odometry_slam.launch.xml: the map of slam_toolbox, the 2D scan of the points on the floor
+# plane of base_link, the points of the LiDAR, the trajectory (~/path, in odom) and the pose (~/odom) of
+# laser_odometry, in map;
+#   ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/laser_odometry_slam.rviz
+Panels: []
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Enabled: true
+      Name: Grid
+      Cell Size: 1
+      Plane: XY
+      Plane Cell Count: 40
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Class: rviz_default_plugins/Map
+      Enabled: true
+      Name: map
+      Alpha: 0.8
+      Color Scheme: map
+      Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /map
+      Value: true
+    - Class: rviz_default_plugins/PointCloud2
+      Enabled: true
+      Name: points
+      Color Transformer: AxisColor
+      Axis: Z
+      Decay Time: 0
+      Size (Pixels): 1
+      Style: Points
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /points
+      Value: true
+    - Class: rviz_default_plugins/LaserScan
+      Enabled: true
+      Name: scan
+      Color Transformer: FlatColor
+      Color: 255; 60; 60
+      Size (Pixels): 3
+      Style: Points
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /scan
+      Value: true
+    - Class: rviz_default_plugins/Path
+      Enabled: true
+      Name: laser_odometry/path
+      Color: 255; 220; 0
+      Line Style: Billboards
+      Line Width: 0.05
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /laser_odometry/path
+      Value: true
+    - Class: rviz_default_plugins/Odometry
+      Enabled: true
+      Name: laser_odometry/odom
+      Keep: 1
+      Shape:
+        Value: Axes
+        Axes Length: 0.5
+        Axes Radius: 0.05
+      Covariance:
+        Value: false
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /laser_odometry/odom
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: map
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 16
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
+      Name: Current View
+      Pitch: 1.3
+      Target Frame: <Fixed Frame>
+      Value: Orbit (rviz)
+      Yaw: 3.14
+    Saved: ~
+Window Geometry:
+  Height: 800
+  Width: 1280
