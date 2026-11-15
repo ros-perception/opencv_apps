@@ -272,15 +272,17 @@ class DNNObjectDetectionNodelet : public opencv_apps::Nodelet
     }
   }
 
-  // detect the objects by YOLOX, as object_detection_yolox of opencv_zoo, called with mutex_
+  // detect the objects by YOLOX, as object_detection_yolox of opencv_zoo, but in BGR as YOLOX of Megvii (trained on
+  // the images of cv2.imread; YOLOX-S of opencv_zoo, YOLOX-Tiny and YOLOX-Nano score slightly higher in BGR), called
+  // with mutex_
   void detectYOLOX(const cv::Mat& frame, std::vector<int>& class_ids, std::vector<float>& confidences,
                    std::vector<cv::Rect>& boxes)
   {
-    // the image in RGB, resized keeping the aspect ratio into the top-left of the input, padded with 114
+    // the image in BGR, resized keeping the aspect ratio into the top-left of the input, padded with 114
     cv::Size input_size(input_width_, input_height_);
     double ratio;
     cv::Mat input = letterbox(frame, input_size, cv::Scalar(114, 114, 114), ratio);
-    net_.setInput(cv::dnn::blobFromImage(input, 1.0, cv::Size(), cv::Scalar(), true, false));
+    net_.setInput(cv::dnn::blobFromImage(input, 1.0, cv::Size(), cv::Scalar(), false, false));
     cv::Mat output = net_.forward();  // 1 x N x (4 box + 1 objectness + classes)
     if (output.dims != 3 || output.size[2] <= 5)
     {
