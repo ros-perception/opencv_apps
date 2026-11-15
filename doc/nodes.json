@@ -2376,7 +2376,7 @@
    },
    {
     "default": "",
-    "description": "Path or URL of the class names of the model, one name per line, or empty for the classes of COCO for yolox",
+    "description": "Path or URL of the class names of the model, one name per line, or empty for the classes of COCO for yolox, nanodet and yolov8",
     "name": "classes",
     "type": "string"
    },
@@ -2412,7 +2412,7 @@
    },
    {
     "default": 640,
-    "description": "Height of the network input, a multiple of 32 for yolox",
+    "description": "Height of the network input, a multiple of 32 for yolox and yolov8, 416 for nanodet",
     "name": "input_height",
     "range": [
      1,
@@ -2422,7 +2422,7 @@
    },
    {
     "default": 640,
-    "description": "Width of the network input, a multiple of 32 for yolox",
+    "description": "Width of the network input, a multiple of 32 for yolox and yolov8, 416 for nanodet",
     "name": "input_width",
     "range": [
      1,
@@ -2438,13 +2438,13 @@
    },
    {
     "default": "",
-    "description": "Path or URL of the model (e.g. .onnx, .weights, .caffemodel, .pb), empty for YOLOX-S trained on COCO of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "description": "Path or URL of the model (e.g. .onnx, .weights, .caffemodel, .pb), empty for YOLOX-S (yolox) or NanoDet-Plus (nanodet) trained on COCO of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
     "name": "model",
     "type": "string"
    },
    {
     "default": "yolox",
-    "description": "yolox for the YOLOX models (onnx), or detection_model for the models of cv::dnn::DetectionModel, e.g. YOLO (darknet), SSD (caffe, tensorflow), with config, input_width, input_height, scale and swap_rb",
+    "description": "yolox for the YOLOX models (onnx), nanodet for NanoDet-Plus (onnx, input 416x416), yolov8 for the models of the output of YOLOv8, YOLOv9 and YOLO11 (onnx, OpenCV 4.9 or later), or detection_model for the models of cv::dnn::DetectionModel, e.g. YOLO (darknet), SSD (caffe, tensorflow), with config, input_width, input_height, scale and swap_rb",
     "name": "model_type",
     "type": "string"
    },

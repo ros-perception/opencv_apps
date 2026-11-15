@@ -3,7 +3,7 @@ dnn_object_detection
 
 Detect objects with a DNN model (cv::dnn::DetectionModel), e.g. YOLO.
 
-Object detection with YOLOX (onnx), by default YOLOX-S trained on COCO of opencv_zoo, or with a model of cv::dnn::DetectionModel, e.g. YOLO (darknet), SSD (caffe, tensorflow), which OpenCV 5 cannot read except onnx.
+Object detection with YOLOX (onnx), by default YOLOX-S trained on COCO of opencv_zoo, NanoDet-Plus (onnx) or YOLOv8 (onnx, the output of YOLOv8, YOLOv9 and YOLO11), or with a model of cv::dnn::DetectionModel, e.g. YOLO (darknet), SSD (caffe, tensorflow), which OpenCV 5 cannot read except onnx.
 
 .. list-table::
    :stub-columns: 1
@@ -59,7 +59,7 @@ See :doc:`../credits` for the license of the video.
 Models
 ------
 
-The node runs YOLOX (``model_type:=yolox``, onnx), by default YOLOX-S trained on COCO of opencv_zoo, or a model of ``cv::dnn::DetectionModel`` (``model_type:=detection_model``), e.g. YOLO of darknet and SSD, with ``config``, ``classes``, ``input_width``, ``input_height``, ``scale`` and ``swap_rb``.
+The node runs YOLOX (``model_type:=yolox``, onnx), by default YOLOX-S trained on COCO of opencv_zoo, NanoDet-Plus (``model_type:=nanodet``, onnx), the models of the output of YOLOv8, YOLOv9 and YOLO11 (``model_type:=yolov8``, onnx, OpenCV 4.9 or later), or a model of ``cv::dnn::DetectionModel`` (``model_type:=detection_model``), e.g. YOLO of darknet and SSD, with ``config``, ``classes``, ``input_width``, ``input_height``, ``scale`` and ``swap_rb``. All the models below are trained on the 80 classes of COCO.
 
 YOLOX-S (default)
 ^^^^^^^^^^^^^^^^^
@@ -84,6 +84,54 @@ YOLOX-S int8
    ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image model:=https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/object_detection_yolox/object_detection_yolox_2022nov_int8.onnx
 
 YOLOX-S quantized to int8 of opencv_zoo (AP 32.6, 9 MB, onnx): a little less accurate, smaller and faster on a CPU without a GPU, e.g. a small computer of a robot; with CUDA, use YOLOX-S, as int8 runs on the CPU.
+
+YOLOX-Tiny
+^^^^^^^^^^
+
+.. image:: https://ros-perception.github.io/opencv_apps/media/dnn_object_detection_yoloxtiny.gif
+   :alt: demo of dnn_object_detection with yoloxtiny
+
+.. code-block:: bash
+
+   ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image input_height:=416 input_width:=416 model:=https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_tiny.onnx
+
+YOLOX-Tiny of Megvii (AP 32.8 on COCO, 20 MB, onnx, Apache-2.0): smaller and faster than YOLOX-S, with the input 416x416, for a CPU of a robot; read by OpenCV 4 and 5.
+
+YOLOX-Nano
+^^^^^^^^^^
+
+.. image:: https://ros-perception.github.io/opencv_apps/media/dnn_object_detection_yoloxnano.gif
+   :alt: demo of dnn_object_detection with yoloxnano
+
+.. code-block:: bash
+
+   ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image input_height:=416 input_width:=416 model:=https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_nano.onnx
+
+YOLOX-Nano of Megvii (AP 25.8, 3.7 MB, onnx, Apache-2.0): the smallest YOLOX, for a small computer, e.g. a Raspberry Pi; misses small or blurred objects more than the others. Read by OpenCV 4 and 5.
+
+NanoDet-Plus
+^^^^^^^^^^^^
+
+.. image:: https://ros-perception.github.io/opencv_apps/media/dnn_object_detection_nanodet.gif
+   :alt: demo of dnn_object_detection with nanodet
+
+.. code-block:: bash
+
+   ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image input_height:=416 input_width:=416 model_type:=nanodet
+
+NanoDet-Plus-m-1.5x of opencv_zoo (AP 34.1, 3.8 MB, onnx, Apache-2.0): as accurate as YOLOX-Tiny in a fifth of its size, the first choice for a CPU without a GPU; read by OpenCV 4 (also 4.6 of Ubuntu 24.04) and 5.
+
+YOLOv8n (AGPL-3.0)
+^^^^^^^^^^^^^^^^^^
+
+.. image:: https://ros-perception.github.io/opencv_apps/media/dnn_object_detection_yolov8n.gif
+   :alt: demo of dnn_object_detection with yolov8n
+
+.. code-block:: bash
+
+   ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image model:=https://github.com/CVHub520/X-AnyLabeling/releases/download/v0.1.0/yolov8n.onnx model_type:=yolov8
+
+YOLOv8n of Ultralytics (AP 37.3, 13 MB, onnx, the URL of samples/dnn/models.yml of OpenCV): the most accurate of the small models; the models of Ultralytics are under AGPL-3.0, which applies to your system using them, so it is not the default. model_type yolov8 also reads YOLOv9 and YOLO11 exported to onnx (opset 12). OpenCV 4.9 or later.
 
 YOLOv4-tiny (darknet)
 ^^^^^^^^^^^^^^^^^^^^^
@@ -143,7 +191,7 @@ See also the :ref:`common parameters <common-parameters>`.
      - string
      - ""
      - yes
-     - Path or URL of the class names of the model, one name per line, or empty for the classes of COCO for yolox
+     - Path or URL of the class names of the model, one name per line, or empty for the classes of COCO for yolox, nanodet and yolov8
    * - ``confidence_threshold``
      - double
      - 0.5 (0 - 1)
@@ -158,22 +206,22 @@ See also the :ref:`common parameters <common-parameters>`.
      - int
      - 640 (1 - 4096)
      - yes
-     - Height of the network input, a multiple of 32 for yolox
+     - Height of the network input, a multiple of 32 for yolox and yolov8, 416 for nanodet
    * - ``input_width``
      - int
      - 640 (1 - 4096)
      - yes
-     - Width of the network input, a multiple of 32 for yolox
+     - Width of the network input, a multiple of 32 for yolox and yolov8, 416 for nanodet
    * - ``model``
      - string
      - ""
      - yes
-     - Path or URL of the model (e.g. .onnx, .weights, .caffemodel, .pb), empty for YOLOX-S trained on COCO of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time
+     - Path or URL of the model (e.g. .onnx, .weights, .caffemodel, .pb), empty for YOLOX-S (yolox) or NanoDet-Plus (nanodet) trained on COCO of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time
    * - ``model_type``
      - string
      - "yolox"
      - yes
-     - yolox for the YOLOX models (onnx), or detection_model for the models of cv::dnn::DetectionModel, e.g. YOLO (darknet), SSD (caffe, tensorflow), with config, input_width, input_height, scale and swap_rb
+     - yolox for the YOLOX models (onnx), nanodet for NanoDet-Plus (onnx, input 416x416), yolov8 for the models of the output of YOLOv8, YOLOv9 and YOLO11 (onnx, OpenCV 4.9 or later), or detection_model for the models of cv::dnn::DetectionModel, e.g. YOLO (darknet), SSD (caffe, tensorflow), with config, input_width, input_height, scale and swap_rb
    * - ``nms_threshold``
      - double
      - 0.4 (0 - 1)
