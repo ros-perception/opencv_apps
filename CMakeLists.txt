@@ -289,6 +289,8 @@ install(DIRECTORY launch
 # the configs of rviz2 of detection_3d and the odometry
 install(FILES rviz/detection_3d.rviz rviz/detection_3d_lidar.rviz rviz/laser_odometry.rviz
   rviz/laser_odometry_slam.rviz rviz/rgbd_odometry.rviz DESTINATION share/${PROJECT_NAME}/rviz)
+# the parameters of slam_toolbox of launch/laser_odometry_slam.launch.xml
+install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 # with a python3 shebang (the scripts keep "python" for ROS1 melodic and older)
 foreach(_script face_recognition_trainer.py set_image.py)
   file(READ scripts/${_script} _script_content)
