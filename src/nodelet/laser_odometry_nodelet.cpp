@@ -292,13 +292,23 @@ class LaserOdometryNodelet : public opencv_apps::OdometryNodelet
                            cloud.width, cloud.height);
       return points;
     }
+    const uint16_t one = 1;
+    const bool host_big_endian = *reinterpret_cast<const uint8_t*>(&one) == 0;
+    const bool swap_bytes = static_cast<bool>(cloud.is_bigendian) != host_big_endian;
     for (size_t row = 0; row < cloud.height; row++)
       for (size_t column = 0; column < cloud.width; column++)
       {
         const uint8_t* point = cloud.data.data() + row * cloud.row_step + column * cloud.point_step;
         float xyz[3];
         for (int i = 0; i < 3; i++)
-          std::memcpy(&xyz[i], point + offsets[i], sizeof(float));
+        {
+          // the bytes of the float in the byte order of this host
+          uint8_t bytes[sizeof(float)];
+          std::memcpy(bytes, point + offsets[i], sizeof(float));
+          if (swap_bytes)
+            std::reverse(bytes, bytes + sizeof(float));
+          std::memcpy(&xyz[i], bytes, sizeof(float));
+        }
         if (std::isfinite(xyz[0]) && std::isfinite(xyz[1]) && std::isfinite(xyz[2]))
           points.push_back(cv::Point3d(xyz[0], xyz[1], xyz[2]));
       }
