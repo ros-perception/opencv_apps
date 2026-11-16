@@ -33,11 +33,15 @@
 
 # ROS2 version of test/test-watershed-segmentation.test
 
+import time
 import unittest
 
+import numpy as np
 from opencv_apps.msg import Point2D, Point2DArray
 from opencv_apps_test import camera, description, FACE_VIDEO, image_view, include, TopicsTest
 import pytest
+import rclpy
+from sensor_msgs.msg import Image
 
 
 @pytest.mark.launch_test
@@ -53,11 +57,41 @@ class TestWatershedSegmentation(TopicsTest, unittest.TestCase):
 
     TOPICS = ['watershed_segmentation/contours']
 
+    SEEDS = [(100, 100), (200, 100), (300, 100), (400, 100), (500, 100),
+             (100, 200), (200, 200), (300, 200), (400, 200), (500, 200),
+             (100, 300), (200, 300), (300, 300), (400, 300), (500, 300)]
+
     def prepare(self, node):
         # rostopic pub -r 1.5 watershed_segmentation/add_seed_points
         pub = node.create_publisher(Point2DArray, 'watershed_segmentation/add_seed_points', 1)
-        points = Point2DArray(points=[Point2D(x=float(x), y=float(y)) for x, y in [
-            (100, 100), (200, 100), (300, 100), (400, 100), (500, 100),
-            (100, 200), (200, 200), (300, 200), (400, 200), (500, 200),
-            (100, 300), (200, 300), (300, 300), (400, 300), (500, 300)]])
+        points = Point2DArray(points=[Point2D(x=float(x), y=float(y)) for x, y in self.SEEDS])
         self.timer = node.create_timer(1 / 1.5, lambda: pub.publish(points))
+
+    def test_colors(self):
+        """Check that each region has the same color in every image of ~image.
+
+        ~image is the color of the region * 0.5 + the gray image * 0.5, and the gray image is the same in b, g and r, so
+        b - g and g - r of the pixel of a seed point are those of the color of its region.
+        """
+        rclpy.init()
+        try:
+            node = rclpy.create_node('test_watershed_segmentation_colors')
+            self.prepare(node)
+            diffs = []
+
+            def callback(msg):
+                image = np.frombuffer(bytes(msg.data), np.uint8).reshape(msg.height, msg.step)[:, :msg.width * 3]
+                bgr = image.reshape(msg.height, msg.width, 3).astype(int)
+                pixels = np.array([bgr[y, x] for x, y in self.SEEDS])
+                diffs.append(np.stack([pixels[:, 0] - pixels[:, 1], pixels[:, 1] - pixels[:, 2]], axis=1))
+
+            node.create_subscription(Image, 'watershed_segmentation/image', callback, 10)
+            end_time = time.time() + self.TIMEOUT
+            while time.time() < end_time and len(diffs) < 10:
+                rclpy.spin_once(node, timeout_sec=0.1)
+            self.assertGreaterEqual(len(diffs), 10)
+            # the first images may be of the seed points of the first messages only
+            diffs = np.array(diffs[-5:])
+            self.assertLessEqual(int(np.abs(diffs - diffs[0]).max()), 2, 'the colors of the regions change')
+        finally:
+            rclpy.shutdown()
