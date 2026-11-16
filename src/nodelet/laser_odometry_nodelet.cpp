@@ -144,30 +144,43 @@ public:
     }
   }
 
-  // the closest point within the voxels around the point, false if there is none
-  bool closest(const cv::Point3d& p, cv::Point3d& closest_point) const
+  // the closest point within max_distance of the point, false if there is none: the voxels of the shells around the
+  // voxel of the point (max(|dx|, |dy|, |dz|) = k, in the x-y plane if planar), until the closest point is nearer
+  // than the next shell, whose points are at least k voxels away; usually in the first shell
+  bool closest(const cv::Point3d& p, double max_distance, bool planar, cv::Point3d& closest_point) const
   {
     cv::Vec3i v = voxelIndex(p, size_);
-    double best = std::numeric_limits<double>::max();
-    for (int dx = -1; dx <= 1; dx++)
-      for (int dy = -1; dy <= 1; dy++)
-        for (int dz = -1; dz <= 1; dz++)
-        {
-          auto it = voxels_.find(voxelKey(v[0] + dx, v[1] + dy, v[2] + dz));
-          if (it == voxels_.end())
-            continue;
-          for (const cv::Point3d& q : it->second)
+    const int shells = std::max(1, static_cast<int>(std::ceil(max_distance / size_)));
+    double best = max_distance * max_distance;
+    bool found = false;
+    for (int k = 0; k <= shells; k++)
+    {
+      const int kz = planar ? 0 : k;
+      for (int dx = -k; dx <= k; dx++)
+        for (int dy = -k; dy <= k; dy++)
+          for (int dz = -kz; dz <= kz; dz++)
           {
-            const cv::Point3d d = q - p;
-            double distance = d.dot(d);
-            if (distance < best)
+            if (std::max(std::abs(dx), std::max(std::abs(dy), std::abs(dz))) != k)
+              continue;  // the voxels of the shell k only
+            auto it = voxels_.find(voxelKey(v[0] + dx, v[1] + dy, v[2] + dz));
+            if (it == voxels_.end())
+              continue;
+            for (const cv::Point3d& q : it->second)
             {
-              best = distance;
-              closest_point = q;
+              const cv::Point3d d = q - p;
+              double distance = d.dot(d);
+              if (distance <= best)
+              {
+                best = distance;
+                closest_point = q;
+                found = true;
+              }
             }
           }
-        }
-    return best < std::numeric_limits<double>::max();
+      if (found && best < (k * size_) * (k * size_))
+        break;
+    }
+    return found;
   }
 };
 
@@ -342,12 +355,10 @@ class LaserOdometryNodelet : public opencv_apps::OdometryNodelet
       for (const cv::Point3d& p : points)
       {
         cv::Point3d q = transformPoint(pose, p), closest;
-        if (!map_.closest(q, closest))
+        if (!map_.closest(q, correspondence_distance_, planar, closest))
           continue;
         cv::Point3d d = closest - q;
         double residual2 = d.dot(d);
-        if (residual2 > correspondence_distance_ * correspondence_distance_)
-          continue;
         source.push_back(q);
         target.push_back(closest);
         double w = kernel / (kernel + residual2);
