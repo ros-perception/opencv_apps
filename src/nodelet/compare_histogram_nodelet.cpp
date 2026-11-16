@@ -203,14 +203,14 @@ class CompareHistogramNodelet : public opencv_apps::Nodelet
         return cv::HISTCMP_CORREL;
 #else  // cv::HISTCMP_* are available since OpenCV 3.0
       case CompareHistogram_Chi_Square:
-        return CV_COMP_CHISQR;
+        return cv::HISTCMP_CHISQR;
       case CompareHistogram_Intersection:
-        return CV_COMP_INTERSECT;
+        return cv::HISTCMP_INTERSECT;
       case CompareHistogram_Bhattacharyya:
-        return CV_COMP_BHATTACHARYYA;
+        return cv::HISTCMP_BHATTACHARYYA;
       case CompareHistogram_Correlation:
       default:
-        return CV_COMP_CORREL;
+        return cv::HISTCMP_CORREL;
 #endif
     }
   }

@@ -98,8 +98,9 @@ class LineSegmentDetectorNodelet : public opencv_apps::Nodelet
   // throws cv::Exception for invalid parameters (e.g. scale <= 0)
   static cv::Ptr<cv::LineSegmentDetector> createLSD(const LSDParams& p)
   {
-    return cv::createLineSegmentDetector(p.refine, p.scale, p.sigma_scale, p.quant, p.angle_threshold, p.log_eps,
-                                         p.density_threshold, p.n_bins);
+    // the enum of the refinement, which OpenCV 5 takes (and OpenCV 3 and 4 as int)
+    return cv::createLineSegmentDetector(static_cast<cv::LineSegmentDetectorModes>(p.refine), p.scale, p.sigma_scale,
+                                         p.quant, p.angle_threshold, p.log_eps, p.density_threshold, p.n_bins);
   }
 
   rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)

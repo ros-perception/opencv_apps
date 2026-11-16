@@ -67,11 +67,6 @@ namespace face = cv::face;
 namespace face = cv;
 #endif
 
-#if CV_MAJOR_VERSION >= 4
-#include <opencv2/imgcodecs/legacy/constants_c.h>  // include CV_LOAD_IMAGE_COLOR
-#include <opencv2/imgproc/imgproc_c.h>             // include CV_AA
-#endif
-
 namespace opencv_apps
 {
 // utility for resolving path
@@ -219,7 +214,7 @@ public:
           fs::path file_path = cit->path();
           try
           {
-            cv::Mat img = cv::imread(file_path.string(), CV_LOAD_IMAGE_COLOR);
+            cv::Mat img = cv::imread(file_path.string(), cv::IMREAD_COLOR);
             labels.push_back(label);
             images.push_back(img);
           }
@@ -336,7 +331,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
                int(face.face.height + face.face.height * face_padding_));
     cv::Scalar color(0.0, 0.0, 255.0);
     int boldness = 2;
-    cv::rectangle(img, r.tl(), r.br(), color, boldness, CV_AA);
+    cv::rectangle(img, r.tl(), r.br(), color, boldness, cv::LINE_AA);
 
     double font_scale = 1.5;
     int text_height = 20;
@@ -347,7 +342,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
       text_bl = r.br() + cv::Point(-r.width, text_height);
     std::stringstream ss;
     ss << face.label << " (" << std::fixed << std::setprecision(2) << face.confidence << ")";
-    cv::putText(img, ss.str(), text_bl, cv::FONT_HERSHEY_PLAIN, font_scale, color, boldness, CV_AA);
+    cv::putText(img, ss.str(), text_bl, cv::FONT_HERSHEY_PLAIN, font_scale, color, boldness, cv::LINE_AA);
   }
 
   void extractImage(const cv::Mat& img, const opencv_apps::msg::Rect& rect, cv::Mat& ret, double padding = 0.0)
@@ -388,7 +383,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
     for (int i = 0; i < images.size(); ++i)
     {
       cv::resize(images[i], resized_images[i], face_model_size_, 0, 0, cv::INTER_CUBIC);
-      cv::cvtColor(resized_images[i], resized_images[i], CV_BGR2GRAY);
+      cv::cvtColor(resized_images[i], resized_images[i], cv::COLOR_BGR2GRAY);
     }
 
     label_mapper_->add(labels);
@@ -409,7 +404,7 @@ class FaceRecognitionNodelet : public opencv_apps::Nodelet
   {
     cv::Mat resized_img;
     cv::resize(img, resized_img, face_model_size_, 0, 0, cv::INTER_CUBIC);
-    cv::cvtColor(resized_img, resized_img, CV_BGR2GRAY);
+    cv::cvtColor(resized_img, resized_img, cv::COLOR_BGR2GRAY);
     model_->predict(resized_img, label, confidence);
   }
 

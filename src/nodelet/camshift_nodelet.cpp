@@ -424,7 +424,7 @@ class CamShiftNodelet : public opencv_apps::Nodelet
 #ifndef CV_VERSION_EPOCH
           cv::ellipse(frame, track_box, cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
 #else
-          cv::ellipse(frame, track_box, cv::Scalar(0, 0, 255), 3, CV_AA);
+          cv::ellipse(frame, track_box, cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
 #endif
 
           rect_msg.rect.angle = track_box.angle;

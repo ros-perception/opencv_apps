@@ -172,7 +172,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
       }
 
       cv::Mat out_image;
-      cv::cvtColor(in_image, out_image, CV_GRAY2BGR);
+      cv::cvtColor(in_image, out_image, cv::COLOR_GRAY2BGR);
 
       // Messages
       opencv_apps::msg::LineArrayStamped lines_msg;
@@ -218,7 +218,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
 #ifndef CV_VERSION_EPOCH
             cv::line(out_image, pt1, pt2, cv::Scalar(255, 0, 0), 3, cv::LINE_AA);
 #else
-            cv::line(out_image, pt1, pt2, cv::Scalar(255, 0, 0), 3, CV_AA);
+            cv::line(out_image, pt1, pt2, cv::Scalar(255, 0, 0), 3, cv::LINE_AA);
 #endif
             opencv_apps::msg::Line line_msg;
             line_msg.pt1.x = pt1.x;
@@ -244,7 +244,7 @@ class HoughLinesNodelet : public opencv_apps::Nodelet
 #ifndef CV_VERSION_EPOCH
             cv::line(out_image, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(255, 0, 0), 3, cv::LINE_AA);
 #else
-            cv::line(out_image, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(255, 0, 0), 3, CV_AA);
+            cv::line(out_image, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(255, 0, 0), 3, cv::LINE_AA);
 #endif
             opencv_apps::msg::Line line_msg;
             line_msg.pt1.x = l[0];

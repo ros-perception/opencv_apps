@@ -39,6 +39,13 @@
 #include <rclcpp_components/register_node_macro.hpp>
 #include <image_transport/image_transport.hpp>
 #include <cv_bridge/cv_bridge.hpp>
+// OpenCV 5 moved the geometric functions of imgproc (e.g. boundingRect, contourArea, convexHull,
+// getRotationMatrix2D) to the geometry module, and goodFeaturesToTrack of imgproc to the features module
+#include <opencv2/core/version.hpp>
+#if CV_VERSION_MAJOR >= 5
+#include <opencv2/features.hpp>
+#include <opencv2/geometry.hpp>
+#endif
 #include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>

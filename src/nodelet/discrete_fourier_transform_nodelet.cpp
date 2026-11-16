@@ -112,7 +112,7 @@ class DiscreteFourierTransformNodelet : public opencv_apps::Nodelet
       cv::Mat src_image = cv_bridge::toCvShare(image_msg, image_msg->encoding)->image;
       if (src_image.channels() > 1)
       {
-        cv::cvtColor(src_image, src_image, CV_BGR2GRAY);
+        cv::cvtColor(src_image, src_image, cv::COLOR_BGR2GRAY);
       }
 
       cv::Mat padded;  // expand input image to optimal size

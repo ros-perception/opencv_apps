@@ -42,7 +42,7 @@
 
 #include <cfloat>
 
-#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/features2d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
