@@ -159,6 +159,13 @@ set(_nodelet_cppfiles
   src/nodelet/simple_compressed_example_nodelet.cpp
   src/nodelet/background_subtraction_nodelet.cpp
 )
+# cv::CascadeClassifier (face_detection) and cv::HOGDescriptor (people_detect) are in the xobjdetect module of
+# opencv_contrib since OpenCV 5
+if(NOT OpenCV_VERSION VERSION_LESS "5.0" AND NOT TARGET opencv_xobjdetect)
+  list(REMOVE_ITEM _nodelets face_detection:FaceDetectionNodelet people_detect:PeopleDetectNodelet)
+  list(REMOVE_ITEM _nodelet_cppfiles src/nodelet/face_detection_nodelet.cpp src/nodelet/people_detect_nodelet.cpp)
+  set(OPENCV_APPS_NO_XOBJDETECT TRUE)
+endif()
 # simple flow requires opencv-contrib https://github.com/ros-perception/vision_opencv/issues/108
 if(OPENCV_HAVE_OPTFLOW)
   list(APPEND _nodelets simple_flow:SimpleFlowNodelet)
@@ -294,6 +301,9 @@ if(BUILD_TESTING)
   find_package(launch_testing_ament_cmake REQUIRED)
   # test/ros2/test_*.py: ROS2 versions of test/test-*.test, plus test_nodes.py; they import test/ros2/opencv_apps_test.py
   file(GLOB _launch_tests RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/ros2/test_*.py)
+  if(OPENCV_APPS_NO_XOBJDETECT)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_face_detection.py test/ros2/test_people_detect.py)
+  endif()
   if(OPENCV_HAVE_OPTFLOW)
     set(_have_optflow 1)
   else()

@@ -43,6 +43,10 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/objdetect/objdetect.hpp>
+// cv::CascadeClassifier and cv::HOGDescriptor are in the xobjdetect module of opencv_contrib since OpenCV 5
+#if CV_VERSION_MAJOR >= 5
+#include <opencv2/xobjdetect.hpp>
+#endif
 
 #include <opencv_apps/msg/detection_array_stamped.hpp>
 #include <opencv_apps/msg/rect.hpp>
