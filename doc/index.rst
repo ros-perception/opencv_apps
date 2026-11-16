@@ -25,6 +25,7 @@ each tile shows the main output of the node. Click a node to see its topics, par
    :hidden:
 
    nodes
+   gpu
    messages
    credits
 
