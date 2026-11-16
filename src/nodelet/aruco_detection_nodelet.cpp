@@ -294,7 +294,8 @@ class ArucoDetectionNodelet : public opencv_apps::Nodelet
         if (rectified)
         {
           // the rectified image (e.g. image_rect of image_proc) has the intrinsics of P, without distortion
-          camera_matrix = (cv::Mat_<double>(3, 3) << p[0], p[1], p[2], p[4], p[5], p[6], p[8], p[9], p[10]);
+          // cv::Mat of cv::Matx, as OpenCV 5.1 has no comma initializer of cv::Mat_
+          camera_matrix = cv::Mat(cv::Matx33d(p[0], p[1], p[2], p[4], p[5], p[6], p[8], p[9], p[10]), true);
         }
         else
         {
