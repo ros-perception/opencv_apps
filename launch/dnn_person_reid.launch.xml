@@ -12,9 +12,13 @@
   <arg name="label" default="person" description="Label of the detections to re-identify, empty for all of them" />
   <arg name="match_threshold" default="0.5" description="Threshold of the cosine similarity to the person seen before to have the same id, a new id otherwise" />
   <arg name="update_rate" default="0.1" description="Rate of the feature of the new image in the moving average of the feature of the person" />
+  <arg name="use_cuda" default="false" description="Run the node in the docker image of OpenCV with CUDA (cuda_image, built from docker/ of opencv_apps), by scripts/run_in_docker" />
+  <arg name="cuda_image" default="ghcr.io/ros-perception/opencv_apps:cuda" description="The docker image of use_cuda, pulled at the first use: ghcr.io/ros-perception/opencv_apps:cuda (OpenCV 4.12, docker/cuda) or ghcr.io/ros-perception/opencv_apps:opencv5-cuda (OpenCV 5.1, docker/opencv5-cuda), or an image built from them" />
+  <let name="launch_prefix" value="$(find-pkg-prefix opencv_apps)/lib/opencv_apps/run_in_docker $(var cuda_image)" if="$(var use_cuda)" />
+  <let name="launch_prefix" value="" unless="$(var use_cuda)" />
 
   <!-- dnn_person_reid_nodelet.cpp, person re-identification with the YouTu ReID model of opencv_zoo -->
-  <node name="$(var node_name)" pkg="opencv_apps" exec="dnn_person_reid" >
+  <node name="$(var node_name)" pkg="opencv_apps" exec="dnn_person_reid" launch-prefix="$(var launch_prefix)" >
     <remap from="image" to="$(var image)" />
     <remap from="input" to="$(var input)" />
     <param name="debug_view" value="$(var debug_view)" />

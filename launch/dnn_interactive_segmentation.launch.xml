@@ -8,9 +8,13 @@
   <arg name="queue_size" default="3" description="Specify queue_size of input image subscribers" />
   <arg name="model" default="" description="Path or URL of the EfficientSAM model (onnx), empty for EfficientSAM-Ti of opencv_zoo" />
   <arg name="backend" default="auto" description="Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise." />
+  <arg name="use_cuda" default="false" description="Run the node in the docker image of OpenCV with CUDA (cuda_image, built from docker/ of opencv_apps), by scripts/run_in_docker" />
+  <arg name="cuda_image" default="ghcr.io/ros-perception/opencv_apps:cuda" description="The docker image of use_cuda, pulled at the first use: ghcr.io/ros-perception/opencv_apps:cuda (OpenCV 4.12, docker/cuda) or ghcr.io/ros-perception/opencv_apps:opencv5-cuda (OpenCV 5.1, docker/opencv5-cuda), or an image built from them" />
+  <let name="launch_prefix" value="$(find-pkg-prefix opencv_apps)/lib/opencv_apps/run_in_docker $(var cuda_image)" if="$(var use_cuda)" />
+  <let name="launch_prefix" value="" unless="$(var use_cuda)" />
 
   <!-- dnn_interactive_segmentation_nodelet.cpp, segments the object given by ~set_roi (as the tracking nodes), ~add_points or the mouse with EfficientSAM -->
-  <node name="$(var node_name)" pkg="opencv_apps" exec="dnn_interactive_segmentation" >
+  <node name="$(var node_name)" pkg="opencv_apps" exec="dnn_interactive_segmentation" launch-prefix="$(var launch_prefix)" >
     <remap from="image" to="$(var image)" />
     <param name="use_camera_info" value="$(var use_camera_info)" />
     <param name="debug_view" value="$(var debug_view)" />
