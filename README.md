@@ -52,7 +52,7 @@ docker build -f docker/cuda/Dockerfile --build-arg CUDA_ARCH_BIN=8.9 -t opencv_a
 ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/camera/image_raw use_cuda:=true cuda_image:=opencv_apps:cuda
 ```
 
-The rate of `~/detections` of dnn_object_detection (YOLOX-S, 640x640) for the images of 640x480 at 100 Hz, on AMD
+The rates of all the models on the CPU and in both images are in [the documentation](https://ros-perception.github.io/opencv_apps/gpu.html). The rate of `~/detections` of dnn_object_detection (YOLOX-S, 640x640) for the images of 640x480 at 100 Hz, on AMD
 Ryzen 9 7950X (16 cores) and NVIDIA GeForce RTX 4090:
 
 | | OpenCV | backend | Hz |
