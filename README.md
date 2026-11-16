@@ -317,7 +317,7 @@ Estimate the motion of the image. Output: `~/flows` (FlowArrayStamped), `~/shift
 
 <table>
 <tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_optical_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_optical_flow_thumb.gif" width="200" alt="dnn_optical_flow"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_optical_flow.html"><code>dnn_optical_flow</code></a><br><sub>~/image</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_optical_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_optical_flow_thumb.gif" width="200" alt="dnn_optical_flow"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_optical_flow.html"><code>dnn_optical_flow</code></a><br><sub>~/flows</sub></td>
 </tr>
 </table>
 
@@ -330,21 +330,6 @@ Re-identify the people detected by the other nodes over the images, by the simil
 <table>
 <tr>
 <td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_person_reid.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_person_reid_thumb.gif" width="200" alt="dnn_person_reid"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_person_reid.html"><code>dnn_person_reid</code></a><br><sub>~/detections</sub></td>
-</tr>
-</table>
-
-### Optical flow and motion
-
-Estimate the motion of the image. Output: `~/flows` (FlowArrayStamped), `~/shift` (Point2DStamped) of phase_corr.
-
-**ROS 1: noetic and later, ROS 2: jazzy and later**
-
-<table>
-<tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/fback_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/fback_flow_thumb.gif" width="200" alt="fback_flow"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/fback_flow.html"><code>fback_flow</code></a><br><sub>~/flows</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/lk_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/lk_flow_thumb.gif" width="200" alt="lk_flow"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/lk_flow.html"><code>lk_flow</code></a><br><sub>~/flows</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/simple_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/simple_flow_thumb.gif" width="200" alt="simple_flow"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/simple_flow.html"><code>simple_flow</code></a><br><sub>~/flows</sub></td>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/phase_corr.html"><img src="https://ros-perception.github.io/opencv_apps/media/phase_corr_thumb.gif" width="200" alt="phase_corr"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/phase_corr.html"><code>phase_corr</code></a><br><sub>~/shift</sub></td>
 </tr>
 </table>
 

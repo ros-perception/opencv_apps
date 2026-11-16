@@ -75,7 +75,6 @@ CATEGORIES = [
     ('Tracking', ['tracking', 'match_template', 'dnn_tracking', 'camshift']),
     ('Optical flow and motion', ['fback_flow', 'lk_flow', 'simple_flow', 'dnn_optical_flow', 'phase_corr']),
     ('Re-identification', ['dnn_person_reid']),
-    ('Optical flow and motion', ['fback_flow', 'lk_flow', 'simple_flow', 'phase_corr']),
     ('Histogram comparison', ['compare_histogram']),
     ('Depth and 3D localization', ['dnn_depth_estimation', 'detection_3d']),
     ('Odometry and maps', ['rgbd_odometry', 'laser_odometry']),
