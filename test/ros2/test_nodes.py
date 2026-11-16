@@ -59,6 +59,9 @@ if os.environ.get('OPENCV_APPS_HAVE_OPTFLOW', '1') == '0':  # simple_flow needs 
     NODES.remove('simple_flow')
 if os.environ.get('OPENCV_APPS_HAVE_LSD', '1') == '0':  # see OPENCV_HAVE_LSD in CMakeLists.txt
     NODES.remove('line_segment_detector')
+if os.environ.get('OPENCV_APPS_HAVE_XOBJDETECT', '1') == '0':  # OpenCV 5 without opencv_contrib's xobjdetect
+    NODES.remove('face_detection')
+    NODES.remove('people_detect')
 OUTPUTS = ['/%s/image' % name for name in NODES] + ['/image_converter/output_video/raw',
                                                      '/image_converter/output_video/compressed']
 

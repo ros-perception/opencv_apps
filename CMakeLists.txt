@@ -301,8 +301,13 @@ if(BUILD_TESTING)
   find_package(launch_testing_ament_cmake REQUIRED)
   # test/ros2/test_*.py: ROS2 versions of test/test-*.test, plus test_nodes.py; they import test/ros2/opencv_apps_test.py
   file(GLOB _launch_tests RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/ros2/test_*.py)
+  # face_detection and people_detect (and face_recognition, whose test launches face_detection) need xobjdetect
   if(OPENCV_APPS_NO_XOBJDETECT)
-    list(REMOVE_ITEM _launch_tests test/ros2/test_face_detection.py test/ros2/test_people_detect.py)
+    set(_have_xobjdetect 0)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_face_detection.py test/ros2/test_people_detect.py
+      test/ros2/test_face_recognition.py)
+  else()
+    set(_have_xobjdetect 1)
   endif()
   if(OPENCV_HAVE_OPTFLOW)
     set(_have_optflow 1)
@@ -373,7 +378,7 @@ if(BUILD_TESTING)
     get_filename_component(_name ${_launch_test} NAME_WE)
     add_launch_test(${_launch_test} TARGET ${_name} TIMEOUT 180
       ENV OPENCV_APPS_HAVE_OPTFLOW=${_have_optflow} OPENCV_APPS_HAVE_LSD=${_have_lsd}
-          OPENCV_APPS_HAVE_TRACKING=${_have_tracking}
+          OPENCV_APPS_HAVE_XOBJDETECT=${_have_xobjdetect} OPENCV_APPS_HAVE_TRACKING=${_have_tracking}
       APPEND_ENV PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/test/ros2)
     # they use the same ROS domain and topic names (e.g. /image)
     set_tests_properties(${_name} PROPERTIES RUN_SERIAL TRUE)
