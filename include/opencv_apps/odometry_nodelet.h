@@ -46,7 +46,7 @@
 
 #include "opencv_apps/nodelet.h"
 
-#include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/calib3d.hpp>
 
 #include <cmath>
 #include <cstdint>
