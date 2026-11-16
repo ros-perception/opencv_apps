@@ -26,7 +26,7 @@
   <test test-name="detection_3d_points_test" pkg="rostest" type="hztest" name="detection_3d_points_test" time-limit="300" >
     <param name="hz" value="9.0" />
     <param name="hzerror" value="8.9" />
-    <param name="test_duration" value="2.0" />
+    <param name="test_duration" value="10.0" />
     <param name="wait_time" value="240.0" />
   </test>
 </launch>
