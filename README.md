@@ -8,7 +8,7 @@
 [![kilted](https://img.shields.io/ros/v/kilted/opencv_apps)](https://index.ros.org/p/opencv_apps/#kilted)
 [![lyrical](https://img.shields.io/ros/v/lyrical/opencv_apps)](https://index.ros.org/p/opencv_apps/#lyrical)
 [![noetic](https://img.shields.io/ros/v/noetic/opencv_apps)](https://index.ros.org/p/opencv_apps/#noetic)
-[![ROS One](https://img.shields.io/badge/ROS%20One-apt-22314E)](https://ros.packages.techfak.net/)
+[![ROS One](https://img.shields.io/endpoint?url=https://ros-perception.github.io/opencv_apps/media/ros_one.json)](https://ros.packages.techfak.net/)
 
 opencv_apps provides the ROS nodes that run the functions of [OpenCV](https://opencv.org/): image processing,
 features, contours, optical flows, tracking, detection and recognition, and the deep learning models of `cv::dnn`.
