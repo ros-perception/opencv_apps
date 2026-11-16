@@ -38,7 +38,11 @@
 # BY 4.0, https://cvg.cit.tum.de/data/datasets/rgbd-dataset, every 6th of its first 120 images).
 # With --distortion K1, the image and the depth are distorted by the radial distortion K1 (plumb_bob), as the raw image
 # of a camera, and camera_info has it; the points are of the depth before the distortion.
-#   publish_rgbd.py [VIDEO DEPTH_NPZ] [--rate 10] [--distortion K1]
+# The .npz may have the intrinsics of the camera (array "K", fx fy cx cy), e.g. test/rgbd_xyz_depth.npz (30 images of
+# freiburg1_xyz, every 3rd of its images 300 - 387, with the ground truth of the poses of the camera from the first
+# image, array "groundtruth", for rgbd_odometry). With --rewind, the stamps start again at each loop, as a bag played
+# in a loop, which restarts the odometry.
+#   publish_rgbd.py [VIDEO DEPTH_NPZ] [--rate 10] [--distortion K1] [--rewind]
 
 import argparse
 import os
@@ -50,6 +54,12 @@ import numpy as np
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 # the intrinsics of the freiburg3 sequences, whose images are undistorted
 FX, FY, CX, CY = 535.4, 539.2, 320.1, 247.6
+
+
+def intrinsics(depth_npz):
+    """Return fx, fy, cx and cy of the .npz, or of the freiburg3 sequences."""
+    data = np.load(depth_npz)
+    return tuple(float(v) for v in data['K']) if 'K' in data else (FX, FY, CX, CY)
 
 
 def read_frames(video, depth_npz):
@@ -115,6 +125,7 @@ def image_msg(image_type, frame, encoding):
 
 
 def main():
+    global FX, FY, CX, CY
     parser = argparse.ArgumentParser()
     parser.add_argument('video', nargs='?', default=os.path.join(TEST_DIR, 'rgbd_walking.mp4'))
     parser.add_argument('depth', nargs='?', default=os.path.join(TEST_DIR, 'rgbd_walking_depth.npz'))
@@ -122,9 +133,11 @@ def main():
     parser.add_argument('--frame-id', default='camera_rgb_optical_frame')
     parser.add_argument('--base-frame', default='camera_link')
     parser.add_argument('--distortion', type=float, default=0.0, help='k1 of the radial distortion')
+    parser.add_argument('--rewind', action='store_true', help='the stamps start again at each loop')
     # without the arguments of ROS (__name:=..., __log:=... of roslaunch, --ros-args ... of ROS 2)
     argv = sys.argv[1:sys.argv.index('--ros-args')] if '--ros-args' in sys.argv else sys.argv[1:]
     args = parser.parse_args([a for a in argv if ':=' not in a])
+    FX, FY, CX, CY = intrinsics(args.depth)
     frames = read_frames(args.video, args.depth)
     distorted = distort(frames, args.distortion) if args.distortion else frames
     d = [args.distortion, 0.0, 0.0, 0.0, 0.0]
@@ -144,9 +157,14 @@ def main():
                                              ('points', PointCloud2)]]
         info = CameraInfo(width=640, height=480, distortion_model='plumb_bob', D=d, K=k, R=r, P=p)
         now = rospy.Time.now
+        start = rospy.Time.now()
+
+        def rewound(seconds):
+            return start + rospy.Duration.from_sec(seconds)
     else:
         from geometry_msgs.msg import TransformStamped
         import rclpy
+        import rclpy.duration
         from sensor_msgs.msg import CameraInfo, Image, PointCloud2, PointField
         import tf2_ros
         rclpy.init()
@@ -159,6 +177,11 @@ def main():
 
         def now():
             return node.get_clock().now().to_msg()
+
+        start = node.get_clock().now()
+
+        def rewound(seconds):
+            return (start + rclpy.duration.Duration(seconds=seconds)).to_msg()
 
     # the optical frame of the camera (z forward, y down) on camera_link (x forward, z up), for rviz
     optical = TransformStamped()
@@ -177,6 +200,8 @@ def main():
         messages = [image_msg(Image, distorted_color, 'bgr8'), image_msg(Image, distorted_depth, '16UC1'), info,
                     cloud_msg(PointCloud2, PointField, color, depth)]
         stamp = now()
+        if args.rewind:
+            stamp = rewound(state['index'] % len(frames) / args.rate)
         for msg, publisher in zip(messages, publishers):
             msg.header.stamp = stamp
             msg.header.frame_id = args.frame_id

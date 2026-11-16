@@ -156,8 +156,9 @@ def main():
     plugins = ET.parse(os.path.join(PACKAGE_DIR, 'nodelet_plugins.xml')).getroot()
     descriptions = {c.get('name').split('/')[-1]: ' '.join(c.find('description').text.split())
                     for c in plugins.iter('class') if c.find('description') is not None}
+    # the launch files of the nodes, not of the examples (e.g. laser_odometry_slam)
     executables = sorted(f[:-len('.launch.xml')] for f in os.listdir(os.path.join(PACKAGE_DIR, 'launch'))
-                         if f.endswith('.launch.xml'))
+                         if f.endswith('.launch.xml') and f[:-len('.launch.xml')] in descriptions)
     rclpy.init()
     node = rclpy.create_node('dump_nodes')
     nodes = {}

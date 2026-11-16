@@ -1,0 +1,39 @@
+<launch>
+  <arg name="node_name" default="rgbd_odometry" />
+
+  <arg name="image" default="image" description="The color (or mono) image of the RGB-D camera." />
+  <arg name="depth" default="depth" description="The depth image registered to the image (16UC1 in mm or 32FC1 in m), e.g. aligned_depth_to_color/image_raw of realsense2_camera." />
+  <arg name="camera_info" default="camera_info" description="The camera info of the image." />
+
+  <arg name="method" default="rgbd_icp" description="Method of the odometry: rgbd (the photometric error of the image), icp (the geometric error of the depth) or rgbd_icp (both)." />
+  <arg name="use_image" default="true" description="Subscribe the image; false for a depth camera without the image, of method icp." />
+  <arg name="min_depth" default="0.3" description="Minimum valid depth (m)." />
+  <arg name="max_depth" default="4.0" description="Maximum valid depth (m)." />
+  <arg name="max_depth_diff" default="0.07" description="Maximum difference (m) of the depths of the corresponding points of the images." />
+  <arg name="queue_size" default="10" description="Queue size of the synchronized subscribers." />
+  <arg name="odom_frame" default="odom" description="Frame of the odometry, the robot (base_frame) at the start." />
+  <arg name="base_frame" default="" description="Frame of the robot, whose TF to the sensor is given (e.g. base_link, base_footprint), or empty for the frame of the sensor." />
+  <arg name="publish_tf" default="true" description="Publish the TF odom_frame -> base_frame; with it at the start, the node subscribes the inputs always, for the subscribers of /tf." />
+  <arg name="path_length" default="10000" description="Number of the poses of ~/path, the trajectory for rviz, 0 for all of them." />
+  <arg name="map_voxel_size" default="0.05" description="Size (m) of the voxels of the 3D map (~/map, a point of each voxel), 0 for no map." />
+  <arg name="map_period" default="1.0" description="Period (s) to publish the 3D map (~/map)." />
+
+  <!-- rgbd_odometry_nodelet.cpp, the visual odometry of an RGB-D camera (cv::rgbd) -->
+  <node name="$(var node_name)" pkg="opencv_apps" exec="rgbd_odometry" >
+    <remap from="image" to="$(var image)" />
+    <remap from="depth" to="$(var depth)" />
+    <remap from="camera_info" to="$(var camera_info)" />
+    <param name="method" type="str" value="$(var method)" />
+    <param name="use_image" value="$(var use_image)" />
+    <param name="min_depth" value="$(var min_depth)" />
+    <param name="max_depth" value="$(var max_depth)" />
+    <param name="max_depth_diff" value="$(var max_depth_diff)" />
+    <param name="queue_size" value="$(var queue_size)" />
+    <param name="odom_frame" type="str" value="$(var odom_frame)" />
+    <param name="base_frame" type="str" value="$(var base_frame)" />
+    <param name="publish_tf" value="$(var publish_tf)" />
+    <param name="path_length" value="$(var path_length)" />
+    <param name="map_voxel_size" value="$(var map_voxel_size)" />
+    <param name="map_period" value="$(var map_period)" />
+  </node>
+</launch>

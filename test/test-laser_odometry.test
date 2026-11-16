@@ -1,0 +1,34 @@
+<launch>
+  <arg name="gui" default="true" />
+
+  <!-- the simulated scans of Livox Mid-360 (points) and of a 2D LiDAR (scan) moving in a room, in a loop -->
+  <node name="publish_livox_sim" pkg="opencv_apps" type="publish_livox_sim.py" />
+
+  <!-- laser_odometry_nodelet.cpp, of the points and of the scan -->
+  <include file="$(find opencv_apps)/launch/laser_odometry.launch" >
+    <arg name="voxel_size" value="0.2" />
+    <arg name="max_range" value="20.0" />
+  </include>
+  <include file="$(find opencv_apps)/launch/laser_odometry.launch" >
+    <arg name="node_name" value="laser_odometry_scan" />
+    <arg name="input_type" value="scan" />
+    <arg name="publish_tf" value="false" />
+    <arg name="voxel_size" value="0.1" />
+    <arg name="max_range" value="20.0" />
+  </include>
+
+  <param name="laser_odometry_odom_test/topic" value="laser_odometry/odom" />
+  <test test-name="laser_odometry_odom_test" pkg="rostest" type="hztest" name="laser_odometry_odom_test" time-limit="120" >
+    <param name="hz" value="10.0" />
+    <param name="hzerror" value="9.9" />
+    <param name="test_duration" value="2.0" />
+    <param name="wait_time" value="60.0" />
+  </test>
+  <param name="laser_odometry_scan_odom_test/topic" value="laser_odometry_scan/odom" />
+  <test test-name="laser_odometry_scan_odom_test" pkg="rostest" type="hztest" name="laser_odometry_scan_odom_test" time-limit="120" >
+    <param name="hz" value="10.0" />
+    <param name="hzerror" value="9.9" />
+    <param name="test_duration" value="2.0" />
+    <param name="wait_time" value="60.0" />
+  </test>
+</launch>

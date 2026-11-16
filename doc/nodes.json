@@ -4626,6 +4626,175 @@
    }
   ]
  },
+ "laser_odometry": {
+  "description": "Nodelet of the odometry of a LiDAR (e.g. Livox), by ICP of the scans to the local map",
+  "node": "laser_odometry",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Frame of the robot, whose TF to the sensor is given (e.g. base_link, base_footprint), or empty for the frame of the sensor",
+    "name": "base_frame",
+    "type": "string"
+   },
+   {
+    "default": 1.0,
+    "description": "Maximum distance (m) of the corresponding points of the scan and the map, larger than the error of the initial guess of the constant velocity.",
+    "name": "correspondence_distance",
+    "range": [
+     0.01,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "points",
+    "description": "Type of input: points (sensor_msgs/PointCloud2 of a 3D LiDAR, e.g. Livox) or scan (sensor_msgs/LaserScan of a 2D LiDAR, whose motion is in its x-y plane)",
+    "name": "input_type",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 1.0,
+    "description": "Period (s) to publish the 3D map (~/map).",
+    "name": "map_period",
+    "range": [
+     0.0,
+     3600.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.05,
+    "description": "Size (m) of the voxels of the 3D map (~/map, a point of each voxel), 0 for no map.",
+    "name": "map_voxel_size",
+    "range": [
+     0.0,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 50,
+    "description": "Maximum iterations of ICP of each scan.",
+    "name": "max_iterations",
+    "range": [
+     1,
+     1000
+    ],
+    "type": "int"
+   },
+   {
+    "default": 20,
+    "description": "Maximum points in a voxel of the map.",
+    "name": "max_points_per_voxel",
+    "range": [
+     1,
+     1000
+    ],
+    "type": "int"
+   },
+   {
+    "default": 50.0,
+    "description": "Maximum range (m) of the points, and of the map.",
+    "name": "max_range",
+    "range": [
+     0.1,
+     1000.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.3,
+    "description": "Minimum range (m) of the points, without the robot.",
+    "name": "min_range",
+    "range": [
+     0.0,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "odom",
+    "description": "Frame of the odometry, the robot (base_frame) at the start",
+    "name": "odom_frame",
+    "type": "string"
+   },
+   {
+    "default": 10000,
+    "description": "Number of the poses of ~/path, the trajectory for rviz, 0 for all of them.",
+    "name": "path_length",
+    "range": [
+     0,
+     1000000
+    ],
+    "type": "int"
+   },
+   {
+    "default": true,
+    "description": "Publish the TF odom_frame -> base_frame; with it at the start, the node subscribes the inputs always, for the subscribers of /tf.",
+    "name": "publish_tf",
+    "type": "bool"
+   },
+   {
+    "default": 10,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   },
+   {
+    "default": 0.5,
+    "description": "Size (m) of the voxels of the map, e.g. 0.5 outdoors and 0.1 - 0.2 indoors; the scan is downsampled by its half to the map and by 1.5 times of it to the registration.",
+    "name": "voxel_size",
+    "range": [
+     0.01,
+     10.0
+    ],
+    "type": "double"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/map",
+    "type": "sensor_msgs/msg/PointCloud2"
+   },
+   {
+    "name": "~/odom",
+    "type": "nav_msgs/msg/Odometry"
+   },
+   {
+    "name": "~/path",
+    "type": "nav_msgs/msg/Path"
+   },
+   {
+    "name": "/tf",
+    "type": "tf2_msgs/msg/TFMessage"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/points",
+    "type": "sensor_msgs/msg/PointCloud2"
+   }
+  ]
+ },
  "line_segment_detector": {
   "description": "Nodelet to detect line segments using the LineSegmentDetector",
   "node": "line_segment_detector",
@@ -5603,6 +5772,179 @@
   ],
   "services": [],
   "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "rgbd_odometry": {
+  "description": "Nodelet of the visual odometry of an RGB-D camera (cv::rgbd::RgbdOdometry, ICPOdometry and RgbdICPOdometry)",
+  "node": "rgbd_odometry",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Frame of the robot, whose TF to the sensor is given (e.g. base_link, base_footprint), or empty for the frame of the sensor",
+    "name": "base_frame",
+    "type": "string"
+   },
+   {
+    "default": 0.1,
+    "description": "The images are registered to the keyframe until the camera turns this angle (rad) from it.",
+    "name": "keyframe_angle",
+    "range": [
+     0.0,
+     3.2
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.1,
+    "description": "The images are registered to the keyframe until the camera moves this distance (m) from it.",
+    "name": "keyframe_distance",
+    "range": [
+     0.0,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 1.0,
+    "description": "Period (s) to publish the 3D map (~/map).",
+    "name": "map_period",
+    "range": [
+     0.0,
+     3600.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.05,
+    "description": "Size (m) of the voxels of the 3D map (~/map, a point of each voxel), 0 for no map.",
+    "name": "map_voxel_size",
+    "range": [
+     0.0,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 4.0,
+    "description": "Maximum valid depth (m).",
+    "name": "max_depth",
+    "range": [
+     0.0,
+     1000.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": 0.07,
+    "description": "Maximum difference (m) of the depths of the corresponding points of the images.",
+    "name": "max_depth_diff",
+    "range": [
+     0.0,
+     10.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "rgbd_icp",
+    "description": "Method of the odometry: rgbd (the photometric error of the image, cv::rgbd::RgbdOdometry), icp (the geometric error of the depth, cv::rgbd::ICPOdometry) or rgbd_icp (both, cv::rgbd::RgbdICPOdometry)",
+    "name": "method",
+    "type": "string"
+   },
+   {
+    "default": 0.3,
+    "description": "Minimum valid depth (m).",
+    "name": "min_depth",
+    "range": [
+     0.0,
+     100.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "odom",
+    "description": "Frame of the odometry, the robot (base_frame) at the start",
+    "name": "odom_frame",
+    "type": "string"
+   },
+   {
+    "default": 10000,
+    "description": "Number of the poses of ~/path, the trajectory for rviz, 0 for all of them.",
+    "name": "path_length",
+    "range": [
+     0,
+     1000000
+    ],
+    "type": "int"
+   },
+   {
+    "default": true,
+    "description": "Publish the TF odom_frame -> base_frame; with it at the start, the node subscribes the inputs always, for the subscribers of /tf.",
+    "name": "publish_tf",
+    "type": "bool"
+   },
+   {
+    "default": 10,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": true,
+    "description": "Subscribe the image; false for a depth camera without the image, of method icp",
+    "name": "use_image",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/map",
+    "type": "sensor_msgs/msg/PointCloud2"
+   },
+   {
+    "name": "~/odom",
+    "type": "nav_msgs/msg/Odometry"
+   },
+   {
+    "name": "~/path",
+    "type": "nav_msgs/msg/Path"
+   },
+   {
+    "name": "/tf",
+    "type": "tf2_msgs/msg/TFMessage"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/camera_info",
+    "type": "sensor_msgs/msg/CameraInfo"
+   },
+   {
+    "name": "/depth",
+    "type": "sensor_msgs/msg/Image"
+   },
    {
     "name": "/image",
     "type": "sensor_msgs/msg/Image"

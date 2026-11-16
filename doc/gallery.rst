@@ -180,3 +180,10 @@
    <a class="opencv-apps-tile" href="nodes/dnn_depth_estimation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_depth_estimation_thumb.gif" alt="dnn_depth_estimation" loading="lazy"><span>dnn_depth_estimation<br><small>~/inverse_depth</small></span></a>
    <a class="opencv-apps-tile" href="nodes/detection_3d.html"><img src="https://ros-perception.github.io/opencv_apps/media/detection_3d_thumb.gif" alt="detection_3d" loading="lazy"><span>detection_3d<br><small>~/detections</small></span></a>
    </div>
+   <h3>Odometry and maps</h3>
+   <p>Estimate the motion of the robot by an RGB-D camera or a LiDAR (e.g. Livox), as the odometry for slam_toolbox (the 2D map) and Nav2 instead of the odometry of the wheels, and build the 3D map and the 3D trajectory.<br>Output: <code>~/odom</code> (nav_msgs/Odometry), the TF odom -> base_frame, <code>~/path</code> (nav_msgs/Path) and <code>~/map</code> (PointCloud2, the 3D map).</p>
+   <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
+   <div class="opencv-apps-gallery">
+   <a class="opencv-apps-tile" href="nodes/rgbd_odometry.html"><img src="https://ros-perception.github.io/opencv_apps/media/rgbd_odometry_thumb.gif" alt="rgbd_odometry" loading="lazy"><span>rgbd_odometry<br><small>~/odom, ~/map</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/laser_odometry.html"><img src="https://ros-perception.github.io/opencv_apps/media/laser_odometry_thumb.gif" alt="laser_odometry" loading="lazy"><span>laser_odometry<br><small>~/odom, ~/map</small></span></a>
+   </div>

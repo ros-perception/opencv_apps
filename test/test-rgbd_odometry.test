@@ -1,0 +1,19 @@
+<launch>
+  <arg name="gui" default="true" />
+
+  <!-- the RGB-D images of test/rgbd_xyz.mp4 and test/rgbd_xyz_depth.npz (TUM RGB-D freiburg1_xyz) in a loop whose
+       stamps start again, on image, depth and camera_info -->
+  <node name="publish_rgbd" pkg="opencv_apps" type="publish_rgbd.py"
+        args="$(find opencv_apps)/test/rgbd_xyz.mp4 $(find opencv_apps)/test/rgbd_xyz_depth.npz --rate 5 --rewind" />
+
+  <!-- rgbd_odometry_nodelet.cpp -->
+  <include file="$(find opencv_apps)/launch/rgbd_odometry.launch" />
+
+  <param name="rgbd_odometry_odom_test/topic" value="rgbd_odometry/odom" />
+  <test test-name="rgbd_odometry_odom_test" pkg="rostest" type="hztest" name="rgbd_odometry_odom_test" time-limit="120" >
+    <param name="hz" value="5.0" />
+    <param name="hzerror" value="4.9" />
+    <param name="test_duration" value="2.0" />
+    <param name="wait_time" value="60.0" />
+  </test>
+</launch>

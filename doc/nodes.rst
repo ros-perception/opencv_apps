@@ -170,3 +170,14 @@ Estimate the depth of a color image by a DNN, and localize the objects, the face
 
    nodes/dnn_depth_estimation
    nodes/detection_3d
+
+Odometry and maps
+-----------------
+
+Estimate the motion of the robot by an RGB-D camera or a LiDAR (e.g. Livox), as the odometry for slam_toolbox (the 2D map) and Nav2 instead of the odometry of the wheels, and build the 3D map and the 3D trajectory. Output: ``~/odom`` (nav_msgs/Odometry), the TF odom -> base_frame, ``~/path`` (nav_msgs/Path) and ``~/map`` (PointCloud2, the 3D map).
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/rgbd_odometry
+   nodes/laser_odometry

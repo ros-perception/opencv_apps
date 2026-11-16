@@ -1,0 +1,38 @@
+<launch>
+  <!-- 2D SLAM with the odometry of a 3D LiDAR (e.g. Livox): laser_odometry (odom -> base_frame), the points on the
+       floor plane of base_frame as a 2D scan (pointcloud_to_laserscan) and slam_toolbox (map -> odom, ~map), e.g.
+       for Nav2. ROS 2 only; needs pointcloud_to_laserscan and slam_toolbox
+       (sudo apt install ros-$ROS_DISTRO-pointcloud-to-laserscan ros-$ROS_DISTRO-slam-toolbox). -->
+  <arg name="points" default="points" description="The point cloud of the 3D LiDAR (sensor_msgs/PointCloud2)." />
+  <arg name="base_frame" default="base_link" description="Frame of the robot, z up, whose TF to the LiDAR is given (also base_frame of slam_params_file)." />
+  <arg name="voxel_size" default="0.2" description="Size (m) of the voxels of laser_odometry, e.g. 0.1 - 0.2 indoors and 0.5 outdoors." />
+  <arg name="max_range" default="30.0" description="Maximum range (m) of the points of laser_odometry and of the scan." />
+  <arg name="min_height" default="-0.3" description="Minimum height (m) of the points of the scan in base_frame." />
+  <arg name="max_height" default="0.3" description="Maximum height (m) of the points of the scan in base_frame." />
+  <arg name="slam_params_file" default="$(find-pkg-share opencv_apps)/config/laser_odometry_slam.yaml" description="The parameters of slam_toolbox, e.g. base_frame (base_link) and resolution." />
+
+  <include file="$(find-pkg-share opencv_apps)/launch/laser_odometry.launch.xml">
+    <arg name="points" value="$(var points)" />
+    <arg name="base_frame" value="$(var base_frame)" />
+    <arg name="voxel_size" value="$(var voxel_size)" />
+    <arg name="max_range" value="$(var max_range)" />
+  </include>
+
+  <node name="pointcloud_to_laserscan" pkg="pointcloud_to_laserscan" exec="pointcloud_to_laserscan_node">
+    <remap from="cloud_in" to="$(var points)" />
+    <param name="target_frame" value="$(var base_frame)" />
+    <param name="min_height" value="$(var min_height)" />
+    <param name="max_height" value="$(var max_height)" />
+    <param name="angle_min" value="-3.14159" />
+    <param name="angle_max" value="3.14159" />
+    <param name="angle_increment" value="0.00436" />
+    <param name="range_min" value="0.3" />
+    <param name="range_max" value="$(var max_range)" />
+    <param name="use_inf" value="true" />
+  </node>
+
+  <!-- slam_toolbox of its launch file, which configures and activates its lifecycle node -->
+  <include file="$(find-pkg-share slam_toolbox)/launch/online_async_launch.py">
+    <arg name="slam_params_file" value="$(var slam_params_file)" />
+  </include>
+</launch>

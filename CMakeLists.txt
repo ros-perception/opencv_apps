@@ -228,6 +228,15 @@ find_package(vision_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 list(APPEND _nodelets detection_3d:Detection3DNodelet)
 list(APPEND _nodelet_cppfiles src/nodelet/detection_3d_nodelet.cpp)
+# the odometry of a LiDAR, and of an RGB-D camera by the rgbd module of opencv_contrib
+find_package(nav_msgs REQUIRED)
+list(APPEND _nodelets laser_odometry:LaserOdometryNodelet)
+list(APPEND _nodelet_cppfiles src/nodelet/laser_odometry_nodelet.cpp)
+if(TARGET opencv_rgbd)
+  set(OPENCV_HAVE_RGBD TRUE)
+  list(APPEND _nodelets rgbd_odometry:RGBDOdometryNodelet)
+  list(APPEND _nodelet_cppfiles src/nodelet/rgbd_odometry_nodelet.cpp)
+endif()
 
 add_library(${PROJECT_NAME}_nodelet SHARED
   src/nodelet/nodelet.cpp
@@ -256,7 +265,7 @@ if(OPENCV_HAVE_DNN)
   endif()
 endif()
 target_link_libraries(${PROJECT_NAME}_nodelet ${geometry_msgs_TARGETS} tf2_ros::tf2_ros ${vision_msgs_TARGETS}
-  ${visualization_msgs_TARGETS})
+  ${visualization_msgs_TARGETS} ${nav_msgs_TARGETS})
 foreach(_nodelet ${_nodelets})
   string(REPLACE ":" ";" _nodelet ${_nodelet})
   list(GET _nodelet 0 _name)
@@ -275,10 +284,14 @@ install(TARGETS ${PROJECT_NAME}_nodelet
 install(DIRECTORY include/ DESTINATION include/${PROJECT_NAME})
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
-  FILES_MATCHING PATTERN "*.launch.xml"
+  FILES_MATCHING PATTERN "*.launch.xml" PATTERN "*.launch.py"
 )
-# the configs of rviz2 of detection_3d
-install(FILES rviz/detection_3d.rviz rviz/detection_3d_lidar.rviz DESTINATION share/${PROJECT_NAME}/rviz)
+# the configs of rviz2 of detection_3d and the odometry
+install(FILES rviz/detection_3d.rviz rviz/detection_3d_lidar.rviz rviz/laser_odometry.rviz
+  rviz/laser_odometry_slam.rviz rviz/rgbd_odometry.rviz rviz/odometry_tb3_simulation.rviz
+  rviz/odometry_tb3_simulation_3d.rviz DESTINATION share/${PROJECT_NAME}/rviz)
+# the parameters of slam_toolbox and the bridge of Gazebo of the examples of the odometry
+install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 # with a python3 shebang (the scripts keep "python" for ROS1 melodic and older)
 foreach(_script face_recognition_trainer.py set_image.py)
   file(READ scripts/${_script} _script_content)
@@ -299,6 +312,10 @@ if(BUILD_TESTING)
   else()
     set(_have_optflow 0)
     list(REMOVE_ITEM _launch_tests test/ros2/test_simple_flow.py)
+  endif()
+  # rgbd_odometry needs the rgbd module of opencv_contrib
+  if(NOT OPENCV_HAVE_RGBD)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_rgbd_odometry.py)
   endif()
   # the tests of the dnn nodes download the models by libcurl
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
@@ -862,6 +879,17 @@ if(tf2_ros_FOUND AND vision_msgs_FOUND AND visualization_msgs_FOUND)
   opencv_apps_add_nodelet(detection_3d src/nodelet/detection_3d_nodelet.cpp)
   set(OPENCV_APPS_HAVE_DETECTION_3D TRUE)
 endif()
+# the odometry of a LiDAR, and of an RGB-D camera by the rgbd module of opencv_contrib, with tf2_ros and nav_msgs
+find_package(nav_msgs QUIET)
+if(tf2_ros_FOUND AND nav_msgs_FOUND)
+  include_directories(${tf2_ros_INCLUDE_DIRS} ${nav_msgs_INCLUDE_DIRS})
+  opencv_apps_add_nodelet(laser_odometry src/nodelet/laser_odometry_nodelet.cpp)
+  set(OPENCV_APPS_HAVE_ODOMETRY TRUE)
+  if(TARGET opencv_rgbd)
+    opencv_apps_add_nodelet(rgbd_odometry src/nodelet/rgbd_odometry_nodelet.cpp)
+    set(OPENCV_HAVE_RGBD TRUE)
+  endif()
+endif()
 
 add_library(${PROJECT_NAME} SHARED
   src/nodelet/nodelet.cpp
@@ -869,8 +897,13 @@ add_library(${PROJECT_NAME} SHARED
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${OpenCV_LIBRARIES})
-if(OPENCV_APPS_HAVE_DETECTION_3D)
+if(OPENCV_APPS_HAVE_DETECTION_3D OR OPENCV_APPS_HAVE_ODOMETRY)
   target_link_libraries(${PROJECT_NAME} ${tf2_ros_LIBRARIES})
+endif()
+if(OPENCV_APPS_HAVE_ODOMETRY)
+  add_dependencies(${PROJECT_NAME} ${nav_msgs_EXPORTED_TARGETS})
+endif()
+if(OPENCV_APPS_HAVE_DETECTION_3D)
   # the messages of vision_msgs and visualization_msgs built in the same workspace before detection_3d
   add_dependencies(${PROJECT_NAME} ${vision_msgs_EXPORTED_TARGETS} ${visualization_msgs_EXPORTED_TARGETS})
 endif()
@@ -930,6 +963,12 @@ if(CATKIN_ENABLE_TESTING)
     endif()
     if(NOT OPENCV_APPS_HAVE_DETECTION_3D)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/detection_3d.launch)
+    endif()
+    if(NOT OPENCV_APPS_HAVE_ODOMETRY)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/laser_odometry.launch)
+    endif()
+    if(NOT OPENCV_APPS_HAVE_ODOMETRY OR NOT OPENCV_HAVE_RGBD)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/rgbd_odometry.launch)
     endif()
     if(NOT OPENCV_HAVE_ARUCO)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/aruco_detection.launch)
