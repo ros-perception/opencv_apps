@@ -175,6 +175,7 @@
    <h3>Depth and 3D localization</h3>
    <p>Estimate the depth of a color image by a DNN, and localize the objects, the faces, the tracked targets and the human and hand skeletons of the nodes above in 3D, with a depth image of an RGB-D camera or of the depth estimation, or a point cloud of a LiDAR, and publish their TF frames.<br>Output: <code>~/inverse_depth</code> or <code>~/depth</code> (Image) of dnn_depth_estimation, and <code>~/detections</code> (vision_msgs/Detection3DArray), <code>~/markers</code> (for rviz) and the TF frames of detection_3d.</p>
    <p><img src="https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/doc/images/detection_3d_pipeline.svg" alt="the pipeline of detection_3d" style="width: 100%; max-width: 900px"></p>
+   <p><img src="https://raw.githubusercontent.com/ros-perception/opencv_apps/docs-media/detection_3d_skeletons_rviz.gif" alt="detection_3d of the human skeletons in rviz" style="width: 100%; max-width: 900px"></p>
    <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/dnn_depth_estimation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_depth_estimation_thumb.gif" alt="dnn_depth_estimation" loading="lazy"><span>dnn_depth_estimation<br><small>~/inverse_depth</small></span></a>
