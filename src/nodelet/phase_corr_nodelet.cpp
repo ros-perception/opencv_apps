@@ -151,9 +151,9 @@ class PhaseCorrNodelet : public opencv_apps::Nodelet
         cv::line(frame, center, cv::Point(center.x + (int)(shift.x * 5), center.y + (int)(shift.y * 5)),
                  cv::Scalar(0, 255, 0), 3, cv::LINE_AA);
 #else
-        cv::circle(frame, center, (int)(radius * 5), cv::Scalar(0, 255, 0), 3, CV_AA);
+        cv::circle(frame, center, (int)(radius * 5), cv::Scalar(0, 255, 0), 3, cv::LINE_AA);
         cv::line(frame, center, cv::Point(center.x + (int)(shift.x * 5), center.y + (int)(shift.y * 5)),
-                 cv::Scalar(0, 255, 0), 3, CV_AA);
+                 cv::Scalar(0, 255, 0), 3, cv::LINE_AA);
 #endif
 
         //

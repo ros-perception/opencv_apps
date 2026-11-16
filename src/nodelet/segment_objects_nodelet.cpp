@@ -42,10 +42,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/background_segm.hpp>
-#if CV_MAJOR_VERSION >= 4
-#include <opencv2/imgproc/imgproc_c.h>  // incldue CV_FILLED
-#endif
-
 #include <std_srvs/srv/empty.hpp>
 #include <std_msgs/msg/float64.hpp>
 #include <opencv_apps/msg/contour.hpp>
@@ -159,7 +155,7 @@ class SegmentObjectsNodelet : public opencv_apps::Nodelet
       cv::erode(temp, temp, cv::Mat(), cv::Point(-1, -1), niters * 2);
       cv::dilate(temp, temp, cv::Mat(), cv::Point(-1, -1), niters);
 
-      cv::findContours(temp, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+      cv::findContours(temp, contours, hierarchy, cv::RETR_CCOMP, cv::CHAIN_APPROX_SIMPLE);
 
       out_frame = cv::Mat::zeros(frame.size(), CV_8UC3);
 
@@ -182,7 +178,7 @@ class SegmentObjectsNodelet : public opencv_apps::Nodelet
         }
       }
       cv::Scalar color(0, 0, 255);
-      cv::drawContours(out_frame, contours, largest_comp, color, CV_FILLED, 8, hierarchy);
+      cv::drawContours(out_frame, contours, largest_comp, color, cv::FILLED, 8, hierarchy);
 
       std_msgs::msg::Float64 area_msg;
       area_msg.data = max_area;

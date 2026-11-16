@@ -155,7 +155,7 @@ class GeneralContoursNodelet : public opencv_apps::Nodelet
       cv::threshold(src_gray, threshold_output, threshold_, 255, cv::THRESH_BINARY);
 
       /// Find contours
-      cv::findContours(threshold_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+      cv::findContours(threshold_output, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
       /// Find the rotated rectangles and ellipses for each contour
       std::vector<cv::RotatedRect> min_rect(contours.size());

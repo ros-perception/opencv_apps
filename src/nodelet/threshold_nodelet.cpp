@@ -125,11 +125,11 @@ class ThresholdNodelet : public opencv_apps::Nodelet
       cv::cvtColor(src_image, gray_image, cv::COLOR_BGR2GRAY);
       cv::Mat result_image;
 
-      // not threshold_type_ |= CV_THRESH_OTSU, which would stay after apply_otsu is set to false
+      // not threshold_type_ |= cv::THRESH_OTSU, which would stay after apply_otsu is set to false
       int threshold_type = threshold_type_;
       if (apply_otsu_)
       {
-        threshold_type |= CV_THRESH_OTSU;
+        threshold_type |= cv::THRESH_OTSU;
       }
       cv::threshold(gray_image, result_image, threshold_value_, max_binary_value_, threshold_type);
       //-- Show what you got

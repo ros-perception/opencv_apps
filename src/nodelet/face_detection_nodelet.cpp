@@ -130,7 +130,7 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
 #ifndef CV_VERSION_EPOCH
       face_cascade_.detectMultiScale(frame_gray, faces, 1.1, 2, 0, cv::Size(30, 30));
 #else
-      face_cascade_.detectMultiScale(frame_gray, faces, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, cv::Size(30, 30));
+      face_cascade_.detectMultiScale(frame_gray, faces, 1.1, 2, 0 | cv::CASCADE_SCALE_IMAGE, cv::Size(30, 30));
 #endif
 
       cv::Mat face_image;
@@ -165,7 +165,7 @@ class FaceDetectionNodelet : public opencv_apps::Nodelet
 #ifndef CV_VERSION_EPOCH
         eyes_cascade_.detectMultiScale(face_roi, eyes, 1.1, 2, 0, cv::Size(30, 30));
 #else
-        eyes_cascade_.detectMultiScale(face_roi, eyes, 1.1, 2, 0 | CV_HAAR_SCALE_IMAGE, cv::Size(30, 30));
+        eyes_cascade_.detectMultiScale(face_roi, eyes, 1.1, 2, 0 | cv::CASCADE_SCALE_IMAGE, cv::Size(30, 30));
 #endif
 
         for (const cv::Rect& eye : eyes)

@@ -160,7 +160,7 @@ class ContourMomentsNodelet : public opencv_apps::Nodelet
       /// Detect edges using canny
       cv::Canny(src_gray, canny_output, low_threshold_, low_threshold_ * 2, 3);
       /// Find contours
-      cv::findContours(canny_output, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+      cv::findContours(canny_output, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
       /// Draw contours
       cv::Mat drawing;

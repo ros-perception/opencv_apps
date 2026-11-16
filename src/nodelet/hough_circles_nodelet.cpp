@@ -251,7 +251,7 @@ class HoughCirclesNodelet : public opencv_apps::Nodelet
       // will hold the results of the detection
       std::vector<cv::Vec3f> circles;
       // runs the actual detection
-      cv::HoughCircles(src_gray, circles, CV_HOUGH_GRADIENT, dp_, min_distance_between_circles_, canny_threshold_,
+      cv::HoughCircles(src_gray, circles, cv::HOUGH_GRADIENT, dp_, min_distance_between_circles_, canny_threshold_,
                        accumulator_threshold_, min_circle_radius_, max_circle_radius_);
 
       cv::Mat out_image;

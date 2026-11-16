@@ -153,7 +153,7 @@ https://github.com/ros-perception/vision_opencv/pull/70
 
     // Draw an example circle on the video stream
     if (cv_ptr->image.rows > 110 && cv_ptr->image.cols > 110)
-      cv::circle(cv_ptr->image, cv::Point(cv_ptr->image.cols / 2, cv_ptr->image.rows / 2), 100, CV_RGB(255, 0, 0));
+      cv::circle(cv_ptr->image, cv::Point(cv_ptr->image.cols / 2, cv_ptr->image.rows / 2), 100, cv::Scalar(0, 0, 255));
 
     if (debug_view_)
     {

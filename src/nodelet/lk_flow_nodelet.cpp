@@ -123,7 +123,7 @@ class LKFlowNodelet : public opencv_apps::Nodelet
 #if 0
   static void onMouse( int event, int x, int y, int /*flags*/, void* /*param*/ )
   {
-    if( event == CV_EVENT_LBUTTONDOWN )
+    if( event == cv::EVENT_LBUTTONDOWN )
     {
       point = Point2f((float)x, (float)y);
       addRemovePt = true;

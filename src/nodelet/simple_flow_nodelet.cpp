@@ -129,7 +129,7 @@ class SimpleFlowNodelet : public opencv_apps::Nodelet
       }
 
       cv::resize(frame, color, cv::Size(frame.cols / (double)MAX(1, scale_), frame.rows / (double)MAX(1, scale_)), 0, 0,
-                 CV_INTER_AREA);
+                 cv::INTER_AREA);
       if (prevColor.empty())
         color.copyTo(prevColor);
 
