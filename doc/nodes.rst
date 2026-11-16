@@ -153,6 +153,29 @@ Estimate the motion of the image. Output: ``~/flows`` (FlowArrayStamped), ``~/sh
    nodes/dnn_optical_flow
    nodes/phase_corr
 
+Re-identification
+-----------------
+
+Re-identify the people detected by the other nodes over the images, by the similarity of their appearance to the people seen before. Output: ``~/detections`` (DetectionArrayStamped), with the id of each person.
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/dnn_person_reid
+
+Optical flow and motion
+-----------------------
+
+Estimate the motion of the image. Output: ``~/flows`` (FlowArrayStamped), ``~/shift`` (Point2DStamped) of phase_corr.
+
+.. toctree::
+   :maxdepth: 1
+
+   nodes/fback_flow
+   nodes/lk_flow
+   nodes/simple_flow
+   nodes/phase_corr
+
 Histogram comparison
 --------------------
 

@@ -180,6 +180,12 @@ if(OPENCV_APPS_HAVE_DETECTION_3D AND OPENCV_HAVE_DNN AND CURL_FOUND AND NOT Open
 else()
   list(APPEND _skip_test_files test-detection_3d_skeletons.test)
 endif()
+# dnn_person_reid re-identifies the people detected by dnn_object_detection
+if(OPENCV_HAVE_DNN AND CURL_FOUND)
+  add_rostest(test-dnn_person_reid.test ARGS gui:=false)
+else()
+  list(APPEND _skip_test_files test-dnn_person_reid.test)
+endif()
 # the odometry of a LiDAR, and of an RGB-D camera by the rgbd module of opencv_contrib
 if(OPENCV_APPS_HAVE_ODOMETRY)
   add_rostest(test-laser_odometry.test ARGS gui:=false)

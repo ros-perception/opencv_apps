@@ -73,6 +73,8 @@ CATEGORIES = [
     ('Human and hand poses', ['dnn_pose_estimation', 'dnn_hand_pose_estimation']),
     ('Tracking', ['tracking', 'match_template', 'dnn_tracking', 'camshift']),
     ('Optical flow and motion', ['fback_flow', 'lk_flow', 'simple_flow', 'dnn_optical_flow', 'phase_corr']),
+    ('Re-identification', ['dnn_person_reid']),
+    ('Optical flow and motion', ['fback_flow', 'lk_flow', 'simple_flow', 'phase_corr']),
     ('Histogram comparison', ['compare_histogram']),
     ('Depth and 3D localization', ['dnn_depth_estimation', 'detection_3d']),
     ('Odometry and maps', ['rgbd_odometry', 'laser_odometry']),
@@ -200,6 +202,9 @@ CATEGORY_DESCRIPTIONS = {
                              '``~/skeletons`` (SkeletonArrayStamped)'),
     'Tracking': ('Track a target given by ``set_roi`` or the mouse.',
                  '``~/output`` (RectArrayStamped), ``~/track_box`` (RotatedRectStamped) of camshift'),
+    'Re-identification': ('Re-identify the people detected by the other nodes over the images, by the similarity of '
+                          'their appearance to the people seen before.',
+                          '``~/detections`` (DetectionArrayStamped), with the id of each person'),
     'Optical flow and motion': ('Estimate the motion of the image.',
                                 '``~/flows`` (FlowArrayStamped), ``~/shift`` (Point2DStamped) of phase_corr'),
     'Histogram comparison': ('Compare the color histogram of the image with a reference.',
@@ -233,7 +238,7 @@ for _category, _topic in [('Image classification', '~/detections'), ('Object det
                           ('Codes and markers', '~/detections'), ('Text detection and recognition', '~/detections'),
                           ('Faces', '~/faces'),
                           ('Human and hand poses', '~/skeletons'), ('Tracking', '~/output'),
-                          ('Optical flow and motion', '~/flows')]:
+                          ('Re-identification', '~/detections'), ('Optical flow and motion', '~/flows')]:
     for _node in dict(CATEGORIES)[_category]:
         NODE_OUTPUTS.setdefault(_node, _topic)
 # the notes of the published topics: the topics added for the common output of the group are recommended, and the
@@ -272,7 +277,8 @@ for _node in ['aruco_detection', 'background_subtraction', 'barcode_detection', 
               'dnn_hand_pose_estimation', 'dnn_image_classification', 'dnn_object_detection', 'dnn_pose_estimation',
               'dnn_semantic_segmentation', 'dnn_text_detection', 'dnn_tracking']:
     SINCE[_node] = '3.0.0'
-for _node in ['detection_3d', 'rgbd_odometry', 'laser_odometry', 'dnn_super_resolution', 'dnn_optical_flow', 'dnn_interactive_segmentation']:
+for _node in ['detection_3d', 'rgbd_odometry', 'laser_odometry', 'dnn_super_resolution', 'dnn_optical_flow',
+              'dnn_interactive_segmentation', 'dnn_person_reid']:
     SINCE[_node] = '3.1.0'
 # the requirements of OpenCV of the nodes (see CMakeLists.txt): the minimum version, and the description
 OPENCV_REQUIREMENTS = {
@@ -298,7 +304,8 @@ OPENCV_REQUIREMENTS = {
     'dnn_interactive_segmentation': ('4.10', 'OpenCV 4.10 or later, which reads EfficientSAM'),
 }
 for _node in ['dnn_face_detection', 'dnn_face_recognition', 'dnn_facial_expression_recognition', 'dnn_object_detection',
-              'dnn_image_classification', 'dnn_semantic_segmentation', 'dnn_depth_estimation', 'dnn_text_detection']:
+              'dnn_image_classification', 'dnn_semantic_segmentation', 'dnn_depth_estimation', 'dnn_text_detection',
+              'dnn_person_reid']:
     OPENCV_REQUIREMENTS[_node] = ('4.5.4', 'OpenCV 4.5.4 or later')
 
 
@@ -411,6 +418,7 @@ USAGE_INPUTS = {
                       'image:=/camera/color/image_raw depth:=/camera/aligned_depth_to_color/image_raw '
                       'camera_info:=/camera/color/camera_info base_frame:=camera_link'),
     'laser_odometry': 'points:=/livox/lidar base_frame:=base_link',
+    'dnn_person_reid': 'image:=/camera/image_raw input:=/dnn_object_detection/detections',
 }
 
 

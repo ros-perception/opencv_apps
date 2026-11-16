@@ -304,6 +304,14 @@ dnn_optical_flow:
     flows are of the images about 1 s apart, which the node processes, not of the consecutive images of the 10 Hz
     video. The model of opencv_zoo is under the BSD-3-Clause license (RAFT) and the MIT License (its conversion to
     onnx).
+dnn_person_reid:
+  clip: tum_walking.mp4
+  image: image:=image input:=/dnn_object_detection/detections
+  steps:
+  - ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image debug_view:=false &
+  note: 'The people of dnn_object_detection keep their ids while they walk around: each box is in the color of the
+    id, with person_<id> and the cosine similarity to the person seen before, or new. The YouTu ReID baseline of
+    opencv_zoo (Apache 2.0, 106 MB, onnx) is read by OpenCV 4 (also 4.6 of Ubuntu 24.04) and 5.'
 dnn_pose_estimation:
   clip: tos_bridge.mp4
   note: Needs OpenCV 4.9 or later; recorded with OpenCV 4.12 on CUDA.

@@ -2900,6 +2900,116 @@
    }
   ]
  },
+ "dnn_person_reid": {
+  "description": "Nodelet to re-identify the people detected by another node with the YouTu person ReID model",
+  "node": "dnn_person_reid",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "Synchronize the image and the detections by the approximate time of the stamps, instead of the exact time",
+    "name": "approximate_sync",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/compressed",
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_person_reid.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": "person",
+    "description": "Label of the detections to re-identify, empty for all of them",
+    "name": "label",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 0.5,
+    "description": "Threshold of the cosine similarity to the person seen before to have the same id, a new id otherwise",
+    "name": "match_threshold",
+    "range": [
+     -1.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the person ReID model (onnx, 128x256 RGB input), empty for the YouTu ReID model of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 10,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 0.1,
+    "description": "Rate of the feature of the new image in the moving average of the feature of the person",
+    "name": "update_rate",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/detections",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "/input",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
+   }
+  ]
+ },
  "dnn_pose_estimation": {
   "description": "Nodelet to estimate the human poses with MediaPipe person detection and pose estimation",
   "node": "dnn_pose_estimation",
