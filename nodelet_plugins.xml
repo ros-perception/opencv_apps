@@ -206,6 +206,10 @@
   <class name="opencv_apps/dnn_person_reid" type="opencv_apps::DNNPersonReIDNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to re-identify the people detected by another node with the YouTu person ReID model</description>
   </class>
+
+  <class name="opencv_apps/dnn_inpainting" type="opencv_apps::DNNInpaintingNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to fill the masked region of the image with LaMa (OpenCV 5.0 or later)</description>
+  </class>
   <class name="opencv_apps/detection_3d" type="opencv_apps::Detection3DNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to publish the 3D boxes and the TF frames of the 2D detections, faces or tracked targets, with a depth image</description>
   </class>

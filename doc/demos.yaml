@@ -234,6 +234,16 @@ dnn_interactive_segmentation:
     images. EfficientSAM-Ti of opencv_zoo (Apache 2.0) needs OpenCV 4.10 or later.
   steps:
   - ros2 run opencv_apps set_image.py 375 325 150 310 --ros-args -r set_roi:=/dnn_interactive_segmentation/set_roi
+dnn_inpainting:
+  clip: tos_bridge.mp4
+  launch_args:
+    mask: /dnn_semantic_segmentation/label
+  note: 'The people found by dnn_semantic_segmentation (its ``~/label``, non-zero for the people) are filled by LaMa
+    (Apache-2.0) of opencv_zoo, which needs OpenCV 5.0 or later and takes about 0.8 s for each image on a CPU
+    (OpenCV 5.1). A rectangle is filled with ``ros2 run opencv_apps set_image.py <center x> <center y> <width>
+    <height> --ros-args -r set_roi:=/dnn_inpainting/set_roi`` instead, and cleared with the width and height of 0.'
+  steps:
+  - ros2 launch opencv_apps dnn_semantic_segmentation.launch.xml image:=image debug_view:=false &
 dnn_object_detection:
   clip: tum_walking.mp4
   variants_title: Models

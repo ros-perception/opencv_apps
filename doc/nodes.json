@@ -2358,6 +2358,90 @@
    }
   ]
  },
+ "dnn_inpainting": {
+  "description": "Nodelet to fill the masked region of the image with LaMa (OpenCV 5.0 or later)",
+  "node": "dnn_inpainting",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "cpu",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise. cpu by default, as OpenCV 5.1 runs LaMa on the CPU also with cuda, which is slower",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_inpainting.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the model (onnx) of the same input and output as LaMa, empty for LaMa of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [
+   {
+    "name": "~/set_roi",
+    "type": "opencv_apps/srv/SetROI"
+   }
+  ],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "/mask",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
  "dnn_interactive_segmentation": {
   "description": "Nodelet to segment the object given by a box or points with EfficientSAM",
   "node": "dnn_interactive_segmentation",

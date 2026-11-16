@@ -198,6 +198,7 @@ if(OPENCV_HAVE_DNN)
     dnn_super_resolution:DNNSuperResolutionNodelet
     dnn_optical_flow:DNNOpticalFlowNodelet
     dnn_person_reid:DNNPersonReIDNodelet
+    dnn_inpainting:DNNInpaintingNodelet
     qrcode_detection:QRCodeDetectionNodelet
   )
   list(APPEND _nodelet_cppfiles
@@ -217,6 +218,7 @@ if(OPENCV_HAVE_DNN)
     src/nodelet/dnn_super_resolution_nodelet.cpp
     src/nodelet/dnn_optical_flow_nodelet.cpp
     src/nodelet/dnn_person_reid_nodelet.cpp
+    src/nodelet/dnn_inpainting_nodelet.cpp
     src/nodelet/qrcode_detection_nodelet.cpp
   )
   if(OPENCV_HAVE_BARCODE)
@@ -390,6 +392,10 @@ if(BUILD_TESTING)
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_pose_estimation.py test/ros2/test_dnn_pose_estimation_tracking.py
       test/ros2/test_dnn_hand_pose_estimation.py test/ros2/test_dnn_hand_pose_estimation_tracking.py
       test/ros2/test_detection_3d_skeletons.py)
+  endif()
+  # LaMa of dnn_inpainting needs OpenCV 5.0 or later
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "5.0")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_inpainting.py)
   endif()
   # Depth Anything V2 Metric (onnx of a vision transformer) needs OpenCV 4.10 or later
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.10")
@@ -910,6 +916,7 @@ if(OPENCV_HAVE_DNN)
   opencv_apps_add_nodelet(dnn_super_resolution src/nodelet/dnn_super_resolution_nodelet.cpp) # opencv_contrib dnn_superres
   opencv_apps_add_nodelet(dnn_optical_flow src/nodelet/dnn_optical_flow_nodelet.cpp) # opencv_zoo optical_flow_estimation_raft
   opencv_apps_add_nodelet(dnn_person_reid src/nodelet/dnn_person_reid_nodelet.cpp) # ./dnn/person_reid.py
+  opencv_apps_add_nodelet(dnn_inpainting src/nodelet/dnn_inpainting_nodelet.cpp) # opencv_zoo inpainting_lama, ./dnn/inpainting.cpp of OpenCV 5
   opencv_apps_add_nodelet(qrcode_detection src/nodelet/qrcode_detection_nodelet.cpp) # ./cpp/qrcode.cpp
   if(OPENCV_HAVE_BARCODE)
     opencv_apps_add_nodelet(barcode_detection src/nodelet/barcode_detection_nodelet.cpp) # ./cpp/barcode.cpp
@@ -1018,6 +1025,9 @@ if(CATKIN_ENABLE_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_optical_flow.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_person_reid.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/qrcode_detection.launch)
+    endif()
+    if(NOT OPENCV_HAVE_DNN)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_inpainting.launch)
     endif()
     if(NOT OPENCV_HAVE_BARCODE)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/barcode_detection.launch)

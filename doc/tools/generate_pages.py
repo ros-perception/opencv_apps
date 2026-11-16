@@ -57,7 +57,8 @@ TEST_VIDEOS_URL = 'https://raw.githubusercontent.com/ros-perception/opencv_apps/
 # replace another, e.g. face_detection by dnn_face_detection
 CATEGORIES = [
     ('Image filters', ['adding_images', 'discrete_fourier_transform', 'edge_detection', 'equalize_histogram',
-                       'morphology', 'pyramids', 'smoothing', 'threshold', 'dnn_super_resolution']),
+                       'morphology', 'pyramids', 'smoothing', 'threshold', 'dnn_super_resolution',
+                       'dnn_inpainting']),
     ('Features and shapes', ['corner_harris', 'goodfeature_track', 'hough_lines', 'line_segment_detector',
                              'hough_circles', 'blob_detection', 'find_contours', 'general_contours',
                              'contour_moments', 'convex_hull']),
@@ -174,7 +175,8 @@ DESCRIPTIONS = {
 # the descriptions of the groups, and their common output (the message types are linked in the pages)
 CATEGORY_DESCRIPTIONS = {
     'Image filters': ('Filter and transform the images: edges, histogram equalization, morphology, image pyramids, '
-                      'smoothing, thresholds, the Fourier transform and the super resolution by a DNN.',
+                      'smoothing, thresholds, the Fourier transform, and the super resolution and the inpainting '
+                      'by a DNN.',
                       'the processed image in ``~/image``'),
     'Features and shapes': ('Find the corners, the lines and the line segments, the circles and the blobs, and the '
                             'contours with their bounding shapes, moments and convex hulls.',
@@ -278,7 +280,7 @@ for _node in ['aruco_detection', 'background_subtraction', 'barcode_detection', 
               'dnn_semantic_segmentation', 'dnn_text_detection', 'dnn_tracking']:
     SINCE[_node] = '3.0.0'
 for _node in ['detection_3d', 'rgbd_odometry', 'laser_odometry', 'dnn_super_resolution', 'dnn_optical_flow',
-              'dnn_interactive_segmentation', 'dnn_person_reid']:
+              'dnn_interactive_segmentation', 'dnn_person_reid', 'dnn_inpainting']:
     SINCE[_node] = '3.1.0'
 # the requirements of OpenCV of the nodes (see CMakeLists.txt): the minimum version, and the description
 OPENCV_REQUIREMENTS = {
@@ -302,6 +304,7 @@ OPENCV_REQUIREMENTS = {
                                  'OpenCV 4.10 of lyrical); on the CPU with OpenCV 4.x, whose CUDA backend crashes '
                                  'with RAFT'),
     'dnn_interactive_segmentation': ('4.10', 'OpenCV 4.10 or later, which reads EfficientSAM'),
+    'dnn_inpainting': ('5.0', 'OpenCV 5.0 or later, which reads LaMa (OpenCV 4.6 - 4.12 fail to read it)'),
 }
 for _node in ['dnn_face_detection', 'dnn_face_recognition', 'dnn_facial_expression_recognition', 'dnn_object_detection',
               'dnn_image_classification', 'dnn_semantic_segmentation', 'dnn_depth_estimation', 'dnn_text_detection',
@@ -340,7 +343,8 @@ def availability(node):
     since = SINCE.get(node, '1.11')
     opencv = OPENCV_REQUIREMENTS.get(node, (None, 'any version of the distributions'))[1]
     distributions, old_opencv = distributions_of(node)
-    ros = ', '.join(distributions) + ' and later'
+    # the nodes which need a newer OpenCV than all the distributions, e.g. OpenCV 5 built from source
+    ros = (', '.join(distributions) + ' and later') if distributions else 'any, with OpenCV built from source'
     if old_opencv:
         ros += '; not %s' % ', '.join(old_opencv)
     if node in ROS_NOTES:
@@ -367,7 +371,7 @@ def tier_label(distributions):
         names = [name for name, version, _, _, _ in DISTRIBUTIONS if version == ros and name in distributions]
         if names:
             labels.append('%s: %s and later' % (ros, names[0]))
-    return ', '.join(labels)
+    return ', '.join(labels) or 'ROS 1 and ROS 2, with OpenCV built from source'
 
 
 def category_of(node):

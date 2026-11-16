@@ -6,7 +6,7 @@ Each node subscribes ``image`` (``sensor_msgs/msg/Image``), and publishes its re
 Image filters
 -------------
 
-Filter and transform the images: edges, histogram equalization, morphology, image pyramids, smoothing, thresholds, the Fourier transform and the super resolution by a DNN. Output: the processed image in ``~/image``.
+Filter and transform the images: edges, histogram equalization, morphology, image pyramids, smoothing, thresholds, the Fourier transform, and the super resolution and the inpainting by a DNN. Output: the processed image in ``~/image``.
 
 .. toctree::
    :maxdepth: 1
@@ -20,6 +20,7 @@ Filter and transform the images: edges, histogram equalization, morphology, imag
    nodes/smoothing
    nodes/threshold
    nodes/dnn_super_resolution
+   nodes/dnn_inpainting
 
 Features and shapes
 -------------------
