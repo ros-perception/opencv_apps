@@ -9,6 +9,10 @@
   <arg name="palm_detection_model" default="" description="Path or URL of the MediaPipe palm detection model (onnx), empty for palm_detection_mediapipe_2023feb.onnx of opencv_zoo" />
   <arg name="hand_pose_estimation_model" default="" description="Path or URL of the MediaPipe hand pose estimation model (onnx), empty for handpose_estimation_mediapipe_2023feb.onnx of opencv_zoo" />
   <arg name="backend" default="auto" description="Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise." />
+  <arg name="use_cuda" default="false" description="Run the node in the docker image of OpenCV with CUDA (cuda_image, built from docker/ of opencv_apps), by scripts/run_in_docker" />
+  <arg name="cuda_image" default="ghcr.io/ros-perception/opencv_apps:cuda" description="The docker image of use_cuda, pulled at the first use: ghcr.io/ros-perception/opencv_apps:cuda (OpenCV 4.12, docker/cuda) or ghcr.io/ros-perception/opencv_apps:opencv5-cuda (OpenCV 5.1, docker/opencv5-cuda), or an image built from them" />
+  <let name="launch_prefix" value="$(find-pkg-prefix opencv_apps)/lib/opencv_apps/run_in_docker $(var cuda_image)" if="$(var use_cuda)" />
+  <let name="launch_prefix" value="" unless="$(var use_cuda)" />
   <arg name="confidence_threshold" default="0.5" description="Threshold of the confidence to detect the palms and to estimate the hands" />
   <arg name="nms_threshold" default="0.3" description="Threshold of the overlap of the hands to suppress, by non maximum suppression" />
   <arg name="tracking" default="true" description="Track the hands by their poses in the previous image, as MediaPipe, and run the palm detection every detection_interval images, otherwise every image" />
@@ -19,7 +23,7 @@
   <arg name="smoothing_derivative_cutoff" default="1.0" description="Cutoff frequency (Hz) of the velocity of One Euro filter" />
 
   <!-- dnn_hand_pose_estimation_nodelet.cpp, MediaPipe hand pose estimation (OpenCV 4.9 or later), ~skeletons has a Skeleton for each hand, whose keypoints are the 21 landmarks -->
-  <node name="$(var node_name)" pkg="opencv_apps" exec="dnn_hand_pose_estimation" >
+  <node name="$(var node_name)" pkg="opencv_apps" exec="dnn_hand_pose_estimation" launch-prefix="$(var launch_prefix)" >
     <remap from="image" to="$(var image)" />
     <param name="use_camera_info" value="$(var use_camera_info)" />
     <param name="debug_view" value="$(var debug_view)" />
