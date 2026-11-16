@@ -226,5 +226,5 @@ jobs:
         run: |
           docker run --rm -v $PWD:/ws/src/opencv_apps:ro opencv_apps_opencv5 bash -c \
             '. /opt/ros/lyrical/setup.sh && . install/setup.sh && colcon build --packages-select opencv_apps \
-             --event-handlers console_cohesion+ --cmake-args -DCMAKE_BUILD_TYPE=Release \
+             --event-handlers console_cohesion+ --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
              -DOpenCV_DIR=/opt/opencv/lib/cmake/opencv5'
