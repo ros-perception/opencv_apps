@@ -32,6 +32,23 @@ roslaunch opencv_apps face_detection.launch image:=camera/image_raw use_opencv4:
 **Documentation: https://ros-perception.github.io/opencv_apps/** (the topics, the parameters and the usage of the
 nodes)
 
+## Run the dnn nodes on the GPU (CUDA, ROS 2)
+
+The OpenCV of the distributions has no CUDA, so the launch files of the dnn nodes (`dnn_*.launch.xml`) run the node
+in a docker image of OpenCV with CUDA with `use_cuda:=true` (by `scripts/run_in_docker`, with the GPUs, the network
+and the shared memory of the host, so the other nodes on the host communicate with it as usual). Build the image once
+(about an hour), in opencv_apps, with the NVIDIA driver and the NVIDIA Container Toolkit:
+
+```bash
+# OpenCV 4.12 with CUDA 12.8 (opencv_apps:cuda, the default of cuda_image); CUDA_ARCH_BIN of your GPU, e.g. 8.9
+docker build -f docker/cuda/Dockerfile --build-arg CUDA_ARCH_BIN=8.9 -t opencv_apps:cuda .
+ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/camera/image_raw use_cuda:=true
+# OpenCV 5.1 with CUDA 13.3 (opencv_apps:opencv5-cuda); its new engine runs a model on CUDA only if all its layers
+# have CUDA, otherwise on the CPU (e.g. YOLOX-S, YuNet and SFace of opencv_zoo with OpenCV 5.1)
+docker build -f docker/opencv5-cuda/Dockerfile --build-arg CUDA_ARCH_BIN=8.9 -t opencv_apps:opencv5-cuda .
+ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/camera/image_raw use_cuda:=true cuda_image:=opencv_apps:opencv5-cuda
+```
+
 ## What opencv_apps can do
 
 The nodes are grouped by what they find, e.g. what the whole image shows (image classification), the bounding boxes of
