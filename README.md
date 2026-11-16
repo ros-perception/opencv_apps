@@ -274,6 +274,8 @@ Estimate the depth of a color image by a DNN, and localize the objects, the face
 
 <img src="https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/doc/images/detection_3d_pipeline.svg" alt="the pipeline of detection_3d" width="900">
 
+<img src="https://raw.githubusercontent.com/ros-perception/opencv_apps/docs-media/detection_3d_skeletons_rviz.gif" alt="detection_3d of the human skeletons in rviz" width="900">
+
 **ROS 1: ROS One and later, ROS 2: jazzy and later**
 
 <table>

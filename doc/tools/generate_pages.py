@@ -656,10 +656,15 @@ def nodes_index():
     return '\n'.join(lines)
 
 
-# the figures of the groups, under the description of the group on the top page and README.md
+# the figures of the groups (the URL and the alt text of each), under the description of the group on the top page and
+# README.md
 CATEGORY_FIGURES = {
-    'Depth and 3D localization': ('https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/doc/images/'
-                                  'detection_3d_pipeline.svg', 'the pipeline of detection_3d'),
+    'Depth and 3D localization': [
+        ('https://raw.githubusercontent.com/ros-perception/opencv_apps/indigo/doc/images/detection_3d_pipeline.svg',
+         'the pipeline of detection_3d'),
+        ('https://raw.githubusercontent.com/ros-perception/opencv_apps/docs-media/detection_3d_skeletons_rviz.gif',
+         'detection_3d of the human skeletons in rviz'),
+    ],
 }
 
 
@@ -669,9 +674,8 @@ def gallery_html(node_url, thumbnail_url):
     for category, nodes in CATEGORIES:
         description, output = CATEGORY_DESCRIPTIONS[category]
         lines += ['<h3>%s</h3>' % category, '<p>%s<br>Output: %s.</p>' % (description, rst_to_html(output))]
-        if category in CATEGORY_FIGURES:
-            lines.append('<p><img src="%s" alt="%s" style="width: 100%%; max-width: 900px"></p>'
-                         % CATEGORY_FIGURES[category])
+        for figure in CATEGORY_FIGURES.get(category, []):
+            lines.append('<p><img src="%s" alt="%s" style="width: 100%%; max-width: 900px"></p>' % figure)
         for distributions, tier_nodes in tiers(nodes):
             lines += ['<p class="opencv-apps-tier">%s</p>' % tier_label(distributions),
                       '<div class="opencv-apps-gallery">']
@@ -744,8 +748,8 @@ def readme_gallery():
         description, output = CATEGORY_DESCRIPTIONS[category]
         # the inline literals of reStructuredText (``...``) in Markdown (`...`)
         lines += ['### %s' % category, '', ('%s Output: %s.' % (description, output)).replace('``', '`'), '']
-        if category in CATEGORY_FIGURES:
-            lines += ['<img src="%s" alt="%s" width="900">' % CATEGORY_FIGURES[category], '']
+        for figure in CATEGORY_FIGURES.get(category, []):
+            lines += ['<img src="%s" alt="%s" width="900">' % figure, '']
         for distributions, tier_nodes in tiers(nodes):
             lines += ['**%s**' % tier_label(distributions), '', '<table>']
             for i in range(0, len(tier_nodes), 4):
