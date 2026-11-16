@@ -104,6 +104,11 @@ See also the :ref:`common parameters <common-parameters>`.
      - "cpu"
      - yes
      - Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise. cpu by default, as OpenCV 5.1 runs LaMa on the CPU also with cuda, which is slower
+   * - ``mask_dilation``
+     - int
+     - 10
+     - yes
+     - Pixels to dilate the region to fill by, as the masks of segmentation (e.g. ~/label of dnn_semantic_segmentation) miss the edges of the objects, which LaMa extends otherwise
    * - ``model``
      - string
      - ""

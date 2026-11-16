@@ -96,6 +96,7 @@ class DNNInpaintingNodelet : public opencv_apps::Nodelet
   // the region to fill: the rect of ~set_roi (empty if none) and the latest mask (empty if none)
   cv::Rect roi_;
   cv::Mat mask_;
+  int mask_dilation_;
 
   rcl_interfaces::msg::SetParametersResult parametersCallback(const std::vector<rclcpp::Parameter>& parameters)
   {
@@ -104,6 +105,8 @@ class DNNInpaintingNodelet : public opencv_apps::Nodelet
     {
       if (parameter.get_name() == "use_camera_info")
         use_camera_info_ = parameter.as_bool();
+      else if (parameter.get_name() == "mask_dilation")
+        mask_dilation_ = parameter.as_int();
       else
       {
         if (parameter.get_name() == "model")
@@ -255,6 +258,10 @@ class DNNInpaintingNodelet : public opencv_apps::Nodelet
             cv::resize(mask_, resized, frame.size(), 0, 0, cv::INTER_NEAREST);
           mask.setTo(255, resized);
         }
+        if (mask_dilation_ > 0)
+          cv::dilate(mask, mask,
+                     cv::getStructuringElement(cv::MORPH_ELLIPSE,
+                                               cv::Size(2 * mask_dilation_ + 1, 2 * mask_dilation_ + 1)));
         if (cv::countNonZero(mask) == 0)
         {
           RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 10000,
@@ -343,6 +350,10 @@ public:
         "backend", std::string("cpu"),
         paramDescriptor(std::string(DNN_BACKEND_DESCRIPTION) +
                         " cpu by default, as OpenCV 5.1 runs LaMa on the CPU also with cuda, which is slower"));
+    mask_dilation_ = declare_parameter(
+        "mask_dilation", 10,
+        paramDescriptor("Pixels to dilate the region to fill by, as the masks of segmentation (e.g. ~/label of "
+                        "dnn_semantic_segmentation) miss the edges of the objects, which LaMa extends otherwise"));
     on_set_parameters_callback_handle_ = add_on_set_parameters_callback(
         std::bind(&DNNInpaintingNodelet::parametersCallback, this, std::placeholders::_1));
 

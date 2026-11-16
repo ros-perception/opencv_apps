@@ -56,7 +56,8 @@ MASK = (200, 250, 60, 80)
 @pytest.mark.launch_test
 def generate_test_description():
     return description(
-        include('dnn_inpainting', image='image'),
+        # the exact region (not dilated), for the check of the pixels outside of it
+        include('dnn_inpainting', image='image', mask_dilation='0'),
         image_view('dnn_inpainting/image', name='dnn_inpainting_view'),
     )
 
