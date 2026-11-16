@@ -206,7 +206,7 @@ CATEGORY_DESCRIPTIONS = {
                  '``~/output`` (RectArrayStamped), ``~/track_box`` (RotatedRectStamped) of camshift'),
     'Re-identification': ('Re-identify the people detected by the other nodes over the images, by the similarity of '
                           'their appearance to the people seen before.',
-                          '``~/detections`` (DetectionArrayStamped), with the id of each person'),
+                          '``~/detections`` (DetectionArrayStamped), with the id of each person in ``data``'),
     'Optical flow and motion': ('Estimate the motion of the image.',
                                 '``~/flows`` (FlowArrayStamped), ``~/shift`` (Point2DStamped) of phase_corr'),
     'Histogram comparison': ('Compare the color histogram of the image with a reference.',

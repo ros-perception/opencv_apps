@@ -3,7 +3,7 @@ dnn_person_reid
 
 Re-identify the people detected by another node with the YouTu person ReID model.
 
-Person re-identification of the people detected by another node (e.g. ~/detections of dnn_object_detection, synchronized with the image) with the YouTu ReID baseline of opencv_zoo (Apache 2.0): the feature of each person is compared with the gallery of the features of the people seen before by the cosine similarity, and the person gets the id of the most similar one over match_threshold, or a new id. Each person of the gallery is matched with one person of an image, the most similar pairs first, and its feature is updated by the moving average. The detections are published with the id of the person in their id.
+Person re-identification of the people detected by another node (e.g. ~/detections of dnn_object_detection, synchronized with the image) with the YouTu ReID baseline of opencv_zoo (Apache 2.0): the feature of each person is compared with the gallery of the features of the people seen before by the cosine similarity, and the person gets the id of the most similar one over match_threshold, or a new id. Each person of the gallery is matched with one person of an image, the most similar pairs first, and its feature is updated by the moving average. The detections are published with the id of the person in their data (in decimal), with their class id kept in their id.
 
 .. list-table::
    :stub-columns: 1
@@ -15,7 +15,7 @@ Person re-identification of the people detected by another node (e.g. ~/detectio
    * - OpenCV
      - OpenCV 4.5.4 or later
    * - Group
-     - Re-identification, the nodes of which publish ``~/detections`` (DetectionArrayStamped), with the id of each person
+     - Re-identification, the nodes of which publish ``~/detections`` (DetectionArrayStamped), with the id of each person in ``data``
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_person_reid.gif
    :alt: demo of dnn_person_reid

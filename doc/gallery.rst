@@ -184,7 +184,7 @@
    <a class="opencv-apps-tile" href="nodes/dnn_optical_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_optical_flow_thumb.gif" alt="dnn_optical_flow" loading="lazy"><span>dnn_optical_flow<br><small>~/image</small></span></a>
    </div>
    <h3>Re-identification</h3>
-   <p>Re-identify the people detected by the other nodes over the images, by the similarity of their appearance to the people seen before.<br>Output: <code>~/detections</code> (DetectionArrayStamped), with the id of each person.</p>
+   <p>Re-identify the people detected by the other nodes over the images, by the similarity of their appearance to the people seen before.<br>Output: <code>~/detections</code> (DetectionArrayStamped), with the id of each person in <code>data</code>.</p>
    <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/dnn_person_reid.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_person_reid_thumb.gif" alt="dnn_person_reid" loading="lazy"><span>dnn_person_reid<br><small>~/detections</small></span></a>

@@ -323,7 +323,7 @@ Estimate the motion of the image. Output: `~/flows` (FlowArrayStamped), `~/shift
 
 ### Re-identification
 
-Re-identify the people detected by the other nodes over the images, by the similarity of their appearance to the people seen before. Output: `~/detections` (DetectionArrayStamped), with the id of each person.
+Re-identify the people detected by the other nodes over the images, by the similarity of their appearance to the people seen before. Output: `~/detections` (DetectionArrayStamped), with the id of each person in `data`.
 
 **ROS 1: ROS One and later, ROS 2: jazzy and later**
 

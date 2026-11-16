@@ -158,7 +158,7 @@ Estimate the motion of the image. Output: ``~/flows`` (FlowArrayStamped), ``~/sh
 Re-identification
 -----------------
 
-Re-identify the people detected by the other nodes over the images, by the similarity of their appearance to the people seen before. Output: ``~/detections`` (DetectionArrayStamped), with the id of each person.
+Re-identify the people detected by the other nodes over the images, by the similarity of their appearance to the people seen before. Output: ``~/detections`` (DetectionArrayStamped), with the id of each person in ``data``.
 
 .. toctree::
    :maxdepth: 1

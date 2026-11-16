@@ -59,7 +59,7 @@ def generate_test_description():
 
 def ids(msg, left):
     """Return the ids of the people on the left (the center x < 320) or on the right of the image."""
-    return [d.id for d in msg.detections if d.label == 'person' and d.score > 0.5 and (d.rect.x < 320) == left]
+    return [int(d.data) for d in msg.detections if d.label == 'person' and d.score > 0.5 and (d.rect.x < 320) == left]
 
 
 class TestDNNPersonReID(unittest.TestCase):
@@ -78,7 +78,7 @@ class TestDNNPersonReID(unittest.TestCase):
         self.assertTrue(all(r[TOPIC] is not None for r in results), 'no output of some images')
         msgs = [r[TOPIC] for r in results]
         for msg in msgs:
-            print(' '.join('%s_%d(x=%.0f, width=%.0f)' % (d.label, d.id, d.rect.x, d.rect.width)
+            print(' '.join('%s_%s(x=%.0f, width=%.0f)' % (d.label, d.data, d.rect.x, d.rect.width)
                            for d in msg.detections) or '-')
         # nobody on the black images
         self.assertTrue(all(msg.detections == [] for msg in msgs[20:20 + BLACK_IMAGES]))
@@ -91,3 +91,5 @@ class TestDNNPersonReID(unittest.TestCase):
         self.assertEqual(len(set(left)), 1, 'ids of the person on the left: %s' % left)
         self.assertEqual(len(set(right)), 1, 'ids of the person on the right: %s' % right)
         self.assertNotEqual(left[0], right[0])
+        # the class id of dnn_object_detection is kept (person of COCO is 0), the id of the person is in the data
+        self.assertTrue(all(d.id == 0 for msg in people for d in msg.detections if d.label == 'person'))

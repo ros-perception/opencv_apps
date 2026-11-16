@@ -41,7 +41,7 @@
  * compared with the gallery of the features of the people seen before by the cosine similarity, and the person gets
  * the id of the most similar one over match_threshold, or a new id. Each person of the gallery is matched with one
  * person of an image, the most similar pairs first, and its feature is updated by the moving average. The detections
- * are published with the id of the person in their id.
+ * are published with the id of the person in their data (in decimal), with their class id kept in their id.
  */
 
 #include "opencv_apps/nodelet.h"
@@ -131,7 +131,12 @@ class DNNPersonReIDNodelet : public opencv_apps::Nodelet
       else if (parameter.get_name() == "model" || parameter.get_name() == "backend")
       {
         if (parameter.get_name() == "model")
+        {
+          // the features of another model are not comparable; the ids go on from next_id_
+          if (parameter.as_string() != model_)
+            gallery_.clear();
           model_ = parameter.as_string();
+        }
         else
           backend_ = parameter.as_string();
         need_model_update_ = true;
@@ -284,13 +289,13 @@ class DNNPersonReIDNodelet : public opencv_apps::Nodelet
         reid_msg.detections.push_back(detection);
       }
 
-      // Do the work, the id of the person is in the id of the detection
+      // Do the work, the id of the person is in the data of the detection (its id is the class id)
       std::vector<std::pair<int, double> > matched = match(features(frame, rects));
       for (size_t i = 0; i < rects.size(); i++)
       {
         int id = gallery_[matched[i].first].id;
         opencv_apps::msg::Detection& detection = reid_msg.detections[i];
-        detection.id = id;
+        detection.data = std::to_string(id);
         cv::Scalar color = idColor(id);
         cv::rectangle(frame, rects[i], color, 2);
         // the similarity to the person in the gallery, or "new"
@@ -333,9 +338,11 @@ class DNNPersonReIDNodelet : public opencv_apps::Nodelet
     RCLCPP_DEBUG(get_logger(), "subscribe");
     // image_transport takes rclcpp::QoS since lyrical, message_filters since kilted
 #if __has_include(<image_transport/node_interfaces.hpp>)
-    img_sub_.subscribe(*this, "image", "raw", subscriberQos(queue_size_));
+    img_sub_.subscribe(*this, "image", image_transport::TransportHints(*this).getTransport(),
+                       subscriberQos(queue_size_));
 #else
-    img_sub_.subscribe(this, "image", "raw", subscriberQos(queue_size_).get_rmw_qos_profile());
+    img_sub_.subscribe(this, "image", image_transport::TransportHints(this).getTransport(),
+                       subscriberQos(queue_size_).get_rmw_qos_profile());
 #endif
 #if RCLCPP_VERSION_GTE(29, 0, 0)
     detections_sub_.subscribe(this, "input", subscriberQos(queue_size_));
