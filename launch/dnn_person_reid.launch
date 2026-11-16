@@ -6,6 +6,7 @@
 
   <arg name="debug_view" default="true" doc="Specify whether the node displays a window to show the result" />
   <arg name="queue_size" default="10" doc="Queue size of the synchronized subscribers of the image and the detections." />
+  <arg name="sync_queue_size" default="100" doc="Number of the images (and the detections) kept to be synchronized, more than the rate of the images times the latency of the detector, e.g. 30 Hz x 0.6 s = 18" />
   <arg name="approximate_sync" default="false" doc="Synchronize the image and the detections by the approximate time of the stamps, instead of the exact time" />
   <arg name="model" default="" doc="Path or URL of the person ReID model (onnx, 128x256 RGB input), empty for the YouTu ReID model of opencv_zoo" />
   <arg name="backend" default="auto" doc="Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise." />
@@ -19,6 +20,7 @@
     <remap from="input" to="$(arg input)" />
     <param name="debug_view" value="$(arg debug_view)" />
     <param name="queue_size" value="$(arg queue_size)" />
+    <param name="sync_queue_size" value="$(arg sync_queue_size)" />
     <param name="approximate_sync" value="$(arg approximate_sync)" />
     <param name="model" type="str" value="$(arg model)" />
     <param name="backend" type="str" value="$(arg backend)" />

@@ -96,6 +96,7 @@ class DNNPersonReIDNodelet : public opencv_apps::Nodelet
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr on_set_parameters_callback_handle_;
 
   int queue_size_;
+  int sync_queue_size_;
   bool debug_view_;
   bool use_async_;
 
@@ -351,15 +352,15 @@ class DNNPersonReIDNodelet : public opencv_apps::Nodelet
 #endif
     if (use_async_)
     {
-      async_ =
-          std::make_shared<message_filters::Synchronizer<ApproximateSyncPolicy> >(ApproximateSyncPolicy(queue_size_));
+      async_ = std::make_shared<message_filters::Synchronizer<ApproximateSyncPolicy> >(
+          ApproximateSyncPolicy(sync_queue_size_));
       async_->connectInput(img_sub_, detections_sub_);
       async_->registerCallback(
           std::bind(&DNNPersonReIDNodelet::callback, this, std::placeholders::_1, std::placeholders::_2));
     }
     else
     {
-      sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy> >(SyncPolicy(queue_size_));
+      sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy> >(SyncPolicy(sync_queue_size_));
       sync_->connectInput(img_sub_, detections_sub_);
       sync_->registerCallback(
           std::bind(&DNNPersonReIDNodelet::callback, this, std::placeholders::_1, std::placeholders::_2));
@@ -391,6 +392,11 @@ public:
     need_model_update_ = true;
     next_id_ = 0;
 
+    // the images wait for their detections in the synchronizer, e.g. 3.3 s at 30 Hz by default
+    sync_queue_size_ = declare_parameter(
+        "sync_queue_size", 100,
+        paramDescriptor("Number of the images (and the detections) kept to be synchronized, more than the rate of "
+                        "the images times the latency of the detector, e.g. 30 Hz x 0.6 s = 18"));
     use_async_ = declare_parameter(
         "approximate_sync", false,
         paramDescriptor("Synchronize the image and the detections by the approximate time of the stamps, instead "

@@ -120,6 +120,11 @@ See also the :ref:`common parameters <common-parameters>`.
      - 10
      - no, restart the node
      - Queue size of the synchronized subscribers of the image and the detections.
+   * - ``sync_queue_size``
+     - int
+     - 100
+     - no, restart the node
+     - Number of the images (and the detections) kept to be synchronized, more than the rate of the images times the latency of the detector, e.g. 30 Hz x 0.6 s = 18
    * - ``update_rate``
      - double
      - 0.1 (0 - 1)

@@ -374,7 +374,7 @@ if(BUILD_TESTING)
   endif()
   # the test of dnn_person_reid re-identifies the people detected by dnn_object_detection
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
-    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_person_reid.py)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_person_reid.py test/ros2/test_dnn_person_reid_delay.py)
   endif()
   if(NOT OPENCV_HAVE_DNN)
     list(REMOVE_ITEM _launch_tests test/ros2/test_qrcode_detection.py)

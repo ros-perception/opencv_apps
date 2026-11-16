@@ -3157,6 +3157,12 @@
     "type": "int"
    },
    {
+    "default": 100,
+    "description": "Number of the images (and the detections) kept to be synchronized, more than the rate of the images times the latency of the detector, e.g. 30 Hz x 0.6 s = 18",
+    "name": "sync_queue_size",
+    "type": "int"
+   },
+   {
     "default": 0.1,
     "description": "Rate of the feature of the new image in the moving average of the feature of the person",
     "name": "update_rate",
