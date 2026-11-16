@@ -84,7 +84,7 @@
    <a class="opencv-apps-tile" href="nodes/blob_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/blob_detection_thumb.gif" alt="blob_detection" loading="lazy"><span>blob_detection<br><small>~/circles</small></span></a>
    </div>
    <h3>Segmentation</h3>
-   <p>Divide the image into regions by the class of each pixel: the pixels in a range of colors, the foreground, the connected regions, and the classes of a DNN.<br>Output: the mask or label image, <code>~/image</code> of the color filters and background_subtraction, <code>~/label</code> of dnn_semantic_segmentation, and <code>~/contours</code> (ContourArrayStamped) of the regions of segment_objects and watershed_segmentation.</p>
+   <p>Divide the image into regions by the class of each pixel: the pixels in a range of colors, the foreground, the connected regions, the classes of a DNN, and the object given by a box or points.<br>Output: the mask or label image, <code>~/image</code> of the color filters and background_subtraction, <code>~/label</code> of dnn_semantic_segmentation, <code>~/mask</code> of dnn_interactive_segmentation, and <code>~/contours</code> (ContourArrayStamped) of the regions of segment_objects, watershed_segmentation and dnn_interactive_segmentation.</p>
    <p class="opencv-apps-tier">ROS 1: noetic and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/hsv_color_filter.html"><img src="https://ros-perception.github.io/opencv_apps/media/hsv_color_filter_thumb.gif" alt="hsv_color_filter" loading="lazy"><span>hsv_color_filter<br><small>~/image</small></span></a>
@@ -98,6 +98,10 @@
    <a class="opencv-apps-tile" href="nodes/lab_color_filter.html"><img src="https://ros-perception.github.io/opencv_apps/media/lab_color_filter_thumb.gif" alt="lab_color_filter" loading="lazy"><span>lab_color_filter<br><small>~/image</small></span></a>
    <a class="opencv-apps-tile" href="nodes/background_subtraction.html"><img src="https://ros-perception.github.io/opencv_apps/media/background_subtraction_thumb.gif" alt="background_subtraction" loading="lazy"><span>background_subtraction<br><small>~/image</small></span></a>
    <a class="opencv-apps-tile" href="nodes/dnn_semantic_segmentation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_semantic_segmentation_thumb.gif" alt="dnn_semantic_segmentation" loading="lazy"><span>dnn_semantic_segmentation<br><small>~/label</small></span></a>
+   </div>
+   <p class="opencv-apps-tier">ROS 2: lyrical and later</p>
+   <div class="opencv-apps-gallery">
+   <a class="opencv-apps-tile" href="nodes/dnn_interactive_segmentation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_interactive_segmentation_thumb.gif" alt="dnn_interactive_segmentation" loading="lazy"><span>dnn_interactive_segmentation<br><small>~/mask</small></span></a>
    </div>
    <h3>Image classification</h3>
    <p>Find what the whole image shows, the classes of ImageNet.<br>Output: <code>~/detections</code> (DetectionArrayStamped), the classes with their scores.</p>

@@ -187,6 +187,10 @@
     <description>Nodelet of semantic segmentation with a DNN model, e.g. PP-HumanSeg</description>
   </class>
 
+  <class name="opencv_apps/dnn_interactive_segmentation" type="opencv_apps::DNNInteractiveSegmentationNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to segment the object given by a box or points with EfficientSAM</description>
+  </class>
+
   <class name="opencv_apps/dnn_text_detection" type="opencv_apps::DNNTextDetectionNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to detect and recognize texts with DB (cv::dnn::TextDetectionModel_DB) and CRNN (cv::dnn::TextRecognitionModel)</description>
   </class>

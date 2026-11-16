@@ -161,6 +161,12 @@ if(OPENCV_HAVE_DNN AND CURL_FOUND AND NOT OpenCV_VERSION VERSION_LESS "4.10")
 else()
   list(APPEND _skip_test_files test-dnn_optical_flow.test)
 endif()
+# EfficientSAM of dnn_interactive_segmentation needs OpenCV 4.10 or later
+if(OPENCV_HAVE_DNN AND CURL_FOUND AND NOT OpenCV_VERSION VERSION_LESS "4.10")
+  add_rostest(test-dnn_interactive_segmentation.test ARGS gui:=false)
+else()
+  list(APPEND _skip_test_files test-dnn_interactive_segmentation.test)
+endif()
 # detection_3d, built with tf2_ros and vision_msgs; the test detects the people with dnn_object_detection
 if(OPENCV_APPS_HAVE_DETECTION_3D AND OPENCV_HAVE_DNN AND CURL_FOUND)
   add_rostest(test-detection_3d.test ARGS gui:=false)

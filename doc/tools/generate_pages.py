@@ -63,7 +63,7 @@ CATEGORIES = [
                              'contour_moments', 'convex_hull']),
     ('Segmentation', ['hsv_color_filter', 'hls_color_filter', 'lab_color_filter', 'rgb_color_filter',
                       'background_subtraction', 'segment_objects', 'watershed_segmentation',
-                      'dnn_semantic_segmentation']),
+                      'dnn_semantic_segmentation', 'dnn_interactive_segmentation']),
     ('Image classification', ['dnn_image_classification']),
     ('Object detection', ['people_detect', 'dnn_object_detection']),
     ('Codes and markers', ['qrcode_detection', 'barcode_detection', 'aruco_detection']),
@@ -180,10 +180,12 @@ CATEGORY_DESCRIPTIONS = {
                             '(CircleArrayStamped) and ``~/contours`` (ContourArrayStamped, ``~/hulls`` of '
                             'convex_hull), by the kind of the features'),
     'Segmentation': ('Divide the image into regions by the class of each pixel: the pixels in a range of colors, '
-                     'the foreground, the connected regions, and the classes of a DNN.',
+                     'the foreground, the connected regions, the classes of a DNN, and the object given by a box or '
+                     'points.',
                      'the mask or label image, ``~/image`` of the color filters and background_subtraction, '
-                     '``~/label`` of dnn_semantic_segmentation, and ``~/contours`` (ContourArrayStamped) of the '
-                     'regions of segment_objects and watershed_segmentation'),
+                     '``~/label`` of dnn_semantic_segmentation, ``~/mask`` of dnn_interactive_segmentation, and '
+                     '``~/contours`` (ContourArrayStamped) of the regions of segment_objects, watershed_segmentation '
+                     'and dnn_interactive_segmentation'),
     'Image classification': ('Find what the whole image shows, the classes of ImageNet.',
                              '``~/detections`` (DetectionArrayStamped), the classes with their scores'),
     'Object detection': ('Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of '
@@ -218,6 +220,7 @@ CATEGORY_DESCRIPTIONS = {
 # the main output of each node, under its tile, when it is not ~/image
 NODE_OUTPUTS = {
     'dnn_depth_estimation': '~/inverse_depth', 'dnn_semantic_segmentation': '~/label',
+    'dnn_interactive_segmentation': '~/mask',
     'corner_harris': '~/corners', 'goodfeature_track': '~/corners', 'hough_lines': '~/lines',
     'line_segment_detector': '~/lines', 'hough_circles': '~/circles', 'blob_detection': '~/circles',
     'convex_hull': '~/hulls', 'camshift': '~/track_box', 'phase_corr': '~/shift', 'compare_histogram': '~/distance',
@@ -269,7 +272,7 @@ for _node in ['aruco_detection', 'background_subtraction', 'barcode_detection', 
               'dnn_hand_pose_estimation', 'dnn_image_classification', 'dnn_object_detection', 'dnn_pose_estimation',
               'dnn_semantic_segmentation', 'dnn_text_detection', 'dnn_tracking']:
     SINCE[_node] = '3.0.0'
-for _node in ['detection_3d', 'rgbd_odometry', 'laser_odometry', 'dnn_super_resolution', 'dnn_optical_flow']:
+for _node in ['detection_3d', 'rgbd_odometry', 'laser_odometry', 'dnn_super_resolution', 'dnn_optical_flow', 'dnn_interactive_segmentation']:
     SINCE[_node] = '3.1.0'
 # the requirements of OpenCV of the nodes (see CMakeLists.txt): the minimum version, and the description
 OPENCV_REQUIREMENTS = {
@@ -292,6 +295,7 @@ OPENCV_REQUIREMENTS = {
     'dnn_optical_flow': ('4.10', 'OpenCV 4.10 or later, which reads RAFT (tested with OpenCV 4.12 and 5.1, not with '
                                  'OpenCV 4.10 of lyrical); on the CPU with OpenCV 4.x, whose CUDA backend crashes '
                                  'with RAFT'),
+    'dnn_interactive_segmentation': ('4.10', 'OpenCV 4.10 or later, which reads EfficientSAM'),
 }
 for _node in ['dnn_face_detection', 'dnn_face_recognition', 'dnn_facial_expression_recognition', 'dnn_object_detection',
               'dnn_image_classification', 'dnn_semantic_segmentation', 'dnn_depth_estimation', 'dnn_text_detection']:
@@ -301,7 +305,8 @@ for _node in ['dnn_face_detection', 'dnn_face_recognition', 'dnn_facial_expressi
 # the notes of the distributions, which depend on their OpenCV
 ROS_NOTES = {'dnn_tracking': 'DaSiamRPN on ROS One, jazzy and kilted (OpenCV 4.6), and also NanoTrack and VitTrack on '
                              'lyrical (OpenCV 4.10)',
-             'tracking': 'the trackers other than MIL need libopencv-contrib'}
+             'tracking': 'the trackers other than MIL need libopencv-contrib',
+             'dnn_interactive_segmentation': 'not tested yet with OpenCV 4.10 of lyrical'}
 
 
 def version_tuple(version):

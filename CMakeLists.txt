@@ -193,6 +193,7 @@ if(OPENCV_HAVE_DNN)
     dnn_pose_estimation:DNNPoseEstimationNodelet
     dnn_hand_pose_estimation:DNNHandPoseEstimationNodelet
     dnn_semantic_segmentation:DNNSemanticSegmentationNodelet
+    dnn_interactive_segmentation:DNNInteractiveSegmentationNodelet
     dnn_text_detection:DNNTextDetectionNodelet
     dnn_super_resolution:DNNSuperResolutionNodelet
     dnn_optical_flow:DNNOpticalFlowNodelet
@@ -210,6 +211,7 @@ if(OPENCV_HAVE_DNN)
     src/nodelet/dnn_pose_estimation_nodelet.cpp
     src/nodelet/dnn_hand_pose_estimation_nodelet.cpp
     src/nodelet/dnn_semantic_segmentation_nodelet.cpp
+    src/nodelet/dnn_interactive_segmentation_nodelet.cpp
     src/nodelet/dnn_text_detection_nodelet.cpp
     src/nodelet/dnn_super_resolution_nodelet.cpp
     src/nodelet/dnn_optical_flow_nodelet.cpp
@@ -394,6 +396,10 @@ if(BUILD_TESTING)
   # RAFT of dnn_optical_flow needs OpenCV 4.10 or later (OpenCV 4.6 cannot read it)
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.10")
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_optical_flow.py)
+  endif()
+  # EfficientSAM (onnx of a vision transformer, e.g. LayerNormalization) needs OpenCV 4.10 or later
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.10")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_interactive_segmentation.py)
   endif()
   if(NOT OPENCV_HAVE_BARCODE)
     list(REMOVE_ITEM _launch_tests test/ros2/test_barcode_detection.py)
@@ -893,6 +899,7 @@ if(OPENCV_HAVE_DNN)
   opencv_apps_add_nodelet(dnn_pose_estimation src/nodelet/dnn_pose_estimation_nodelet.cpp) # opencv_zoo pose_estimation_mediapipe
   opencv_apps_add_nodelet(dnn_hand_pose_estimation src/nodelet/dnn_hand_pose_estimation_nodelet.cpp) # opencv_zoo handpose_estimation_mediapipe
   opencv_apps_add_nodelet(dnn_semantic_segmentation src/nodelet/dnn_semantic_segmentation_nodelet.cpp) # ./dnn/segmentation.cpp
+  opencv_apps_add_nodelet(dnn_interactive_segmentation src/nodelet/dnn_interactive_segmentation_nodelet.cpp) # opencv_zoo image_segmentation_efficientsam
   opencv_apps_add_nodelet(dnn_text_detection src/nodelet/dnn_text_detection_nodelet.cpp) # ./dnn/text_detection.cpp
   opencv_apps_add_nodelet(dnn_super_resolution src/nodelet/dnn_super_resolution_nodelet.cpp) # opencv_contrib dnn_superres
   opencv_apps_add_nodelet(dnn_optical_flow src/nodelet/dnn_optical_flow_nodelet.cpp) # opencv_zoo optical_flow_estimation_raft
@@ -998,6 +1005,7 @@ if(CATKIN_ENABLE_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_pose_estimation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_hand_pose_estimation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_semantic_segmentation.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_interactive_segmentation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_text_detection.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_super_resolution.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_optical_flow.launch

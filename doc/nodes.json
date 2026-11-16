@@ -2358,6 +2358,296 @@
    }
   ]
  },
+ "dnn_interactive_segmentation": {
+  "description": "Nodelet to segment the object given by a box or points with EfficientSAM",
+  "node": "dnn_interactive_segmentation",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": "jpeg",
+    "description": "Compression method",
+    "name": "dnn_interactive_segmentation.image.compressed.format",
+    "type": "string"
+   },
+   {
+    "default": 95,
+    "description": "Image quality for JPEG format",
+    "name": "dnn_interactive_segmentation.image.compressed.jpeg_quality",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "Compression level for PNG format",
+    "name": "dnn_interactive_segmentation.image.compressed.png_level",
+    "range": [
+     0,
+     9
+    ],
+    "type": "int"
+   },
+   {
+    "default": "inch",
+    "description": "tiff resolution unit",
+    "name": "dnn_interactive_segmentation.image.compressed.tiff.res_unit",
+    "type": "string"
+   },
+   {
+    "default": -1,
+    "description": "tiff xdpi",
+    "name": "dnn_interactive_segmentation.image.compressed.tiff.xdpi",
+    "type": "int"
+   },
+   {
+    "default": -1,
+    "description": "tiff ydpi",
+    "name": "dnn_interactive_segmentation.image.compressed.tiff.ydpi",
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/compressed",
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_interactive_segmentation.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": "jpeg",
+    "description": "Compression method",
+    "name": "dnn_interactive_segmentation.image.format",
+    "type": "string"
+   },
+   {
+    "default": 95,
+    "description": "Image quality for JPEG format",
+    "name": "dnn_interactive_segmentation.image.jpeg_quality",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "Compression level for PNG format",
+    "name": "dnn_interactive_segmentation.image.png_level",
+    "range": [
+     0,
+     9
+    ],
+    "type": "int"
+   },
+   {
+    "default": "inch",
+    "description": "tiff resolution unit",
+    "name": "dnn_interactive_segmentation.image.tiff.res_unit",
+    "type": "string"
+   },
+   {
+    "default": -1,
+    "description": "tiff xdpi",
+    "name": "dnn_interactive_segmentation.image.tiff.xdpi",
+    "type": "int"
+   },
+   {
+    "default": -1,
+    "description": "tiff ydpi",
+    "name": "dnn_interactive_segmentation.image.tiff.ydpi",
+    "type": "int"
+   },
+   {
+    "default": "jpeg",
+    "description": "Compression method",
+    "name": "dnn_interactive_segmentation.mask.compressed.format",
+    "type": "string"
+   },
+   {
+    "default": 95,
+    "description": "Image quality for JPEG format",
+    "name": "dnn_interactive_segmentation.mask.compressed.jpeg_quality",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "Compression level for PNG format",
+    "name": "dnn_interactive_segmentation.mask.compressed.png_level",
+    "range": [
+     0,
+     9
+    ],
+    "type": "int"
+   },
+   {
+    "default": "inch",
+    "description": "tiff resolution unit",
+    "name": "dnn_interactive_segmentation.mask.compressed.tiff.res_unit",
+    "type": "string"
+   },
+   {
+    "default": -1,
+    "description": "tiff xdpi",
+    "name": "dnn_interactive_segmentation.mask.compressed.tiff.xdpi",
+    "type": "int"
+   },
+   {
+    "default": -1,
+    "description": "tiff ydpi",
+    "name": "dnn_interactive_segmentation.mask.compressed.tiff.ydpi",
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/compressed",
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_interactive_segmentation.mask.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": "jpeg",
+    "description": "Compression method",
+    "name": "dnn_interactive_segmentation.mask.format",
+    "type": "string"
+   },
+   {
+    "default": 95,
+    "description": "Image quality for JPEG format",
+    "name": "dnn_interactive_segmentation.mask.jpeg_quality",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "Compression level for PNG format",
+    "name": "dnn_interactive_segmentation.mask.png_level",
+    "range": [
+     0,
+     9
+    ],
+    "type": "int"
+   },
+   {
+    "default": "inch",
+    "description": "tiff resolution unit",
+    "name": "dnn_interactive_segmentation.mask.tiff.res_unit",
+    "type": "string"
+   },
+   {
+    "default": -1,
+    "description": "tiff xdpi",
+    "name": "dnn_interactive_segmentation.mask.tiff.xdpi",
+    "type": "int"
+   },
+   {
+    "default": -1,
+    "description": "tiff ydpi",
+    "name": "dnn_interactive_segmentation.mask.tiff.ydpi",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the EfficientSAM model (onnx), empty for EfficientSAM-Ti of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/contours",
+    "type": "opencv_apps/msg/ContourArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/image/compressed",
+    "type": "sensor_msgs/msg/CompressedImage"
+   },
+   {
+    "name": "~/mask",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/mask/compressed",
+    "type": "sensor_msgs/msg/CompressedImage"
+   },
+   {
+    "name": "~/output",
+    "type": "opencv_apps/msg/RectArrayStamped"
+   }
+  ],
+  "services": [
+   {
+    "name": "~/set_roi",
+    "type": "opencv_apps/srv/SetROI"
+   }
+  ],
+  "subscriptions": [
+   {
+    "name": "~/add_points",
+    "type": "opencv_apps/msg/Point2DArray"
+   },
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
  "dnn_object_detection": {
   "description": "Nodelet to detect objects with a DNN model (cv::dnn::DetectionModel), e.g. YOLO",
   "node": "dnn_object_detection",

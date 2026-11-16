@@ -43,7 +43,7 @@ Find the corners, the lines and the line segments, the circles and the blobs, an
 Segmentation
 ------------
 
-Divide the image into regions by the class of each pixel: the pixels in a range of colors, the foreground, the connected regions, and the classes of a DNN. Output: the mask or label image, ``~/image`` of the color filters and background_subtraction, ``~/label`` of dnn_semantic_segmentation, and ``~/contours`` (ContourArrayStamped) of the regions of segment_objects and watershed_segmentation.
+Divide the image into regions by the class of each pixel: the pixels in a range of colors, the foreground, the connected regions, the classes of a DNN, and the object given by a box or points. Output: the mask or label image, ``~/image`` of the color filters and background_subtraction, ``~/label`` of dnn_semantic_segmentation, ``~/mask`` of dnn_interactive_segmentation, and ``~/contours`` (ContourArrayStamped) of the regions of segment_objects, watershed_segmentation and dnn_interactive_segmentation.
 
 .. toctree::
    :maxdepth: 1
@@ -56,6 +56,7 @@ Divide the image into regions by the class of each pixel: the pixels in a range 
    nodes/segment_objects
    nodes/watershed_segmentation
    nodes/dnn_semantic_segmentation
+   nodes/dnn_interactive_segmentation
 
 Image classification
 --------------------

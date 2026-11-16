@@ -13,7 +13,7 @@ Segments the moving objects by the background subtraction, and cleans up the for
    * - OpenCV
      - any version of the distributions
    * - Group
-     - Segmentation, the nodes of which publish the mask or label image, ``~/image`` of the color filters and background_subtraction, ``~/label`` of dnn_semantic_segmentation, and ``~/contours`` (ContourArrayStamped) of the regions of segment_objects and watershed_segmentation
+     - Segmentation, the nodes of which publish the mask or label image, ``~/image`` of the color filters and background_subtraction, ``~/label`` of dnn_semantic_segmentation, ``~/mask`` of dnn_interactive_segmentation, and ``~/contours`` (ContourArrayStamped) of the regions of segment_objects, watershed_segmentation and dnn_interactive_segmentation
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/segment_objects.gif
    :alt: demo of segment_objects

@@ -228,6 +228,12 @@ dnn_image_classification:
       model: https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/image_classification_mobilenet/image_classification_mobilenetv2_2022apr.onnx
     note: 'MobileNetV2 of opencv_zoo (top-1 69.4 %, 14 MB, OpenCV 4.9 or later): the more accurate of the two
       MobileNets at about the same speed, the first choice for a small computer.'
+dnn_interactive_segmentation:
+  clip: test/face_detector_withface_test_diamondback.mp4
+  note: The box around the woman at the center is given with set_image.py, as the tracking nodes, and kept for the next
+    images. EfficientSAM-Ti of opencv_zoo (Apache 2.0) needs OpenCV 4.10 or later.
+  steps:
+  - ros2 run opencv_apps set_image.py 375 325 150 310 --ros-args -r set_roi:=/dnn_interactive_segmentation/set_roi
 dnn_object_detection:
   clip: tum_walking.mp4
   variants_title: Models

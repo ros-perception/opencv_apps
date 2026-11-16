@@ -139,7 +139,7 @@ Find the corners, the lines and the line segments, the circles and the blobs, an
 
 ### Segmentation
 
-Divide the image into regions by the class of each pixel: the pixels in a range of colors, the foreground, the connected regions, and the classes of a DNN. Output: the mask or label image, `~/image` of the color filters and background_subtraction, `~/label` of dnn_semantic_segmentation, and `~/contours` (ContourArrayStamped) of the regions of segment_objects and watershed_segmentation.
+Divide the image into regions by the class of each pixel: the pixels in a range of colors, the foreground, the connected regions, the classes of a DNN, and the object given by a box or points. Output: the mask or label image, `~/image` of the color filters and background_subtraction, `~/label` of dnn_semantic_segmentation, `~/mask` of dnn_interactive_segmentation, and `~/contours` (ContourArrayStamped) of the regions of segment_objects, watershed_segmentation and dnn_interactive_segmentation.
 
 **ROS 1: noetic and later, ROS 2: jazzy and later**
 
@@ -162,6 +162,14 @@ Divide the image into regions by the class of each pixel: the pixels in a range 
 <td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/lab_color_filter.html"><img src="https://ros-perception.github.io/opencv_apps/media/lab_color_filter_thumb.gif" width="200" alt="lab_color_filter"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/lab_color_filter.html"><code>lab_color_filter</code></a><br><sub>~/image</sub></td>
 <td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/background_subtraction.html"><img src="https://ros-perception.github.io/opencv_apps/media/background_subtraction_thumb.gif" width="200" alt="background_subtraction"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/background_subtraction.html"><code>background_subtraction</code></a><br><sub>~/image</sub></td>
 <td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_semantic_segmentation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_semantic_segmentation_thumb.gif" width="200" alt="dnn_semantic_segmentation"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_semantic_segmentation.html"><code>dnn_semantic_segmentation</code></a><br><sub>~/label</sub></td>
+</tr>
+</table>
+
+**ROS 2: lyrical and later**
+
+<table>
+<tr>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_interactive_segmentation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_interactive_segmentation_thumb.gif" width="200" alt="dnn_interactive_segmentation"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_interactive_segmentation.html"><code>dnn_interactive_segmentation</code></a><br><sub>~/mask</sub></td>
 </tr>
 </table>
 
