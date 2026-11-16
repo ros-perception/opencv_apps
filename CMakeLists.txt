@@ -308,6 +308,8 @@ install(FILES rviz/detection_3d.rviz rviz/detection_3d_lidar.rviz rviz/detection
 # the parameters of slam_toolbox and the bridge of Gazebo of the examples of the odometry
 install(DIRECTORY config DESTINATION share/${PROJECT_NAME})
 # with a python3 shebang (the scripts keep "python" for ROS1 melodic and older)
+# the wrapper of use_cuda of the launch files of the dnn nodes, to run them in the docker image of CUDA
+install(PROGRAMS scripts/run_in_docker DESTINATION lib/${PROJECT_NAME})
 foreach(_script face_recognition_trainer.py set_image.py)
   file(READ scripts/${_script} _script_content)
   set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS scripts/${_script})

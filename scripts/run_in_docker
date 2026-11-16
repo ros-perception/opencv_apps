@@ -1,0 +1,35 @@
+#!/bin/bash
+# Run a node of opencv_apps in a docker image of OpenCV with CUDA (docker/cuda, docker/opencv5-cuda), e.g. as the
+# launch-prefix of use_cuda:=true of the launch files of the dnn nodes:
+#   run_in_docker IMAGE EXECUTABLE [ARGUMENTS...]
+# EXECUTABLE (of the host) runs as the executable of the same name of opencv_apps in IMAGE, with the GPUs, the network,
+# the IPC (the shared memory of DDS) and the processes of the host, as the user of the host, with the ROS environment
+# of the host (ROS_DOMAIN_ID, RMW_IMPLEMENTATION, ...), ~/.ros (the downloaded models) and /tmp (the parameters of
+# launch); build IMAGE first, e.g. docker build -f docker/cuda/Dockerfile -t opencv_apps:cuda . in opencv_apps
+set -e
+if [ $# -lt 2 ]; then
+  echo "usage: $0 IMAGE EXECUTABLE [ARGUMENTS...]" >&2
+  exit 2
+fi
+image=$1
+executable=$(basename "$2")
+shift 2
+if ! docker image inspect "$image" > /dev/null 2>&1; then
+  echo "$0: no docker image $image; build it in opencv_apps, e.g. docker build -f docker/cuda/Dockerfile -t $image ." >&2
+  exit 1
+fi
+environment=()
+for name in ROS_DOMAIN_ID ROS_LOCALHOST_ONLY ROS_AUTOMATIC_DISCOVERY_RANGE ROS_STATIC_PEERS RMW_IMPLEMENTATION \
+            FASTDDS_DEFAULT_PROFILES_FILE FASTRTPS_DEFAULT_PROFILES_FILE CYCLONEDDS_URI RCUTILS_LOGGING_BUFFERED_STREAM \
+            RCUTILS_COLORIZED_OUTPUT DISPLAY; do
+  [ -n "${!name}" ] && environment+=(-e "$name=${!name}")
+done
+mkdir -p "$HOME/.ros"
+# the X server of the host for debug_view (/tmp/.X11-unix is in /tmp)
+xauthority=${XAUTHORITY:-$HOME/.Xauthority}
+[ -f "$xauthority" ] && environment+=(-e "XAUTHORITY=$xauthority" -v "$xauthority:$xauthority:ro")
+# the node of the ROS distribution of the image, which receives SIGINT and SIGTERM of launch by docker run
+exec docker run --rm --init --gpus all --net=host --ipc=host --pid=host \
+  --user "$(id -u):$(id -g)" -e HOME="$HOME" -v "$HOME/.ros:$HOME/.ros" -v /tmp:/tmp "${environment[@]}" \
+  "$image" bash -c '. /opt/ros/*/setup.sh && . /ws/install/setup.sh && exec /ws/install/opencv_apps/lib/opencv_apps/"$0" "$@"' \
+  "$executable" "$@"
