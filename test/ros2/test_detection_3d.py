@@ -43,6 +43,7 @@ from opencv_apps_test import description, include, MessagesTest, TEST_DIR
 import pytest
 from tf2_msgs.msg import TFMessage
 from vision_msgs.msg import Detection3DArray
+from visualization_msgs.msg import Marker, MarkerArray
 
 
 @pytest.mark.launch_test
@@ -62,6 +63,15 @@ def person(detection):
             0.2 < box.size.x < 1.5 and 0.5 < box.size.y < 2.5)
 
 
+def box_edges(marker):
+    # the box of an object as its 12 edges (24 points), each point at a corner of the box
+    if marker.ns != 'boxes' or marker.type != Marker.LINE_LIST or len(marker.points) != 24:
+        return False
+    half = [abs(marker.points[0].x), abs(marker.points[0].y), abs(marker.points[0].z)]
+    return min(half) > 0 and all(abs(abs(v) - h) < 1e-3 for p in marker.points
+                                 for v, h in zip([p.x, p.y, p.z], half))
+
+
 def person_frame(transform):
     # the TF frame of the person, in the camera frame
     return (transform.child_frame_id == 'person_0' and transform.header.frame_id == 'camera_rgb_optical_frame' and
@@ -75,4 +85,5 @@ class TestDetection3D(MessagesTest, unittest.TestCase):
         'detection_3d/detections': (Detection3DArray, lambda msg: msg.header.frame_id == 'camera_rgb_optical_frame' and
                                     any(person(d) for d in msg.detections)),
         'tf': (TFMessage, lambda msg: any(person_frame(t) for t in msg.transforms)),
+        'detection_3d/markers': (MarkerArray, lambda msg: any(box_edges(m) for m in msg.markers)),
     }
