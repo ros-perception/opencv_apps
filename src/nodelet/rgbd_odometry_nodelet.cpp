@@ -224,6 +224,16 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
       if (!sensorOnBase(header.frame_id))
         return;
       cv::Mat camera_matrix = cameraMatrix(*info_msg);
+      // the rectified frame of P in the optical frame of the camera (header.frame_id): R of camera_info, the identity
+      // if R is 0; the motion and the points of the rectified frame are rotated back to the optical frame
+#ifdef ROS2
+      const double* r = info_msg->r.data();
+#else
+      const double* r = info_msg->R.data();
+#endif
+      cv::Matx44d rectified = cv::Matx44d::eye();
+      if (std::any_of(r, r + 9, [](double c) { return c != 0.0; }))
+        rectified = cv::Matx44d(r[0], r[1], r[2], 0, r[3], r[4], r[5], 0, r[6], r[7], r[8], 0, 0, 0, 0, 1);
       if (camera_matrix.at<double>(0, 0) == 0.0 || !updateOdometry(camera_matrix))
         return;
       cv::Mat depth = depthInMeters(depth_msg);
@@ -291,7 +301,7 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
         previous_pose_ = pose;
         previous_motion_ = motion;
       }
-      publishOdometry(header, motion);
+      publishOdometry(header, rectified.t() * motion * rectified);
 
       // the colored points of every 4th pixel to the 3D map
       std::vector<cv::Point3d> points;
@@ -304,7 +314,8 @@ class RGBDOdometryNodelet : public opencv_apps::OdometryNodelet
           float z = depth.at<float>(v, u);
           if (!std::isfinite(z) || z < min_depth_ || z > max_depth_)
             continue;
-          points.push_back(cv::Point3d((u - cx) * z / fx, (v - cy) * z / fy, z));
+          cv::Vec4d point = rectified.t() * cv::Vec4d((u - cx) * z / fx, (v - cy) * z / fy, z, 1.0);
+          points.push_back(cv::Point3d(point[0], point[1], point[2]));
           if (!image_msg)
             colors.push_back(cv::Vec3b::all(255));
           else if (image.channels() == 1)
