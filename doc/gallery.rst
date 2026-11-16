@@ -170,6 +170,10 @@
    <a class="opencv-apps-tile" href="nodes/simple_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/simple_flow_thumb.gif" alt="simple_flow" loading="lazy"><span>simple_flow<br><small>~/flows</small></span></a>
    <a class="opencv-apps-tile" href="nodes/phase_corr.html"><img src="https://ros-perception.github.io/opencv_apps/media/phase_corr_thumb.gif" alt="phase_corr" loading="lazy"><span>phase_corr<br><small>~/shift</small></span></a>
    </div>
+   <p class="opencv-apps-tier">ROS 2: lyrical and later</p>
+   <div class="opencv-apps-gallery">
+   <a class="opencv-apps-tile" href="nodes/dnn_optical_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_optical_flow_thumb.gif" alt="dnn_optical_flow" loading="lazy"><span>dnn_optical_flow<br><small>~/flows</small></span></a>
+   </div>
    <h3>Histogram comparison</h3>
    <p>Compare the color histogram of the image with a reference.<br>Output: <code>~/distance</code> (Float64).</p>
    <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>

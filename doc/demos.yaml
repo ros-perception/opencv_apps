@@ -292,6 +292,12 @@ dnn_object_detection:
       input_height: 416
     note: 'YOLOv4-tiny of darknet (AP 21.7 on COCO, 23 MB): the fastest and least accurate, and an example of
       darknet models, e.g. your own model trained with darknet; OpenCV 4 only, as OpenCV 5 reads only onnx.'
+dnn_optical_flow:
+  clip: keybridge.mp4
+  note: Needs OpenCV 4.10 or later. RAFT takes about 1 s per image on a CPU (OpenCV 4.x runs it on the CPU), so the
+    flows are of the images about 1 s apart, which the node processes, not of the consecutive images of the 10 Hz
+    video. The model of opencv_zoo is under the BSD-3-Clause license (RAFT) and the MIT License (its conversion to
+    onnx).
 dnn_pose_estimation:
   clip: tos_bridge.mp4
   note: Needs OpenCV 4.9 or later; recorded with OpenCV 4.12 on CUDA.

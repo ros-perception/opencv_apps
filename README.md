@@ -296,6 +296,14 @@ Estimate the motion of the image. Output: `~/flows` (FlowArrayStamped), `~/shift
 </tr>
 </table>
 
+**ROS 2: lyrical and later**
+
+<table>
+<tr>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_optical_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_optical_flow_thumb.gif" width="200" alt="dnn_optical_flow"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_optical_flow.html"><code>dnn_optical_flow</code></a><br><sub>~/flows</sub></td>
+</tr>
+</table>
+
 ### Histogram comparison
 
 Compare the color histogram of the image with a reference. Output: `~/distance` (Float64).

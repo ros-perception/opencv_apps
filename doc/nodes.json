@@ -2511,6 +2511,105 @@
    }
   ]
  },
+ "dnn_optical_flow": {
+  "description": "Nodelet of dense optical flow with RAFT (DNN), the same outputs as fback_flow",
+  "node": "dnn_optical_flow",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise. RAFT runs on the CPU instead of CUDA with OpenCV 4.x, which crashes",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_optical_flow.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 360,
+    "description": "Height of the network input, 360 for RAFT of opencv_zoo",
+    "name": "input_height",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": 480,
+    "description": "Width of the network input, 480 for RAFT of opencv_zoo",
+    "name": "input_width",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the RAFT model (onnx) of the inputs 0 and 1 (the previous and the current image) and the output of the flow, empty for RAFT of opencv_zoo (OpenCV 4.10 or later). The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/flows",
+    "type": "opencv_apps/msg/FlowArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
  "dnn_pose_estimation": {
   "description": "Nodelet to estimate the human poses with MediaPipe person detection and pose estimation",
   "node": "dnn_pose_estimation",

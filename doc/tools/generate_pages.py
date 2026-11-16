@@ -72,7 +72,7 @@ CATEGORIES = [
                'dnn_facial_expression_recognition']),
     ('Human and hand poses', ['dnn_pose_estimation', 'dnn_hand_pose_estimation']),
     ('Tracking', ['tracking', 'match_template', 'dnn_tracking', 'camshift']),
-    ('Optical flow and motion', ['fback_flow', 'lk_flow', 'simple_flow', 'phase_corr']),
+    ('Optical flow and motion', ['fback_flow', 'lk_flow', 'simple_flow', 'dnn_optical_flow', 'phase_corr']),
     ('Histogram comparison', ['compare_histogram']),
     ('Depth and 3D localization', ['dnn_depth_estimation', 'detection_3d']),
     ('Odometry and maps', ['rgbd_odometry', 'laser_odometry']),
@@ -269,7 +269,7 @@ for _node in ['aruco_detection', 'background_subtraction', 'barcode_detection', 
               'dnn_hand_pose_estimation', 'dnn_image_classification', 'dnn_object_detection', 'dnn_pose_estimation',
               'dnn_semantic_segmentation', 'dnn_text_detection', 'dnn_tracking']:
     SINCE[_node] = '3.0.0'
-for _node in ['detection_3d', 'rgbd_odometry', 'laser_odometry', 'dnn_super_resolution']:
+for _node in ['detection_3d', 'rgbd_odometry', 'laser_odometry', 'dnn_super_resolution', 'dnn_optical_flow']:
     SINCE[_node] = '3.1.0'
 # the requirements of OpenCV of the nodes (see CMakeLists.txt): the minimum version, and the description
 OPENCV_REQUIREMENTS = {
@@ -289,6 +289,9 @@ OPENCV_REQUIREMENTS = {
                               'for VitTrack'),
     'rgbd_odometry': (None, 'the rgbd module of opencv_contrib (OpenCV 4)'),
     'dnn_super_resolution': ('4.10', 'OpenCV 4.10 or later, which reads the onnx models of dnn_superres'),
+    'dnn_optical_flow': ('4.10', 'OpenCV 4.10 or later, which reads RAFT (tested with OpenCV 4.12 and 5.1, not with '
+                                 'OpenCV 4.10 of lyrical); on the CPU with OpenCV 4.x, whose CUDA backend crashes '
+                                 'with RAFT'),
 }
 for _node in ['dnn_face_detection', 'dnn_face_recognition', 'dnn_facial_expression_recognition', 'dnn_object_detection',
               'dnn_image_classification', 'dnn_semantic_segmentation', 'dnn_depth_estimation', 'dnn_text_detection']:

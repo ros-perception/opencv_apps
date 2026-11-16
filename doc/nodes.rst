@@ -149,6 +149,7 @@ Estimate the motion of the image. Output: ``~/flows`` (FlowArrayStamped), ``~/sh
    nodes/fback_flow
    nodes/lk_flow
    nodes/simple_flow
+   nodes/dnn_optical_flow
    nodes/phase_corr
 
 Histogram comparison
