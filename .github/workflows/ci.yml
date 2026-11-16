@@ -204,3 +204,27 @@ jobs:
           # run tests one by one, since they publish/subscribe the same topics
           colcon test --event-handlers console_cohesion+ --ctest-args --output-on-failure
           colcon test-result --verbose
+
+  # build only (no test) with OpenCV 5 and opencv_contrib, built in docker/opencv5 (lyrical, CPU only) with cv_bridge
+  # of vision_opencv#572; the image is cached by GitHub Actions, and rebuilt (about an hour) when it changes
+  opencv5:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chcekout Source
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build the image of OpenCV 5
+        uses: docker/build-push-action@v6
+        with:
+          context: docker/opencv5
+          tags: opencv_apps_opencv5
+          load: true
+          cache-from: type=gha,scope=opencv5
+          cache-to: type=gha,mode=max,scope=opencv5
+      - name: Compile opencv_apps with OpenCV 5
+        run: |
+          docker run --rm -v $PWD:/ws/src/opencv_apps:ro opencv_apps_opencv5 bash -c \
+            '. /opt/ros/lyrical/setup.sh && . install/setup.sh && colcon build --packages-select opencv_apps \
+             --event-handlers console_cohesion+ --cmake-args -DCMAKE_BUILD_TYPE=Release \
+             -DOpenCV_DIR=/opt/opencv/lib/cmake/opencv5'
