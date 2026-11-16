@@ -729,18 +729,35 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       marker.header = detections_msg.header;
       marker.ns = "boxes";
       marker.id = static_cast<int>(markers_msg.markers.size());
-      marker.type = visualization_msgs::msg::Marker::CUBE;
+      // the 12 edges of the box (not filled, not to hide the points and the skeletons in it)
+      marker.type = visualization_msgs::msg::Marker::LINE_LIST;
       marker.action = visualization_msgs::msg::Marker::ADD;
       marker.pose = detection.bbox.center;
-      marker.scale.x = std::max(size.x, 0.01);
-      marker.scale.y = std::max(size.y, 0.01);
-      marker.scale.z = std::max(size.z, 0.01);
+      marker.scale.x = std::max(0.01, center.z * 0.004);  // the width of the lines, wider for the far objects
+      for (int e = 0; e < 12; e++)
+      {
+        // the edges along the axis e / 4, at the corners (-1 or 1) of the other two axes of e % 4
+        int axis = e / 4, sign1 = (e % 4) & 1 ? 1 : -1, sign2 = (e % 4) & 2 ? 1 : -1;
+        for (int end : { -1, 1 })
+        {
+          double xyz[3];
+          xyz[axis] = end;
+          xyz[(axis + 1) % 3] = sign1;
+          xyz[(axis + 2) % 3] = sign2;
+          geometry_msgs::msg::Point p;
+          p.x = xyz[0] * size.x / 2;
+          p.y = xyz[1] * size.y / 2;
+          p.z = xyz[2] * size.z / 2;
+          marker.points.push_back(p);
+        }
+      }
       marker.color.r = c[2] / 255.0f;
       marker.color.g = c[1] / 255.0f;
       marker.color.b = c[0] / 255.0f;
-      marker.color.a = 0.4f;
+      marker.color.a = 1.0f;
       markers_msg.markers.push_back(marker);
       visualization_msgs::msg::Marker label = marker;
+      label.points.clear();
       label.ns = "labels";
       label.id = static_cast<int>(markers_msg.markers.size());
       label.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
