@@ -158,8 +158,8 @@ public:
       const int kz = planar ? 0 : k;
       for (int dx = -k; dx <= k; dx++)
         for (int dy = -k; dy <= k; dy++)
-          for (int dz = -kz, step = !planar && std::max(std::abs(dx), std::abs(dy)) < k ? 2 * k : 1;
-               dz <= kz; dz += step)
+          for (int dz = -kz, step = !planar && std::max(std::abs(dx), std::abs(dy)) < k ? 2 * k : 1; dz <= kz;
+               dz += step)
           {
             if (std::max(std::abs(dx), std::max(std::abs(dy), std::abs(dz))) != k)
               continue;  // the voxels of the shell k only
