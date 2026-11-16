@@ -57,7 +57,7 @@ TEST_VIDEOS_URL = 'https://raw.githubusercontent.com/ros-perception/opencv_apps/
 # replace another, e.g. face_detection by dnn_face_detection
 CATEGORIES = [
     ('Image filters', ['adding_images', 'discrete_fourier_transform', 'edge_detection', 'equalize_histogram',
-                       'morphology', 'pyramids', 'smoothing', 'threshold']),
+                       'morphology', 'pyramids', 'smoothing', 'threshold', 'dnn_super_resolution']),
     ('Features and shapes', ['corner_harris', 'goodfeature_track', 'hough_lines', 'line_segment_detector',
                              'hough_circles', 'blob_detection', 'find_contours', 'general_contours',
                              'contour_moments', 'convex_hull']),
@@ -172,7 +172,7 @@ DESCRIPTIONS = {
 # the descriptions of the groups, and their common output (the message types are linked in the pages)
 CATEGORY_DESCRIPTIONS = {
     'Image filters': ('Filter and transform the images: edges, histogram equalization, morphology, image pyramids, '
-                      'smoothing, thresholds and the Fourier transform.',
+                      'smoothing, thresholds, the Fourier transform and the super resolution by a DNN.',
                       'the processed image in ``~/image``'),
     'Features and shapes': ('Find the corners, the lines and the line segments, the circles and the blobs, and the '
                             'contours with their bounding shapes, moments and convex hulls.',
@@ -269,7 +269,7 @@ for _node in ['aruco_detection', 'background_subtraction', 'barcode_detection', 
               'dnn_hand_pose_estimation', 'dnn_image_classification', 'dnn_object_detection', 'dnn_pose_estimation',
               'dnn_semantic_segmentation', 'dnn_text_detection', 'dnn_tracking']:
     SINCE[_node] = '3.0.0'
-for _node in ['detection_3d', 'rgbd_odometry', 'laser_odometry']:
+for _node in ['detection_3d', 'rgbd_odometry', 'laser_odometry', 'dnn_super_resolution']:
     SINCE[_node] = '3.1.0'
 # the requirements of OpenCV of the nodes (see CMakeLists.txt): the minimum version, and the description
 OPENCV_REQUIREMENTS = {
@@ -288,6 +288,7 @@ OPENCV_REQUIREMENTS = {
     'dnn_tracking': ('4.5.4', 'OpenCV 4.5.4 or later for DaSiamRPN, 4.7 or later for NanoTrack and 4.9 or later '
                               'for VitTrack'),
     'rgbd_odometry': (None, 'the rgbd module of opencv_contrib (OpenCV 4)'),
+    'dnn_super_resolution': ('4.10', 'OpenCV 4.10 or later, which reads the onnx models of dnn_superres'),
 }
 for _node in ['dnn_face_detection', 'dnn_face_recognition', 'dnn_facial_expression_recognition', 'dnn_object_detection',
               'dnn_image_classification', 'dnn_semantic_segmentation', 'dnn_depth_estimation', 'dnn_text_detection']:

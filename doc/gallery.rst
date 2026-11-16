@@ -46,7 +46,7 @@
    }
    </style>
    <h3>Image filters</h3>
-   <p>Filter and transform the images: edges, histogram equalization, morphology, image pyramids, smoothing, thresholds and the Fourier transform.<br>Output: the processed image in <code>~/image</code>.</p>
+   <p>Filter and transform the images: edges, histogram equalization, morphology, image pyramids, smoothing, thresholds, the Fourier transform and the super resolution by a DNN.<br>Output: the processed image in <code>~/image</code>.</p>
    <p class="opencv-apps-tier">ROS 1: noetic and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/adding_images.html"><img src="https://ros-perception.github.io/opencv_apps/media/adding_images_thumb.gif" alt="adding_images" loading="lazy"><span>adding_images<br><small>~/image</small></span></a>
@@ -60,6 +60,10 @@
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/equalize_histogram.html"><img src="https://ros-perception.github.io/opencv_apps/media/equalize_histogram_thumb.gif" alt="equalize_histogram" loading="lazy"><span>equalize_histogram<br><small>~/image</small></span></a>
    <a class="opencv-apps-tile" href="nodes/morphology.html"><img src="https://ros-perception.github.io/opencv_apps/media/morphology_thumb.gif" alt="morphology" loading="lazy"><span>morphology<br><small>~/image</small></span></a>
+   </div>
+   <p class="opencv-apps-tier">ROS 2: lyrical and later</p>
+   <div class="opencv-apps-gallery">
+   <a class="opencv-apps-tile" href="nodes/dnn_super_resolution.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_super_resolution_thumb.gif" alt="dnn_super_resolution" loading="lazy"><span>dnn_super_resolution<br><small>~/image</small></span></a>
    </div>
    <h3>Features and shapes</h3>
    <p>Find the corners, the lines and the line segments, the circles and the blobs, and the contours with their bounding shapes, moments and convex hulls.<br>Output: <code>~/corners</code> (Point2DArrayStamped), <code>~/lines</code> (LineArrayStamped), <code>~/circles</code> (CircleArrayStamped) and <code>~/contours</code> (ContourArrayStamped, <code>~/hulls</code> of convex_hull), by the kind of the features.</p>

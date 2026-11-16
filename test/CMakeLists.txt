@@ -149,6 +149,12 @@ if(OPENCV_HAVE_DNN AND CURL_FOUND AND NOT OpenCV_VERSION VERSION_LESS "4.9")
 else()
   list(APPEND _skip_test_files test-dnn_pose_estimation.test test-dnn_hand_pose_estimation.test)
 endif()
+# the onnx models of dnn_superres (DepthToSpace) of dnn_super_resolution need OpenCV 4.10 or later
+if(OPENCV_HAVE_DNN AND CURL_FOUND AND NOT OpenCV_VERSION VERSION_LESS "4.10")
+  add_rostest(test-dnn_super_resolution.test ARGS gui:=false)
+else()
+  list(APPEND _skip_test_files test-dnn_super_resolution.test)
+endif()
 # detection_3d, built with tf2_ros and vision_msgs; the test detects the people with dnn_object_detection
 if(OPENCV_APPS_HAVE_DETECTION_3D AND OPENCV_HAVE_DNN AND CURL_FOUND)
   add_rostest(test-detection_3d.test ARGS gui:=false)

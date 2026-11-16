@@ -297,6 +297,32 @@ dnn_pose_estimation:
   note: Needs OpenCV 4.9 or later; recorded with OpenCV 4.12 on CUDA.
 dnn_semantic_segmentation:
   clip: tos_bridge.mp4
+dnn_super_resolution:
+  clip: test/face_detector_withface_test_diamondback.mp4
+  variants_title: Models
+  variants_note: The node runs the onnx models of `dnn_superres <https://github.com/opencv/opencv_contrib/tree/5.x/modules/dnn_superres>`_
+    of opencv_contrib (in opencv_extra, OpenCV 4.10 or later), given by ``model``, whose scale is the scale of
+    ``~/image``; the model enlarges the Y channel of YCrCb, and the colors (Cr and Cb) are enlarged by the bicubic
+    interpolation. The models are converted from the TensorFlow models of
+    `TF-ESPCN <https://github.com/fannymonori/TF-ESPCN>`_ and
+    `FSRCNN_Tensorflow <https://github.com/Saafke/FSRCNN_Tensorflow>`_, both Apache-2.0 (opencv_extra, which has
+    the onnx files, has no license file of its own). The input of this demo is 640x480.
+  variants:
+  - name: espcn_x2
+    title: ESPCN x2 (default)
+    default: true
+    note: 'ESPCN x2 (86 KB): 2 times as large, e.g. 640x480 to 1280x960, the fastest.'
+  - name: fsrcnn_x2
+    title: FSRCNN x2
+    launch_args:
+      model: https://raw.githubusercontent.com/opencv/opencv_extra/697e5c3de828f3154e82f222dbe902d622bbe19a/testdata/cv/dnn_superres/FSRCNN_x2.onnx
+    note: 'FSRCNN x2 (38 KB): 2 times as large, about as accurate as ESPCN x2 (the benchmark of dnn_superres) and
+      slower.'
+  - name: fsrcnn_x3
+    title: FSRCNN x3
+    launch_args:
+      model: https://raw.githubusercontent.com/opencv/opencv_extra/697e5c3de828f3154e82f222dbe902d622bbe19a/testdata/cv/dnn_superres/FSRCNN_x3.onnx
+    note: 'FSRCNN x3 (39 KB): 3 times as large, e.g. 640x480 to 1920x1440.'
 dnn_text_detection:
   clip: test/text.mp4
 dnn_tracking:

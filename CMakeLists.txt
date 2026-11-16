@@ -194,6 +194,7 @@ if(OPENCV_HAVE_DNN)
     dnn_hand_pose_estimation:DNNHandPoseEstimationNodelet
     dnn_semantic_segmentation:DNNSemanticSegmentationNodelet
     dnn_text_detection:DNNTextDetectionNodelet
+    dnn_super_resolution:DNNSuperResolutionNodelet
     qrcode_detection:QRCodeDetectionNodelet
   )
   list(APPEND _nodelet_cppfiles
@@ -209,6 +210,7 @@ if(OPENCV_HAVE_DNN)
     src/nodelet/dnn_hand_pose_estimation_nodelet.cpp
     src/nodelet/dnn_semantic_segmentation_nodelet.cpp
     src/nodelet/dnn_text_detection_nodelet.cpp
+    src/nodelet/dnn_super_resolution_nodelet.cpp
     src/nodelet/qrcode_detection_nodelet.cpp
   )
   if(OPENCV_HAVE_BARCODE)
@@ -382,6 +384,10 @@ if(BUILD_TESTING)
   # Depth Anything V2 Metric (onnx of a vision transformer) needs OpenCV 4.10 or later
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.10")
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_depth_estimation_metric.py)
+  endif()
+  # the onnx models of dnn_superres (DepthToSpace) of dnn_super_resolution need OpenCV 4.10 or later
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.10")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_super_resolution.py)
   endif()
   if(NOT OPENCV_HAVE_BARCODE)
     list(REMOVE_ITEM _launch_tests test/ros2/test_barcode_detection.py)
@@ -882,6 +888,7 @@ if(OPENCV_HAVE_DNN)
   opencv_apps_add_nodelet(dnn_hand_pose_estimation src/nodelet/dnn_hand_pose_estimation_nodelet.cpp) # opencv_zoo handpose_estimation_mediapipe
   opencv_apps_add_nodelet(dnn_semantic_segmentation src/nodelet/dnn_semantic_segmentation_nodelet.cpp) # ./dnn/segmentation.cpp
   opencv_apps_add_nodelet(dnn_text_detection src/nodelet/dnn_text_detection_nodelet.cpp) # ./dnn/text_detection.cpp
+  opencv_apps_add_nodelet(dnn_super_resolution src/nodelet/dnn_super_resolution_nodelet.cpp) # opencv_contrib dnn_superres
   opencv_apps_add_nodelet(qrcode_detection src/nodelet/qrcode_detection_nodelet.cpp) # ./cpp/qrcode.cpp
   if(OPENCV_HAVE_BARCODE)
     opencv_apps_add_nodelet(barcode_detection src/nodelet/barcode_detection_nodelet.cpp) # ./cpp/barcode.cpp
@@ -985,6 +992,7 @@ if(CATKIN_ENABLE_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_hand_pose_estimation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_semantic_segmentation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_text_detection.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_super_resolution.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/qrcode_detection.launch)
     endif()
     if(NOT OPENCV_HAVE_BARCODE)
