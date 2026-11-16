@@ -115,7 +115,7 @@
    <a class="opencv-apps-tile" href="nodes/dnn_image_classification.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_image_classification_thumb.gif" alt="dnn_image_classification" loading="lazy"><span>dnn_image_classification<br><small>~/detections</small></span></a>
    </div>
    <h3>Object detection</h3>
-   <p>Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn).<br>Output: <code>~/detections</code> (DetectionArrayStamped).</p>
+   <p>Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn), and re-identify the people of ``~/detections`` over the images by their appearance (dnn_person_reid, a post-process of the detections).<br>Output: <code>~/detections</code> (DetectionArrayStamped), with the id of each person in <code>data</code> for dnn_person_reid.</p>
    <p class="opencv-apps-tier">ROS 1: noetic and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/people_detect.html"><img src="https://ros-perception.github.io/opencv_apps/media/people_detect_thumb.gif" alt="people_detect" loading="lazy"><span>people_detect<br><small>~/detections</small></span></a>
@@ -123,6 +123,7 @@
    <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/dnn_object_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_object_detection_thumb.gif" alt="dnn_object_detection" loading="lazy"><span>dnn_object_detection<br><small>~/detections</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/dnn_person_reid.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_person_reid_thumb.gif" alt="dnn_person_reid" loading="lazy"><span>dnn_person_reid<br><small>~/detections</small></span></a>
    </div>
    <h3>Codes and markers</h3>
    <p>Find and decode QR codes, barcodes and ArUco markers.<br>Output: <code>~/detections</code> (DetectionArrayStamped), with the decoded data and the corners.</p>
@@ -182,12 +183,6 @@
    <p class="opencv-apps-tier">ROS 2: lyrical and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/dnn_optical_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_optical_flow_thumb.gif" alt="dnn_optical_flow" loading="lazy"><span>dnn_optical_flow<br><small>~/flows</small></span></a>
-   </div>
-   <h3>Re-identification</h3>
-   <p>Re-identify the people detected by the other nodes over the images, by the similarity of their appearance to the people seen before.<br>Output: <code>~/detections</code> (DetectionArrayStamped), with the id of each person in <code>data</code>.</p>
-   <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
-   <div class="opencv-apps-gallery">
-   <a class="opencv-apps-tile" href="nodes/dnn_person_reid.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_person_reid_thumb.gif" alt="dnn_person_reid" loading="lazy"><span>dnn_person_reid<br><small>~/detections</small></span></a>
    </div>
    <h3>Histogram comparison</h3>
    <p>Compare the color histogram of the image with a reference.<br>Output: <code>~/distance</code> (Float64).</p>

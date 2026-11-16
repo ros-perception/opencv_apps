@@ -15,7 +15,7 @@ Person re-identification of the people detected by another node (e.g. ~/detectio
    * - OpenCV
      - OpenCV 4.5.4 or later
    * - Group
-     - Re-identification, the nodes of which publish ``~/detections`` (DetectionArrayStamped), with the id of each person in ``data``
+     - Object detection, the nodes of which publish ``~/detections`` (DetectionArrayStamped), with the id of each person in ``data`` for dnn_person_reid
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/dnn_person_reid.gif
    :alt: demo of dnn_person_reid

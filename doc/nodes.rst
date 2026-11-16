@@ -73,13 +73,14 @@ Find what the whole image shows, the classes of ImageNet. Output: ``~/detections
 Object detection
 ----------------
 
-Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn). Output: ``~/detections`` (DetectionArrayStamped).
+Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn), and re-identify the people of ``~/detections`` over the images by their appearance (dnn_person_reid, a post-process of the detections). Output: ``~/detections`` (DetectionArrayStamped), with the id of each person in ``data`` for dnn_person_reid.
 
 .. toctree::
    :maxdepth: 1
 
    nodes/people_detect
    nodes/dnn_object_detection
+   nodes/dnn_person_reid
 
 Codes and markers
 -----------------
@@ -154,16 +155,6 @@ Estimate the motion of the image. Output: ``~/flows`` (FlowArrayStamped), ``~/sh
    nodes/simple_flow
    nodes/dnn_optical_flow
    nodes/phase_corr
-
-Re-identification
------------------
-
-Re-identify the people detected by the other nodes over the images, by the similarity of their appearance to the people seen before. Output: ``~/detections`` (DetectionArrayStamped), with the id of each person in ``data``.
-
-.. toctree::
-   :maxdepth: 1
-
-   nodes/dnn_person_reid
 
 Histogram comparison
 --------------------

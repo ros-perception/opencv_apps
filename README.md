@@ -196,7 +196,7 @@ Find what the whole image shows, the classes of ImageNet. Output: `~/detections`
 
 ### Object detection
 
-Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn). Output: `~/detections` (DetectionArrayStamped).
+Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn), and re-identify the people of `~/detections` over the images by their appearance (dnn_person_reid, a post-process of the detections). Output: `~/detections` (DetectionArrayStamped), with the id of each person in `data` for dnn_person_reid.
 
 **ROS 1: noetic and later, ROS 2: jazzy and later**
 
@@ -211,6 +211,7 @@ Find the bounding boxes of the people (HOG of people_detect) and the objects (YO
 <table>
 <tr>
 <td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_object_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_object_detection_thumb.gif" width="200" alt="dnn_object_detection"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_object_detection.html"><code>dnn_object_detection</code></a><br><sub>~/detections</sub></td>
+<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_person_reid.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_person_reid_thumb.gif" width="200" alt="dnn_person_reid"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_person_reid.html"><code>dnn_person_reid</code></a><br><sub>~/detections</sub></td>
 </tr>
 </table>
 
@@ -318,18 +319,6 @@ Estimate the motion of the image. Output: `~/flows` (FlowArrayStamped), `~/shift
 <table>
 <tr>
 <td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_optical_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_optical_flow_thumb.gif" width="200" alt="dnn_optical_flow"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_optical_flow.html"><code>dnn_optical_flow</code></a><br><sub>~/flows</sub></td>
-</tr>
-</table>
-
-### Re-identification
-
-Re-identify the people detected by the other nodes over the images, by the similarity of their appearance to the people seen before. Output: `~/detections` (DetectionArrayStamped), with the id of each person in `data`.
-
-**ROS 1: ROS One and later, ROS 2: jazzy and later**
-
-<table>
-<tr>
-<td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_person_reid.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_person_reid_thumb.gif" width="200" alt="dnn_person_reid"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_person_reid.html"><code>dnn_person_reid</code></a><br><sub>~/detections</sub></td>
 </tr>
 </table>
 
