@@ -83,7 +83,7 @@ Human and hand skeletons
 
    python3 publish_rgbd.py rgbd_walking.mp4 rgbd_walking_depth.npz &
    ros2 launch opencv_apps dnn_pose_estimation.launch.xml image:=image &
-   ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d.rviz --ros-args -r /dnn_object_detection/image:=/dnn_pose_estimation/image &
+   ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d_skeletons.rviz &
    ros2 launch opencv_apps detection_3d.launch.xml input:=/dnn_pose_estimation/skeletons depth:=depth camera_info:=camera_info input_type:=skeletons
 
 ``~/skeletons`` of dnn_pose_estimation (``person``) or dnn_hand_pose_estimation (``left_hand`` and ``right_hand``): the box and the TF frame of each skeleton as an object, the TF frame ``<label>_<id>_<keypoint>`` of each keypoint (e.g. ``person_0_left_wrist``) at the median depth within ``keypoint_radius`` of the keypoint, and the joints and the bones in ``~/markers``; the keypoints less visible than ``keypoint_visibility`` are left out. Needs OpenCV 4.9 or later, as the pose nodes.
