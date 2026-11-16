@@ -10,6 +10,8 @@
 [![noetic](https://img.shields.io/ros/v/noetic/opencv_apps)](https://index.ros.org/p/opencv_apps/#noetic)
 [![ROS One](https://img.shields.io/endpoint?url=https://ros-perception.github.io/opencv_apps/media/ros_one.json)](https://ros.packages.techfak.net/)
 
+<p align="center"><img src="https://raw.githubusercontent.com/ros-perception/opencv_apps/docs-media/opencv_apps_hero.gif" width="960" alt="opencv_apps: the input image, edge_detection, dnn_image_classification, dnn_pose_estimation, dnn_tracking, fback_flow and detection_3d"></p>
+
 opencv_apps provides the ROS nodes that run the functions of [OpenCV](https://opencv.org/): image processing,
 features, contours, optical flows, tracking, detection and recognition, and the deep learning models of `cv::dnn`.
 Each node subscribes an image topic, and publishes its results as messages and as an image, so you can use the

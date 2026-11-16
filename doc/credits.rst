@@ -59,3 +59,13 @@ images (612x512, 1/4 of the camera) and the LiDAR points in the view of the came
 sequence boreas-2021-09-02-11-42 of the `Boreas dataset <https://www.boreas.utias.utoronto.ca/>`_ (K. Burnett et al.,
 "Boreas: A Multi-Season Autonomous Driving Dataset", IJRR 2023), licensed under
 `CC BY 4.0 <https://creativecommons.org/licenses/by/4.0/>`_.
+
+The image at the top of README.md (``opencv_apps_hero.gif`` of the docs-media branch) is made of the demo videos above
+(Tears of Steel, the TUM RGB-D dataset), with the ROS logo of
+`ros-infrastructure/artwork <https://github.com/ros-infrastructure/artwork>`_
+(`CC BY-NC 4.0 <https://creativecommons.org/licenses/by-nc/4.0/>`_, and the
+`trademark policy of ROS <https://www.ros.org/blog/media/>`_) and the OpenCV logo of
+`opencv/opencv <https://github.com/opencv/opencv/tree/4.x/doc>`_. Its
+detection_3d is of the black-jacket scene of Tears of Steel (about 4:37 - 4:49, from the 720p version of
+`download.blender.org <https://download.blender.org/demo/movies/ToS/>`_), with the depths of Depth Anything V2 Metric
+(VKITTI) of dnn_depth_estimation.
