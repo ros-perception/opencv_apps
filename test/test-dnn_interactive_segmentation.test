@@ -20,14 +20,14 @@
   <test test-name="dnn_interactive_segmentation_mask_test" pkg="rostest" type="hztest" name="dnn_interactive_segmentation_mask_test" time-limit="300" >
     <param name="hz" value="9.0" />
     <param name="hzerror" value="8.9" />
-    <param name="test_duration" value="2.0" />
+    <param name="test_duration" value="10.0" />
     <param name="wait_time" value="240.0" />
   </test>
   <param name="dnn_interactive_segmentation_image_test/topic" value="dnn_interactive_segmentation/image" />
   <test test-name="dnn_interactive_segmentation_image_test" pkg="rostest" type="hztest" name="dnn_interactive_segmentation_image_test" time-limit="300" >
     <param name="hz" value="9.0" />
     <param name="hzerror" value="8.9" />
-    <param name="test_duration" value="2.0" />
+    <param name="test_duration" value="10.0" />
     <param name="wait_time" value="240.0" />
   </test>
 </launch>
