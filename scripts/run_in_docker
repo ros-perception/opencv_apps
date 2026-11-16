@@ -5,7 +5,8 @@
 # EXECUTABLE (of the host) runs as the executable of the same name of opencv_apps in IMAGE, with the GPUs, the network,
 # the IPC (the shared memory of DDS) and the processes of the host, as the user of the host, with the ROS environment
 # of the host (ROS_DOMAIN_ID, RMW_IMPLEMENTATION, ...), ~/.ros (the downloaded models) and /tmp (the parameters of
-# launch); build IMAGE first, e.g. docker build -f docker/cuda/Dockerfile -t opencv_apps:cuda . in opencv_apps
+# launch). IMAGE is pulled if it is not on the host, e.g. ghcr.io/ros-perception/opencv_apps:cuda, or built from docker/
+# of opencv_apps, e.g. docker build -f docker/cuda/Dockerfile -t opencv_apps:cuda .
 set -e
 if [ $# -lt 2 ]; then
   echo "usage: $0 IMAGE EXECUTABLE [ARGUMENTS...]" >&2
@@ -15,8 +16,13 @@ image=$1
 executable=$(basename "$2")
 shift 2
 if ! docker image inspect "$image" > /dev/null 2>&1; then
-  echo "$0: no docker image $image; build it in opencv_apps, e.g. docker build -f docker/cuda/Dockerfile -t $image ." >&2
-  exit 1
+  # the first use: the image of OpenCV with CUDA is about 10 GB
+  echo "$0: pulling the docker image $image" >&2
+  if ! docker pull "$image" >&2; then
+    echo "$0: no docker image $image; pull it, or build it in opencv_apps, e.g." \
+         "docker build -f docker/cuda/Dockerfile -t $image ." >&2
+    exit 1
+  fi
 fi
 environment=()
 for name in ROS_DOMAIN_ID ROS_LOCALHOST_ONLY ROS_AUTOMATIC_DISCOVERY_RANGE ROS_STATIC_PEERS RMW_IMPLEMENTATION \
