@@ -36,18 +36,31 @@ nodes)
 
 The OpenCV of the distributions has no CUDA, so the launch files of the dnn nodes (`dnn_*.launch.xml`) run the node
 in a docker image of OpenCV with CUDA with `use_cuda:=true` (by `scripts/run_in_docker`, with the GPUs, the network
-and the shared memory of the host, so the other nodes on the host communicate with it as usual). Build the image once
-(about an hour), in opencv_apps, with the NVIDIA driver and the NVIDIA Container Toolkit:
+and the shared memory of the host, so the other nodes on the host communicate with it as usual). The images are on
+the GitHub Container Registry, and pulled at the first use (about 10 GB); the host needs the NVIDIA driver and the
+NVIDIA Container Toolkit:
 
 ```bash
-# OpenCV 4.12 with CUDA 12.8 (opencv_apps:cuda, the default of cuda_image); CUDA_ARCH_BIN of your GPU, e.g. 8.9
-docker build -f docker/cuda/Dockerfile --build-arg CUDA_ARCH_BIN=8.9 -t opencv_apps:cuda .
+# OpenCV 4.12 with CUDA 12.8 (ghcr.io/ros-perception/opencv_apps:cuda, the default of cuda_image)
 ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/camera/image_raw use_cuda:=true
-# OpenCV 5.1 with CUDA 13.3 (opencv_apps:opencv5-cuda); its new engine runs a model on CUDA only if all its layers
-# have CUDA, otherwise on the CPU (e.g. YOLOX-S, YuNet and SFace of opencv_zoo with OpenCV 5.1)
-docker build -f docker/opencv5-cuda/Dockerfile --build-arg CUDA_ARCH_BIN=8.9 -t opencv_apps:opencv5-cuda .
-ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/camera/image_raw use_cuda:=true cuda_image:=opencv_apps:opencv5-cuda
+# OpenCV 5.1 with CUDA 13.3; its new engine runs a model on CUDA only if all its layers have CUDA, otherwise on the
+# CPU (e.g. YOLOX-S, YuNet and SFace of opencv_zoo with OpenCV 5.1)
+ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/camera/image_raw use_cuda:=true \
+  cuda_image:=ghcr.io/ros-perception/opencv_apps:opencv5-cuda
+# or build the image (about an hour), in opencv_apps, with CUDA_ARCH_BIN of your GPU, e.g. 8.9 of RTX 40 series
+docker build -f docker/cuda/Dockerfile --build-arg CUDA_ARCH_BIN=8.9 -t opencv_apps:cuda .
+ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/camera/image_raw use_cuda:=true cuda_image:=opencv_apps:cuda
 ```
+
+The rate of `~/detections` of dnn_object_detection (YOLOX-S, 640x640) for the images of 640x480 at 100 Hz, on AMD
+Ryzen 9 7950X (16 cores) and NVIDIA GeForce RTX 4090:
+
+| | OpenCV | backend | Hz |
+|---|---|---|---|
+| ROS 2 jazzy (apt) | 4.6 | CPU | 13.3 |
+| `opencv_apps:cuda` | 4.12 | CUDA | 55.0 |
+| `opencv_apps:cuda` | 4.12 | CPU (`backend:=cpu`) | 13.4 |
+| `opencv_apps:opencv5-cuda` | 5.1 | CPU (falls back from CUDA) | 36.0 |
 
 ## What opencv_apps can do
 
