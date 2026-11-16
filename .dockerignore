@@ -1,0 +1,7 @@
+# the build context of docker/*/Dockerfile (opencv_apps itself): without git, the workspaces and the media
+.git
+build
+install
+log
+*.mp4
+!test/*.mp4
