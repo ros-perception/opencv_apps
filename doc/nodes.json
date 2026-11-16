@@ -1724,6 +1724,101 @@
    }
   ]
  },
+ "dnn_edge_detection": {
+  "description": "Nodelet to detect the edges with a DNN model, e.g. DexiNed",
+  "node": "dnn_edge_detection",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_edge_detection.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 512,
+    "description": "Height of the network input, 512 for DexiNed",
+    "name": "input_height",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": 512,
+    "description": "Width of the network input, 512 for DexiNed",
+    "name": "input_width",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the model (onnx) of the same input and output as DexiNed, empty for DexiNed of opencv_zoo (OpenCV 4.10 or later). The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
  "dnn_face_detection": {
   "description": "Nodelet to detect faces with YuNet (cv::FaceDetectorYN)",
   "node": "dnn_face_detection",

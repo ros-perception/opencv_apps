@@ -190,6 +190,9 @@ dnn_depth_estimation:
       metric_depth: true
     note: 'Depth Anything V2 Metric Small trained on Virtual KITTI (518x518, 99 MB): the depth in meters outdoors, up
       to about 80 m, e.g. on the road; needs OpenCV 4.10 or later.'
+dnn_edge_detection:
+  clip: street.mp4
+  note: DexiNed of opencv_zoo (MIT License), the same clip as edge_detection; needs OpenCV 4.10 or later.
 dnn_face_detection:
   clip: tos_faces.mp4
 dnn_face_recognition:

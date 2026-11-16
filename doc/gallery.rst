@@ -46,7 +46,7 @@
    }
    </style>
    <h3>Image filters</h3>
-   <p>Filter and transform the images: edges, histogram equalization, morphology, image pyramids, smoothing, thresholds, the Fourier transform, and the super resolution and the inpainting by a DNN.<br>Output: the processed image in <code>~/image</code>.</p>
+   <p>Filter and transform the images: edges (also by DexiNed), histogram equalization, morphology, image pyramids, smoothing, thresholds, the Fourier transform, and the super resolution and the inpainting by a DNN.<br>Output: the processed image in <code>~/image</code>.</p>
    <p class="opencv-apps-tier">ROS 1: noetic and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/adding_images.html"><img src="https://ros-perception.github.io/opencv_apps/media/adding_images_thumb.gif" alt="adding_images" loading="lazy"><span>adding_images<br><small>~/image</small></span></a>
@@ -63,6 +63,7 @@
    </div>
    <p class="opencv-apps-tier">ROS 2: lyrical and later</p>
    <div class="opencv-apps-gallery">
+   <a class="opencv-apps-tile" href="nodes/dnn_edge_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_edge_detection_thumb.gif" alt="dnn_edge_detection" loading="lazy"><span>dnn_edge_detection<br><small>~/image</small></span></a>
    <a class="opencv-apps-tile" href="nodes/dnn_super_resolution.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_super_resolution_thumb.gif" alt="dnn_super_resolution" loading="lazy"><span>dnn_super_resolution<br><small>~/image</small></span></a>
    </div>
    <p class="opencv-apps-tier">ROS 1 and ROS 2, with OpenCV built from source</p>

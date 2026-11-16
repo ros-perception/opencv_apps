@@ -56,9 +56,9 @@ TEST_VIDEOS_URL = 'https://raw.githubusercontent.com/ros-perception/opencv_apps/
 # the groups of the nodes by what they find: the nodes of a group publish the same kind of results, so that one can
 # replace another, e.g. face_detection by dnn_face_detection
 CATEGORIES = [
-    ('Image filters', ['adding_images', 'discrete_fourier_transform', 'edge_detection', 'equalize_histogram',
-                       'morphology', 'pyramids', 'smoothing', 'threshold', 'dnn_super_resolution',
-                       'dnn_inpainting']),
+    ('Image filters', ['adding_images', 'discrete_fourier_transform', 'edge_detection', 'dnn_edge_detection',
+                       'equalize_histogram', 'morphology', 'pyramids', 'smoothing', 'threshold',
+                       'dnn_super_resolution', 'dnn_inpainting']),
     ('Features and shapes', ['corner_harris', 'goodfeature_track', 'hough_lines', 'line_segment_detector',
                              'hough_circles', 'blob_detection', 'find_contours', 'general_contours',
                              'contour_moments', 'convex_hull']),
@@ -174,9 +174,9 @@ DESCRIPTIONS = {
 # the short descriptions of the categories, on the top page and README.md
 # the descriptions of the groups, and their common output (the message types are linked in the pages)
 CATEGORY_DESCRIPTIONS = {
-    'Image filters': ('Filter and transform the images: edges, histogram equalization, morphology, image pyramids, '
-                      'smoothing, thresholds, the Fourier transform, and the super resolution and the inpainting '
-                      'by a DNN.',
+    'Image filters': ('Filter and transform the images: edges (also by DexiNed), histogram equalization, '
+                      'morphology, image pyramids, smoothing, thresholds, the Fourier transform, and the super '
+                      'resolution and the inpainting by a DNN.',
                       'the processed image in ``~/image``'),
     'Features and shapes': ('Find the corners, the lines and the line segments, the circles and the blobs, and the '
                             'contours with their bounding shapes, moments and convex hulls.',
@@ -280,7 +280,7 @@ for _node in ['aruco_detection', 'background_subtraction', 'barcode_detection', 
               'dnn_semantic_segmentation', 'dnn_text_detection', 'dnn_tracking']:
     SINCE[_node] = '3.0.0'
 for _node in ['detection_3d', 'rgbd_odometry', 'laser_odometry', 'dnn_super_resolution', 'dnn_optical_flow',
-              'dnn_interactive_segmentation', 'dnn_person_reid', 'dnn_inpainting']:
+              'dnn_interactive_segmentation', 'dnn_person_reid', 'dnn_inpainting', 'dnn_edge_detection']:
     SINCE[_node] = '3.1.0'
 # the requirements of OpenCV of the nodes (see CMakeLists.txt): the minimum version, and the description
 OPENCV_REQUIREMENTS = {
@@ -305,6 +305,7 @@ OPENCV_REQUIREMENTS = {
                                  'with RAFT'),
     'dnn_interactive_segmentation': ('4.10', 'OpenCV 4.10 or later, which reads EfficientSAM'),
     'dnn_inpainting': ('5.0', 'OpenCV 5.0 or later, which reads LaMa (OpenCV 4.6 - 4.12 fail to read it)'),
+    'dnn_edge_detection': ('4.10', 'OpenCV 4.10 or later, which reads DexiNed (DequantizeLinear)'),
 }
 for _node in ['dnn_face_detection', 'dnn_face_recognition', 'dnn_facial_expression_recognition', 'dnn_object_detection',
               'dnn_image_classification', 'dnn_semantic_segmentation', 'dnn_depth_estimation', 'dnn_text_detection',
@@ -316,7 +317,8 @@ for _node in ['dnn_face_detection', 'dnn_face_recognition', 'dnn_facial_expressi
 ROS_NOTES = {'dnn_tracking': 'DaSiamRPN on ROS One, jazzy and kilted (OpenCV 4.6), and also NanoTrack and VitTrack on '
                              'lyrical (OpenCV 4.10)',
              'tracking': 'the trackers other than MIL need libopencv-contrib',
-             'dnn_interactive_segmentation': 'not tested yet with OpenCV 4.10 of lyrical'}
+             'dnn_interactive_segmentation': 'not tested yet with OpenCV 4.10 of lyrical',
+             'dnn_edge_detection': 'tested with OpenCV 4.12 and 5.1, not yet with OpenCV 4.10 of lyrical'}
 
 
 def version_tuple(version):
