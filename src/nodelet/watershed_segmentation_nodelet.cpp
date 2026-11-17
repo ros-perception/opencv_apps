@@ -338,6 +338,8 @@ public:
 
     add_seed_points_sub_ = create_subscription<opencv_apps::msg::Point2DArray>(
         "~/add_seed_points", 1, std::bind(&WatershedSegmentationNodelet::addSeedPointCb, this, std::placeholders::_1));
+    // the seeds may be of the clicks on the window
+    optionalInput("~/add_seed_points");
     img_pub_ = advertiseImage("~/image", 1);
     msg_pub_ = advertise<opencv_apps::msg::ContourArrayStamped>("~/contours", 1);
 

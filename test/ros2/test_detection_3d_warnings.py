@@ -32,7 +32,8 @@
 
 
 # the warnings of the inputs of detection_3d (and of the other nodes) on /rosout: the input of no publisher, with the
-# published topics of its type to remap it to, and no 3D detection with the inputs not received or not synchronized
+# published topics of its type to remap it to, and no 3D detection with the inputs not received or not synchronized;
+# and no warning of the optional inputs of no publisher, also remapped
 
 import os
 import sys
@@ -40,6 +41,7 @@ import time
 import unittest
 
 import launch.actions
+import launch_ros.actions
 from opencv_apps_test import description, include, TEST_DIR
 import pytest
 from opencv_apps.msg import DetectionArrayStamped
@@ -61,6 +63,13 @@ def generate_test_description():
         # the input of the other stamps than the depth, by the test below (e.g. of the clock of another computer)
         include('detection_3d', node_name='detection_3d_other_stamps', input='/other_stamp_detections',
                 depth='/depth', camera_info='/camera_info'),
+        # the optional inputs: ~/template remapped out of the namespace of the node, ~/mask, and mask of dnn_inpainting
+        # (which does not read its model without the subscribers of its output)
+        launch_ros.actions.Node(package='opencv_apps', executable='match_template', name='match_template_optional',
+                                remappings=[('image', '/image'), ('~/template', '/templates')],
+                                parameters=[{'debug_view': False}]),
+        launch_ros.actions.Node(package='opencv_apps', executable='dnn_inpainting', name='dnn_inpainting_optional',
+                                remappings=[('image', '/image')], parameters=[{'debug_view': False}]),
     )
 
 
@@ -102,5 +111,12 @@ class TestDetection3DWarnings(unittest.TestCase):
             while time.time() < end_time and any(missing().values()):
                 rclpy.spin_once(node, timeout_sec=0.1)
             self.assertEqual({name: parts for name, parts in missing().items() if parts}, {})
+            # the warnings of no publisher are at 5 - 10 s of the nodes, which are up with the warnings above
+            end_time = time.time() + 10.0
+            while time.time() < end_time:
+                rclpy.spin_once(node, timeout_sec=0.1)
+            optional = ('match_template_optional', 'dnn_inpainting_optional')
+            self.assertEqual([log.msg for log in logs
+                              if log.name in optional and log.level == Log.WARN and 'no publisher' in log.msg], [])
         finally:
             rclpy.shutdown()

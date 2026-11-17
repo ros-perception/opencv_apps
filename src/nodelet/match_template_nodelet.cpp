@@ -627,6 +627,9 @@ public:
     // the latest template and mask are kept, even if the output topics are not subscribed
     template_sub_ = subscribeRawImage("~/template", &MatchTemplateNodelet::templateCallback);
     mask_sub_ = subscribeRawImage("~/mask", &MatchTemplateNodelet::maskCallback);
+    // the template may be of template_file, and the mask is optional
+    optionalInput("~/template");
+    optionalInput("~/mask");
 
     img_pub_ = advertiseImage("~/image", 1);
     matched_img_pub_ = advertiseImage("~/matched_image", 1);

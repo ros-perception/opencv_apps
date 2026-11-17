@@ -54,6 +54,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -104,10 +105,16 @@ protected:
 
   /** @brief
    * callback function of the wall timer to warn about the input topics of no publisher (e.g. the wrong remapping), with
-   * the published topics of the same type, on ROS 2. The private topics (~/...) are of the optional inputs, and are not
-   * checked.
+   * the published topics of the same type, on ROS 2, except the optional inputs of optionalInput().
    */
   void checkInputsCallback();
+
+  /** @brief
+   * Mark an input topic as optional (e.g. ~/template of match_template), not warned about without publisher.
+   *
+   * @param topic topic name as the node subscribes it, resolved with the remapping.
+   */
+  void optionalInput(const std::string& topic);
 
   /** @brief
    * This method is called when publisher is subscribed by other
@@ -254,6 +261,11 @@ protected:
    * Number of the checks that each input topic has no publisher in a row.
    */
   std::map<std::string, int> no_publisher_counts_;
+
+  /** @brief
+   * The resolved names of the optional input topics.
+   */
+  std::set<std::string> optional_inputs_;
 
   /** @brief
    * A flag to check if the node has been ever subscribed

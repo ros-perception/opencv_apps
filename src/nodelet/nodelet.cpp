@@ -93,13 +93,12 @@ void Nodelet::checkInputsCallback()
     RCLCPP_DEBUG(get_logger(), "failed to get the topics: %s", e.what());
     return;
   }
-  const std::string private_namespace = std::string(get_fully_qualified_name()) + "/";
   std::map<std::string, int> counts;
   for (const auto& input : inputs)
   {
     const std::string& topic = input.first;
     if (topic == "/parameter_events" || topic == "/clock" || topic == "/tf" || topic == "/tf_static" ||
-        topic.compare(0, private_namespace.size(), private_namespace) == 0 || count_publishers(topic) > 0)
+        optional_inputs_.count(topic) || count_publishers(topic) > 0)
     {
       continue;
     }
@@ -142,6 +141,16 @@ void Nodelet::checkInputsCallback()
     }
   }
   no_publisher_counts_ = counts;
+#endif
+}
+
+void Nodelet::optionalInput(const std::string& topic)
+{
+#ifdef ROS2
+  // the name of the subscription, e.g. /templates of ~/template:=/templates
+  optional_inputs_.insert(get_node_topics_interface()->resolve_topic_name(topic));
+#else
+  (void)topic;
 #endif
 }
 
