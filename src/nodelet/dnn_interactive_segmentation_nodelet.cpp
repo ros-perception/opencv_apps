@@ -525,6 +525,8 @@ public:
     // the prompt is kept, even if the output topics are not subscribed
     add_points_sub_ = create_subscription<opencv_apps::msg::Point2DArray>(
         "~/add_points", 1, std::bind(&DNNInteractiveSegmentationNodelet::addPointsCb, this, std::placeholders::_1));
+    // the prompt may be of ~set_roi
+    optionalInput("~/add_points");
     roi_srv_ = create_service<opencv_apps::srv::SetROI>("~/set_roi",
                                                         std::bind(&DNNInteractiveSegmentationNodelet::setROICb, this,
                                                                   std::placeholders::_1, std::placeholders::_2));

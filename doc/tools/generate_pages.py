@@ -426,6 +426,32 @@ USAGE_INPUTS = {
 }
 
 
+# the launch files of the 2D results which run detection_3d (detection_3d:=true, launch/detection_3d_pipeline.launch.xml)
+# in the usage of the nodes, with the depth of realsense2_camera with align_depth, or the depth estimated without it
+USAGE_3D = {
+    'detection_3d': 'dnn_object_detection',
+    'dnn_object_detection': 'dnn_object_detection',
+    'dnn_pose_estimation': 'dnn_pose_estimation',
+}
+
+
+USAGE_3D_RESULTS = {
+    'dnn_object_detection': 'detected objects',
+    'dnn_pose_estimation': 'persons and of their keypoints',
+}
+
+
+def usage_3d(node):
+    """Return the lines of the usage of detection_3d:=true of the launch file of the 2D results, or []."""
+    if node not in USAGE_3D:
+        return []
+    return ['   # ROS 2, with detection_3d: the 3D boxes and the TF frames of the %s, from the depth image registered to '
+            'the color image (or, without depth:=, the depth estimated from the color image by dnn_depth_estimation), '
+            'shown in rviz2' % USAGE_3D_RESULTS[USAGE_3D[node]],
+            '   ros2 launch opencv_apps %s.launch.xml image:=/camera/camera/color/image_raw '
+            'depth:=/camera/camera/aligned_depth_to_color/image_raw detection_3d:=true rviz:=true' % USAGE_3D[node]]
+
+
 def usage_arguments(node, ros1=False):
     """Return the arguments of the usage of the node: its inputs, and debug_view:=false if the launch file has it."""
     arguments = USAGE_INPUTS.get(node, 'image:=/camera/image_raw')
@@ -490,7 +516,9 @@ def node_classes():
 def demo_section(node, demo):
     """Return the commands to run the node on the input video of its demo, from doc/demos.yaml.
 
-    The commands which keep running (the publishers, the nodes) are in their own terminals.
+    The commands which keep running (the publishers, the nodes) are in their own terminals. With launch_command (e.g.
+    detection_3d:=true of the launch file of a detector), the demo runs it, and the commands of the nodes of its
+    pipeline (pipeline, a list of the titles and the commands) follow, as what runs in it.
     """
     clip = demo['clip']
     url = (TEST_VIDEOS_URL + clip) if clip.startswith('test/') else (CLIPS_URL + clip)
@@ -519,6 +547,10 @@ def demo_section(node, demo):
     view = demo.get('view_command',
                     'ros2 run rqt_image_view rqt_image_view /%s/%s' % (node_name, demo.get('view', 'image')))
     terminals.append(('view the result', [view]))
+    # launch_command instead of the node, with the nodes of its pipeline each in its own terminal
+    pipeline = [(step['title'], [step['command']]) for step in demo.get('pipeline', [])]
+    if demo.get('launch_command'):
+        terminals = [terminals[0], (demo['launch_command_title'], [demo['launch_command']])]
     intro = ('Download the input video of the demo above, publish it as ``image`` with ``image_publisher``, and run '
              'the node on it, in the terminals:' if 'publisher' not in demo else
              'Download the input of the demo above, publish it, and run the node on it, in the terminals:')
@@ -531,6 +563,14 @@ def demo_section(node, demo):
     lines.append('')
     if demo.get('note'):
         lines += [demo['note'], '']
+    if pipeline:
+        title = demo['pipeline_title']
+        lines += [title, '^' * len(title), '', demo['pipeline_note'], '', '.. code-block:: bash', '',
+                  '   # terminal 1: publish the input in a loop, as above']
+        for number, (title, commands) in enumerate(pipeline, 2):
+            lines.append('   # terminal %d: %s' % (number, title))
+            lines += ['   ' + command for command in commands]
+        lines.append('')
     if not demo.get('steps') and not demo.get('prepare') and image == 'image:=image' and 'publisher' not in demo:
         lines += ['In ROS 1:', '', '.. code-block:: bash', '',
                   '   # terminal 1',
@@ -600,7 +640,7 @@ def node_page(node, interface, classes, files, demo=None):
               '   ros2 launch opencv_apps %s.launch.xml %s' % (node, usage_arguments(node)),
               '   # ROS 1',
               '   roslaunch opencv_apps %s.launch %s%s' % (
-                  node, usage_arguments(node, ros1=True), ros1_arguments(node)), '']
+                  node, usage_arguments(node, ros1=True), ros1_arguments(node))] + usage_3d(node) + ['']
     if demo:
         lines += demo_section(node, demo)
         if demo.get('variants'):

@@ -49,7 +49,9 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 #include <functional>
 #include <map>
@@ -209,6 +211,22 @@ class Detection3DNodelet : public opencv_apps::Nodelet
   message_filters::Subscriber<opencv_apps::msg::SkeletonArrayStamped> skeletons_sub_;
   // the synchronizer of the depth source and the input, one of them is used
   std::shared_ptr<void> sync_;
+  // the numbers of the messages of the inputs and of their synchronized sets in the period of sync_check_timer_, and
+  // the stamps of the latest messages, to tell why nothing is published
+  struct InputStatus
+  {
+    std::string name;
+    std::string topic;
+    std::atomic<int> count{ 0 };
+    std::atomic<double> stamp{ 0.0 };
+  };
+  InputStatus depth_status_, info_status_, input_status_;
+  std::vector<message_filters::Connection> input_connections_;
+  std::atomic<int> synchronized_count_{ 0 };
+  int not_synchronized_periods_ = 0;
+  // the cause of the last warning of checkSynchronization(), the missing inputs or not synchronized
+  std::string not_synchronized_cause_;
+  rclcpp::TimerBase::SharedPtr sync_check_timer_;
   rclcpp::Publisher<vision_msgs::msg::Detection3DArray>::SharedPtr detections_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr markers_pub_;
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
@@ -367,6 +385,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
                      const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg,
                      const typename T::ConstSharedPtr& msg)
   {
+    synchronized_count_++;
     std::lock_guard<std::mutex> lock(mutex_);
     try
     {
@@ -425,6 +444,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
                       const sensor_msgs::msg::CameraInfo::ConstSharedPtr& info_msg,
                       const typename T::ConstSharedPtr& msg)
   {
+    synchronized_count_++;
     std::lock_guard<std::mutex> lock(mutex_);
     try
     {
@@ -865,6 +885,79 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       tf_broadcaster_->sendTransform(transforms);
   }
 
+  // count the messages of an input for checkSynchronization()
+  template <class M, class Filter>
+  void watchInput(Filter& filter, InputStatus& status, const std::string& name)
+  {
+    status.name = name;
+#ifdef ROS2
+    status.topic = get_node_topics_interface()->resolve_topic_name(filter.getTopic());
+#else
+    status.topic = filter.getTopic();
+#endif
+    status.count = 0;
+    status.stamp = 0.0;
+    input_connections_.push_back(filter.registerCallback(
+        std::function<void(const typename M::ConstSharedPtr&)>([&status](const typename M::ConstSharedPtr& msg) {
+          status.count++;
+          status.stamp = rclcpp::Time(msg->header.stamp).seconds();
+        })));
+  }
+
+  // warn when nothing is published, as the inputs are not received or not synchronized, e.g. by the wrong remapping
+  // of depth (no publisher, or the depth not registered to the color image of the input) or by the stamps of the
+  // input and the depth of the different images
+  void checkSynchronization()
+  {
+    InputStatus* inputs[3] = { &depth_status_, &info_status_, &input_status_ };
+    int counts[3];
+    for (int i = 0; i < 3; i++)
+      counts[i] = inputs[i]->count.exchange(0);
+    if (synchronized_count_.exchange(0) > 0)
+    {
+      if (!not_synchronized_cause_.empty())
+        RCLCPP_INFO(get_logger(), "the inputs are synchronized now");
+      not_synchronized_periods_ = 0;
+      not_synchronized_cause_.clear();
+      return;
+    }
+    std::string received, missing, stamps;
+    for (int i = 0; i < 3; i++)
+    {
+      char text[512];
+      snprintf(text, sizeof(text), "%s %s", inputs[i]->name.c_str(), inputs[i]->topic.c_str());
+      if (counts[i] == 0)
+        missing += (missing.empty() ? "" : ", ") + std::string(text);
+      else
+        received += (received.empty() ? "" : ", ") + std::string(text) + " (" + std::to_string(counts[i]) + ")";
+      snprintf(text, sizeof(text), "%s %.3f", inputs[i]->name.c_str(), inputs[i]->stamp.load());
+      stamps += (stamps.empty() ? "" : ", ") + std::string(text);
+    }
+    // warn from the second period (5 to 10 s, for the inputs starting slowly, e.g. loading a model), when the cause
+    // changes (e.g. from the input not received yet to the inputs not synchronized), and every minute
+    std::string cause = missing.empty() ? "not synchronized" : missing;
+    if (++not_synchronized_periods_ < 2 || (cause == not_synchronized_cause_ && not_synchronized_periods_ % 12 != 2))
+      return;
+    not_synchronized_cause_ = cause;
+    if (!missing.empty())
+    {
+      std::string others = received.empty() ? "" : " (the messages of the others in 5 s: " + received + ")";
+      RCLCPP_WARN(get_logger(),
+                  "no 3D detection, as no message of %s is received in 5 s%s: check the remapping of the topics and "
+                  "that their publishers are running",
+                  missing.c_str(), others.c_str());
+    }
+    else
+    {
+      RCLCPP_WARN(get_logger(),
+                  "no 3D detection, as the inputs are received (the messages in 5 s: %s) but not synchronized by their "
+                  "stamps (the latest: %s): the input should be of the image of the same stamp as the depth (e.g. "
+                  "the color image of the RGB-D camera, registered to the depth), and queue_size (%d) larger for the "
+                  "slow input",
+                  received.c_str(), stamps.c_str(), queue_size_);
+    }
+  }
+
   template <class Filter>
   void subscribeFilter(Filter& filter, const std::string& topic)
   {
@@ -883,6 +976,13 @@ class Detection3DNodelet : public opencv_apps::Nodelet
                                                     const typename T::ConstSharedPtr&))
   {
     subscribeFilter(input_sub, "input");
+    watchInput<D>(depth_filter, depth_status_, depth_source_);
+    watchInput<sensor_msgs::msg::CameraInfo>(info_sub_, info_status_, "camera_info");
+    watchInput<T>(input_sub, input_status_, "input");
+    synchronized_count_ = 0;
+    not_synchronized_periods_ = 0;
+    not_synchronized_cause_.clear();
+    sync_check_timer_ = create_wall_timer(std::chrono::seconds(5), [this]() { checkSynchronization(); });
     auto sync = std::make_shared<Sync<D, T> >(SyncPolicy<D, T>(queue_size_));
     sync->connectInput(depth_filter, info_sub_, input_sub);
     sync->registerCallback(
@@ -929,6 +1029,10 @@ class Detection3DNodelet : public opencv_apps::Nodelet
   void unsubscribe() override
   {
     RCLCPP_DEBUG(get_logger(), "unsubscribe");
+    sync_check_timer_.reset();
+    for (auto& connection : input_connections_)
+      connection.disconnect();
+    input_connections_.clear();
     sync_.reset();
     depth_sub_.unsubscribe();
     points_sub_.unsubscribe();

@@ -359,6 +359,8 @@ public:
 
     // the latest mask is kept, even if the output topic is not subscribed
     mask_sub_ = subscribeRawImage("mask");
+    // the region to fill may be of ~set_roi
+    optionalInput("mask");
     img_pub_ = advertiseImage("~/image", 1);
     roi_srv_ = create_service<opencv_apps::srv::SetROI>(
         "~/set_roi", std::bind(&DNNInpaintingNodelet::setROICb, this, std::placeholders::_1, std::placeholders::_2));

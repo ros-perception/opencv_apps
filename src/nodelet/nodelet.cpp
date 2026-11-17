@@ -48,6 +48,9 @@ Nodelet::Nodelet(const std::string& node_name, const rclcpp::NodeOptions& option
     timer_->cancel();
     warnNeverSubscribedCallback();
   });
+#ifdef ROS2
+  input_check_timer_ = create_wall_timer(std::chrono::seconds(5), [this]() { checkInputsCallback(); });
+#endif
 }
 
 void Nodelet::onInitPostProcess()
@@ -73,6 +76,82 @@ void Nodelet::warnNeverSubscribedCallback()
   {
     RCLCPP_WARN(get_logger(), "'%s' subscribes topics only with child subscribers.", get_name());
   }
+}
+
+void Nodelet::checkInputsCallback()
+{
+#ifdef ROS2  // ros1_compat.h has no graph of the topics
+  std::map<std::string, std::vector<std::string>> inputs, topics, outputs;
+  try
+  {
+    inputs = get_node_graph_interface()->get_subscriber_names_and_types_by_node(get_name(), get_namespace());
+    outputs = get_node_graph_interface()->get_publisher_names_and_types_by_node(get_name(), get_namespace());
+    topics = get_topic_names_and_types();
+  }
+  catch (const std::exception& e)
+  {
+    RCLCPP_DEBUG(get_logger(), "failed to get the topics: %s", e.what());
+    return;
+  }
+  std::map<std::string, int> counts;
+  for (const auto& input : inputs)
+  {
+    const std::string& topic = input.first;
+    if (topic == "/parameter_events" || topic == "/clock" || topic == "/tf" || topic == "/tf_static" ||
+        optional_inputs_.count(topic) || count_publishers(topic) > 0)
+    {
+      continue;
+    }
+    // warn at the second check (5 to 10 s), for the publishers starting slowly, and every minute after it
+    int count = counts[topic] = no_publisher_counts_[topic] + 1;
+    if (count % 12 != 2)
+    {
+      continue;
+    }
+    std::string candidates;
+    int num_candidates = 0;
+    for (const auto& other : topics)
+    {
+      if (other.first != topic && other.second == input.second && !outputs.count(other.first) &&
+          count_publishers(other.first) > 0 && num_candidates++ < 8)
+      {
+        candidates += (candidates.empty() ? "" : ", ") + other.first;
+      }
+    }
+    const std::string type = input.second.empty() ? "" : input.second[0];
+    if (candidates.empty())
+    {
+      RCLCPP_WARN(get_logger(),
+                  "no publisher of the input %s (%s), nor of any other topic of the type: is its publisher (e.g. the "
+                  "driver of the camera, or the node of the previous step) running?",
+                  topic.c_str(), type.c_str());
+    }
+    else
+    {
+      RCLCPP_WARN(get_logger(),
+                  "no publisher of the input %s (%s): remap it to one of the published topics of the type, %s%s",
+                  topic.c_str(), type.c_str(), candidates.c_str(), num_candidates > 8 ? ", ..." : "");
+    }
+  }
+  for (const auto& count : no_publisher_counts_)
+  {
+    if (count.second >= 2 && !counts.count(count.first) && inputs.count(count.first))
+    {
+      RCLCPP_INFO(get_logger(), "the input %s is published now", count.first.c_str());
+    }
+  }
+  no_publisher_counts_ = counts;
+#endif
+}
+
+void Nodelet::optionalInput(const std::string& topic)
+{
+#ifdef ROS2
+  // the name of the subscription, e.g. /templates of ~/template:=/templates
+  optional_inputs_.insert(get_node_topics_interface()->resolve_topic_name(topic));
+#else
+  (void)topic;
+#endif
 }
 
 rclcpp::QoS Nodelet::qos(int queue_size) const
