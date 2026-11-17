@@ -916,7 +916,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     if (synchronized_count_.exchange(0) > 0)
     {
       if (!not_synchronized_cause_.empty())
-        RCLCPP_INFO(get_logger(), "the inputs are synchronized now, and the 3D detections are published");
+        RCLCPP_INFO(get_logger(), "the inputs are synchronized now");
       not_synchronized_periods_ = 0;
       not_synchronized_cause_.clear();
       return;
