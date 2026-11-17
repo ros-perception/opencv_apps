@@ -5,8 +5,9 @@
 # EXECUTABLE (of the host) runs as the executable of the same name of opencv_apps in IMAGE, with the GPUs, the network,
 # the IPC (the shared memory of DDS) and the processes of the host, as the user of the host, with the ROS environment
 # of the host (ROS_DOMAIN_ID, RMW_IMPLEMENTATION, ...), ~/.ros (the downloaded models) and /tmp (the parameters of
-# launch). IMAGE is pulled if it is not on the host, e.g. ghcr.io/ros-perception/opencv_apps:cuda, or built from docker/
-# of opencv_apps, e.g. docker build -f docker/cuda/Dockerfile -t opencv_apps:cuda .
+# launch). IMAGE is pulled if it is not on the host, e.g. ghcr.io/ros-perception/opencv_apps:cuda (docker pull
+# ghcr.io/ros-perception/opencv_apps:cuda), or built from docker/ of opencv_apps, e.g.
+# docker build -f docker/cuda/Dockerfile -t opencv_apps:cuda .
 set -e
 if [ $# -lt 2 ]; then
   echo "usage: $0 IMAGE EXECUTABLE [ARGUMENTS...]" >&2
@@ -19,8 +20,10 @@ if ! docker image inspect "$image" > /dev/null 2>&1; then
   # the first use: the image of OpenCV with CUDA is about 10 GB
   echo "$0: pulling the docker image $image" >&2
   if ! docker pull "$image" >&2; then
-    echo "$0: no docker image $image; pull it, or build it in opencv_apps, e.g." \
-         "docker build -f docker/cuda/Dockerfile -t $image ." >&2
+    echo "$0: failed to pull the docker image $image; pull it by" >&2
+    echo "  docker pull $image" >&2
+    echo "checking the name and the tag of the image (the tags of ghcr.io/ros-perception/opencv_apps are cuda" \
+         "and opencv5-cuda), the network, and the login of docker (docker login ghcr.io, when it is denied)" >&2
     exit 1
   fi
 fi
