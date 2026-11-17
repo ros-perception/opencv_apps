@@ -15,11 +15,13 @@
   <arg name="cuda_image" default="ghcr.io/ros-perception/opencv_apps:cuda" description="The docker image of use_cuda" />
 
   <let name="depth_estimation" value="$(eval '&quot;$(var depth)&quot; == &quot;&quot;')" />
-  <let name="depth_topic" value="/$(var node_name)_depth_estimation/depth" if="$(var depth_estimation)" />
+  <!-- the topics of the nodes of this file are relative, in the namespace of the launch file (e.g. of a group with
+       push-ros-namespace), as the nodes -->
+  <let name="depth_topic" value="$(var node_name)_depth_estimation/depth" if="$(var depth_estimation)" />
   <let name="depth_topic" value="$(var depth)" unless="$(var depth_estimation)" />
-  <let name="input_topic" value="/$(var node_name)/$(var input_type)" />
+  <let name="input_topic" value="$(var node_name)/$(var input_type)" />
   <!-- /points of the rviz config, shown when points is given -->
-  <let name="points_topic" value="$(eval '&quot;$(var rviz_points)&quot; or &quot;/$(var node_name)_3d/points&quot;')" />
+  <let name="points_topic" value="$(eval '&quot;$(var rviz_points)&quot; or &quot;$(var node_name)_3d/points&quot;')" />
 
   <group>
     <!-- scoped, otherwise the arguments of the include (e.g. node_name) would be set after it -->
@@ -50,9 +52,10 @@
   </group>
 
   <node name="$(var node_name)_rviz" pkg="rviz2" exec="rviz2" args="-d $(var rviz_config) -f $(var fixed_frame)" if="$(var rviz)" >
-    <remap from="/detection_3d/markers" to="/$(var node_name)_3d/markers" />
-    <remap from="/dnn_object_detection/image" to="/$(var node_name)/image" />
-    <remap from="/dnn_pose_estimation/image" to="/$(var node_name)/image" />
+    <!-- the absolute topics of the rviz configs to the relative topics of the nodes -->
+    <remap from="/detection_3d/markers" to="$(var node_name)_3d/markers" />
+    <remap from="/dnn_object_detection/image" to="$(var node_name)/image" />
+    <remap from="/dnn_pose_estimation/image" to="$(var node_name)/image" />
     <remap from="/depth" to="$(var depth_topic)" />
     <remap from="/points" to="$(var points_topic)" />
   </node>

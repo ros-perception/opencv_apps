@@ -31,15 +31,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-# detection_3d:=true of launch/dnn_object_detection.launch.xml: the people of dnn_object_detection in 3D, by
-# detection_3d of launch/detection_3d_pipeline.launch.xml, with the depth (full name) and the camera_info next to the
-# image of test/publish_rgbd.py
+# detection_3d:=true of launch/dnn_object_detection.launch.xml: the 3D boxes of the people of dnn_object_detection,
+# by detection_3d of launch/detection_3d_pipeline.launch.xml, with the depth (full name) and the camera_info next to the
+# image of test/publish_rgbd.py, in the namespace camera1, where the topics of the pipeline are
 
 import os
 import sys
 import unittest
 
 import launch.actions
+import launch_ros.actions
 from opencv_apps_test import description, include, MessagesTest, TEST_DIR
 import pytest
 from test_detection_3d import box_edges, person
@@ -51,16 +52,19 @@ from visualization_msgs.msg import MarkerArray
 def generate_test_description():
     return description(
         launch.actions.ExecuteProcess(cmd=[sys.executable, os.path.join(TEST_DIR, 'publish_rgbd.py')], output='screen'),
-        include('dnn_object_detection', image='/image', detection_3d='true', depth='/depth'),
+        launch.actions.GroupAction([
+            launch_ros.actions.PushRosNamespace('camera1'),
+            include('dnn_object_detection', image='/image', detection_3d='true', depth='/depth'),
+        ]),
     )
 
 
 class TestDetection3DLaunch(MessagesTest, unittest.TestCase):
 
-    TOPICS = ['dnn_object_detection_3d/detections']
+    TOPICS = ['camera1/dnn_object_detection_3d/detections']
     CHECKS = {
-        'dnn_object_detection_3d/detections': (
+        'camera1/dnn_object_detection_3d/detections': (
             Detection3DArray, lambda msg: msg.header.frame_id == 'camera_rgb_optical_frame' and
             any(person(d) for d in msg.detections)),
-        'dnn_object_detection_3d/markers': (MarkerArray, lambda msg: any(box_edges(m) for m in msg.markers)),
+        'camera1/dnn_object_detection_3d/markers': (MarkerArray, lambda msg: any(box_edges(m) for m in msg.markers)),
     }
