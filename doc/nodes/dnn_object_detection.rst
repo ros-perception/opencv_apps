@@ -29,6 +29,8 @@ Usage
    ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/camera/image_raw debug_view:=false
    # ROS 1
    roslaunch opencv_apps dnn_object_detection.launch image:=/camera/image_raw debug_view:=false
+   # ROS 2, in 3D by detection_3d, with the depth registered to the image and rviz2; without depth:=, with the depth estimated by dnn_depth_estimation
+   ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/camera/camera/color/image_raw depth:=/camera/camera/aligned_depth_to_color/image_raw detection_3d:=true rviz:=true
 
 Try it with the demo video
 --------------------------

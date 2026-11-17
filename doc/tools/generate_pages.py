@@ -426,6 +426,25 @@ USAGE_INPUTS = {
 }
 
 
+# the launch files of the 2D results which run detection_3d (detection_3d:=true, launch/detection_3d_pipeline.launch.xml)
+# in the usage of the nodes, with the depth of realsense2_camera with align_depth, or the depth estimated without it
+USAGE_3D = {
+    'detection_3d': 'dnn_object_detection',
+    'dnn_object_detection': 'dnn_object_detection',
+    'dnn_pose_estimation': 'dnn_pose_estimation',
+}
+
+
+def usage_3d(node):
+    """Return the lines of the usage of detection_3d:=true of the launch file of the 2D results, or []."""
+    if node not in USAGE_3D:
+        return []
+    return ['   # ROS 2, in 3D by detection_3d, with the depth registered to the image and rviz2; without depth:=, with '
+            'the depth estimated by dnn_depth_estimation',
+            '   ros2 launch opencv_apps %s.launch.xml image:=/camera/camera/color/image_raw '
+            'depth:=/camera/camera/aligned_depth_to_color/image_raw detection_3d:=true rviz:=true' % USAGE_3D[node]]
+
+
 def usage_arguments(node, ros1=False):
     """Return the arguments of the usage of the node: its inputs, and debug_view:=false if the launch file has it."""
     arguments = USAGE_INPUTS.get(node, 'image:=/camera/image_raw')
@@ -600,7 +619,7 @@ def node_page(node, interface, classes, files, demo=None):
               '   ros2 launch opencv_apps %s.launch.xml %s' % (node, usage_arguments(node)),
               '   # ROS 1',
               '   roslaunch opencv_apps %s.launch %s%s' % (
-                  node, usage_arguments(node, ros1=True), ros1_arguments(node)), '']
+                  node, usage_arguments(node, ros1=True), ros1_arguments(node))] + usage_3d(node) + ['']
     if demo:
         lines += demo_section(node, demo)
         if demo.get('variants'):
