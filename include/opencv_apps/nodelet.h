@@ -51,6 +51,7 @@
 #include <sensor_msgs/msg/image.hpp>
 
 #include <functional>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -100,6 +101,13 @@ protected:
    * duration run out.
    */
   void warnNeverSubscribedCallback();
+
+  /** @brief
+   * callback function of the wall timer to warn about the input topics of no publisher (e.g. the wrong remapping), with
+   * the published topics of the same type, on ROS 2. The private topics (~/...) are of the optional inputs, and are not
+   * checked.
+   */
+  void checkInputsCallback();
 
   /** @brief
    * This method is called when publisher is subscribed by other
@@ -236,6 +244,16 @@ protected:
    * WallTimer instance for warning about no connection.
    */
   rclcpp::TimerBase::SharedPtr timer_;
+
+  /** @brief
+   * WallTimer instance for checking the publishers of the input topics.
+   */
+  rclcpp::TimerBase::SharedPtr input_check_timer_;
+
+  /** @brief
+   * Number of the checks that each input topic has no publisher in a row.
+   */
+  std::map<std::string, int> no_publisher_counts_;
 
   /** @brief
    * A flag to check if the node has been ever subscribed
