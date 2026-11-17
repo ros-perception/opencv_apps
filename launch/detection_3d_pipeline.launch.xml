@@ -23,8 +23,10 @@
   <!-- the queues of the synchronizer of detection_3d keep the camera_info (and the 2D results) until the depth of their
        stamp comes: the estimated depth comes seconds later on a CPU (about 1 Hz), more than 10 camera_info of a camera
        at 10 - 30 Hz -->
-  <let name="queue_size" value="100" if="$(var depth_estimation)" />
-  <let name="queue_size" value="10" unless="$(var depth_estimation)" />
+  <!-- not named queue_size, which would be set in the includes below too (e.g. the queue of the images of
+       dnn_depth_estimation) -->
+  <let name="detection_3d_queue_size" value="100" if="$(var depth_estimation)" />
+  <let name="detection_3d_queue_size" value="10" unless="$(var depth_estimation)" />
   <!-- /points of the rviz config, shown when points is given -->
   <let name="points_topic" value="$(eval '&quot;$(var rviz_points)&quot; or &quot;$(var node_name)_3d/points&quot;')" />
 
@@ -52,7 +54,7 @@
       <arg name="depth" value="$(var depth_topic)" />
       <arg name="camera_info" value="$(var camera_info)" />
       <!-- not queue_size of the launch file including this file -->
-      <arg name="queue_size" value="$(var queue_size)" />
+      <arg name="queue_size" value="$(var detection_3d_queue_size)" />
     </include>
   </group>
 
