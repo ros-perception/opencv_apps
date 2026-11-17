@@ -26,7 +26,7 @@
   <arg name="detection_3d" default="false" description="Run detection_3d, which publishes the 3D boxes and the TF frames of the persons and of their keypoints, from depth, or from the depth estimated from image by dnn_depth_estimation when depth is empty" />
   <arg name="depth" default="" description="With detection_3d: the full name of the depth image registered to image, e.g. /camera/camera/aligned_depth_to_color/image_raw of realsense2_camera, or empty to estimate the depth of image by dnn_depth_estimation (Depth Anything V2 Metric, indoors)" />
   <arg name="camera_info" default="$(eval '&quot;/&quot;.join(&quot;$(var image)&quot;.split(&quot;/&quot;)[:-1] + [&quot;camera_info&quot;])')" description="With detection_3d: the camera info of image, camera_info next to image by default (e.g. /camera/rgb/camera_info of /camera/rgb/image_raw)" />
-  <arg name="rviz" default="false" description="With detection_3d: show the image of the detector, the depth image and the 3D boxes (markers of detection_3d) in rviz2 (rviz/detection_3d_skeletons.rviz)" />
+  <arg name="rviz" default="false" description="With detection_3d: show the image of the detector, the depth image and the 3D boxes (markers of detection_3d) in rviz2 (rviz/detection_3d_skeletons.rviz); rviz2 is not a dependency of opencv_apps: install it (e.g. sudo apt install ros-$ROS_DISTRO-rviz2)" />
   <arg name="rviz_points" default="" description="With rviz: the point cloud shown in rviz2, e.g. /camera/camera/depth/color/points of realsense2_camera, or empty" />
   <arg name="fixed_frame" default="camera_link" description="With rviz: the fixed frame of rviz2, e.g. camera_link of the camera" />
 
