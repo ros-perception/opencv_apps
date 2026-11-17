@@ -46,7 +46,7 @@
    }
    </style>
    <h3>Image filters</h3>
-   <p>Filter and transform the images: edges, histogram equalization, morphology, image pyramids, smoothing, thresholds and the Fourier transform.<br>Output: the processed image in <code>~/image</code>.</p>
+   <p>Filter and transform the images: edges (also by DexiNed), histogram equalization, morphology, image pyramids, smoothing, thresholds, the Fourier transform, and the super resolution and the inpainting by a DNN.<br>Output: the processed image in <code>~/image</code>.</p>
    <p class="opencv-apps-tier">ROS 1: noetic and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/adding_images.html"><img src="https://ros-perception.github.io/opencv_apps/media/adding_images_thumb.gif" alt="adding_images" loading="lazy"><span>adding_images<br><small>~/image</small></span></a>
@@ -60,6 +60,12 @@
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/equalize_histogram.html"><img src="https://ros-perception.github.io/opencv_apps/media/equalize_histogram_thumb.gif" alt="equalize_histogram" loading="lazy"><span>equalize_histogram<br><small>~/image</small></span></a>
    <a class="opencv-apps-tile" href="nodes/morphology.html"><img src="https://ros-perception.github.io/opencv_apps/media/morphology_thumb.gif" alt="morphology" loading="lazy"><span>morphology<br><small>~/image</small></span></a>
+   </div>
+   <p class="opencv-apps-tier">ROS 1 and ROS 2, with OpenCV built from source</p>
+   <div class="opencv-apps-gallery">
+   <a class="opencv-apps-tile" href="nodes/dnn_edge_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_edge_detection_thumb.gif" alt="dnn_edge_detection" loading="lazy"><span>dnn_edge_detection<br><small>~/image</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/dnn_super_resolution.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_super_resolution_thumb.gif" alt="dnn_super_resolution" loading="lazy"><span>dnn_super_resolution<br><small>~/image</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/dnn_inpainting.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_inpainting_thumb.gif" alt="dnn_inpainting" loading="lazy"><span>dnn_inpainting<br><small>~/image</small></span></a>
    </div>
    <h3>Features and shapes</h3>
    <p>Find the corners, the lines and the line segments, the circles and the blobs, and the contours with their bounding shapes, moments and convex hulls.<br>Output: <code>~/corners</code> (Point2DArrayStamped), <code>~/lines</code> (LineArrayStamped), <code>~/circles</code> (CircleArrayStamped) and <code>~/contours</code> (ContourArrayStamped, <code>~/hulls</code> of convex_hull), by the kind of the features.</p>
@@ -80,7 +86,7 @@
    <a class="opencv-apps-tile" href="nodes/blob_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/blob_detection_thumb.gif" alt="blob_detection" loading="lazy"><span>blob_detection<br><small>~/circles</small></span></a>
    </div>
    <h3>Segmentation</h3>
-   <p>Divide the image into regions by the class of each pixel: the pixels in a range of colors, the foreground, the connected regions, and the classes of a DNN.<br>Output: the mask or label image, <code>~/image</code> of the color filters and background_subtraction, <code>~/label</code> of dnn_semantic_segmentation, and <code>~/contours</code> (ContourArrayStamped) of the regions of segment_objects and watershed_segmentation.</p>
+   <p>Divide the image into regions by the class of each pixel: the pixels in a range of colors, the foreground, the connected regions, the classes of a DNN, and the object given by a box or points.<br>Output: the mask or label image, <code>~/image</code> of the color filters and background_subtraction, <code>~/label</code> of dnn_semantic_segmentation, <code>~/mask</code> of dnn_interactive_segmentation, and <code>~/contours</code> (ContourArrayStamped) of the regions of segment_objects, watershed_segmentation and dnn_interactive_segmentation.</p>
    <p class="opencv-apps-tier">ROS 1: noetic and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/hsv_color_filter.html"><img src="https://ros-perception.github.io/opencv_apps/media/hsv_color_filter_thumb.gif" alt="hsv_color_filter" loading="lazy"><span>hsv_color_filter<br><small>~/image</small></span></a>
@@ -95,6 +101,10 @@
    <a class="opencv-apps-tile" href="nodes/background_subtraction.html"><img src="https://ros-perception.github.io/opencv_apps/media/background_subtraction_thumb.gif" alt="background_subtraction" loading="lazy"><span>background_subtraction<br><small>~/image</small></span></a>
    <a class="opencv-apps-tile" href="nodes/dnn_semantic_segmentation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_semantic_segmentation_thumb.gif" alt="dnn_semantic_segmentation" loading="lazy"><span>dnn_semantic_segmentation<br><small>~/label</small></span></a>
    </div>
+   <p class="opencv-apps-tier">ROS 2: lyrical and later</p>
+   <div class="opencv-apps-gallery">
+   <a class="opencv-apps-tile" href="nodes/dnn_interactive_segmentation.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_interactive_segmentation_thumb.gif" alt="dnn_interactive_segmentation" loading="lazy"><span>dnn_interactive_segmentation<br><small>~/mask</small></span></a>
+   </div>
    <h3>Image classification</h3>
    <p>Find what the whole image shows, the classes of ImageNet.<br>Output: <code>~/detections</code> (DetectionArrayStamped), the classes with their scores.</p>
    <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
@@ -102,7 +112,7 @@
    <a class="opencv-apps-tile" href="nodes/dnn_image_classification.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_image_classification_thumb.gif" alt="dnn_image_classification" loading="lazy"><span>dnn_image_classification<br><small>~/detections</small></span></a>
    </div>
    <h3>Object detection</h3>
-   <p>Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn).<br>Output: <code>~/detections</code> (DetectionArrayStamped).</p>
+   <p>Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn), and re-identify the people of ``~/detections`` over the images by their appearance (dnn_person_reid, a post-process of the detections).<br>Output: <code>~/detections</code> (DetectionArrayStamped), with the id of each person in <code>data</code> for dnn_person_reid.</p>
    <p class="opencv-apps-tier">ROS 1: noetic and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/people_detect.html"><img src="https://ros-perception.github.io/opencv_apps/media/people_detect_thumb.gif" alt="people_detect" loading="lazy"><span>people_detect<br><small>~/detections</small></span></a>
@@ -110,6 +120,7 @@
    <p class="opencv-apps-tier">ROS 1: ROS One and later, ROS 2: jazzy and later</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/dnn_object_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_object_detection_thumb.gif" alt="dnn_object_detection" loading="lazy"><span>dnn_object_detection<br><small>~/detections</small></span></a>
+   <a class="opencv-apps-tile" href="nodes/dnn_person_reid.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_person_reid_thumb.gif" alt="dnn_person_reid" loading="lazy"><span>dnn_person_reid<br><small>~/detections</small></span></a>
    </div>
    <h3>Codes and markers</h3>
    <p>Find and decode QR codes, barcodes and ArUco markers.<br>Output: <code>~/detections</code> (DetectionArrayStamped), with the decoded data and the corners.</p>
@@ -165,6 +176,10 @@
    <a class="opencv-apps-tile" href="nodes/lk_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/lk_flow_thumb.gif" alt="lk_flow" loading="lazy"><span>lk_flow<br><small>~/flows</small></span></a>
    <a class="opencv-apps-tile" href="nodes/simple_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/simple_flow_thumb.gif" alt="simple_flow" loading="lazy"><span>simple_flow<br><small>~/flows</small></span></a>
    <a class="opencv-apps-tile" href="nodes/phase_corr.html"><img src="https://ros-perception.github.io/opencv_apps/media/phase_corr_thumb.gif" alt="phase_corr" loading="lazy"><span>phase_corr<br><small>~/shift</small></span></a>
+   </div>
+   <p class="opencv-apps-tier">ROS 2: lyrical and later</p>
+   <div class="opencv-apps-gallery">
+   <a class="opencv-apps-tile" href="nodes/dnn_optical_flow.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_optical_flow_thumb.gif" alt="dnn_optical_flow" loading="lazy"><span>dnn_optical_flow<br><small>~/flows</small></span></a>
    </div>
    <h3>Histogram comparison</h3>
    <p>Compare the color histogram of the image with a reference.<br>Output: <code>~/distance</code> (Float64).</p>

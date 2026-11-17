@@ -30,7 +30,8 @@
  *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-
+ *  POSSIBILITY OF SUCH DAMAGE.
+ *********************************************************************/
 
 /**
  * Base class of the odometry nodes, rgbd_odometry and laser_odometry: the derived class estimates the motion of its

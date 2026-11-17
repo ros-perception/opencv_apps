@@ -6,7 +6,7 @@ Each node subscribes ``image`` (``sensor_msgs/msg/Image``), and publishes its re
 Image filters
 -------------
 
-Filter and transform the images: edges, histogram equalization, morphology, image pyramids, smoothing, thresholds and the Fourier transform. Output: the processed image in ``~/image``.
+Filter and transform the images: edges (also by DexiNed), histogram equalization, morphology, image pyramids, smoothing, thresholds, the Fourier transform, and the super resolution and the inpainting by a DNN. Output: the processed image in ``~/image``.
 
 .. toctree::
    :maxdepth: 1
@@ -14,11 +14,14 @@ Filter and transform the images: edges, histogram equalization, morphology, imag
    nodes/adding_images
    nodes/discrete_fourier_transform
    nodes/edge_detection
+   nodes/dnn_edge_detection
    nodes/equalize_histogram
    nodes/morphology
    nodes/pyramids
    nodes/smoothing
    nodes/threshold
+   nodes/dnn_super_resolution
+   nodes/dnn_inpainting
 
 Features and shapes
 -------------------
@@ -42,7 +45,7 @@ Find the corners, the lines and the line segments, the circles and the blobs, an
 Segmentation
 ------------
 
-Divide the image into regions by the class of each pixel: the pixels in a range of colors, the foreground, the connected regions, and the classes of a DNN. Output: the mask or label image, ``~/image`` of the color filters and background_subtraction, ``~/label`` of dnn_semantic_segmentation, and ``~/contours`` (ContourArrayStamped) of the regions of segment_objects and watershed_segmentation.
+Divide the image into regions by the class of each pixel: the pixels in a range of colors, the foreground, the connected regions, the classes of a DNN, and the object given by a box or points. Output: the mask or label image, ``~/image`` of the color filters and background_subtraction, ``~/label`` of dnn_semantic_segmentation, ``~/mask`` of dnn_interactive_segmentation, and ``~/contours`` (ContourArrayStamped) of the regions of segment_objects, watershed_segmentation and dnn_interactive_segmentation.
 
 .. toctree::
    :maxdepth: 1
@@ -55,6 +58,7 @@ Divide the image into regions by the class of each pixel: the pixels in a range 
    nodes/segment_objects
    nodes/watershed_segmentation
    nodes/dnn_semantic_segmentation
+   nodes/dnn_interactive_segmentation
 
 Image classification
 --------------------
@@ -69,13 +73,14 @@ Find what the whole image shows, the classes of ImageNet. Output: ``~/detections
 Object detection
 ----------------
 
-Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn). Output: ``~/detections`` (DetectionArrayStamped).
+Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn), and re-identify the people of ``~/detections`` over the images by their appearance (dnn_person_reid, a post-process of the detections). Output: ``~/detections`` (DetectionArrayStamped), with the id of each person in ``data`` for dnn_person_reid.
 
 .. toctree::
    :maxdepth: 1
 
    nodes/people_detect
    nodes/dnn_object_detection
+   nodes/dnn_person_reid
 
 Codes and markers
 -----------------
@@ -148,6 +153,7 @@ Estimate the motion of the image. Output: ``~/flows`` (FlowArrayStamped), ``~/sh
    nodes/fback_flow
    nodes/lk_flow
    nodes/simple_flow
+   nodes/dnn_optical_flow
    nodes/phase_corr
 
 Histogram comparison

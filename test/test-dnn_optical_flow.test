@@ -1,0 +1,29 @@
+<launch>
+  <arg name="gui" default="true" />
+
+  <!-- the video in a loop, on camera/image_raw and camera/camera_info, slow for RAFT on the CPU (about 1 s per image) -->
+  <node name="camera" pkg="image_publisher" type="image_publisher" args="$(find opencv_apps)/test/vslam_tutorial.mp4" >
+    <param name="publish_rate" value="2" />
+  </node>
+
+  <!-- dnn_optical_flow_nodelet.cpp, downloads the model at the first time -->
+  <include file="$(find opencv_apps)/launch/dnn_optical_flow.launch" >
+    <arg name="debug_view" value="$(arg gui)" />
+    <arg name="image" value="camera/image_raw" />
+  </include>
+
+  <param name="dnn_optical_flow_flows_test/topic" value="dnn_optical_flow/flows" />    <!-- opencv_apps/FlowArrayStamped -->
+  <test test-name="dnn_optical_flow_flows_test" pkg="rostest" type="hztest" name="dnn_optical_flow_flows_test" time-limit="300" >
+    <param name="hz" value="1.0" />
+    <param name="hzerror" value="0.99" />
+    <param name="test_duration" value="5.0" />
+    <param name="wait_time" value="240.0" />
+  </test>
+  <param name="dnn_optical_flow_image_test/topic" value="dnn_optical_flow/image" />
+  <test test-name="dnn_optical_flow_image_test" pkg="rostest" type="hztest" name="dnn_optical_flow_image_test" time-limit="300" >
+    <param name="hz" value="1.0" />
+    <param name="hzerror" value="0.99" />
+    <param name="test_duration" value="5.0" />
+    <param name="wait_time" value="240.0" />
+  </test>
+</launch>

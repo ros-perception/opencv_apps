@@ -189,7 +189,10 @@ dnn_depth_estimation:
       input_height: 518
       metric_depth: true
     note: 'Depth Anything V2 Metric Small trained on Virtual KITTI (518x518, 99 MB): the depth in meters outdoors, up
-      to about 80 m, e.g. on the road; needs OpenCV 4.10 or later.'
+      to about 80 m, e.g. on the road; needs OpenCV 4.12 or later.'
+dnn_edge_detection:
+  clip: street.mp4
+  note: DexiNed of opencv_zoo (MIT License), the same clip as edge_detection; needs OpenCV 4.12 or later.
 dnn_face_detection:
   clip: tos_faces.mp4
 dnn_face_recognition:
@@ -228,6 +231,22 @@ dnn_image_classification:
       model: https://github.com/opencv/opencv_zoo/raw/48b10fa505aeb51fbd127fc60a5c660040e823b7/models/image_classification_mobilenet/image_classification_mobilenetv2_2022apr.onnx
     note: 'MobileNetV2 of opencv_zoo (top-1 69.4 %, 14 MB, OpenCV 4.9 or later): the more accurate of the two
       MobileNets at about the same speed, the first choice for a small computer.'
+dnn_interactive_segmentation:
+  clip: test/face_detector_withface_test_diamondback.mp4
+  note: The box around the woman at the center is given with set_image.py, as the tracking nodes, and kept for the next
+    images. EfficientSAM-Ti of opencv_zoo (Apache 2.0) needs OpenCV 4.12 or later.
+  steps:
+  - ros2 run opencv_apps set_image.py 375 325 150 310 --ros-args -r set_roi:=/dnn_interactive_segmentation/set_roi
+dnn_inpainting:
+  clip: tos_bridge.mp4
+  launch_args:
+    mask: /dnn_semantic_segmentation/label
+  note: 'The people found by dnn_semantic_segmentation (its ``~/label``, non-zero for the people) are filled by LaMa
+    (Apache-2.0) of opencv_zoo, which needs OpenCV 5.0 or later and takes about 0.8 s for each image on a CPU
+    (OpenCV 5.1). A rectangle is filled with ``ros2 run opencv_apps set_image.py <center x> <center y> <width>
+    <height> --ros-args -r set_roi:=/dnn_inpainting/set_roi`` instead, and cleared with the width and height of 0.'
+  steps:
+  - ros2 launch opencv_apps dnn_semantic_segmentation.launch.xml image:=image debug_view:=false &
 dnn_object_detection:
   clip: tum_walking.mp4
   variants_title: Models
@@ -292,11 +311,51 @@ dnn_object_detection:
       input_height: 416
     note: 'YOLOv4-tiny of darknet (AP 21.7 on COCO, 23 MB): the fastest and least accurate, and an example of
       darknet models, e.g. your own model trained with darknet; OpenCV 4 only, as OpenCV 5 reads only onnx.'
+dnn_optical_flow:
+  clip: keybridge.mp4
+  note: Needs OpenCV 4.10 or later. RAFT takes about 1 s per image on a CPU (OpenCV 4.x runs it on the CPU), so the
+    flows are of the images about 1 s apart, which the node processes, not of the consecutive images of the 10 Hz
+    video. The model of opencv_zoo is under the BSD-3-Clause license (RAFT) and the MIT License (its conversion to
+    onnx).
+dnn_person_reid:
+  clip: tum_walking.mp4
+  image: image:=image input:=/dnn_object_detection/detections
+  steps:
+  - ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image debug_view:=false &
+  note: 'The people of dnn_object_detection keep their ids while they walk around: each box is in the color of the
+    id, with person_<id> and the cosine similarity to the person seen before, or new. The YouTu ReID baseline of
+    opencv_zoo (Apache 2.0, 106 MB, onnx) is read by OpenCV 4 (also 4.6 of Ubuntu 24.04) and 5.'
 dnn_pose_estimation:
   clip: tos_bridge.mp4
   note: Needs OpenCV 4.9 or later; recorded with OpenCV 4.12 on CUDA.
 dnn_semantic_segmentation:
   clip: tos_bridge.mp4
+dnn_super_resolution:
+  clip: test/face_detector_withface_test_diamondback.mp4
+  variants_title: Models
+  variants_note: The node runs the onnx models of `dnn_superres <https://github.com/opencv/opencv_contrib/tree/5.x/modules/dnn_superres>`_
+    of opencv_contrib (in opencv_extra, OpenCV 4.10 or later), given by ``model``, whose scale is the scale of
+    ``~/image``; the model enlarges the Y channel of YCrCb, and the colors (Cr and Cb) are enlarged by the bicubic
+    interpolation. The models are converted from the TensorFlow models of
+    `TF-ESPCN <https://github.com/fannymonori/TF-ESPCN>`_ and
+    `FSRCNN_Tensorflow <https://github.com/Saafke/FSRCNN_Tensorflow>`_, both Apache-2.0 (opencv_extra, which has
+    the onnx files, has no license file of its own). The input of this demo is 640x480.
+  variants:
+  - name: espcn_x2
+    title: ESPCN x2 (default)
+    default: true
+    note: 'ESPCN x2 (86 KB): 2 times as large, e.g. 640x480 to 1280x960, the fastest.'
+  - name: fsrcnn_x2
+    title: FSRCNN x2
+    launch_args:
+      model: https://raw.githubusercontent.com/opencv/opencv_extra/697e5c3de828f3154e82f222dbe902d622bbe19a/testdata/cv/dnn_superres/FSRCNN_x2.onnx
+    note: 'FSRCNN x2 (38 KB): 2 times as large, about as accurate as ESPCN x2 (the benchmark of dnn_superres) and
+      slower.'
+  - name: fsrcnn_x3
+    title: FSRCNN x3
+    launch_args:
+      model: https://raw.githubusercontent.com/opencv/opencv_extra/697e5c3de828f3154e82f222dbe902d622bbe19a/testdata/cv/dnn_superres/FSRCNN_x3.onnx
+    note: 'FSRCNN x3 (39 KB): 3 times as large, e.g. 640x480 to 1920x1440.'
 dnn_text_detection:
   clip: test/text.mp4
 dnn_tracking:

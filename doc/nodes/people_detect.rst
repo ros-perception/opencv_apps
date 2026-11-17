@@ -13,7 +13,7 @@ Detects the people with the HOG descriptor and the linear SVM (``cv::HOGDescript
    * - OpenCV
      - any version of the distributions
    * - Group
-     - Object detection, the nodes of which publish ``~/detections`` (DetectionArrayStamped)
+     - Object detection, the nodes of which publish ``~/detections`` (DetectionArrayStamped), with the id of each person in ``data`` for dnn_person_reid
 
 .. image:: https://ros-perception.github.io/opencv_apps/media/people_detect.gif
    :alt: demo of people_detect

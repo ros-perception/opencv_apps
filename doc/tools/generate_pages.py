@@ -56,23 +56,24 @@ TEST_VIDEOS_URL = 'https://raw.githubusercontent.com/ros-perception/opencv_apps/
 # the groups of the nodes by what they find: the nodes of a group publish the same kind of results, so that one can
 # replace another, e.g. face_detection by dnn_face_detection
 CATEGORIES = [
-    ('Image filters', ['adding_images', 'discrete_fourier_transform', 'edge_detection', 'equalize_histogram',
-                       'morphology', 'pyramids', 'smoothing', 'threshold']),
+    ('Image filters', ['adding_images', 'discrete_fourier_transform', 'edge_detection', 'dnn_edge_detection',
+                       'equalize_histogram', 'morphology', 'pyramids', 'smoothing', 'threshold',
+                       'dnn_super_resolution', 'dnn_inpainting']),
     ('Features and shapes', ['corner_harris', 'goodfeature_track', 'hough_lines', 'line_segment_detector',
                              'hough_circles', 'blob_detection', 'find_contours', 'general_contours',
                              'contour_moments', 'convex_hull']),
     ('Segmentation', ['hsv_color_filter', 'hls_color_filter', 'lab_color_filter', 'rgb_color_filter',
                       'background_subtraction', 'segment_objects', 'watershed_segmentation',
-                      'dnn_semantic_segmentation']),
+                      'dnn_semantic_segmentation', 'dnn_interactive_segmentation']),
     ('Image classification', ['dnn_image_classification']),
-    ('Object detection', ['people_detect', 'dnn_object_detection']),
+    ('Object detection', ['people_detect', 'dnn_object_detection', 'dnn_person_reid']),
     ('Codes and markers', ['qrcode_detection', 'barcode_detection', 'aruco_detection']),
     ('Text detection and recognition', ['dnn_text_detection']),
     ('Faces', ['face_detection', 'face_recognition', 'dnn_face_detection', 'dnn_face_recognition',
                'dnn_facial_expression_recognition']),
     ('Human and hand poses', ['dnn_pose_estimation', 'dnn_hand_pose_estimation']),
     ('Tracking', ['tracking', 'match_template', 'dnn_tracking', 'camshift']),
-    ('Optical flow and motion', ['fback_flow', 'lk_flow', 'simple_flow', 'phase_corr']),
+    ('Optical flow and motion', ['fback_flow', 'lk_flow', 'simple_flow', 'dnn_optical_flow', 'phase_corr']),
     ('Histogram comparison', ['compare_histogram']),
     ('Depth and 3D localization', ['dnn_depth_estimation', 'detection_3d']),
     ('Odometry and maps', ['rgbd_odometry', 'laser_odometry']),
@@ -171,8 +172,9 @@ DESCRIPTIONS = {
 # the short descriptions of the categories, on the top page and README.md
 # the descriptions of the groups, and their common output (the message types are linked in the pages)
 CATEGORY_DESCRIPTIONS = {
-    'Image filters': ('Filter and transform the images: edges, histogram equalization, morphology, image pyramids, '
-                      'smoothing, thresholds and the Fourier transform.',
+    'Image filters': ('Filter and transform the images: edges (also by DexiNed), histogram equalization, '
+                      'morphology, image pyramids, smoothing, thresholds, the Fourier transform, and the super '
+                      'resolution and the inpainting by a DNN.',
                       'the processed image in ``~/image``'),
     'Features and shapes': ('Find the corners, the lines and the line segments, the circles and the blobs, and the '
                             'contours with their bounding shapes, moments and convex hulls.',
@@ -180,15 +182,20 @@ CATEGORY_DESCRIPTIONS = {
                             '(CircleArrayStamped) and ``~/contours`` (ContourArrayStamped, ``~/hulls`` of '
                             'convex_hull), by the kind of the features'),
     'Segmentation': ('Divide the image into regions by the class of each pixel: the pixels in a range of colors, '
-                     'the foreground, the connected regions, and the classes of a DNN.',
+                     'the foreground, the connected regions, the classes of a DNN, and the object given by a box or '
+                     'points.',
                      'the mask or label image, ``~/image`` of the color filters and background_subtraction, '
-                     '``~/label`` of dnn_semantic_segmentation, and ``~/contours`` (ContourArrayStamped) of the '
-                     'regions of segment_objects and watershed_segmentation'),
+                     '``~/label`` of dnn_semantic_segmentation, ``~/mask`` of dnn_interactive_segmentation, and '
+                     '``~/contours`` (ContourArrayStamped) of the regions of segment_objects, watershed_segmentation '
+                     'and dnn_interactive_segmentation'),
     'Image classification': ('Find what the whole image shows, the classes of ImageNet.',
                              '``~/detections`` (DetectionArrayStamped), the classes with their scores'),
     'Object detection': ('Find the bounding boxes of the people (HOG of people_detect) and the objects (YOLO of '
-                         'dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn).',
-                         '``~/detections`` (DetectionArrayStamped)'),
+                         'dnn_object_detection: YOLOX, YOLOv4 and the other models of cv::dnn), and re-identify the '
+                         'people of ``~/detections`` over the images by their appearance (dnn_person_reid, a '
+                         'post-process of the detections).',
+                         '``~/detections`` (DetectionArrayStamped), with the id of each person in ``data`` for '
+                         'dnn_person_reid'),
     'Codes and markers': ('Find and decode QR codes, barcodes and ArUco markers.',
                           '``~/detections`` (DetectionArrayStamped), with the decoded data and the corners'),
     'Text detection and recognition': ('Find the texts and read them (OCR).',
@@ -218,6 +225,7 @@ CATEGORY_DESCRIPTIONS = {
 # the main output of each node, under its tile, when it is not ~/image
 NODE_OUTPUTS = {
     'dnn_depth_estimation': '~/inverse_depth', 'dnn_semantic_segmentation': '~/label',
+    'dnn_interactive_segmentation': '~/mask',
     'corner_harris': '~/corners', 'goodfeature_track': '~/corners', 'hough_lines': '~/lines',
     'line_segment_detector': '~/lines', 'hough_circles': '~/circles', 'blob_detection': '~/circles',
     'convex_hull': '~/hulls', 'camshift': '~/track_box', 'phase_corr': '~/shift', 'compare_histogram': '~/distance',
@@ -269,7 +277,8 @@ for _node in ['aruco_detection', 'background_subtraction', 'barcode_detection', 
               'dnn_hand_pose_estimation', 'dnn_image_classification', 'dnn_object_detection', 'dnn_pose_estimation',
               'dnn_semantic_segmentation', 'dnn_text_detection', 'dnn_tracking']:
     SINCE[_node] = '3.0.0'
-for _node in ['detection_3d', 'rgbd_odometry', 'laser_odometry']:
+for _node in ['detection_3d', 'rgbd_odometry', 'laser_odometry', 'dnn_super_resolution', 'dnn_optical_flow',
+              'dnn_interactive_segmentation', 'dnn_person_reid', 'dnn_inpainting', 'dnn_edge_detection']:
     SINCE[_node] = '3.1.0'
 # the requirements of OpenCV of the nodes (see CMakeLists.txt): the minimum version, and the description
 OPENCV_REQUIREMENTS = {
@@ -288,16 +297,26 @@ OPENCV_REQUIREMENTS = {
     'dnn_tracking': ('4.5.4', 'OpenCV 4.5.4 or later for DaSiamRPN, 4.7 or later for NanoTrack and 4.9 or later '
                               'for VitTrack'),
     'rgbd_odometry': (None, 'the rgbd module of opencv_contrib (OpenCV 4)'),
+    'dnn_super_resolution': ('4.12', 'OpenCV 4.12 or later, which runs the onnx models of dnn_superres (4.10 fails on '
+                                     'DepthToSpace)'),
+    'dnn_optical_flow': ('4.10', 'OpenCV 4.10 or later, which reads RAFT; on the CPU with OpenCV 4.x, whose CUDA backend '
+                                 'crashes with RAFT'),
+    'dnn_interactive_segmentation': ('4.10', 'OpenCV 4.10 or later, which reads EfficientSAM'),
+    'dnn_inpainting': ('5.0', 'OpenCV 5.0 or later, which reads LaMa (OpenCV 4.6 - 4.12 fail to read it)'),
+    'dnn_edge_detection': ('4.12', 'OpenCV 4.12 or later, which reads DexiNed (4.10 fails on DequantizeLinear)'),
 }
 for _node in ['dnn_face_detection', 'dnn_face_recognition', 'dnn_facial_expression_recognition', 'dnn_object_detection',
-              'dnn_image_classification', 'dnn_semantic_segmentation', 'dnn_depth_estimation', 'dnn_text_detection']:
+              'dnn_image_classification', 'dnn_semantic_segmentation', 'dnn_depth_estimation', 'dnn_text_detection',
+              'dnn_person_reid']:
     OPENCV_REQUIREMENTS[_node] = ('4.5.4', 'OpenCV 4.5.4 or later')
 
 
 # the notes of the distributions, which depend on their OpenCV
 ROS_NOTES = {'dnn_tracking': 'DaSiamRPN on ROS One, jazzy and kilted (OpenCV 4.6), and also NanoTrack and VitTrack on '
                              'lyrical (OpenCV 4.10)',
-             'tracking': 'the trackers other than MIL need libopencv-contrib'}
+             'tracking': 'the trackers other than MIL need libopencv-contrib',
+             'dnn_edge_detection': 'not on lyrical, whose OpenCV 4.10 cannot read DexiNed',
+             'dnn_super_resolution': 'not on lyrical, whose OpenCV 4.10 fails on the models'}
 
 
 def version_tuple(version):
@@ -324,7 +343,8 @@ def availability(node):
     since = SINCE.get(node, '1.11')
     opencv = OPENCV_REQUIREMENTS.get(node, (None, 'any version of the distributions'))[1]
     distributions, old_opencv = distributions_of(node)
-    ros = ', '.join(distributions) + ' and later'
+    # the nodes which need a newer OpenCV than all the distributions, e.g. OpenCV 5 built from source
+    ros = (', '.join(distributions) + ' and later') if distributions else 'any, with OpenCV built from source'
     if old_opencv:
         ros += '; not %s' % ', '.join(old_opencv)
     if node in ROS_NOTES:
@@ -351,7 +371,7 @@ def tier_label(distributions):
         names = [name for name, version, _, _, _ in DISTRIBUTIONS if version == ros and name in distributions]
         if names:
             labels.append('%s: %s and later' % (ros, names[0]))
-    return ', '.join(labels)
+    return ', '.join(labels) or 'ROS 1 and ROS 2, with OpenCV built from source'
 
 
 def category_of(node):
@@ -402,6 +422,7 @@ USAGE_INPUTS = {
                       'image:=/camera/color/image_raw depth:=/camera/aligned_depth_to_color/image_raw '
                       'camera_info:=/camera/color/camera_info base_frame:=camera_link'),
     'laser_odometry': 'points:=/livox/lidar base_frame:=base_link',
+    'dnn_person_reid': 'image:=/camera/image_raw input:=/dnn_object_detection/detections',
 }
 
 

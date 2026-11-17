@@ -1,0 +1,35 @@
+<launch>
+  <arg name="node_name" default="dnn_person_reid" />
+
+  <arg name="image" default="image" description="The image topic. Should be remapped to the name of the real image topic." />
+  <arg name="input" default="input" description="The detections of the image, e.g. ~/detections of dnn_object_detection." />
+
+  <arg name="debug_view" default="true" description="Specify whether the node displays a window to show the result" />
+  <arg name="queue_size" default="10" description="Queue size of the synchronized subscribers of the image and the detections." />
+  <arg name="sync_queue_size" default="100" description="Number of the images (and the detections) kept to be synchronized, more than the rate of the images times the latency of the detector, e.g. 30 Hz x 0.6 s = 18" />
+  <arg name="approximate_sync" default="false" description="Synchronize the image and the detections by the approximate time of the stamps, instead of the exact time" />
+  <arg name="model" default="" description="Path or URL of the person ReID model (onnx, 128x256 RGB input), empty for the YouTu ReID model of opencv_zoo" />
+  <arg name="backend" default="auto" description="Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise." />
+  <arg name="label" default="person" description="Label of the detections to re-identify, empty for all of them" />
+  <arg name="match_threshold" default="0.5" description="Threshold of the cosine similarity to the person seen before to have the same id, a new id otherwise" />
+  <arg name="update_rate" default="0.1" description="Rate of the feature of the new image in the moving average of the feature of the person" />
+  <arg name="use_cuda" default="false" description="Run the node in the docker image of OpenCV with CUDA (cuda_image, built from docker/ of opencv_apps), by scripts/run_in_docker" />
+  <arg name="cuda_image" default="ghcr.io/ros-perception/opencv_apps:cuda" description="The docker image of use_cuda, pulled at the first use: ghcr.io/ros-perception/opencv_apps:cuda (OpenCV 4.12, docker/cuda) or ghcr.io/ros-perception/opencv_apps:opencv5-cuda (OpenCV 5.1, docker/opencv5-cuda), or an image built from them" />
+  <let name="launch_prefix" value="$(find-pkg-prefix opencv_apps)/lib/opencv_apps/run_in_docker $(var cuda_image)" if="$(var use_cuda)" />
+  <let name="launch_prefix" value="" unless="$(var use_cuda)" />
+
+  <!-- dnn_person_reid_nodelet.cpp, person re-identification with the YouTu ReID model of opencv_zoo -->
+  <node name="$(var node_name)" pkg="opencv_apps" exec="dnn_person_reid" launch-prefix="$(var launch_prefix)" >
+    <remap from="image" to="$(var image)" />
+    <remap from="input" to="$(var input)" />
+    <param name="debug_view" value="$(var debug_view)" />
+    <param name="queue_size" value="$(var queue_size)" />
+    <param name="sync_queue_size" value="$(var sync_queue_size)" />
+    <param name="approximate_sync" value="$(var approximate_sync)" />
+    <param name="model" type="str" value="$(var model)" />
+    <param name="backend" type="str" value="$(var backend)" />
+    <param name="label" type="str" value="$(var label)" />
+    <param name="match_threshold" value="$(var match_threshold)" />
+    <param name="update_rate" value="$(var update_rate)" />
+  </node>
+</launch>

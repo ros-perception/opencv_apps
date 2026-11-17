@@ -187,8 +187,32 @@
     <description>Nodelet of semantic segmentation with a DNN model, e.g. PP-HumanSeg</description>
   </class>
 
+  <class name="opencv_apps/dnn_interactive_segmentation" type="opencv_apps::DNNInteractiveSegmentationNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to segment the object given by a box or points with EfficientSAM</description>
+  </class>
+
   <class name="opencv_apps/dnn_text_detection" type="opencv_apps::DNNTextDetectionNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to detect and recognize texts with DB (cv::dnn::TextDetectionModel_DB) and CRNN (cv::dnn::TextRecognitionModel)</description>
+  </class>
+
+  <class name="opencv_apps/dnn_super_resolution" type="opencv_apps::DNNSuperResolutionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of super resolution of the image with a DNN model, e.g. ESPCN of dnn_superres</description>
+  </class>
+
+  <class name="opencv_apps/dnn_optical_flow" type="opencv_apps::DNNOpticalFlowNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet of dense optical flow with RAFT (DNN), the same outputs as fback_flow</description>
+  </class>
+
+  <class name="opencv_apps/dnn_person_reid" type="opencv_apps::DNNPersonReIDNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to re-identify the people detected by another node with the YouTu person ReID model</description>
+  </class>
+
+  <class name="opencv_apps/dnn_inpainting" type="opencv_apps::DNNInpaintingNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to fill the masked region of the image with LaMa (OpenCV 5.0 or later)</description>
+  </class>
+
+  <class name="opencv_apps/dnn_edge_detection" type="opencv_apps::DNNEdgeDetectionNodelet" base_class_type="nodelet::Nodelet">
+    <description>Nodelet to detect the edges with a DNN model, e.g. DexiNed</description>
   </class>
   <class name="opencv_apps/detection_3d" type="opencv_apps::Detection3DNodelet" base_class_type="nodelet::Nodelet">
     <description>Nodelet to publish the 3D boxes and the TF frames of the 2D detections, faces or tracked targets, with a depth image</description>

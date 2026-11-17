@@ -1724,6 +1724,101 @@
    }
   ]
  },
+ "dnn_edge_detection": {
+  "description": "Nodelet to detect the edges with a DNN model, e.g. DexiNed",
+  "node": "dnn_edge_detection",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_edge_detection.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 512,
+    "description": "Height of the network input, 512 for DexiNed",
+    "name": "input_height",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": 512,
+    "description": "Width of the network input, 512 for DexiNed",
+    "name": "input_width",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the model (onnx) of the same input and output as DexiNed, empty for DexiNed of opencv_zoo (OpenCV 4.12 or later). The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
  "dnn_face_detection": {
   "description": "Nodelet to detect faces with YuNet (cv::FaceDetectorYN)",
   "node": "dnn_face_detection",
@@ -2358,6 +2453,386 @@
    }
   ]
  },
+ "dnn_inpainting": {
+  "description": "Nodelet to fill the masked region of the image with LaMa (OpenCV 5.0 or later)",
+  "node": "dnn_inpainting",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "cpu",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise. cpu by default, as OpenCV 5.1 runs LaMa on the CPU also with cuda, which is slower",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_inpainting.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 10,
+    "description": "Pixels to dilate the region to fill by, as the masks of segmentation (e.g. ~/label of dnn_semantic_segmentation) miss the edges of the objects, which LaMa extends otherwise",
+    "name": "mask_dilation",
+    "type": "int"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the model (onnx) of the same input and output as LaMa, empty for LaMa of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [
+   {
+    "name": "~/set_roi",
+    "type": "opencv_apps/srv/SetROI"
+   }
+  ],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "/mask",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_interactive_segmentation": {
+  "description": "Nodelet to segment the object given by a box or points with EfficientSAM",
+  "node": "dnn_interactive_segmentation",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": "jpeg",
+    "description": "Compression method",
+    "name": "dnn_interactive_segmentation.image.compressed.format",
+    "type": "string"
+   },
+   {
+    "default": 95,
+    "description": "Image quality for JPEG format",
+    "name": "dnn_interactive_segmentation.image.compressed.jpeg_quality",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "Compression level for PNG format",
+    "name": "dnn_interactive_segmentation.image.compressed.png_level",
+    "range": [
+     0,
+     9
+    ],
+    "type": "int"
+   },
+   {
+    "default": "inch",
+    "description": "tiff resolution unit",
+    "name": "dnn_interactive_segmentation.image.compressed.tiff.res_unit",
+    "type": "string"
+   },
+   {
+    "default": -1,
+    "description": "tiff xdpi",
+    "name": "dnn_interactive_segmentation.image.compressed.tiff.xdpi",
+    "type": "int"
+   },
+   {
+    "default": -1,
+    "description": "tiff ydpi",
+    "name": "dnn_interactive_segmentation.image.compressed.tiff.ydpi",
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/compressed",
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_interactive_segmentation.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": "jpeg",
+    "description": "Compression method",
+    "name": "dnn_interactive_segmentation.image.format",
+    "type": "string"
+   },
+   {
+    "default": 95,
+    "description": "Image quality for JPEG format",
+    "name": "dnn_interactive_segmentation.image.jpeg_quality",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "Compression level for PNG format",
+    "name": "dnn_interactive_segmentation.image.png_level",
+    "range": [
+     0,
+     9
+    ],
+    "type": "int"
+   },
+   {
+    "default": "inch",
+    "description": "tiff resolution unit",
+    "name": "dnn_interactive_segmentation.image.tiff.res_unit",
+    "type": "string"
+   },
+   {
+    "default": -1,
+    "description": "tiff xdpi",
+    "name": "dnn_interactive_segmentation.image.tiff.xdpi",
+    "type": "int"
+   },
+   {
+    "default": -1,
+    "description": "tiff ydpi",
+    "name": "dnn_interactive_segmentation.image.tiff.ydpi",
+    "type": "int"
+   },
+   {
+    "default": "jpeg",
+    "description": "Compression method",
+    "name": "dnn_interactive_segmentation.mask.compressed.format",
+    "type": "string"
+   },
+   {
+    "default": 95,
+    "description": "Image quality for JPEG format",
+    "name": "dnn_interactive_segmentation.mask.compressed.jpeg_quality",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "Compression level for PNG format",
+    "name": "dnn_interactive_segmentation.mask.compressed.png_level",
+    "range": [
+     0,
+     9
+    ],
+    "type": "int"
+   },
+   {
+    "default": "inch",
+    "description": "tiff resolution unit",
+    "name": "dnn_interactive_segmentation.mask.compressed.tiff.res_unit",
+    "type": "string"
+   },
+   {
+    "default": -1,
+    "description": "tiff xdpi",
+    "name": "dnn_interactive_segmentation.mask.compressed.tiff.xdpi",
+    "type": "int"
+   },
+   {
+    "default": -1,
+    "description": "tiff ydpi",
+    "name": "dnn_interactive_segmentation.mask.compressed.tiff.ydpi",
+    "type": "int"
+   },
+   {
+    "default": [
+     "image_transport/compressed",
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_interactive_segmentation.mask.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": "jpeg",
+    "description": "Compression method",
+    "name": "dnn_interactive_segmentation.mask.format",
+    "type": "string"
+   },
+   {
+    "default": 95,
+    "description": "Image quality for JPEG format",
+    "name": "dnn_interactive_segmentation.mask.jpeg_quality",
+    "range": [
+     1,
+     100
+    ],
+    "type": "int"
+   },
+   {
+    "default": 3,
+    "description": "Compression level for PNG format",
+    "name": "dnn_interactive_segmentation.mask.png_level",
+    "range": [
+     0,
+     9
+    ],
+    "type": "int"
+   },
+   {
+    "default": "inch",
+    "description": "tiff resolution unit",
+    "name": "dnn_interactive_segmentation.mask.tiff.res_unit",
+    "type": "string"
+   },
+   {
+    "default": -1,
+    "description": "tiff xdpi",
+    "name": "dnn_interactive_segmentation.mask.tiff.xdpi",
+    "type": "int"
+   },
+   {
+    "default": -1,
+    "description": "tiff ydpi",
+    "name": "dnn_interactive_segmentation.mask.tiff.ydpi",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the EfficientSAM model (onnx), empty for EfficientSAM-Ti of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/contours",
+    "type": "opencv_apps/msg/ContourArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/image/compressed",
+    "type": "sensor_msgs/msg/CompressedImage"
+   },
+   {
+    "name": "~/mask",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "~/mask/compressed",
+    "type": "sensor_msgs/msg/CompressedImage"
+   },
+   {
+    "name": "~/output",
+    "type": "opencv_apps/msg/RectArrayStamped"
+   }
+  ],
+  "services": [
+   {
+    "name": "~/set_roi",
+    "type": "opencv_apps/srv/SetROI"
+   }
+  ],
+  "subscriptions": [
+   {
+    "name": "~/add_points",
+    "type": "opencv_apps/msg/Point2DArray"
+   },
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
  "dnn_object_detection": {
   "description": "Nodelet to detect objects with a DNN model (cv::dnn::DetectionModel), e.g. YOLO",
   "node": "dnn_object_detection",
@@ -2508,6 +2983,221 @@
    {
     "name": "/image",
     "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_optical_flow": {
+  "description": "Nodelet of dense optical flow with RAFT (DNN), the same outputs as fback_flow",
+  "node": "dnn_optical_flow",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise. RAFT runs on the CPU instead of CUDA with OpenCV 4.x, which crashes",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_optical_flow.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": 360,
+    "description": "Height of the network input, 360 for RAFT of opencv_zoo",
+    "name": "input_height",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": 480,
+    "description": "Width of the network input, 480 for RAFT of opencv_zoo",
+    "name": "input_width",
+    "range": [
+     1,
+     4096
+    ],
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the RAFT model (onnx) of the inputs 0 and 1 (the previous and the current image) and the output of the flow, empty for RAFT of opencv_zoo (OpenCV 4.10 or later). The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/flows",
+    "type": "opencv_apps/msg/FlowArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_person_reid": {
+  "description": "Nodelet to re-identify the people detected by another node with the YouTu person ReID model",
+  "node": "dnn_person_reid",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "Synchronize the image and the detections by the approximate time of the stamps, instead of the exact time",
+    "name": "approximate_sync",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/compressed",
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_person_reid.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": "person",
+    "description": "Label of the detections to re-identify, empty for all of them",
+    "name": "label",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": 0.5,
+    "description": "Threshold of the cosine similarity to the person seen before to have the same id, a new id otherwise",
+    "name": "match_threshold",
+    "range": [
+     -1.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the person ReID model (onnx, 128x256 RGB input), empty for the YouTu ReID model of opencv_zoo. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 10,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": 100,
+    "description": "Number of the images (and the detections) kept to be synchronized, more than the rate of the images times the latency of the detector, e.g. 30 Hz x 0.6 s = 18",
+    "name": "sync_queue_size",
+    "type": "int"
+   },
+   {
+    "default": 0.1,
+    "description": "Rate of the feature of the new image in the moving average of the feature of the person",
+    "name": "update_rate",
+    "range": [
+     0.0,
+     1.0
+    ],
+    "type": "double"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/detections",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
+   },
+   {
+    "name": "~/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   },
+   {
+    "name": "/input",
+    "type": "opencv_apps/msg/DetectionArrayStamped"
    }
   ]
  },
@@ -2796,6 +3486,81 @@
    },
    {
     "name": "~/label",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ],
+  "services": [],
+  "subscriptions": [
+   {
+    "name": "/image",
+    "type": "sensor_msgs/msg/Image"
+   }
+  ]
+ },
+ "dnn_super_resolution": {
+  "description": "Nodelet of super resolution of the image with a DNN model, e.g. ESPCN of dnn_superres",
+  "node": "dnn_super_resolution",
+  "parameters": [
+   {
+    "default": false,
+    "description": "",
+    "name": "always_subscribe",
+    "type": "bool"
+   },
+   {
+    "default": "auto",
+    "description": "Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise.",
+    "name": "backend",
+    "type": "string"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "debug_view",
+    "type": "bool"
+   },
+   {
+    "default": [
+     "image_transport/raw"
+    ],
+    "description": "",
+    "name": "dnn_super_resolution.image.enable_pub_plugins",
+    "type": "string[]"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "latch",
+    "type": "bool"
+   },
+   {
+    "default": "",
+    "description": "Path or URL of the model (onnx) of dnn_superres, ESPCN or FSRCNN, whose scale is the scale of ~image, empty for ESPCN x2. The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "name": "model",
+    "type": "string"
+   },
+   {
+    "default": 3,
+    "description": "",
+    "name": "queue_size",
+    "type": "int"
+   },
+   {
+    "default": false,
+    "description": "Indicates that the camera_info topic should be subscribed to to get the default input_frame_id. Otherwise the frame from the image message will be used.",
+    "name": "use_camera_info",
+    "type": "bool"
+   },
+   {
+    "default": false,
+    "description": "",
+    "name": "verbose_connection",
+    "type": "bool"
+   }
+  ],
+  "publishers": [
+   {
+    "name": "~/image",
     "type": "sensor_msgs/msg/Image"
    }
   ],

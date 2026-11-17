@@ -95,7 +95,7 @@ Depth Anything V2 Metric Small, outdoors (Virtual KITTI)
 
    ros2 launch opencv_apps dnn_depth_estimation.launch.xml image:=image input_height:=518 input_width:=518 metric_depth:=true model:=https://huggingface.co/k-okada/depth-anything-v2-metric-small-onnx/resolve/5494458701c7274fa82af484e2f2d226c948b54d/depth_anything_v2_metric_vkitti_vits_518.onnx
 
-Depth Anything V2 Metric Small trained on Virtual KITTI (518x518, 99 MB): the depth in meters outdoors, up to about 80 m, e.g. on the road; needs OpenCV 4.10 or later.
+Depth Anything V2 Metric Small trained on Virtual KITTI (518x518, 99 MB): the depth in meters outdoors, up to about 80 m, e.g. on the road; needs OpenCV 4.12 or later.
 
 Subscribed topics
 -----------------

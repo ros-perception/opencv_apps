@@ -1,0 +1,31 @@
+<launch>
+  <arg name="node_name" default="dnn_person_reid" />
+
+  <arg name="image" default="image" doc="The image topic. Should be remapped to the name of the real image topic." />
+  <arg name="input" default="input" doc="The detections of the image, e.g. ~/detections of dnn_object_detection." />
+
+  <arg name="debug_view" default="true" doc="Specify whether the node displays a window to show the result" />
+  <arg name="queue_size" default="10" doc="Queue size of the synchronized subscribers of the image and the detections." />
+  <arg name="sync_queue_size" default="100" doc="Number of the images (and the detections) kept to be synchronized, more than the rate of the images times the latency of the detector, e.g. 30 Hz x 0.6 s = 18" />
+  <arg name="approximate_sync" default="false" doc="Synchronize the image and the detections by the approximate time of the stamps, instead of the exact time" />
+  <arg name="model" default="" doc="Path or URL of the person ReID model (onnx, 128x256 RGB input), empty for the YouTu ReID model of opencv_zoo" />
+  <arg name="backend" default="auto" doc="Backend of cv::dnn: auto, cpu, opencl, opencl_fp16, cuda or cuda_fp16. auto uses CUDA when OpenCV is built with CUDA and a CUDA device is found, and the CPU otherwise." />
+  <arg name="label" default="person" doc="Label of the detections to re-identify, empty for all of them" />
+  <arg name="match_threshold" default="0.5" doc="Threshold of the cosine similarity to the person seen before to have the same id, a new id otherwise" />
+  <arg name="update_rate" default="0.1" doc="Rate of the feature of the new image in the moving average of the feature of the person" />
+
+  <!-- dnn_person_reid_nodelet.cpp, person re-identification with the YouTu ReID model of opencv_zoo -->
+  <node name="$(arg node_name)" pkg="opencv_apps" type="dnn_person_reid" >
+    <remap from="image" to="$(arg image)" />
+    <remap from="input" to="$(arg input)" />
+    <param name="debug_view" value="$(arg debug_view)" />
+    <param name="queue_size" value="$(arg queue_size)" />
+    <param name="sync_queue_size" value="$(arg sync_queue_size)" />
+    <param name="approximate_sync" value="$(arg approximate_sync)" />
+    <param name="model" type="str" value="$(arg model)" />
+    <param name="backend" type="str" value="$(arg backend)" />
+    <param name="label" type="str" value="$(arg label)" />
+    <param name="match_threshold" type="double" value="$(arg match_threshold)" />
+    <param name="update_rate" type="double" value="$(arg update_rate)" />
+  </node>
+</launch>

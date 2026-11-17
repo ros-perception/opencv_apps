@@ -1,0 +1,34 @@
+<launch>
+  <arg name="gui" default="true" />
+
+  <!-- the color images of test/rgbd_walking.mp4 (TUM RGB-D) in a loop, on image -->
+  <node name="publish_rgbd" pkg="opencv_apps" type="publish_rgbd.py" />
+
+  <!-- the people by dnn_object_detection_nodelet.cpp, which downloads the models at the first time -->
+  <include file="$(find opencv_apps)/launch/dnn_object_detection.launch" >
+    <arg name="debug_view" value="false" />
+    <arg name="image" value="image" />
+  </include>
+
+  <!-- dnn_person_reid_nodelet.cpp, downloads the model at the first time -->
+  <include file="$(find opencv_apps)/launch/dnn_person_reid.launch" >
+    <arg name="debug_view" value="$(arg gui)" />
+    <arg name="image" value="image" />
+    <arg name="input" value="dnn_object_detection/detections" />
+  </include>
+
+  <param name="dnn_person_reid_detections_test/topic" value="dnn_person_reid/detections" />
+  <test test-name="dnn_person_reid_detections_test" pkg="rostest" type="hztest" name="dnn_person_reid_detections_test" time-limit="300" >
+    <param name="hz" value="9.0" />
+    <param name="hzerror" value="8.9" />
+    <param name="test_duration" value="2.0" />
+    <param name="wait_time" value="240.0" />
+  </test>
+  <param name="dnn_person_reid_image_test/topic" value="dnn_person_reid/image" />
+  <test test-name="dnn_person_reid_image_test" pkg="rostest" type="hztest" name="dnn_person_reid_image_test" time-limit="300" >
+    <param name="hz" value="9.0" />
+    <param name="hzerror" value="8.9" />
+    <param name="test_duration" value="2.0" />
+    <param name="wait_time" value="240.0" />
+  </test>
+</launch>

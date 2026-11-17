@@ -193,7 +193,13 @@ if(OPENCV_HAVE_DNN)
     dnn_pose_estimation:DNNPoseEstimationNodelet
     dnn_hand_pose_estimation:DNNHandPoseEstimationNodelet
     dnn_semantic_segmentation:DNNSemanticSegmentationNodelet
+    dnn_interactive_segmentation:DNNInteractiveSegmentationNodelet
     dnn_text_detection:DNNTextDetectionNodelet
+    dnn_super_resolution:DNNSuperResolutionNodelet
+    dnn_optical_flow:DNNOpticalFlowNodelet
+    dnn_person_reid:DNNPersonReIDNodelet
+    dnn_inpainting:DNNInpaintingNodelet
+    dnn_edge_detection:DNNEdgeDetectionNodelet
     qrcode_detection:QRCodeDetectionNodelet
   )
   list(APPEND _nodelet_cppfiles
@@ -208,7 +214,13 @@ if(OPENCV_HAVE_DNN)
     src/nodelet/dnn_pose_estimation_nodelet.cpp
     src/nodelet/dnn_hand_pose_estimation_nodelet.cpp
     src/nodelet/dnn_semantic_segmentation_nodelet.cpp
+    src/nodelet/dnn_interactive_segmentation_nodelet.cpp
     src/nodelet/dnn_text_detection_nodelet.cpp
+    src/nodelet/dnn_super_resolution_nodelet.cpp
+    src/nodelet/dnn_optical_flow_nodelet.cpp
+    src/nodelet/dnn_person_reid_nodelet.cpp
+    src/nodelet/dnn_inpainting_nodelet.cpp
+    src/nodelet/dnn_edge_detection_nodelet.cpp
     src/nodelet/qrcode_detection_nodelet.cpp
   )
   if(OPENCV_HAVE_BARCODE)
@@ -360,6 +372,10 @@ if(BUILD_TESTING)
     list(REMOVE_ITEM _launch_tests test/ros2/test_detection_3d.py test/ros2/test_detection_3d_points.py
       test/ros2/test_detection_3d_distortion.py)
   endif()
+  # the test of dnn_person_reid re-identifies the people detected by dnn_object_detection
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_person_reid.py test/ros2/test_dnn_person_reid_delay.py)
+  endif()
   if(NOT OPENCV_HAVE_DNN)
     list(REMOVE_ITEM _launch_tests test/ros2/test_qrcode_detection.py)
   endif()
@@ -379,9 +395,29 @@ if(BUILD_TESTING)
       test/ros2/test_dnn_hand_pose_estimation.py test/ros2/test_dnn_hand_pose_estimation_tracking.py
       test/ros2/test_detection_3d_skeletons.py)
   endif()
+  # LaMa of dnn_inpainting needs OpenCV 5.0 or later
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "5.0")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_inpainting.py)
+  endif()
   # Depth Anything V2 Metric (onnx of a vision transformer) needs OpenCV 4.10 or later
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.10")
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_depth_estimation_metric.py)
+  endif()
+  # the onnx models of dnn_superres (DepthToSpace) of dnn_super_resolution need OpenCV 4.12 or later (4.10 fails on them)
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.12")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_super_resolution.py)
+  endif()
+  # RAFT of dnn_optical_flow needs OpenCV 4.10 or later (OpenCV 4.6 cannot read it)
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.10")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_optical_flow.py)
+  endif()
+  # EfficientSAM (onnx of a vision transformer, e.g. LayerNormalization) needs OpenCV 4.10 or later
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.10")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_interactive_segmentation.py)
+  endif()
+  # DexiNed of dnn_edge_detection (onnx with DequantizeLinear) needs OpenCV 4.12 or later (4.10 fails on it)
+  if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.12")
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_edge_detection.py)
   endif()
   if(NOT OPENCV_HAVE_BARCODE)
     list(REMOVE_ITEM _launch_tests test/ros2/test_barcode_detection.py)
@@ -881,7 +917,13 @@ if(OPENCV_HAVE_DNN)
   opencv_apps_add_nodelet(dnn_pose_estimation src/nodelet/dnn_pose_estimation_nodelet.cpp) # opencv_zoo pose_estimation_mediapipe
   opencv_apps_add_nodelet(dnn_hand_pose_estimation src/nodelet/dnn_hand_pose_estimation_nodelet.cpp) # opencv_zoo handpose_estimation_mediapipe
   opencv_apps_add_nodelet(dnn_semantic_segmentation src/nodelet/dnn_semantic_segmentation_nodelet.cpp) # ./dnn/segmentation.cpp
+  opencv_apps_add_nodelet(dnn_interactive_segmentation src/nodelet/dnn_interactive_segmentation_nodelet.cpp) # opencv_zoo image_segmentation_efficientsam
   opencv_apps_add_nodelet(dnn_text_detection src/nodelet/dnn_text_detection_nodelet.cpp) # ./dnn/text_detection.cpp
+  opencv_apps_add_nodelet(dnn_super_resolution src/nodelet/dnn_super_resolution_nodelet.cpp) # opencv_contrib dnn_superres
+  opencv_apps_add_nodelet(dnn_optical_flow src/nodelet/dnn_optical_flow_nodelet.cpp) # opencv_zoo optical_flow_estimation_raft
+  opencv_apps_add_nodelet(dnn_person_reid src/nodelet/dnn_person_reid_nodelet.cpp) # ./dnn/person_reid.py
+  opencv_apps_add_nodelet(dnn_inpainting src/nodelet/dnn_inpainting_nodelet.cpp) # opencv_zoo inpainting_lama, ./dnn/inpainting.cpp of OpenCV 5
+  opencv_apps_add_nodelet(dnn_edge_detection src/nodelet/dnn_edge_detection_nodelet.cpp) # ./dnn/edge_detection.cpp (5.x)
   opencv_apps_add_nodelet(qrcode_detection src/nodelet/qrcode_detection_nodelet.cpp) # ./cpp/qrcode.cpp
   if(OPENCV_HAVE_BARCODE)
     opencv_apps_add_nodelet(barcode_detection src/nodelet/barcode_detection_nodelet.cpp) # ./cpp/barcode.cpp
@@ -984,8 +1026,16 @@ if(CATKIN_ENABLE_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_pose_estimation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_hand_pose_estimation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_semantic_segmentation.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_interactive_segmentation.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_text_detection.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_super_resolution.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_optical_flow.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_person_reid.launch
+        ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_edge_detection.launch
         ${CMAKE_CURRENT_SOURCE_DIR}/launch/qrcode_detection.launch)
+    endif()
+    if(NOT OPENCV_HAVE_DNN)
+      list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/dnn_inpainting.launch)
     endif()
     if(NOT OPENCV_HAVE_BARCODE)
       list(REMOVE_ITEM LAUNCH_FILES ${CMAKE_CURRENT_SOURCE_DIR}/launch/barcode_detection.launch)
