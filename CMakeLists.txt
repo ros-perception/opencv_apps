@@ -402,7 +402,8 @@ if(BUILD_TESTING)
   endif()
   # Depth Anything V2 Metric (onnx of a vision transformer) needs OpenCV 4.10 or later
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.10")
-    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_depth_estimation_metric.py)
+    list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_depth_estimation_metric.py
+      test/ros2/test_detection_3d_launch_depth_estimation.py)
   endif()
   # the onnx models of dnn_superres (DepthToSpace) of dnn_super_resolution need OpenCV 4.12 or later (4.10 fails on them)
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.12")
