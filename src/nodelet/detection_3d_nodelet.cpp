@@ -224,6 +224,8 @@ class Detection3DNodelet : public opencv_apps::Nodelet
   std::vector<message_filters::Connection> input_connections_;
   std::atomic<int> synchronized_count_{ 0 };
   int not_synchronized_periods_ = 0;
+  // the cause of the last warning of checkSynchronization(), the missing inputs or not synchronized
+  std::string not_synchronized_cause_;
   rclcpp::TimerBase::SharedPtr sync_check_timer_;
   rclcpp::Publisher<vision_msgs::msg::Detection3DArray>::SharedPtr detections_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr markers_pub_;
@@ -913,14 +915,12 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       counts[i] = inputs[i]->count.exchange(0);
     if (synchronized_count_.exchange(0) > 0)
     {
-      if (not_synchronized_periods_ >= 2)
+      if (!not_synchronized_cause_.empty())
         RCLCPP_INFO(get_logger(), "the inputs are synchronized now, and the 3D detections are published");
       not_synchronized_periods_ = 0;
+      not_synchronized_cause_.clear();
       return;
     }
-    // warn at the second period (5 to 10 s, for the inputs starting slowly, e.g. loading a model), and every minute
-    if (++not_synchronized_periods_ % 12 != 2)
-      return;
     std::string received, missing, stamps;
     for (int i = 0; i < 3; i++)
     {
@@ -933,6 +933,12 @@ class Detection3DNodelet : public opencv_apps::Nodelet
       snprintf(text, sizeof(text), "%s %.3f", inputs[i]->name.c_str(), inputs[i]->stamp.load());
       stamps += (stamps.empty() ? "" : ", ") + std::string(text);
     }
+    // warn from the second period (5 to 10 s, for the inputs starting slowly, e.g. loading a model), when the cause
+    // changes (e.g. from the input not received yet to the inputs not synchronized), and every minute
+    std::string cause = missing.empty() ? "not synchronized" : missing;
+    if (++not_synchronized_periods_ < 2 || (cause == not_synchronized_cause_ && not_synchronized_periods_ % 12 != 2))
+      return;
+    not_synchronized_cause_ = cause;
     if (!missing.empty())
     {
       std::string others = received.empty() ? "" : " (the messages of the others in 5 s: " + received + ")";
@@ -942,12 +948,14 @@ class Detection3DNodelet : public opencv_apps::Nodelet
                   missing.c_str(), others.c_str());
     }
     else
+    {
       RCLCPP_WARN(get_logger(),
                   "no 3D detection, as the inputs are received (the messages in 5 s: %s) but not synchronized by their "
-                  "stamps (the latest: %s): the input should be of the image of the same stamp as the depth (e.g. the "
-                  "color image "
-                  "of the RGB-D camera, registered to the depth), and queue_size (%d) larger for the slow input",
+                  "stamps (the latest: %s): the input should be of the image of the same stamp as the depth (e.g. "
+                  "the color image of the RGB-D camera, registered to the depth), and queue_size (%d) larger for the "
+                  "slow input",
                   received.c_str(), stamps.c_str(), queue_size_);
+    }
   }
 
   template <class Filter>
@@ -973,6 +981,7 @@ class Detection3DNodelet : public opencv_apps::Nodelet
     watchInput<T>(input_sub, input_status_, "input");
     synchronized_count_ = 0;
     not_synchronized_periods_ = 0;
+    not_synchronized_cause_.clear();
     sync_check_timer_ = create_wall_timer(std::chrono::seconds(5), [this]() { checkSynchronization(); });
     auto sync = std::make_shared<Sync<D, T> >(SyncPolicy<D, T>(queue_size_));
     sync->connectInput(depth_filter, info_sub_, input_sub);

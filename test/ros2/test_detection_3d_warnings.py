@@ -48,8 +48,10 @@ from opencv_apps.msg import DetectionArrayStamped
 import rclpy
 from rcl_interfaces.msg import Log
 
-# the stamps of /other_stamp_detections, the detections of dnn_object_detection, are later than those of the depth
-OFFSET = 2.0
+# the stamps of /other_stamp_detections, the detections of dnn_object_detection, are later than those of the depth by
+# far more than the queues of the synchronizer (e.g. of the clock of another computer), which never synchronizes them;
+# by a few seconds, the depth of the stamps of slow detections would come in time to be synchronized
+OFFSET = 1000.0
 
 
 @pytest.mark.launch_test
