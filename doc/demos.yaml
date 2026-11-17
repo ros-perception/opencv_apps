@@ -90,6 +90,27 @@ detection_3d:
   steps:
   - ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/image &
   view_command: ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d.rviz
+  launch_command: ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/image depth:=/depth detection_3d:=true
+    rviz:=true rviz_points:=/points
+  launch_command_title: run the detector, detection_3d and rviz2 in one launch file
+  pipeline_title: What runs in the launch file
+  pipeline_note: '``detection_3d:=true`` of dnn_object_detection.launch.xml (and of dnn_pose_estimation.launch.xml)
+    includes launch/detection_3d_pipeline.launch.xml, which runs the pipeline of the figure above: the detector
+    publishes the 2D results (``/dnn_object_detection/detections``), detection_3d (``dnn_object_detection_3d``)
+    synchronizes them with ``depth`` and ``camera_info`` (``camera_info`` next to ``image`` by default) and publishes
+    the 3D boxes, the markers and the TF frames, and rviz2 (``rviz:=true``) shows them with the image of the detector
+    and the depth image; without ``depth``, dnn_depth_estimation (``dnn_object_detection_depth_estimation``, Depth
+    Anything V2 Metric) estimates the depth from the color image. The same pipeline by the nodes, each in its own
+    terminal, e.g. to change the parameters of each node or to use another detector (any node of the 2D results, with
+    ``input_type``):'
+  pipeline:
+  - title: the detector, the 2D results on /dnn_object_detection/detections
+    command: ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/image
+  - title: detection_3d, the 2D results and the depth to the 3D boxes and the TF frames
+    command: ros2 launch opencv_apps detection_3d.launch.xml input:=/dnn_object_detection/detections depth:=/depth
+      camera_info:=/camera_info
+  - title: rviz2
+    command: ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d.rviz
   figure:
     path: images/detection_3d_pipeline.svg
     caption: 'The pipeline of detection_3d: the 2D results of the other nodes (replaceable by remapping input),
@@ -98,23 +119,26 @@ detection_3d:
     camera_info and the colored points, by test/publish_rgbd.py, with the static TF of the camera on camera_link), and
     the objects of dnn_object_detection. rviz/detection_3d.rviz shows the points, ~/markers (the 3D boxes, the labels
     with the distances and the axes of the TF frames of the objects), the image of dnn_object_detection and the depth
-    image; for your camera, give its frame by -f, e.g. -f camera_link, and the topics of the images by remapping, e.g.
-    --ros-args -r /depth:=/camera/camera/aligned_depth_to_color/image_raw. rviz/detection_3d_ros1.rviz is the same
-    for ROS 1. The topics are the full names, as ``depth:=depth`` would be ``depth`` of the namespace of the node, and
-    a camera may publish ``depth/image``, ``depth/image_raw`` or ``depth_registered/image_raw``; the node warns of an
+    image; for your camera, give its frame by ``fixed_frame``, e.g. ``fixed_frame:=camera_link`` (or by -f of rviz2 run
+    by itself, with the topics of the images by remapping, e.g. --ros-args -r
+    /depth:=/camera/camera/aligned_depth_to_color/image_raw). rviz/detection_3d_ros1.rviz is the same
+    for ROS 1. Give the full names of the topics: ``depth:=depth`` is ``depth`` of the namespace of the node, and a
+    camera may publish ``depth/image``, ``depth/image_raw`` or ``depth_registered/image_raw``. The node warns of an
     input of no publisher, with the published topics of its type, and of the inputs not received or not synchronized
-    for 5 s. On ROS 2, ``detection_3d:=true`` of dnn_object_detection.launch.xml (and dnn_pose_estimation.launch.xml)
-    runs the node, rviz2 with ``rviz:=true``, and dnn_depth_estimation without ``depth``, in one launch file, e.g.
-    ``ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/image depth:=/depth detection_3d:=true
-    rviz:=true`` (``camera_info`` is next to ``image`` by default).'
+    for 5 s.'
   variants_title: Inputs and sources of the distances
   variants_note: The 2D results of the other nodes and the distances of an RGB-D camera, a monocular depth estimation
     or a LiDAR, shown in rviz with rviz/detection_3d.rviz and rviz/detection_3d_lidar.rviz (the view of the objects
-    farther away). The commands below are in their own terminals, as above.
+    farther away). The commands below are in their own terminals, as above; the launch file of the detector with
+    ``detection_3d:=true`` runs the pipeline (see above), and the nodes run each for the LiDAR.
   variants:
   - name: rgbd
     title: Objects and an RGB-D camera (default)
     default: true
+    commands:
+    - python3 publish_rgbd.py rgbd_walking.mp4 rgbd_walking_depth.npz &
+    command: ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/image depth:=/depth detection_3d:=true
+      rviz:=true rviz_points:=/points
     note: The depth image of the TUM RGB-D dataset, as above.
   - name: skeletons
     title: Human and hand skeletons
@@ -123,8 +147,8 @@ detection_3d:
       input_type: skeletons
     commands:
     - python3 publish_rgbd.py rgbd_walking.mp4 rgbd_walking_depth.npz &
-    - ros2 launch opencv_apps dnn_pose_estimation.launch.xml image:=/image &
-    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d_skeletons.rviz &
+    command: ros2 launch opencv_apps dnn_pose_estimation.launch.xml image:=/image depth:=/depth detection_3d:=true
+      rviz:=true rviz_points:=/points
     note: '``~/skeletons`` of dnn_pose_estimation (``person``) or dnn_hand_pose_estimation (``left_hand`` and
       ``right_hand``): the box and the TF frame of each skeleton as an object, the TF frame ``<label>_<id>_<keypoint>``
       of each keypoint (e.g. ``person_0_left_wrist``) at the median depth within ``keypoint_radius`` of the keypoint,
@@ -135,13 +159,15 @@ detection_3d:
     image: input:=/dnn_object_detection/detections depth:=/dnn_depth_estimation/depth camera_info:=/camera_info
     commands:
     - python3 publish_rgbd.py rgbd_walking.mp4 rgbd_walking_depth.npz --ros-args -r depth:=unused_depth -r points:=unused_points &
-    - ros2 launch opencv_apps dnn_depth_estimation.launch.xml image:=image metric_depth:=true input_width:=518 input_height:=518 model:=https://huggingface.co/k-okada/depth-anything-v2-metric-small-onnx/resolve/5494458701c7274fa82af484e2f2d226c948b54d/depth_anything_v2_metric_hypersim_vits_518.onnx &
-    - ros2 launch opencv_apps dnn_object_detection.launch.xml image:=image &
-    - ros2 run depth_image_proc point_cloud_xyzrgb_node --ros-args -r rgb/image_rect_color:=image -r rgb/camera_info:=camera_info -r depth_registered/image_rect:=/dnn_depth_estimation/depth &
-    - ros2 run rviz2 rviz2 -d $(ros2 pkg prefix --share opencv_apps)/rviz/detection_3d.rviz --ros-args -r /depth:=/dnn_depth_estimation/depth &
-    note: 'Only the color image of a camera: ``~/depth`` (32FC1 in m) of dnn_depth_estimation with Depth Anything V2
-      Metric (indoors, see dnn_depth_estimation), instead of the depth of the RGB-D camera (not used, remapped to
-      unused_depth), and its points by depth_image_proc for rviz. The distances are less accurate than those of an
+    command: ros2 launch opencv_apps dnn_object_detection.launch.xml image:=/image detection_3d:=true rviz:=true
+      use_cuda:=true
+    note: 'Only the color image of a camera: without ``depth``, the launch file runs dnn_depth_estimation with Depth
+      Anything V2 Metric (indoors, see dnn_depth_estimation), whose ``~/depth`` (32FC1 in m) detection_3d uses instead
+      of the depth of the RGB-D camera (not used, remapped to unused_depth); ``use_cuda:=true`` runs the detector and
+      the depth estimation in the docker image of OpenCV with CUDA (see :doc:`../gpu`). The points of the estimated
+      depth for rviz are by depth_image_proc, e.g. ``ros2 run depth_image_proc point_cloud_xyzrgb_node --ros-args -r
+      rgb/image_rect_color:=/image -r rgb/camera_info:=/camera_info -r
+      depth_registered/image_rect:=/dnn_object_detection_depth_estimation/depth`` with ``rviz_points:=/points``. The distances are less accurate than those of an
       RGB-D camera (the relative error is about 0.15 on CUDA in this sequence), and the model needs OpenCV 4.10 or
       later, and a GPU to run it in real time.'
   - name: lidar

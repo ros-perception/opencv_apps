@@ -29,7 +29,7 @@ Usage
    ros2 launch opencv_apps dnn_pose_estimation.launch.xml image:=/camera/image_raw debug_view:=false
    # ROS 1
    roslaunch opencv_apps dnn_pose_estimation.launch image:=/camera/image_raw debug_view:=false
-   # ROS 2, in 3D by detection_3d, with the depth registered to the image and rviz2; without depth:=, with the depth estimated by dnn_depth_estimation
+   # ROS 2, with detection_3d: the 3D boxes and the TF frames of the persons and of their keypoints, from the depth image registered to the color image (or, without depth:=, the depth estimated from the color image by dnn_depth_estimation), shown in rviz2
    ros2 launch opencv_apps dnn_pose_estimation.launch.xml image:=/camera/camera/color/image_raw depth:=/camera/camera/aligned_depth_to_color/image_raw detection_3d:=true rviz:=true
 
 Try it with the demo video
