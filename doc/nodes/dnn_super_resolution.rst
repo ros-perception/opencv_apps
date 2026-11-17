@@ -3,7 +3,7 @@ dnn_super_resolution
 
 Super resolution of the image with a DNN model, e.g. ESPCN of dnn_superres.
 
-Super resolution of the image, by default with ESPCN x2, or with FSRCNN x2 or x3, the onnx models of dnn_superres of opencv_contrib (in opencv_extra), converted from the TensorFlow models of TF-ESPCN and FSRCNN_Tensorflow (Apache-2.0). As dnn_superres, the model enlarges the Y channel of YCrCb (0 - 1), and the Cr and Cb channels are enlarged by the bicubic interpolation. The scale (the size of ~image / the size of the input) is that of the model. The models need OpenCV 4.10 or later (OpenCV 4.6 cannot read them).
+Super resolution of the image, by default with ESPCN x2, or with FSRCNN x2 or x3, the onnx models of dnn_superres of opencv_contrib (in opencv_extra), converted from the TensorFlow models of TF-ESPCN and FSRCNN_Tensorflow (Apache-2.0). As dnn_superres, the model enlarges the Y channel of YCrCb (0 - 1), and the Cr and Cb channels are enlarged by the bicubic interpolation. The scale (the size of ~image / the size of the input) is that of the model. The models need OpenCV 4.12 or later (OpenCV 4.6 cannot read them, and 4.10 fails on them).
 
 .. list-table::
    :stub-columns: 1
@@ -11,9 +11,9 @@ Super resolution of the image, by default with ESPCN x2, or with FSRCNN x2 or x3
    * - opencv_apps
      - 3.1.0 and later
    * - ROS
-     - lyrical and later; not ROS One (OpenCV 4.6), jazzy (OpenCV 4.6), kilted (OpenCV 4.6)
+     - any, with OpenCV built from source; not ROS One (OpenCV 4.6), jazzy (OpenCV 4.6), kilted (OpenCV 4.6), lyrical (OpenCV 4.10); not on lyrical, whose OpenCV 4.10 fails on the models
    * - OpenCV
-     - OpenCV 4.10 or later, which reads the onnx models of dnn_superres
+     - OpenCV 4.12 or later, which runs the onnx models of dnn_superres (4.10 fails on DepthToSpace)
    * - Group
      - Image filters, the nodes of which publish the processed image in ``~/image``
 

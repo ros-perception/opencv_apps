@@ -1782,7 +1782,7 @@
    },
    {
     "default": "",
-    "description": "Path or URL of the model (onnx) of the same input and output as DexiNed, empty for DexiNed of opencv_zoo (OpenCV 4.10 or later). The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
+    "description": "Path or URL of the model (onnx) of the same input and output as DexiNed, empty for DexiNed of opencv_zoo (OpenCV 4.12 or later). The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time",
     "name": "model",
     "type": "string"
    },

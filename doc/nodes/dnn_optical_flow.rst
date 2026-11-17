@@ -13,7 +13,7 @@ Dense optical flow between the consecutive images by RAFT of opencv_zoo (trained
    * - ROS
      - lyrical and later; not ROS One (OpenCV 4.6), jazzy (OpenCV 4.6), kilted (OpenCV 4.6)
    * - OpenCV
-     - OpenCV 4.10 or later, which reads RAFT (tested with OpenCV 4.12 and 5.1, not with OpenCV 4.10 of lyrical); on the CPU with OpenCV 4.x, whose CUDA backend crashes with RAFT
+     - OpenCV 4.10 or later, which reads RAFT; on the CPU with OpenCV 4.x, whose CUDA backend crashes with RAFT
    * - Group
      - Optical flow and motion, the nodes of which publish ``~/flows`` (FlowArrayStamped), ``~/shift`` (Point2DStamped) of phase_corr
 

@@ -39,7 +39,7 @@
  * of opencv_contrib (in opencv_extra), converted from the TensorFlow models of TF-ESPCN and FSRCNN_Tensorflow
  * (Apache-2.0). As dnn_superres, the model enlarges the Y channel of YCrCb (0 - 1), and the Cr and Cb channels are
  * enlarged by the bicubic interpolation. The scale (the size of ~image / the size of the input) is that of the
- * model. The models need OpenCV 4.10 or later (OpenCV 4.6 cannot read them).
+ * model. The models need OpenCV 4.12 or later (OpenCV 4.6 cannot read them, and 4.10 fails on them).
  */
 
 #include "opencv_apps/nodelet.h"
@@ -52,6 +52,9 @@
 #include <mutex>
 #include <string>
 #include <vector>
+
+#define OPENCV_APPS_CV_VERSION_GE(major, minor)                                                                        \
+  (CV_VERSION_MAJOR > (major) || (CV_VERSION_MAJOR == (major) && CV_VERSION_MINOR >= (minor)))
 
 namespace opencv_apps
 {
@@ -115,6 +118,12 @@ class DNNSuperResolutionNodelet : public opencv_apps::Nodelet
     need_model_update_ = false;
     read_failed_ = false;
     net_ = cv::dnn::Net();
+#if !OPENCV_APPS_CV_VERSION_GE(4, 12)
+    // cv::dnn of the older OpenCV cannot run the models (OpenCV 4.10 fails on DepthToSpace)
+    RCLCPP_ERROR(get_logger(), "The models of dnn_superres need OpenCV 4.12 or later (this is %s)", CV_VERSION);
+    read_failed_ = true;
+    return false;
+#endif
     int backend, target;
     if (!dnnBackend(backend_, backend, target, get_logger()))
       return false;
@@ -127,7 +136,7 @@ class DNNSuperResolutionNodelet : public opencv_apps::Nodelet
     }
     catch (cv::Exception& e)
     {
-      RCLCPP_ERROR(get_logger(), "Failed to read the model, which needs OpenCV 4.10 or later (this is %s): %s",
+      RCLCPP_ERROR(get_logger(), "Failed to read the model, which needs OpenCV 4.12 or later (this is %s): %s",
                    CV_VERSION, e.what());
       net_ = cv::dnn::Net();
       read_failed_ = true;

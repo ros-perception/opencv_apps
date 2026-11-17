@@ -99,19 +99,12 @@ Filter and transform the images: edges (also by DexiNed), histogram equalization
 </tr>
 </table>
 
-**ROS 2: lyrical and later**
+**ROS 1 and ROS 2, with OpenCV built from source**
 
 <table>
 <tr>
 <td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_edge_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_edge_detection_thumb.gif" width="200" alt="dnn_edge_detection"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_edge_detection.html"><code>dnn_edge_detection</code></a><br><sub>~/image</sub></td>
 <td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_super_resolution.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_super_resolution_thumb.gif" width="200" alt="dnn_super_resolution"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_super_resolution.html"><code>dnn_super_resolution</code></a><br><sub>~/image</sub></td>
-</tr>
-</table>
-
-**ROS 1 and ROS 2, with OpenCV built from source**
-
-<table>
-<tr>
 <td align="center" width="25%"><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_inpainting.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_inpainting_thumb.gif" width="200" alt="dnn_inpainting"></a><br><a href="https://ros-perception.github.io/opencv_apps/nodes/dnn_inpainting.html"><code>dnn_inpainting</code></a><br><sub>~/image</sub></td>
 </tr>
 </table>

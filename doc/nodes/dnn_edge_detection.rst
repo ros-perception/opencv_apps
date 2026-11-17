@@ -3,7 +3,7 @@ dnn_edge_detection
 
 Detect the edges with a DNN model, e.g. DexiNed.
 
-Edge detection with DexiNed of opencv_zoo (MIT License), whose ~/image is the edges in mono8 as edge_detection, the probability of the edge of each pixel (0 - 255). The model needs OpenCV 4.10 or later (OpenCV 4.6 cannot read it).
+Edge detection with DexiNed of opencv_zoo (MIT License), whose ~/image is the edges in mono8 as edge_detection, the probability of the edge of each pixel (0 - 255). The model needs OpenCV 4.12 or later (OpenCV 4.6 and 4.10 cannot read it).
 
 .. list-table::
    :stub-columns: 1
@@ -11,9 +11,9 @@ Edge detection with DexiNed of opencv_zoo (MIT License), whose ~/image is the ed
    * - opencv_apps
      - 3.1.0 and later
    * - ROS
-     - lyrical and later; not ROS One (OpenCV 4.6), jazzy (OpenCV 4.6), kilted (OpenCV 4.6); tested with OpenCV 4.12 and 5.1, not yet with OpenCV 4.10 of lyrical
+     - any, with OpenCV built from source; not ROS One (OpenCV 4.6), jazzy (OpenCV 4.6), kilted (OpenCV 4.6), lyrical (OpenCV 4.10); not on lyrical, whose OpenCV 4.10 cannot read DexiNed
    * - OpenCV
-     - OpenCV 4.10 or later, which reads DexiNed (DequantizeLinear)
+     - OpenCV 4.12 or later, which reads DexiNed (4.10 fails on DequantizeLinear)
    * - Group
      - Image filters, the nodes of which publish the processed image in ``~/image``
 
@@ -45,7 +45,7 @@ Download the input video of the demo above, publish it as ``image`` with ``image
    # terminal 3: view the result
    ros2 run rqt_image_view rqt_image_view /dnn_edge_detection/image
 
-DexiNed of opencv_zoo (MIT License), the same clip as edge_detection; needs OpenCV 4.10 or later.
+DexiNed of opencv_zoo (MIT License), the same clip as edge_detection; needs OpenCV 4.12 or later.
 
 In ROS 1:
 
@@ -112,7 +112,7 @@ See also the :ref:`common parameters <common-parameters>`.
      - string
      - ""
      - yes
-     - Path or URL of the model (onnx) of the same input and output as DexiNed, empty for DexiNed of opencv_zoo (OpenCV 4.10 or later). The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time
+     - Path or URL of the model (onnx) of the same input and output as DexiNed, empty for DexiNed of opencv_zoo (OpenCV 4.12 or later). The URL is downloaded to ~/.ros/opencv_apps/models/ at the first time
    * - ``queue_size``
      - int
      - 3

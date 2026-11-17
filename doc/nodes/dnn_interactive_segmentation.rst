@@ -11,7 +11,7 @@ Interactive segmentation of the object given by a box and/or points with Efficie
    * - opencv_apps
      - 3.1.0 and later
    * - ROS
-     - lyrical and later; not ROS One (OpenCV 4.6), jazzy (OpenCV 4.6), kilted (OpenCV 4.6); not tested yet with OpenCV 4.10 of lyrical
+     - lyrical and later; not ROS One (OpenCV 4.6), jazzy (OpenCV 4.6), kilted (OpenCV 4.6)
    * - OpenCV
      - OpenCV 4.10 or later, which reads EfficientSAM
    * - Group
@@ -47,7 +47,7 @@ Download the input video of the demo above, publish it as ``image`` with ``image
    # terminal 4: view the result
    ros2 run rqt_image_view rqt_image_view /dnn_interactive_segmentation/image
 
-The box around the woman at the center is given with set_image.py, as the tracking nodes, and kept for the next images. EfficientSAM-Ti of opencv_zoo (Apache 2.0) needs OpenCV 4.10 or later.
+The box around the woman at the center is given with set_image.py, as the tracking nodes, and kept for the next images. EfficientSAM-Ti of opencv_zoo (Apache 2.0) needs OpenCV 4.12 or later.
 
 See :doc:`../credits` for the license of the video.
 

@@ -61,13 +61,10 @@
    <a class="opencv-apps-tile" href="nodes/equalize_histogram.html"><img src="https://ros-perception.github.io/opencv_apps/media/equalize_histogram_thumb.gif" alt="equalize_histogram" loading="lazy"><span>equalize_histogram<br><small>~/image</small></span></a>
    <a class="opencv-apps-tile" href="nodes/morphology.html"><img src="https://ros-perception.github.io/opencv_apps/media/morphology_thumb.gif" alt="morphology" loading="lazy"><span>morphology<br><small>~/image</small></span></a>
    </div>
-   <p class="opencv-apps-tier">ROS 2: lyrical and later</p>
+   <p class="opencv-apps-tier">ROS 1 and ROS 2, with OpenCV built from source</p>
    <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/dnn_edge_detection.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_edge_detection_thumb.gif" alt="dnn_edge_detection" loading="lazy"><span>dnn_edge_detection<br><small>~/image</small></span></a>
    <a class="opencv-apps-tile" href="nodes/dnn_super_resolution.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_super_resolution_thumb.gif" alt="dnn_super_resolution" loading="lazy"><span>dnn_super_resolution<br><small>~/image</small></span></a>
-   </div>
-   <p class="opencv-apps-tier">ROS 1 and ROS 2, with OpenCV built from source</p>
-   <div class="opencv-apps-gallery">
    <a class="opencv-apps-tile" href="nodes/dnn_inpainting.html"><img src="https://ros-perception.github.io/opencv_apps/media/dnn_inpainting_thumb.gif" alt="dnn_inpainting" loading="lazy"><span>dnn_inpainting<br><small>~/image</small></span></a>
    </div>
    <h3>Features and shapes</h3>

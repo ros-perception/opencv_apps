@@ -297,13 +297,13 @@ OPENCV_REQUIREMENTS = {
     'dnn_tracking': ('4.5.4', 'OpenCV 4.5.4 or later for DaSiamRPN, 4.7 or later for NanoTrack and 4.9 or later '
                               'for VitTrack'),
     'rgbd_odometry': (None, 'the rgbd module of opencv_contrib (OpenCV 4)'),
-    'dnn_super_resolution': ('4.10', 'OpenCV 4.10 or later, which reads the onnx models of dnn_superres'),
-    'dnn_optical_flow': ('4.10', 'OpenCV 4.10 or later, which reads RAFT (tested with OpenCV 4.12 and 5.1, not with '
-                                 'OpenCV 4.10 of lyrical); on the CPU with OpenCV 4.x, whose CUDA backend crashes '
-                                 'with RAFT'),
+    'dnn_super_resolution': ('4.12', 'OpenCV 4.12 or later, which runs the onnx models of dnn_superres (4.10 fails on '
+                                     'DepthToSpace)'),
+    'dnn_optical_flow': ('4.10', 'OpenCV 4.10 or later, which reads RAFT; on the CPU with OpenCV 4.x, whose CUDA backend '
+                                 'crashes with RAFT'),
     'dnn_interactive_segmentation': ('4.10', 'OpenCV 4.10 or later, which reads EfficientSAM'),
     'dnn_inpainting': ('5.0', 'OpenCV 5.0 or later, which reads LaMa (OpenCV 4.6 - 4.12 fail to read it)'),
-    'dnn_edge_detection': ('4.10', 'OpenCV 4.10 or later, which reads DexiNed (DequantizeLinear)'),
+    'dnn_edge_detection': ('4.12', 'OpenCV 4.12 or later, which reads DexiNed (4.10 fails on DequantizeLinear)'),
 }
 for _node in ['dnn_face_detection', 'dnn_face_recognition', 'dnn_facial_expression_recognition', 'dnn_object_detection',
               'dnn_image_classification', 'dnn_semantic_segmentation', 'dnn_depth_estimation', 'dnn_text_detection',
@@ -315,8 +315,8 @@ for _node in ['dnn_face_detection', 'dnn_face_recognition', 'dnn_facial_expressi
 ROS_NOTES = {'dnn_tracking': 'DaSiamRPN on ROS One, jazzy and kilted (OpenCV 4.6), and also NanoTrack and VitTrack on '
                              'lyrical (OpenCV 4.10)',
              'tracking': 'the trackers other than MIL need libopencv-contrib',
-             'dnn_interactive_segmentation': 'not tested yet with OpenCV 4.10 of lyrical',
-             'dnn_edge_detection': 'tested with OpenCV 4.12 and 5.1, not yet with OpenCV 4.10 of lyrical'}
+             'dnn_edge_detection': 'not on lyrical, whose OpenCV 4.10 cannot read DexiNed',
+             'dnn_super_resolution': 'not on lyrical, whose OpenCV 4.10 fails on the models'}
 
 
 def version_tuple(version):

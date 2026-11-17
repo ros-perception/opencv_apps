@@ -189,10 +189,10 @@ dnn_depth_estimation:
       input_height: 518
       metric_depth: true
     note: 'Depth Anything V2 Metric Small trained on Virtual KITTI (518x518, 99 MB): the depth in meters outdoors, up
-      to about 80 m, e.g. on the road; needs OpenCV 4.10 or later.'
+      to about 80 m, e.g. on the road; needs OpenCV 4.12 or later.'
 dnn_edge_detection:
   clip: street.mp4
-  note: DexiNed of opencv_zoo (MIT License), the same clip as edge_detection; needs OpenCV 4.10 or later.
+  note: DexiNed of opencv_zoo (MIT License), the same clip as edge_detection; needs OpenCV 4.12 or later.
 dnn_face_detection:
   clip: tos_faces.mp4
 dnn_face_recognition:
@@ -234,7 +234,7 @@ dnn_image_classification:
 dnn_interactive_segmentation:
   clip: test/face_detector_withface_test_diamondback.mp4
   note: The box around the woman at the center is given with set_image.py, as the tracking nodes, and kept for the next
-    images. EfficientSAM-Ti of opencv_zoo (Apache 2.0) needs OpenCV 4.10 or later.
+    images. EfficientSAM-Ti of opencv_zoo (Apache 2.0) needs OpenCV 4.12 or later.
   steps:
   - ros2 run opencv_apps set_image.py 375 325 150 310 --ros-args -r set_roi:=/dnn_interactive_segmentation/set_roi
 dnn_inpainting:

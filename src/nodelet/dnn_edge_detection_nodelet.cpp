@@ -37,7 +37,7 @@
 // https://github.com/opencv/opencv_zoo/tree/main/models/edge_detection_dexined
 /**
  * Edge detection with DexiNed of opencv_zoo (MIT License), whose ~/image is the edges in mono8 as edge_detection,
- * the probability of the edge of each pixel (0 - 255). The model needs OpenCV 4.10 or later (OpenCV 4.6 cannot read
+ * the probability of the edge of each pixel (0 - 255). The model needs OpenCV 4.12 or later (OpenCV 4.6 and 4.10 cannot read
  * it).
  */
 
@@ -52,6 +52,9 @@
 #include <mutex>
 #include <string>
 #include <vector>
+
+#define OPENCV_APPS_CV_VERSION_GE(major, minor)                                                                        \
+  (CV_VERSION_MAJOR > (major) || (CV_VERSION_MAJOR == (major) && CV_VERSION_MINOR >= (minor)))
 
 namespace opencv_apps
 {
@@ -123,6 +126,12 @@ class DNNEdgeDetectionNodelet : public opencv_apps::Nodelet
     need_model_update_ = false;
     read_failed_ = false;
     net_ = cv::dnn::Net();
+#if !OPENCV_APPS_CV_VERSION_GE(4, 12)
+    // cv::dnn of the older OpenCV cannot run the model (OpenCV 4.10 fails on DequantizeLinear)
+    RCLCPP_ERROR(get_logger(), "DexiNed needs OpenCV 4.12 or later (this is %s)", CV_VERSION);
+    read_failed_ = true;
+    return false;
+#endif
     int backend, target;
     if (!dnnBackend(backend_, backend, target, get_logger()))
       return false;
@@ -135,7 +144,7 @@ class DNNEdgeDetectionNodelet : public opencv_apps::Nodelet
     }
     catch (cv::Exception& e)
     {
-      RCLCPP_ERROR(get_logger(), "Failed to read the model, which needs OpenCV 4.10 or later (this is %s): %s",
+      RCLCPP_ERROR(get_logger(), "Failed to read the model, which needs OpenCV 4.12 or later (this is %s): %s",
                    CV_VERSION, e.what());
       net_ = cv::dnn::Net();
       read_failed_ = true;
@@ -270,7 +279,7 @@ public:
     model_ = declare_parameter(
         "model", std::string(""),
         paramDescriptor("Path or URL of the model (onnx) of the same input and output as DexiNed, empty for DexiNed of "
-                        "opencv_zoo (OpenCV 4.10 or later). The URL is downloaded to ~/.ros/opencv_apps/models/ at the "
+                        "opencv_zoo (OpenCV 4.12 or later). The URL is downloaded to ~/.ros/opencv_apps/models/ at the "
                         "first time"));
     backend_ = declare_parameter("backend", std::string("auto"), paramDescriptor(DNN_BACKEND_DESCRIPTION));
     input_width_ =
