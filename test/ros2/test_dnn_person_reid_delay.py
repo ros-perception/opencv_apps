@@ -31,9 +31,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # test of dnn_person_reid with the people detected by dnn_object_detection in the frames of test/rgbd_walking.mp4
-# test of dnn_person_reid with the images published continuously at 30 Hz and their detections 0.6 s later (the
-# latency of a detector): the images wait for their detections in the synchronizer (sync_queue_size), and the
-# detections are published by dnn_person_reid
+# test of dnn_person_reid with the images published continuously at 10 Hz and their detections 2 s later (the
+# latency of a detector): 20 images wait for their detections in the synchronizer (sync_queue_size, more than
+# queue_size), and the detections are published by dnn_person_reid; the rate is low enough for the CPU of the CI
 
 import os
 import time
@@ -45,9 +45,9 @@ import pytest
 import rclpy
 from sensor_msgs.msg import Image
 
-RATE = 30.0
-DELAY = 0.6
-DURATION = 3.0
+RATE = 10.0
+DELAY = 2.0
+DURATION = 4.0
 
 
 @pytest.mark.launch_test
@@ -113,6 +113,6 @@ class TestDNNPersonReIDDelay(unittest.TestCase):
             rclpy.shutdown()
         published = count[0] - start
         print('%d of %d images with the delayed detections are published' % (len(received), published))
-        # most of them, not the few of the images still in a small queue (e.g. 10 of 18 images within 0.6 s)
+        # most of them, not the few of the images still in a small queue (e.g. 10 of 20 images within 2 s)
         self.assertGreater(len(received), 0.8 * published)
         self.assertTrue(all(len(msg.detections) == 1 for msg in received))
