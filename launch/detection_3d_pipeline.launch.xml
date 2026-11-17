@@ -1,0 +1,59 @@
+<launch>
+  <!-- The 3D part of the launch files of the detection nodes (detection_3d:=true of dnn_object_detection.launch.xml
+       and dnn_pose_estimation.launch.xml): detection_3d of the 2D results of node_name, with the depth of an RGB-D
+       camera (depth) or of dnn_depth_estimation (empty depth), and rviz2. -->
+  <arg name="node_name" description="The name of the node of the 2D results, e.g. dnn_object_detection" />
+  <arg name="input_type" default="detections" description="input_type of detection_3d: detections (~/detections of node_name) or skeletons (~/skeletons of node_name)" />
+  <arg name="image" description="The color image of the 2D results" />
+  <arg name="depth" default="" description="The depth image registered to image, e.g. /camera/camera/aligned_depth_to_color/image_raw of realsense2_camera, or empty to estimate the depth of image by dnn_depth_estimation (Depth Anything V2 Metric, indoors)" />
+  <arg name="camera_info" description="The camera info of image" />
+  <arg name="rviz" default="false" description="Show the image of node_name, the depth image and the 3D results in rviz2" />
+  <arg name="rviz_config" default="$(find-pkg-share opencv_apps)/rviz/detection_3d.rviz" description="The config of rviz2" />
+  <arg name="rviz_points" default="" description="The point cloud shown in rviz2, e.g. /camera/camera/depth/color/points of realsense2_camera, or empty" />
+  <arg name="fixed_frame" default="camera_link" description="The fixed frame of rviz2, e.g. camera_link of the camera" />
+  <arg name="use_cuda" default="false" description="Run dnn_depth_estimation in the docker image of OpenCV with CUDA" />
+  <arg name="cuda_image" default="ghcr.io/ros-perception/opencv_apps:cuda" description="The docker image of use_cuda" />
+
+  <let name="depth_estimation" value="$(eval '&quot;$(var depth)&quot; == &quot;&quot;')" />
+  <let name="depth_topic" value="/$(var node_name)_depth_estimation/depth" if="$(var depth_estimation)" />
+  <let name="depth_topic" value="$(var depth)" unless="$(var depth_estimation)" />
+  <let name="input_topic" value="/$(var node_name)/$(var input_type)" />
+  <!-- /points of the rviz config, shown when points is given -->
+  <let name="points_topic" value="$(eval '&quot;$(var rviz_points)&quot; or &quot;/$(var node_name)_3d/points&quot;')" />
+
+  <group>
+    <!-- scoped, otherwise the arguments of the include (e.g. node_name) would be set after it -->
+    <include file="$(find-pkg-share opencv_apps)/launch/dnn_depth_estimation.launch.xml" if="$(var depth_estimation)" >
+      <arg name="node_name" value="$(var node_name)_depth_estimation" />
+      <arg name="image" value="$(var image)" />
+      <arg name="debug_view" value="false" />
+      <arg name="use_cuda" value="$(var use_cuda)" />
+      <arg name="cuda_image" value="$(var cuda_image)" />
+      <arg name="metric_depth" value="true" />
+      <arg name="input_width" value="518" />
+      <arg name="input_height" value="518" />
+      <arg name="model" value="https://huggingface.co/k-okada/depth-anything-v2-metric-small-onnx/resolve/5494458701c7274fa82af484e2f2d226c948b54d/depth_anything_v2_metric_hypersim_vits_518.onnx" />
+    </include>
+  </group>
+
+  <group>
+    <!-- scoped, as above -->
+    <include file="$(find-pkg-share opencv_apps)/launch/detection_3d.launch.xml" >
+      <arg name="node_name" value="$(var node_name)_3d" />
+      <arg name="input" value="$(var input_topic)" />
+      <arg name="input_type" value="$(var input_type)" />
+      <arg name="depth" value="$(var depth_topic)" />
+      <arg name="camera_info" value="$(var camera_info)" />
+      <!-- not queue_size of the launch file including this file -->
+      <arg name="queue_size" value="10" />
+    </include>
+  </group>
+
+  <node name="$(var node_name)_rviz" pkg="rviz2" exec="rviz2" args="-d $(var rviz_config) -f $(var fixed_frame)" if="$(var rviz)" >
+    <remap from="/detection_3d/markers" to="/$(var node_name)_3d/markers" />
+    <remap from="/dnn_object_detection/image" to="/$(var node_name)/image" />
+    <remap from="/dnn_pose_estimation/image" to="/$(var node_name)/image" />
+    <remap from="/depth" to="$(var depth_topic)" />
+    <remap from="/points" to="$(var points_topic)" />
+  </node>
+</launch>

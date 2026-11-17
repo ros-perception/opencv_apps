@@ -370,7 +370,8 @@ if(BUILD_TESTING)
   # the test of detection_3d detects the people with dnn_object_detection
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
     list(REMOVE_ITEM _launch_tests test/ros2/test_detection_3d.py test/ros2/test_detection_3d_points.py
-      test/ros2/test_detection_3d_distortion.py test/ros2/test_detection_3d_warnings.py)
+      test/ros2/test_detection_3d_distortion.py test/ros2/test_detection_3d_launch.py
+      test/ros2/test_detection_3d_warnings.py)
   endif()
   # the test of dnn_person_reid re-identifies the people detected by dnn_object_detection
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND)
@@ -393,7 +394,7 @@ if(BUILD_TESTING)
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "4.9")
     list(REMOVE_ITEM _launch_tests test/ros2/test_dnn_pose_estimation.py test/ros2/test_dnn_pose_estimation_tracking.py
       test/ros2/test_dnn_hand_pose_estimation.py test/ros2/test_dnn_hand_pose_estimation_tracking.py
-      test/ros2/test_detection_3d_skeletons.py)
+      test/ros2/test_detection_3d_skeletons.py test/ros2/test_detection_3d_launch_skeletons.py)
   endif()
   # LaMa of dnn_inpainting needs OpenCV 5.0 or later
   if(NOT OPENCV_HAVE_DNN OR NOT CURL_FOUND OR OpenCV_VERSION VERSION_LESS "5.0")

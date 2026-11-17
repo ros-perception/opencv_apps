@@ -22,6 +22,14 @@
   <arg name="confidence_threshold" default="0.5" description="Threshold of the confidence to detect the objects" />
   <arg name="nms_threshold" default="0.4" description="Threshold of the overlap of the objects to suppress, by non maximum suppression" />
 
+  <!-- detection_3d_pipeline.launch.xml: the objects in 3D by detection_3d, and rviz2 -->
+  <arg name="detection_3d" default="false" description="Localize the objects in 3D by detection_3d, with depth, or with the depth estimated by dnn_depth_estimation when depth is empty" />
+  <arg name="depth" default="" description="With detection_3d: the full name of the depth image registered to image, e.g. /camera/camera/aligned_depth_to_color/image_raw of realsense2_camera, or empty to estimate the depth of image by dnn_depth_estimation (Depth Anything V2 Metric, indoors)" />
+  <arg name="camera_info" default="$(eval '&quot;/&quot;.join(&quot;$(var image)&quot;.split(&quot;/&quot;)[:-1] + [&quot;camera_info&quot;])')" description="With detection_3d: the camera info of image, camera_info next to image by default (e.g. /camera/rgb/camera_info of /camera/rgb/image_raw)" />
+  <arg name="rviz" default="false" description="With detection_3d: show the image, the depth image and the objects in 3D in rviz2 (rviz/detection_3d.rviz)" />
+  <arg name="rviz_points" default="" description="With rviz: the point cloud shown in rviz2, e.g. /camera/camera/depth/color/points of realsense2_camera, or empty" />
+  <arg name="fixed_frame" default="camera_link" description="With rviz: the fixed frame of rviz2, e.g. camera_link of the camera" />
+
   <!-- dnn_object_detection_nodelet.cpp, DNN object detection, YOLOX-S (COCO) by default -->
   <node name="$(var node_name)" pkg="opencv_apps" exec="dnn_object_detection" launch-prefix="$(var launch_prefix)" >
     <remap from="image" to="$(var image)" />
@@ -40,4 +48,21 @@
     <param name="confidence_threshold" value="$(var confidence_threshold)" />
     <param name="nms_threshold" value="$(var nms_threshold)" />
   </node>
+
+  <group>
+    <!-- scoped, otherwise the arguments of the include would be set after it -->
+    <include file="$(find-pkg-share opencv_apps)/launch/detection_3d_pipeline.launch.xml" if="$(var detection_3d)" >
+      <arg name="node_name" value="$(var node_name)" />
+      <arg name="input_type" value="detections" />
+      <arg name="image" value="$(var image)" />
+      <arg name="depth" value="$(var depth)" />
+      <arg name="camera_info" value="$(var camera_info)" />
+      <arg name="rviz" value="$(var rviz)" />
+      <arg name="rviz_config" value="$(find-pkg-share opencv_apps)/rviz/detection_3d.rviz" />
+      <arg name="rviz_points" value="$(var rviz_points)" />
+      <arg name="fixed_frame" value="$(var fixed_frame)" />
+      <arg name="use_cuda" value="$(var use_cuda)" />
+      <arg name="cuda_image" value="$(var cuda_image)" />
+    </include>
+  </group>
 </launch>
