@@ -67,19 +67,22 @@ public:
   {
     queue_size_ = node_->declare_parameter("queue_size", 1);
     debug_view_ = node_->declare_parameter("debug_view", false);
+    // the reliable QoS, which does not connect to best effort publishers, instead of the sensor data (best effort)
+    // QoS, which may lose large messages, e.g. images through a network
+    bool reliable_subscription = node_->declare_parameter("reliable_subscription", false);
+    rclcpp::QoS subscriber_qos =
+        reliable_subscription ? rclcpp::QoS(queue_size_) : rclcpp::SensorDataQoS().keep_last(queue_size_);
 
     // Subscrive to input video feed and publish output video feed
     // image_transport takes rclcpp::QoS since lyrical
 #if __has_include(<image_transport/node_interfaces.hpp>)
-    image_sub_ = image_transport::create_subscription(*node_, "image",
-                                                      std::bind(&ImageConverter::imageCb, this, std::placeholders::_1),
-                                                      "raw", rclcpp::SensorDataQoS().keep_last(queue_size_));
+    image_sub_ = image_transport::create_subscription(
+        *node_, "image", std::bind(&ImageConverter::imageCb, this, std::placeholders::_1), "raw", subscriber_qos);
     image_pub_ = image_transport::create_publisher(*node_, "/image_converter/output_video/raw", rclcpp::QoS(1));
 #else
-    image_sub_ =
-        image_transport::create_subscription(node_, "image",
-                                             std::bind(&ImageConverter::imageCb, this, std::placeholders::_1), "raw",
-                                             rclcpp::SensorDataQoS().keep_last(queue_size_).get_rmw_qos_profile());
+    image_sub_ = image_transport::create_subscription(node_, "image",
+                                                      std::bind(&ImageConverter::imageCb, this, std::placeholders::_1),
+                                                      "raw", subscriber_qos.get_rmw_qos_profile());
     image_pub_ = image_transport::create_publisher(node_, "/image_converter/output_video/raw",
                                                    rclcpp::QoS(1).get_rmw_qos_profile());
 #endif
