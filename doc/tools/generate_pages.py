@@ -461,7 +461,7 @@ def usage_realsense(node):
             'rs_launch.py align_depth.enable:=true`` (ROS 2) or ``roslaunch realsense2_camera rs_camera.launch '
             'align_depth:=true`` (ROS 1). On ROS 2 the topics are in ``/camera/camera``, as the default namespace '
             '(``camera_namespace``) and name (``camera_name``) of its node are both ``camera``; with '
-            '``camera_namespace:=\'\'`` they are in ``/camera`` as on ROS 1. With another RGB-D camera, give its depth '
+            '``camera_namespace:=/`` they are in ``/camera`` as on ROS 1. With another RGB-D camera, give its depth '
             'registered to the color image (of the pixels of the color image) and the camera_info of the color '
             'image.', '']
 
