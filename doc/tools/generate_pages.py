@@ -452,6 +452,20 @@ def usage_3d(node):
             'depth:=/camera/camera/aligned_depth_to_color/image_raw detection_3d:=true rviz:=true' % USAGE_3D[node]]
 
 
+def usage_realsense(node):
+    """Return the lines of the note on the topics of realsense2_camera in the usage of the node, or []."""
+    if node not in ('detection_3d', 'rgbd_odometry') and node not in USAGE_3D:
+        return []
+    return ['The topics of the depth above are those of an Intel RealSense camera by realsense2_camera, with the depth '
+            'aligned to the color image, which it does not publish by default: ``ros2 launch realsense2_camera '
+            'rs_launch.py align_depth.enable:=true`` (ROS 2) or ``roslaunch realsense2_camera rs_camera.launch '
+            'align_depth:=true`` (ROS 1). On ROS 2 the topics are in ``/camera/camera``, as the default namespace '
+            '(``camera_namespace``) and name (``camera_name``) of its node are both ``camera``; with '
+            '``camera_namespace:=/`` they are in ``/camera`` as on ROS 1. With another RGB-D camera, give its depth '
+            'registered to the color image (of the pixels of the color image) and the camera_info of the color '
+            'image.', '']
+
+
 def usage_arguments(node, ros1=False):
     """Return the arguments of the usage of the node: its inputs, and debug_view:=false if the launch file has it."""
     arguments = USAGE_INPUTS.get(node, 'image:=/camera/image_raw')
@@ -641,6 +655,7 @@ def node_page(node, interface, classes, files, demo=None):
               '   # ROS 1',
               '   roslaunch opencv_apps %s.launch %s%s' % (
                   node, usage_arguments(node, ros1=True), ros1_arguments(node))] + usage_3d(node) + ['']
+    lines += usage_realsense(node)
     if demo:
         lines += demo_section(node, demo)
         if demo.get('variants'):
