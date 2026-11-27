@@ -217,7 +217,8 @@ protected:
   rclcpp::QoS qos(int queue_size) const;
 
   /** @brief
-   * QoS of subscribed topics, sensor data (best effort) to subscribe both reliable and best effort publishers.
+   * QoS of subscribed topics, sensor data (best effort) to subscribe both reliable and best effort publishers, or
+   * reliable with `~reliable_subscription` parameter, not to lose large messages, e.g. images through a network.
    */
   rclcpp::QoS subscriberQos(int queue_size) const;
 
@@ -293,6 +294,11 @@ protected:
    * true if `~latch` parameter is true.
    */
   bool latch_;
+
+  /** @brief
+   * true if `~reliable_subscription` parameter is true, see subscriberQos().
+   */
+  bool reliable_subscription_;
 };
 
 /** @brief
